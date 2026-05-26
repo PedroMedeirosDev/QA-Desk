@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "descricao": "Registro local (portfolio/QA). Clone do mobile na raiz do QA Automate — não versionar estes arquivos lá.",
+    "codigo_referencia": "../../../app-polygonus",
+    "ultima_atualizacao": "2026-04-29",
+    "sentry_issues_url_template": "https://sentry.io/organizations/polygonus/issues/?project=4511175512883200&query={query}",
+    "nota_colunas_csv": "O export CSV inclui texto amigável, detalhes técnicos, queries/eventos e link para o mesmo projeto Sentry. Use UTF-8 ao importar no Sheets."
+  },
+  "correcoes": [
+    {
+      "id": "cb1d5a2b",
+      "titulo": "TypeError: Null is not a subtype of String em NotificationData.fromMessageData",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.15",
+      "texto_suporte": "",
+      "fix_tecnico": "Duplicata de 3a338a00. Push com campo null em message.data; fix null-safety na 6.05.15.",
+      "sentry_issue_query": "cb1d5a2bc85b4c0b829207927cd3f8f1"
+    },
+    {
+      "id": "5ab3ed0d",
+      "titulo": "TimeoutException 30s em MenuController._loadMenuItems (/mobile_menu)",
+      "data": "2026-04-16",
+      "versao_correcao": "trunk",
+      "texto_suporte": "",
+      "fix_tecnico": "PolyHttpClient converte TimeoutException em ApiException(statusCode: 0); catchError existente trata com toast.",
+      "sentry_issue_query": "5ab3ed0d62464044b7187b1b09f4b46a"
+    },
+    {
+      "id": "f03837da",
+      "titulo": "TimeoutException 30s em selecionarEntidade ao iniciar app",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.16",
+      "texto_suporte": "",
+      "fix_tecnico": "_erroDeRede() em utils.dart: TimeoutException, SocketException, ApiException(0) → toast sem Sentry.",
+      "sentry_issue_query": "f03837da68294254ac986aa8ec02d2d3"
+    },
+    {
+      "id": "d7856c16",
+      "titulo": "PlatformException VideoError: Source error na reprodução de vídeo",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.16",
+      "texto_suporte": "",
+      "fix_tecnico": "video_widget.dart: checagem hasError em _onPlayerChange; mensagem ao usuário sobre conexão.",
+      "sentry_issue_query": "d7856c1639b34419a5897bb9d4bd5c8c"
+    },
+    {
+      "id": "fcfdd4f8",
+      "titulo": "PlatformException: pedidos simultâneos de permissão do microfone no chat de áudio (iOS ERROR_ALREADY_REQUESTING_PERMISSIONS / Android already running)",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.16",
+      "texto_suporte": "No chat, quando havia várias mensagens de áudio na tela, o aplicativo podia pedir permissão do microfone várias vezes ao mesmo tempo. O sistema operacional (Android ou iOS) não aceita pedidos simultâneos e isso gerava erro no monitoramento. Ajustamos para que o pedido de permissão seja feito de forma ordenada, uma vez por vez, evitando esse conflito.",
+      "fix_tecnico": "N instâncias de MobileAudioPlayer chamavam openTheRecorder() em paralelo. Guard _recorderOpening tornou-se static em mobile_audio_player.dart para serializar permissão e abertura do gravador.",
+      "sentry_issue_query": "fcfdd4f815d041e3bb3bc293459e7d16",
+      "sentry_event_ids": ["b12ee6d542154d28a65403024673bda9"]
+    },
+    {
+      "id": "3a338a00",
+      "titulo": "TypeError: Null is not String em NotificationData.fromMessageData",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.15",
+      "texto_suporte": "",
+      "fix_tecnico": "Cast seguro em params + helper _obterValorMensagem.",
+      "sentry_issue_query": "3a338a00f556405fbe2d0d9f3d242e77"
+    },
+    {
+      "id": "9f495089",
+      "titulo": "NoSuchMethodError ao abrir boletim PDF (response null)",
+      "data": "2026-04-16",
+      "versao_correcao": "trunk",
+      "texto_suporte": "",
+      "fix_tecnico": "montarUrlRelatorio + extrairUrlRelatorio em utils.dart.",
+      "sentry_issue_query": "9f495089e9ee4d58a8cd5e689c2eda35"
+    },
+    {
+      "id": "840f6faf",
+      "titulo": "ApiException Cloudflare 403 HTML em selecionarEntidade",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.16",
+      "texto_suporte": "",
+      "fix_tecnico": "_mensagemParaRespostaHtml() em poly_http_client.",
+      "sentry_issue_query": "840f6faf028e48bdab3bdf6190df28c6"
+    },
+    {
+      "id": "1425636d",
+      "titulo": "ApiException Cloudflare 403 HTML em loadMenuItems",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.16",
+      "texto_suporte": "",
+      "fix_tecnico": "Resposta HTML 403 substituída por mensagem amigável (acesso fora do Brasil).",
+      "sentry_issue_query": "1425636d682241f9a746b78bfb2aaaa2"
+    },
+    {
+      "id": "ebea251a",
+      "titulo": "UnsupportedError: Platform._operatingSystem no Flutter Web (startup após Hive)",
+      "data": "2026-04-16",
+      "versao_correcao": "trunk",
+      "texto_suporte": "Na versão web (navegador), ao processar a fila de sincronização offline, o app tentava usar o mesmo mecanismo de segundo plano do celular. No navegador isso não existe da mesma forma e o carregamento quebrava. A correção faz esse envio rodar no fluxo normal da web, sem esse mecanismo nativo.",
+      "fix_tecnico": "Problema: em poly_replicate._startIsolate(), na web, o código chamava IsolateRunner.spawn() como no Android/iOS; isso puxa dart:io/Platform no JS e gera UnsupportedError: Platform._operatingSystem. Solução: if (kIsWeb) usar _webIsolate — apenas await function.call(arguments) no isolate principal, com mesmo timeout/catchError; else manter IsolateRunner.spawn(). Arquivo: lib/poly_replicate/poly_replicate.dart. Cenário típico: Hive aberto e fila poly_replicate a processar no startup web (ex. 6.05.14).",
+      "sentry_issue_query": "ebea251a",
+      "sentry_event_ids": ["ebea251a5e4640a8b00d30b9a15a41c4"]
+    },
+    {
+      "id": "8a56fb06",
+      "titulo": "Null check na lista de mensagens (scroll) — confundido com PDF/vídeo + iOS em segundo plano",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.16",
+      "texto_suporte": "Em conversas com PDF ou vídeo, às vezes o app fechava ou travava ao voltar do segundo plano ou ao rolar a lista. O problema não era o leitor de PDF nem o player em si, e sim o cálculo de posição na lista de mensagens durante uma fase em que a tela já estava se reorganizando. Ajustamos o momento em que o app para de escutar o scroll, para não fazer esse cálculo quando o layout já não é seguro.",
+      "fix_tecnico": "mensagem_widget.dart ~84: listener do ScrollController chamava renderObject.localToGlobal durante desmontagem; dispose() era tarde demais → parent! null. Fix 6.05.16: remover listener em deactivate() antes do render tree desmontar. Sentry: ScrollController + getTransformTo; iOS Carmo JF 6.05.10 exemplo evento abaixo.",
+      "sentry_issue_query": "8a56fb065b7e4b5caf821d98c65add6a",
+      "sentry_event_ids": ["e8990b1d36cb4431947d7381c1c45ede"]
+    },
+    {
+      "id": "3c8b22f4",
+      "titulo": "SIGABRT nativo no startup (símbolos ausentes / emulador)",
+      "data": "2026-04-16",
+      "versao_correcao": "",
+      "texto_suporte": "",
+      "fix_tecnico": "Não reproduzível; ambiente de teste; símbolos missing no Sentry.",
+      "sentry_issue_query": "3c8b22f4dfad4c5bdc2a095b02c3f81e"
+    },
+    {
+      "id": "86a0dc9f",
+      "titulo": "FirebaseException permission-blocked no Flutter Web",
+      "data": "2026-04-16",
+      "versao_correcao": "6.05.16",
+      "texto_suporte": "",
+      "fix_tecnico": "catchError no chain requestPermission em web_main.dart.",
+      "sentry_issue_query": "86a0dc9fb84d4c8f9d3d3ca52f9e93ca"
+    }
+  ]
+}

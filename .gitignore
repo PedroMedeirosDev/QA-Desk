@@ -1,0 +1,23 @@
+# Evidências locais (imagens/vídeos grandes)
+testes/evidence/*
+!testes/evidence/.gitkeep
+
+# Saídas geradas (Sentry → support_record); manter pasta vazia no git
+testes/support/out/*
+!testes/support/out/.gitkeep
+
+# Código da empresa (clones locais — não versionar)
+app-polygonus/
+polygonus-react/
+polygonus-mobile/
+
+# Ambiente e segredos
+.env
+*.local
+
+# Comum em projetos de automação
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.idea/

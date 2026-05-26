@@ -1,0 +1,1 @@
+event_id,pacote,versao_app,build,versao_corrigida,data_ocorrencia_utc,data_correcao,plataforma,ambiente,descricao_erro,descricao_solucao,titulo_sentry,culprit,sentry_release,dist,observacoes

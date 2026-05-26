@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.qa-automate/support_record.schema.json",
+  "title": "support_record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "pacote",
+    "versao_app",
+    "build",
+    "versao_corrigida",
+    "data_ocorrencia_utc",
+    "data_correcao",
+    "plataforma",
+    "ambiente",
+    "descricao_erro",
+    "descricao_solucao",
+    "titulo_sentry",
+    "culprit",
+    "sentry_release",
+    "dist",
+    "observacoes"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "description": "ID do evento no Sentry" },
+    "pacote": { "type": "string", "description": "Application id / bundle id" },
+    "versao_app": { "type": "string", "description": "Versão semântica do app (ex.: 6.05.10)" },
+    "build": { "type": "string", "description": "Build / dist" },
+    "versao_corrigida": { "type": "string", "description": "Versão onde o problema deixou de ocorrer (preencher após fix)" },
+    "data_ocorrencia_utc": { "type": "string", "description": "Data/hora do evento em ISO-8601 UTC" },
+    "data_correcao": { "type": "string", "description": "Data da correção homologada (YYYY-MM-DD ou ISO)" },
+    "plataforma": { "type": "string", "description": "iOS | Android | other" },
+    "ambiente": { "type": "string", "description": "production | staging | ..." },
+    "descricao_erro": { "type": "string", "description": "Texto curto para suporte (sem stack trace)" },
+    "descricao_solucao": { "type": "string", "description": "Texto curto pós-correção" },
+    "titulo_sentry": { "type": "string" },
+    "culprit": { "type": "string" },
+    "sentry_release": { "type": "string", "description": "Campo release completo do Sentry" },
+    "dist": { "type": "string" },
+    "observacoes": {
+      "type": "string",
+      "description": "Só humano preenche; Gemini deve deixar vazio"
+    }
+  }
+}

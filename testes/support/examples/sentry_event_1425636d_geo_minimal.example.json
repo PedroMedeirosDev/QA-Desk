@@ -1,0 +1,22 @@
+{
+  "event_id": "1425636d682241f9a746b78bfb2aaaa2",
+  "release": "br.com.polygonus.mobile.imaculada@6.05.10+60510",
+  "dist": "60510",
+  "datetime": "2026-04-16T12:52:00.439000+00:00",
+  "environment": "production",
+  "tags": [
+    ["os.name", "Android"],
+    ["environment", "production"]
+  ],
+  "exception": {
+    "values": [
+      {
+        "type": "ApiException",
+        "value": "403 com corpo HTML Cloudflare (página de bloqueio; detalhe omitido no exemplo)"
+      }
+    ]
+  },
+  "title": "ApiException: resposta HTML Cloudflare (403)",
+  "culprit": "poly_http_client.dart in PolyHttpClient._handleResponse",
+  "platform": "other"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "aa07c9da683f46c2867ccd04d9cd8581",
+  "release": "br.com.polygonus.mobile.immc@6.05.10+60510",
+  "dist": "60510",
+  "datetime": "2026-04-15T13:48:15.834000+00:00",
+  "environment": "production",
+  "title": "ApiException: token inválido",
+  "culprit": "poly_http_client.dart in PolyHttpClient._handleResponse",
+  "tags": [
+    ["device.family", "iOS"],
+    ["os.name", "iOS"]
+  ],
+  "exception": {
+    "values": [
+      {
+        "type": "ApiException",
+        "value": "token inválido"
+      }
+    ]
+  }
+}

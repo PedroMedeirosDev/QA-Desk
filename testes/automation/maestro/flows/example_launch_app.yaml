@@ -1,0 +1,9 @@
+# Fluxo mínimo: abrir o app (substitua o appId pelo pacote real, ex.: com.empresa.app)
+# Pré-requisito: app já instalado no device/emulador OU instale antes com: adb install caminho\app.apk
+#
+# appId: veja no Android como "package name" ou listando: adb shell pm list packages | findstr nome
+
+appId: com.example.substitua_pelo_package_real
+---
+- launchApp
+- assertVisible: ".*" # ajuste para um texto ou id visível na primeira tela (regex permitido)

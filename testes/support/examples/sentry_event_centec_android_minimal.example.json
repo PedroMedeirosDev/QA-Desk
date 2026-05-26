@@ -1,0 +1,21 @@
+{
+  "event_id": "5c5ecadf8af64d3bb699cffafc9fe4e8",
+  "release": "br.com.polygonus.mobile.centec@6.05.10+60510",
+  "dist": "60510",
+  "datetime": "2026-04-15T17:54:24.889000+00:00",
+  "environment": "production",
+  "title": "ApiException: token inválido",
+  "culprit": "poly_http_client.dart in PolyHttpClient._handleResponse",
+  "tags": [
+    ["device.family", "SM-A356E"],
+    ["os.name", "Android"]
+  ],
+  "exception": {
+    "values": [
+      {
+        "type": "ApiException",
+        "value": "token inválido"
+      }
+    ]
+  }
+}
