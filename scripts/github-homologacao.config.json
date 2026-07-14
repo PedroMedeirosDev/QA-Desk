@@ -1,0 +1,14 @@
+{
+  "org": "polygonus-br",
+  "defaultBranch": "cq",
+  "daysBack": 7,
+  "autoDiscoverOrgRepos": true,
+  "maxRepos": 40,
+  "commitsPerRepo": 12,
+  "companyReposConfig": "scripts/company-repos.json",
+  "tierLabels": {
+    "full": "Homologação completa (APP ou NOVO LAYOUT)",
+    "sanity": "Backend principal — testar via portal + app",
+    "legacy": "Legado — só se entidade usa versão clássica / Moacir pedir"
+  }
+}

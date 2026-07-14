@@ -5,7 +5,7 @@ Pasta reservada para scripts (Android em emulador) e, no futuro, web conforme a 
 ## Diretriz
 
 - **Emulador**: execução principal da suíte automatizada.
-- **Aparelho físico**: smoke manual rápido (ver `../templates/checklist-smoke-dispositivo.md`).
+- **Aparelho físico**: smoke manual rápido (ver [`../../shared/templates/checklist-smoke-dispositivo.md`](../../shared/templates/checklist-smoke-dispositivo.md)).
 
 ## Android — opções comuns
 
@@ -17,14 +17,14 @@ Pasta reservada para scripts (Android em emulador) e, no futuro, web conforme a 
 
 **Maestro (escolhido):** detalhes de device, ADB e exemplos em [`maestro/README.md`](maestro/README.md).
 
-Fluxo de exemplo: [`maestro/flows/example_launch_app.yaml`](maestro/flows/example_launch_app.yaml) — altere `appId` e o `assertVisible` para o app real.
+Fluxo de exemplo: [`maestro/flows/smoke/example_launch_app.yaml`](maestro/flows/smoke/example_launch_app.yaml) — altere `appId` e o `assertVisible` para o app real.
 
 Checklist rápido:
 
 - Versão do Maestro: `maestro --version`
 - Device listado: `adb devices`
 - Instalar APK: `adb install caminho\app.apk`
-- Rodar suíte: `maestro test testes\automation\maestro\flows\example_launch_app.yaml` _(a partir da raiz do projeto QA Automate)_
+- Rodar suíte: `maestro test projects\polygonus\automation\maestro\flows\smoke\example_launch_app.yaml` _(a partir da raiz do projeto QA Automate)_
 
 ## Web
 

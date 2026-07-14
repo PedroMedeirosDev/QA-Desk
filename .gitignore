@@ -9,6 +9,7 @@ projects/polygonus/support/out/*
 # Inbox homologação Polygonus
 projects/polygonus/homologacao/inbox/*
 !projects/polygonus/homologacao/inbox/README.md
+!projects/polygonus/homologacao/inbox/latest.md
 !projects/polygonus/homologacao/inbox/.gitkeep
 
 # Anihype evidence
