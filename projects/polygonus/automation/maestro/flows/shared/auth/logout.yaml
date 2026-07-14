@@ -1,0 +1,67 @@
+# Logout → ENTRAR via menu do usuário (NÃO drawer).
+#
+# Caminho correto:
+#   1. No Mural: 1× botão AppBar "Back" (não empilhar com pressKey)
+#   2. Tocar no NOME no topo
+#   3. Menu: Perfil | Tutorial | Sair → "Sair"
+#   4. Confirmar modal se aparecer
+
+appId: br.com.polygonus.mobile.amostra
+---
+# Voltar do Mural pelo botão do AppBar (content-desc "Back")
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - tapOn: "Back"
+      - waitForAnimationToEnd
+
+# Fallbacks se ainda estiver em tela interna sem botão Back
+- runFlow:
+    when:
+      visible: "Novo comunicado|Para:|Escreva seu texto aqui|Unidade"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "Responder comunicado|Show menu|Teste Comunicado"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Pedro Jesus.*|CARDÁPIO|.*MURAL.*"
+    timeout: 20000
+
+- waitForAnimationToEnd
+
+# Menu do header (Perfil / Tutorial / Sair)
+- tapOn:
+    text: "Pedro Jesus.*"
+    optional: true
+
+- runFlow:
+    when:
+      notVisible: "Sair|Perfil|Tutorial"
+    commands:
+      - tapOn:
+          point: "28%, 10%"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Sair"
+    timeout: 10000
+
+- tapOn: "Sair"
+
+- runFlow:
+    when:
+      visible: "Tem certeza que deseja sair do aplicativo?"
+    commands:
+      - tapOn: "Sair"
+
+- extendedWaitUntil:
+    visible: "ENTRAR"
+    timeout: 20000

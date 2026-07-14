@@ -1,0 +1,51 @@
+# Seleciona a função na lista do dropdown Perfil (tela Perfil).
+#
+# Env: FUNCAO — texto exacto na lista (build amostra):
+#   COORDENADOR | PROFESSORES | SUPORTE | SECRETARIA | RESPONSAVEIS
+#
+# Abre a lista tocando NO VALOR ATUAL (uma vez) e só então escolhe FUNCAO.
+# Não toque outras opções no meio — isso seleciona o item errado.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: ".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|SECRETARIA|Versão.*"
+    timeout: 15000
+
+- runFlow:
+    when:
+      notVisible: "${FUNCAO}"
+    commands:
+      - runFlow:
+          when:
+            visible: "SUPORTE"
+          commands:
+            - tapOn: "SUPORTE"
+            - tapOn: "${FUNCAO}"
+      - runFlow:
+          when:
+            visible: "SECRETARIA"
+          commands:
+            - tapOn: "SECRETARIA"
+            - tapOn: "${FUNCAO}"
+      - runFlow:
+          when:
+            visible: "RESPONSAVEIS"
+          commands:
+            - tapOn: "RESPONSAVEIS"
+            - tapOn: "${FUNCAO}"
+      - runFlow:
+          when:
+            visible: "PROFESSORES"
+          commands:
+            - tapOn: "PROFESSORES"
+            - tapOn: "${FUNCAO}"
+      - extendedWaitUntil:
+          visible: "${FUNCAO}"
+          timeout: 25000
+
+- pressKey: Back
+
+- extendedWaitUntil:
+    visible: "Pedro Jesus|CARDÁPIO|.*MURAL.*"
+    timeout: 30000

@@ -1,0 +1,48 @@
+# Abre a tela Perfil pelo menu do usuário na home.
+#
+# Fluxo UI: tocar foto/nome → "Perfil"
+# Labels Flutter: Unidade/Perfil/Ano podem vir agrupados em accessibilityText.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Pedro Jesus|CARDÁPIO|.*MURAL.*"
+    timeout: 20000
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Pedro Jesus"
+    optional: true
+
+- runFlow:
+    when:
+      notVisible: "Perfil"
+    commands:
+      - tapOn:
+          text: "Pedro"
+          optional: true
+
+- runFlow:
+    when:
+      notVisible: "Perfil"
+    commands:
+      - tapOn:
+          point: "10%, 10%"
+
+- runFlow:
+    when:
+      notVisible: "Perfil"
+    commands:
+      - tapOn:
+          point: "28%, 10%"
+
+- extendedWaitUntil:
+    visible: "Perfil"
+    timeout: 8000
+
+- tapOn: "Perfil"
+
+- extendedWaitUntil:
+    visible: ".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Versão.*"
+    timeout: 20000

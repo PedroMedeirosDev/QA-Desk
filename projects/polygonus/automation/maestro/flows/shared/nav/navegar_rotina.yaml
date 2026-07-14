@@ -1,0 +1,10 @@
+# Subflow: home → Mural → aba Rotina
+# Pré-requisito: usuário logado na home
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: navegar_mural.yaml
+
+- tapOn: "Rotina"
+- assertVisible: "Rotina"

@@ -1,0 +1,40 @@
+{
+  "descricao": "Mapa de clones locais — branch cq para homologação",
+  "repos": [
+    {
+      "id": "mobile",
+      "name": "polygonus-mobile",
+      "url": "https://github.com/polygonus-br/polygonus-mobile.git",
+      "branch": "cq",
+      "papel": "APP"
+    },
+    {
+      "id": "react",
+      "name": "polygonus-react",
+      "url": "https://github.com/polygonus-br/polygonus-react.git",
+      "branch": "cq",
+      "papel": "NOVO LAYOUT"
+    },
+    {
+      "id": "go",
+      "name": "polygonus-go",
+      "url": "https://github.com/polygonus-br/polygonus-go.git",
+      "branch": "cq",
+      "papel": "BACKEND PRINCIPAL"
+    },
+    {
+      "id": "acropoly",
+      "name": "acropoly-server",
+      "url": "https://github.com/polygonus-br/acropoly-server.git",
+      "branch": "cq",
+      "papel": "LEGADO"
+    },
+    {
+      "id": "server",
+      "name": "polygonus-server",
+      "url": "https://github.com/polygonus-br/polygonus-server.git",
+      "branch": "cq",
+      "papel": "BACKEND LEGADO APP"
+    }
+  ]
+}

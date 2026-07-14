@@ -1,0 +1,24 @@
+# PORTO SEGURO — fim do CT: ENTRAR sem limpar dados.
+#
+# Idempotente. Usa logout (Back → nome → Sair).
+# NÃO chama clearState.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      notVisible: "ENTRAR"
+    commands:
+      - runFlow: logout.yaml
+
+- runFlow:
+    when:
+      notVisible: "ENTRAR"
+    commands:
+      - pressKey: Back
+      - pressKey: Back
+      - runFlow: logout.yaml
+
+- extendedWaitUntil:
+    visible: "ENTRAR"
+    timeout: 25000

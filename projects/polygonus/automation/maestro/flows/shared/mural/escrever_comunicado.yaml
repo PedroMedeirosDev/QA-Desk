@@ -1,0 +1,9 @@
+# Preenche o texto do comunicado.
+# Env: TEXTO_COMUNICADO
+#
+# Fonte: pt_BR.json → writeYourMessageHere = "Escreva seu texto aqui"
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn: "Escreva seu texto aqui"
+- inputText: ${TEXTO_COMUNICADO}

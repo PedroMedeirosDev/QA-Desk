@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2026-07-14",
+    "project": "polygonus"
+  },
+  "homologations": [
+    {
+      "id": "HOM-2026-001",
+      "slug": "mural-backend-homologacao",
+      "title": "Homologação Mural (backend)",
+      "description": "Conjunto padrão de testes do módulo Mural após alterações no backend.",
+      "project": "polygonus",
+      "channel": "app",
+      "status": "em_andamento",
+      "campaign": "mural-backend-homologacao",
+      "testKeys": [
+        "mural/01_1_comunicado_enviar",
+        "mural/01_1_comunicado_editar",
+        "mural/01_1_comunicado_enquete",
+        "mural/01_1_comunicado_foto_galeria",
+        "mural/01_1_comunicado_excluir",
+        "mural/01_1_comunicado_pdf",
+        "mural/01_1_comunicado_video_pequeno",
+        "mural/01_1_comunicado_evento",
+        "mural/01_1_filtro_enviadas",
+        "mural/01_1_comunicado_professor_pendente"
+      ],
+      "startedAt": "2026-07-13T20:35:02.142Z",
+      "history": [
+        {
+          "at": "2026-07-13T20:35:02.142Z",
+          "actor": "system",
+          "action": "homologation_created",
+          "detail": "Homologação Mural criada com checklist padrão"
+        }
+      ],
+      "changeScope": "backend",
+      "build": "6.06.01 (60601)"
+    }
+  ]
+}

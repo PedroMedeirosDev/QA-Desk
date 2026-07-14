@@ -1,0 +1,49 @@
+# RESET NUCLEAR — limpa dados do app (só sob demanda).
+#
+# clearState:true:
+#   - desloga
+#   - REAPARECE onboarding / tutoriais (PULAR)
+#   - perde último perfil usado
+#
+# NÃO usar em CT normal. Só quando o usuário pedir reset limpo do device.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- stopApp
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: ".*Acompanhe de perto tudo.*|Colégio Polygonus|FAZER LOGIN|ENTRAR"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible: ".*Acompanhe de perto tudo.*|Colégio Polygonus"
+    commands:
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "FAZER LOGIN"
+    commands:
+      - tapOn: "FAZER LOGIN"
+
+- extendedWaitUntil:
+    visible: "ENTRAR"
+    timeout: 20000

@@ -1,51 +1,63 @@
 # QA Automate
 
-Espaço para padrões de homologação, rascunhos de casos de teste e automação (Android e web).
+Repositório **multi-projeto** de qualidade de software: homologação, casos de teste, automação (Maestro / Playwright) e aplicação web de registro de bugs.
 
-## Escopo de homologação
+> **Nome do produto:** QA Automate  
+> **Pasta local sugerida:** `qa-automate` (renomeie de `Polygonus-QA` quando conveniente — ver [`RENAMING.md`](RENAMING.md))
 
-| Plataforma | Cobertura |
-|------------|-----------|
-| Android | Sim (automação em emulador + confirmação rápida no aparelho físico) |
-| Web | Sim |
-| iOS | Não — sem dispositivo Apple para validação |
+## Projetos
 
-Qualquer item que dependa exclusivamente de iOS deve ser registrado como **não homologado neste ambiente** ou encaminhado a quem tenha hardware iOS.
+| Slug | Pasta | Status |
+|------|-------|--------|
+| **polygonus** | [`projects/polygonus/`](projects/polygonus/) | Ativo — mobile, web, CQ |
+| **anihype** | [`projects/anihype/`](projects/anihype/) | Em setup |
+
+Detalhes: [`projects/README.md`](projects/README.md)
 
 ## Estrutura na raiz
 
 | Pasta / item | Uso |
 |--------------|-----|
-| **`polygonus-mobile/`** | Clone do app Flutter (**polygonus-mobile** no GitHub). Na sua máquina a pasta pode ainda chamar-se `app-polygonus` — renomeie para `polygonus-mobile` quando nenhum programa estiver usando a pasta (IDE fechada ou sem workspace apontando para ela). |
-| **`polygonus-react/`** | Clone do sistema web (**polygonus-react** no GitHub). |
-| **`testes/`** | Tudo que é caso de teste, automação, templates, evidências, suporte/Sentry e notas (ver tabela abaixo). |
-| **`README.md`**, **`.gitignore`** | Documentação e exclusões de versionamento. |
+| **`projects/`** | Um diretório por cliente/produto (cases, automação, evidência) |
+| **`shared/`** | Templates e recursos comuns |
+| **`qa-app/`** | Aplicação web de QA (registro de bugs, histórico, upload) — [`qa-app/SPEC.md`](qa-app/SPEC.md) |
+| **`scripts/`** | Sincronização de clones da empresa |
+| **`polygonus-mobile/`**, **`polygonus-react/`** | Clones locais Polygonus (gitignored) |
+| **`testes/`** | Redirect legado → ver [`testes/README.md`](testes/README.md) |
 
-## Conteúdo de `testes/`
+## Escopo de homologação
 
-| Pasta | Uso |
-|-------|-----|
-| `templates/` | Modelos de relatório, caso de teste e checklist |
-| `cases/` | Casos de teste e suítes em texto (rascunho ou Gherkin) |
-| `automation/` | Scripts, configuração e notas da pilha de automação |
-| `evidence/` | Screenshots, logs exportados (por padrão não versionar arquivos grandes — ver `.gitignore`) |
-| `notes/` | Notas de exploração, dúvidas, IDs de build |
-| `support/` | Registro enxuto para Sheets/Discord a partir de evento Sentry — ver [`testes/support/README.md`](testes/support/README.md) |
-| `polygonus-sentry-suporte/` | Dados e scripts de exportação Sentry → CSV/suporte — ver [`testes/polygonus-sentry-suporte/README.md`](testes/polygonus-sentry-suporte/README.md) |
+| Plataforma | Cobertura |
+|------------|-----------|
+| Android | Sim (emulador + smoke no físico) |
+| Web | Sim |
+| iOS | Não neste ambiente |
 
-## Fluxo recomendado
+## Clones Polygonus (somente leitura)
 
-1. **Automação**: rodar scripts contra **emulador Android** (build estável / APK acordado).
-2. **Confirmação manual**: smoke curto no **seu aparelho Android** nos fluxos críticos ou após mudanças sensíveis (permissões, rede, performance).
-3. **Web**: casos manuais ou automação conforme a stack que forem adotar; registrar navegador e versão.
+```powershell
+.\sync.bat
+```
 
-## Convenções rápidas
+## QA App (fase 1)
 
-- Identificar sempre **build** (versão, commit, APK) nos relatórios e nos casos.
-- Um relatório de homologação por entrega ou por conjunto de correções, com link ou referência ao canal interno (ex.: Discord) se necessário.
-- Evidência mínima: resultado da automação + smoke manual quando aplicável.
+```powershell
+cd qa-app
+npm install
+npm run dev
+```
 
-## Próximos passos sugeridos
+- API: http://localhost:3001  
+- UI: http://localhost:5174  
 
-- **Configurar ambiente (Android Studio + Maestro + PATH):** checklist no início de [`testes/automation/maestro/README.md`](testes/automation/maestro/README.md).
-- Preencher `testes/templates/caso-de-teste.md` para o produto real e duplicar em `testes/cases/`.
+## Fluxo Polygonus (referência)
+
+1. `.\sync.bat` — atualizar clones  
+2. [`projects/polygonus/homologacao/`](projects/polygonus/homologacao/) — planejar sessão  
+3. [`projects/polygonus/automation/maestro/`](projects/polygonus/automation/maestro/) — E2E mobile  
+4. [`projects/polygonus/automation/playwright/`](projects/polygonus/automation/playwright/) — E2E web  
+5. **QA App** — registrar bug, anexar print, histórico  
+
+## Migração jul/2026
+
+O conteúdo de `testes/` foi reorganizado em `projects/polygonus/` + `shared/templates/`. Links antigos: [`testes/README.md`](testes/README.md).

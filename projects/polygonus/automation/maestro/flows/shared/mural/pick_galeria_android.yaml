@@ -1,0 +1,28 @@
+# Seleciona primeira mídia no picker nativo do Android (após addMedia ou adb push).
+# Use com optional taps — IDs variam por API 30–34.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: "com.google.android.providers.media.module:id/icon_thumbnail"
+    optional: true
+- tapOn:
+    id: "com.google.android.documentsui:id/thumbnail"
+    optional: true
+- tapOn:
+    id: "com.google.android.documentsui:id/icon_thumb"
+    optional: true
+# Fallback: primeiro item da grade
+- tapOn:
+    index: 0
+    optional: true
+# Confirmar seleção (alguns pickers)
+- tapOn:
+    text: "Concluir"
+    optional: true
+- tapOn:
+    text: "OK"
+    optional: true
+- tapOn:
+    text: "Done"
+    optional: true

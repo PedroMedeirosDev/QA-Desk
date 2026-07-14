@@ -1,0 +1,72 @@
+import cors from "cors";
+import express from "express";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { loadEnv } from "./load-env.js";
+import { testsRouter } from "./routes/tests.js";
+import { homologationsRouter } from "./routes/homologations.js";
+import { automationRouter } from "./routes/automation.js";
+import { PROJECTS } from "./types.js";
+
+loadEnv();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PORT = Number(process.env.QA_APP_PORT ?? 3001);
+const HOST = process.env.QA_APP_HOST ?? "0.0.0.0";
+const IS_PROD = process.env.NODE_ENV === "production";
+const DIST = path.join(__dirname, "../dist");
+
+const app = express();
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: "2mb" }));
+
+app.get("/api/health", (_req, res) => {
+  res.json({
+    ok: true,
+    mode: IS_PROD ? "production" : "development",
+    automationRun: process.env.QA_AUTOMATION_RUN === "1",
+  });
+});
+
+app.get("/api/projects", (_req, res) => {
+  res.json(PROJECTS);
+});
+
+app.use("/api/projects/:slug/tests", testsRouter);
+/** @deprecated use /tests — mantido temporariamente */
+app.use("/api/projects/:slug/bugs", testsRouter);
+
+app.use("/api/projects/:slug/homologations", homologationsRouter);
+
+app.use("/api/projects/:slug/automation", automationRouter);
+
+app.use(
+  "/api/evidence",
+  express.static(path.join(__dirname, "../data/uploads"), { fallthrough: true }),
+);
+
+if (IS_PROD && fs.existsSync(DIST)) {
+  app.use(express.static(DIST));
+  app.get(/^(?!\/api).*/, (_req, res) => {
+    res.sendFile(path.join(DIST, "index.html"));
+  });
+}
+
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: err.message });
+});
+
+app.listen(PORT, HOST, () => {
+  const automationRun = process.env.QA_AUTOMATION_RUN === "1";
+  console.log(`QA App ${IS_PROD ? "PRODUCTION" : "API"} http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
+  console.log(
+    automationRun
+      ? "Maestro: execução habilitada (QA_AUTOMATION_RUN=1)"
+      : "Maestro: execução desabilitada — copie .env.example para .env ou defina QA_AUTOMATION_RUN=1",
+  );
+  if (HOST === "0.0.0.0") {
+    console.log("Acessível na rede local (mesmo Wi‑Fi) pelo IP desta máquina");
+  }
+});

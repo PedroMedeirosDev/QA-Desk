@@ -1,0 +1,1160 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2026-07-14",
+    "project": "polygonus"
+  },
+  "reports": [
+    {
+      "id": "TEST-2026-010",
+      "testKey": "mural/01_1_comunicado_professor_pendente",
+      "recordType": "teste",
+      "title": "Mural — professor deixa Pendente",
+      "description": "PHJESUS envia como Professor; em seguida troca para Coordenador na tela Perfil e confere Pendentes. (ACMENEZES é aluno — não envia.)",
+      "steps": [
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS",
+        "Tocar foto/nome → Perfil → garantir função Professor na lista",
+        "Abrir o Mural e Novo comunicado",
+        "Selecionar turmas e escrever: Teste Comunicado professor",
+        "Enviar o comunicado",
+        "Tocar foto/nome → Perfil → alternar para Coordenador na lista",
+        "Abrir o Mural → Pendentes",
+        "Confirmar Teste Comunicado professor (quando aplicável)",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-14",
+      "project": "polygonus",
+      "channel": "app",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "homologationStatus": "pendente",
+      "homologationId": "HOM-2026-001",
+      "executionMode": "automated",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_professor_pendente.yaml",
+        "label": "01_1_comunicado_professor_pendente",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-14T00:02:34.108Z",
+          "actor": "system",
+          "action": "test_created",
+          "detail": "Caso de teste criado (Homologação Mural (backend))",
+          "meta": {
+            "testKey": "mural/01_1_comunicado_professor_pendente",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false
+    },
+    {
+      "id": "TEST-2026-009",
+      "testKey": "mural/01_1_filtro_enviadas",
+      "recordType": "teste",
+      "title": "Mural — filtro Enviadas",
+      "description": "Smoke do filtro Enviadas (e opcionalmente Recebidas) no Mural.",
+      "steps": [
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o Mural",
+        "Tocar em Enviadas e confirmar o filtro ativo",
+        "Opcional: voltar para Recebidas",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-14",
+      "project": "polygonus",
+      "channel": "app",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "homologationStatus": "pendente",
+      "homologationId": "HOM-2026-001",
+      "executionMode": "automated",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_filtro_enviadas.yaml",
+        "label": "01_1_filtro_enviadas",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-14T00:02:34.108Z",
+          "actor": "system",
+          "action": "test_created",
+          "detail": "Caso de teste criado (Homologação Mural (backend))",
+          "meta": {
+            "testKey": "mural/01_1_filtro_enviadas",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false
+    },
+    {
+      "id": "TEST-2026-008",
+      "testKey": "mural/01_1_comunicado_evento",
+      "recordType": "teste",
+      "title": "Mural — criar evento",
+      "description": "Abre Evento pelo BoomMenu do Mural e envia um texto de teste.",
+      "steps": [
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o Mural",
+        "BoomMenu → Evento",
+        "Escrever: Teste Evento mural",
+        "Enviar",
+        "Confirmar (quando possível) que o texto aparece",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-14",
+      "project": "polygonus",
+      "channel": "app",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "homologationStatus": "pendente",
+      "homologationId": "HOM-2026-001",
+      "executionMode": "automated",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_evento.yaml",
+        "label": "01_1_comunicado_evento",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-14T00:02:34.108Z",
+          "actor": "system",
+          "action": "test_created",
+          "detail": "Caso de teste criado (Homologação Mural (backend))",
+          "meta": {
+            "testKey": "mural/01_1_comunicado_evento",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false
+    },
+    {
+      "id": "TEST-2026-007",
+      "testKey": "mural/01_1_comunicado_video_pequeno",
+      "recordType": "teste",
+      "title": "Mural — vídeo pequeno",
+      "description": "Envia comunicado com vídeo pequeno da galeria (addMedia + FIXTURE_VIDEO).",
+      "steps": [
+        "Preparar vídeo no device (FIXTURE_VIDEO)",
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o Mural e Novo comunicado",
+        "Selecionar turmas e escrever: Teste Comunicado video",
+        "Anexar mídia da galeria e confirmar no picker",
+        "Enviar o comunicado",
+        "Sair e entrar como ETMENEZES",
+        "Abrir o Mural e confirmar Teste Comunicado video",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-14",
+      "project": "polygonus",
+      "channel": "app",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "homologationStatus": "pendente",
+      "homologationId": "HOM-2026-001",
+      "executionMode": "automated",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_video_pequeno.yaml",
+        "label": "01_1_comunicado_video_pequeno",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-14T00:02:34.108Z",
+          "actor": "system",
+          "action": "test_created",
+          "detail": "Caso de teste criado (Homologação Mural (backend))",
+          "meta": {
+            "testKey": "mural/01_1_comunicado_video_pequeno",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false
+    },
+    {
+      "id": "TEST-2026-006",
+      "testKey": "mural/01_1_comunicado_pdf",
+      "recordType": "teste",
+      "title": "Mural — anexo PDF",
+      "description": "PHJESUS anexa PDF (FIXTURE_PDF) ao comunicado; ETMENEZES confirma na lista.",
+      "steps": [
+        "Preparar PDF no device (push fixtures + FIXTURE_PDF no .env)",
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o Mural e Novo comunicado",
+        "Selecionar turmas e escrever: Teste Comunicado PDF",
+        "Anexar arquivo → selecionar o PDF pelo nome",
+        "Enviar o comunicado",
+        "Sair e entrar como ETMENEZES",
+        "Abrir o Mural e confirmar Teste Comunicado PDF",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-14",
+      "project": "polygonus",
+      "channel": "app",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "homologationStatus": "pendente",
+      "homologationId": "HOM-2026-001",
+      "executionMode": "automated",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_pdf.yaml",
+        "label": "01_1_comunicado_pdf",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-14T00:02:34.108Z",
+          "actor": "system",
+          "action": "test_created",
+          "detail": "Caso de teste criado (Homologação Mural (backend))",
+          "meta": {
+            "testKey": "mural/01_1_comunicado_pdf",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false
+    },
+    {
+      "id": "TEST-2026-005",
+      "title": "Mural — excluir comunicado",
+      "description": "Exclui o comunicado Teste Comunicado editado. Pré-requisito: CT editar.",
+      "steps": [
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o Mural e o filtro Enviadas",
+        "Localizar Teste Comunicado editado",
+        "Menu ⋮ → Excluir e confirmar",
+        "Confirmar que o texto não aparece mais na lista",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_excluir.yaml",
+        "label": "01_1_comunicado_excluir",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.21Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        },
+        {
+          "at": "2026-07-14T00:02:34.107Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_excluir",
+      "channel": "app",
+      "homologationStatus": "pendente",
+      "recordType": "teste",
+      "executionMode": "automated",
+      "homologationId": "HOM-2026-001"
+    },
+    {
+      "id": "TEST-2026-004",
+      "title": "Mural — foto da galeria",
+      "description": "Envia comunicado com foto da galeria; ETMENEZES salva e compartilha o anexo.",
+      "steps": [
+        "Preparar fixture de foto no device (FIXTURE_FOTO)",
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o Mural e Novo comunicado",
+        "Selecionar turmas e escrever: Teste Comunicado foto",
+        "Anexar imagem da galeria e confirmar no picker Android",
+        "Enviar o comunicado",
+        "Sair e entrar como ETMENEZES",
+        "Abrir o Mural e localizar Teste Comunicado foto",
+        "Menu ⋮ → Salvar anexos",
+        "Menu ⋮ → Compartilhar anexos",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_foto_galeria.yaml",
+        "label": "01_1_comunicado_foto_galeria",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.21Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        },
+        {
+          "at": "2026-07-14T00:02:34.107Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_foto_galeria",
+      "channel": "app",
+      "homologationStatus": "pendente",
+      "recordType": "teste",
+      "executionMode": "automated",
+      "homologationId": "HOM-2026-001"
+    },
+    {
+      "id": "TEST-2026-003",
+      "title": "Mural — enquete",
+      "description": "Cria comunicado com enquete do tipo Nova (opções Sim/Não).",
+      "steps": [
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o Mural e Novo comunicado",
+        "Selecionar turmas",
+        "Escrever o texto: Teste Comunicado enquete",
+        "Abrir enquete (ícone Adicionar enquete…) e escolher Nova",
+        "Preencher Opção 1 = Sim e Opção 2 = Não",
+        "Enviar o comunicado",
+        "Confirmar que Teste Comunicado enquete aparece na lista",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enquete.yaml",
+        "label": "01_1_comunicado_enquete",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.21Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        },
+        {
+          "at": "2026-07-14T00:02:34.107Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_enquete",
+      "channel": "app",
+      "homologationStatus": "pendente",
+      "recordType": "teste",
+      "executionMode": "automated",
+      "homologationId": "HOM-2026-001"
+    },
+    {
+      "id": "TEST-2026-002",
+      "title": "Mural — editar comunicado",
+      "description": "Edita o comunicado Teste Comunicado e valida o texto atualizado na lista. Pré-requisito: CT enviar.",
+      "steps": [
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o Mural e o filtro Enviadas",
+        "Localizar Teste Comunicado",
+        "Abrir o menu ⋮ do item → Editar",
+        "Alterar o texto para: Teste Comunicado editado",
+        "Enviar / salvar a edição",
+        "Confirmar que Teste Comunicado editado aparece na lista",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_editar.yaml",
+        "label": "01_1_comunicado_editar",
+        "readiness": "draft",
+        "lastRunAt": "2026-07-13T23:57:58.645Z",
+        "lastRunStatus": "failed",
+        "lastRunOutput": "Running on Medium_Phone\r\n > Flow 01_1_comunicado_editar\r\nRun ../shared/auth/login_phjesus.yaml...\r\n  Run ensure_login_screen.yaml...\r\n    Launch app \"br.com.polygonus.mobile.amostra\"... COMPLETED\r\n    Run flow when \"Acompanhe de perto tudo\" is visible...\r\n    Run flow when \"Acompanhe de perto tudo\" is visible... SKIPPED\r\n    Run flow when \"FAZER LOGIN\" is visible...\r\n    Run flow when \"FAZER LOGIN\" is visible... SKIPPED\r\n    Run flow when \"MURAL\" is visible...\r\n    Run flow when \"MURAL\" is visible... SKIPPED\r\n    Run flow when \"ENTRAR\" is not visible...\r\n      Press Back key... COMPLETED\r\n      Press Back key... COMPLETED\r\n      Press Back key... COMPLETED\r\n    Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n    Run flow when \"MURAL\" is visible...\r\n    Run flow when \"MURAL\" is visible... SKIPPED\r\n    Assert that \"ENTRAR\" is visible... FAILED\r\n  Run ensure_login_screen.yaml... FAILED\r\nRun ../shared/auth/login_phjesus.yaml... FAILED\r\n\nAssertion is false: \"ENTRAR\" is visible\r\n\nAssertion '\"ENTRAR\" is visible' failed. Check the UI hierarchy in debug artifacts to verify the element state and properties.\n\nPossible causes:\n- Element selector may be incorrect - check if there are similar elements with slightly different names/properties.\n- Element may be temporarily unavailable due to loading state\n- This could be a real regression that needs to be addressed\r\n\r\n==== Debug output (logs & screenshots) ====\r\n\nC:\\Users\\pedro\\.maestro\\tests\\2026-07-13_205206\r\n"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.21Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        },
+        {
+          "at": "2026-07-13T23:52:02.58Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend)",
+          "meta": {
+            "runNumber": 1,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_editar.yaml",
+            "output": "Running on Medium_Phone\r\n > Flow 01_1_comunicado_editar\r\nRun ../shared/auth/login_phjesus.yaml...\r\n  Run ensure_login_screen.yaml...\r\n    Launch app \"br.com.polygonus.mobile.amostra\"... COMPLETED\r\n    Run flow when \"Acompanhe de perto tudo\" is visible...\r\n    Run flow when \"Acompanhe de perto tudo\" is visible... SKIPPED\r\n    Run flow when \"FAZER LOGIN\" is visible...\r\n    Run flow when \"FAZER LOGIN\" is visible... SKIPPED\r\n    Run flow when \"MURAL\" is visible...\r\n    Run flow when \"MURAL\" is visible... SKIPPED\r\n    Run flow when \"ENTRAR\" is not visible...\r\n      Press Back key... COMPLETED\r\n      Press Back key... COMPLETED\r\n      Press Back key... COMPLETED\r\n    Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n    Run flow when \"MURAL\" is visible...\r\n    Run flow when \"MURAL\" is visible... SKIPPED\r\n    Assert that \"ENTRAR\" is visible... FAILED\r\n  Run ensure_login_screen.yaml... FAILED\r\nRun ../shared/auth/login_phjesus.yaml... FAILED\r\n\nAssertion is false: \"ENTRAR\" is visible\r\n\nAssertion '\"ENTRAR\" is visible' failed. Check the UI hierarchy in debug artifacts to verify the element state and properties.\n\nPossible causes:\n- Element selector may be incorrect - check if there are similar elements with slightly different names/properties.\n- Element may be temporarily unavailable due to loading state\n- This could be a real regression that needs to be addressed\r\n\r\n==== Debug output (logs & screenshots) ====\r\n\nC:\\Users\\pedro\\.maestro\\tests\\2026-07-13_205206\r\n",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T00:02:34.107Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.656Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_editar",
+      "channel": "app",
+      "homologationStatus": "falhou",
+      "recordType": "teste",
+      "executionMode": "automated",
+      "homologationId": "HOM-2026-001"
+    },
+    {
+      "id": "TEST-2026-001",
+      "title": "Mural — enviar comunicado de texto",
+      "description": "PHJESUS (coordenador) envia um comunicado de texto; ETMENEZES confirma que o texto aparece no Mural.",
+      "steps": [
+        "Abrir o app na tela de login (ENTRAR)",
+        "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+        "Abrir o card MURAL e a aba Mural",
+        "Abrir Novo comunicado (BoomMenu → Comunicado)",
+        "Selecionar turmas (Todas / Selecionar)",
+        "Escrever o texto: Teste Comunicado",
+        "Enviar o comunicado",
+        "Confirmar que Teste Comunicado aparece na lista",
+        "Sair e entrar como ETMENEZES",
+        "Abrir o Mural e confirmar que Teste Comunicado está visível",
+        "Sair até a tela de login"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+        "label": "01_1_comunicado_enviar",
+        "lastRunAt": "2026-07-14T03:48:27.330Z",
+        "lastRunStatus": "success",
+        "lastRunOutput": "r_comunicado.yaml...\r\n  Tap on \"Escreva seu texto aqui\"... COMPLETED\r\n  Input text ${TEXTO_COMUNICADO}... COMPLETED\r\nRun ../shared/mural/escrever_comunicado.yaml... COMPLETED\r\nRun ../shared/mural/enviar_comunicado.yaml...\r\n  Tap on \"Enviar comunicado\"... COMPLETED\r\n  Wait for animation to end... COMPLETED\r\nRun ../shared/mural/enviar_comunicado.yaml... COMPLETED\r\nAssert that \"Teste Comunicado\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml...\r\n  Run flow when \"ENTRAR\" is not visible...\r\n    Run logout.yaml...\r\n      Run flow when \"Back\" is visible...\r\n        Tap on \"Back\"... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Back\" is visible... COMPLETED\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible...\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible... SKIPPED\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible...\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible... SKIPPED\r\n      Assert that \"Pedro Jesus.*|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n      Tap on (Optional) \"Pedro Jesus.*\"... COMPLETED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible...\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible... SKIPPED\r\n      Assert that \"Sair\" is visible... COMPLETED\r\n      Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible...\r\n        Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible... COMPLETED\r\n      Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Run logout.yaml... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible...\r\n  Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n  Assert that \"ENTRAR\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml... COMPLETED\r\nRun ../shared/auth/login_etmenezes.yaml...\r\n  Run ensure_login_screen.yaml...\r\n    Launch app \"br.com.polygonus.mobile.amostra\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible...\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible... SKIPPED\r\n    Run flow when \"FAZER LOGIN\" is visible...\r\n    Run flow when \"FAZER LOGIN\" is visible... SKIPPED\r\n    Run flow when \"ENTRAR\" is not visible...\r\n    Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Assert that \"E-mail ou Login\" is visible... COMPLETED\r\n    Assert that \"Senha\" is visible... COMPLETED\r\n    Assert that \"Vers�o:.*\" is visible... COMPLETED\r\n  Run ensure_login_screen.yaml... COMPLETED\r\n  Run login_as.yaml...\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Tap on \"E-mail ou Login\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${LOGIN}... COMPLETED\r\n    Tap on \"Senha\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${SENHA}... COMPLETED\r\n    Tap on \"ENTRAR\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n      Tap on \"PULAR\"... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n    Run flow when \"PULAR\" is visible... COMPLETED\r\n    Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n  Run login_as.yaml... COMPLETED\r\nRun ../shared/auth/login_etmenezes.yaml... COMPLETED\r\nRun ../shared/nav/navegar_mural.yaml...\r\n  Tap on \".*MURAL.*\"... COMPLETED\r\n  Repeat 6 times...\r\n    Run flow when \"PULAR\" is visible...\r\n      Tap on \"PULAR\"... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n    Run flow when \"PULAR\" is visible... COMPLETED\r\n  Repeat 6 times... COMPLETED\r\n  Tap on (Optional) \"Mural | Tab 1 of 2\"... WARNED\r\n  Assert that \".*Recebidas.*|Responder comunicado|Show menu\" is visible... COMPLETED\r\n  Assert that \"PULAR\" is not visible... COMPLETED\r\nRun ../shared/nav/navegar_mural.yaml... COMPLETED\r\nAssert that \"Teste Comunicado\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml...\r\n  Run flow when \"ENTRAR\" is not visible...\r\n    Run logout.yaml...\r\n      Run flow when \"Back\" is visible...\r\n        Tap on \"Back\"... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Back\" is visible... COMPLETED\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible...\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible... SKIPPED\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible...\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible... SKIPPED\r\n      Assert that \"Pedro Jesus.*|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n      Tap on (Optional) \"Pedro Jesus.*\"... WARNED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible...\r\n        Tap on point (28%, 10%)... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible... COMPLETED\r\n      Assert that \"Sair\" is visible... COMPLETED\r\n      Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible...\r\n        Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible... COMPLETED\r\n      Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Run logout.yaml... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible...\r\n  Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n  Assert that \"ENTRAR\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml... COMPLETED\r\n",
+        "readiness": "ready"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.209Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        },
+        {
+          "at": "2026-07-13T22:40:01.417Z",
+          "actor": "pedro",
+          "action": "test_run",
+          "detail": "Execução #1 — Maestro falhou (Homologação Mural (backend))",
+          "meta": {
+            "runNumber": 1,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nFlow path does not exist: C:\\Users\\pedro\\Projetos\r\n",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-13T22:47:19.342Z",
+          "actor": "pedro",
+          "action": "test_run",
+          "detail": "Execução #2 — Maestro falhou (Homologação Mural (backend))",
+          "meta": {
+            "runNumber": 2,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nInvalid File Path at C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\mural\\01_1_comunicado_enviar.yaml:10:3\r\n",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-13T22:55:34.863Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Execução #3 — Maestro falhou (Homologação Mural (backend))",
+          "meta": {
+            "runNumber": 3,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nUnknown Property: timeout at C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\shared\\auth\\login.yaml:-1:-1\r\n",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-13T23:50:50.67Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend)",
+          "meta": {
+            "runNumber": 4,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nMaestro instrumentation could not be initialized\r\n\nThe stack trace was:\r\nmaestro.MaestroDriverStartupException$AndroidInstrumentationSetupFailure: Maestro instrumentation could not be initialized\r\n\tat maestro.drivers.AndroidDriver.startInstrumentationSession(AndroidDriver.kt:139)\r\n\tat maestro.drivers.AndroidDriver.open(AndroidDriver.kt:105)\r\n\tat maestro.Maestro$Companion.android(Maestro.kt:690)\r\n\tat maestro.cli.session.MaestroSessionManager.createAndroid(MaestroSessionManager.kt:350)\r\n\tat maestro.cli.session.MaestroSessionManager.createMaestro(MaestroSessionManager.kt:211)\r\n\tat maestro.cli.session.MaestroSessionManager.newSession(MaestroSessionManager.kt:109)\r\n\tat maestro.cli.session.MaestroSessionManager.newSession$default(MaestroSessionManager.kt:67)\r\n\tat maestro.cli.command.TestCommand.runShardSuite(TestCommand.kt:479)\r\n\tat maestro.cli.command.TestCommand.access$runShardSuite(TestCommand.kt:81)\r\n\tat maestro.cli.command.TestCommand$handleSessions$1$results$1$1.invokeSuspend(TestCommand.kt:438)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)\r\n\tat kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)\r\n\tat kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)\r\n\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:820)\r\n\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)\r\n\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)\r\n\r\n",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T00:02:34.107Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T02:48:34.392Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601) · Passo: Abrir o app na tela de login (ENTRAR) · Ação: Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible · Flow: login_phjesus.yaml",
+          "meta": {
+            "runNumber": 5,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "Running on Medium_Phone\r\n > Flow 01_1_comunicado_enviar\r\nRun ../shared/auth/login_phjesus.yaml...\r\n  Run ensure_login_screen.yaml...\r\n    Launch app \"br.com.polygonus.mobile.amostra\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible...\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible... SKIPPED\r\n    Run flow when \"FAZER LOGIN\" is visible...\r\n    Run flow when \"FAZER LOGIN\" is visible... SKIPPED\r\n    Run flow when \"ENTRAR\" is not visible...\r\n    Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Assert that \"E-mail ou Login\" is visible... COMPLETED\r\n    Assert that \"Senha\" is visible... COMPLETED\r\n    Assert that \"Vers�o:.*\" is visible... COMPLETED\r\n  Run ensure_login_screen.yaml... COMPLETED\r\n  Run login_as.yaml...\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Tap on \"E-mail ou Login\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${LOGIN}... COMPLETED\r\n    Tap on \"Senha\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${SENHA}... COMPLETED\r\n    Tap on \"ENTRAR\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible... FAILED\r\n  Run login_as.yaml... FAILED\r\nRun ../shared/auth/login_phjesus.yaml... FAILED\r\n\nAssertion is false: \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible\r\n\nAssertion '\"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible' failed. Check the UI hierarchy in debug artifacts to verify the element state and properties.\n\nPossible causes:\n- Element selector may be incorrect - check if there are similar elements with slightly different names/properties.\n- Element may be temporarily unavailable due to loading state\n- This could be a real regression that needs to be addressed\r\n\r\n==== Debug output (logs & screenshots) ====\r\n\nC:\\Users\\pedro\\.maestro\\tests\\2026-07-13_234836\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao",
+            "failedAction": "Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible",
+            "failedFlow": "login_phjesus.yaml",
+            "failedStepIndex": 0,
+            "failedStepLabel": "Abrir o app na tela de login (ENTRAR)",
+            "errorSummary": "Assertion is false: \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible"
+          }
+        },
+        {
+          "at": "2026-07-14T02:53:22.582Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)",
+          "meta": {
+            "runNumber": 6,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nFlow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao",
+            "errorSummary": "Flow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus"
+          }
+        },
+        {
+          "at": "2026-07-14T03:04:27.97Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)",
+          "meta": {
+            "runNumber": 7,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nFlow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao",
+            "errorSummary": "Flow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus"
+          }
+        },
+        {
+          "at": "2026-07-14T03:04:56.58Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)",
+          "meta": {
+            "runNumber": 8,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nFlow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao",
+            "errorSummary": "Flow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus"
+          }
+        },
+        {
+          "at": "2026-07-14T03:05:18.537Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)",
+          "meta": {
+            "runNumber": 9,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nFlow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao",
+            "errorSummary": "Flow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus"
+          }
+        },
+        {
+          "at": "2026-07-14T03:06:31.666Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)",
+          "meta": {
+            "runNumber": 10,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "\r\nFlow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao",
+            "errorSummary": "Flow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus"
+          }
+        },
+        {
+          "at": "2026-07-14T03:16:13.873Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)",
+          "meta": {
+            "runNumber": 11,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": ".\r\n  Run abrir_tela_perfil.yaml...\r\n    Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n    Wait for animation to end... COMPLETED\r\n    Tap on (Optional) \"Pedro Jesus\"... COMPLETED\r\n    Run flow when \"Perfil\" is not visible...\r\n    Run flow when \"Perfil\" is not visible... SKIPPED\r\n    Run flow when \"Perfil\" is not visible...\r\n    Run flow when \"Perfil\" is not visible... SKIPPED\r\n    Run flow when \"Perfil\" is not visible...\r\n    Run flow when \"Perfil\" is not visible... SKIPPED\r\n    Assert that \"Perfil\" is visible... COMPLETED\r\n    Tap on \"Perfil\"... COMPLETED\r\n    Assert that \".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Vers�o.*\" is visible... COMPLETED\r\n  Run abrir_tela_perfil.yaml... COMPLETED\r\n  Run selecionar_funcao.yaml...\r\n    Assert that \".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|SECRETARIA|Vers�o.*\" is visible... COMPLETED\r\n    Run flow when \"${FUNCAO}\" is not visible...\r\n      Run flow when \"SUPORTE\" is visible...\r\n        Tap on \"SUPORTE\"... COMPLETED\r\n        Tap on \"${FUNCAO}\"... COMPLETED\r\n      Run flow when \"SUPORTE\" is visible... COMPLETED\r\n      Run flow when \"SECRETARIA\" is visible...\r\n      Run flow when \"SECRETARIA\" is visible... SKIPPED\r\n      Run flow when \"RESPONSAVEIS\" is visible...\r\n      Run flow when \"RESPONSAVEIS\" is visible... SKIPPED\r\n      Run flow when \"PROFESSORES\" is visible...\r\n      Run flow when \"PROFESSORES\" is visible... SKIPPED\r\n      Assert that \"${FUNCAO}\" is visible... COMPLETED\r\n    Run flow when \"COORDENADOR\" is not visible... COMPLETED\r\n    Press Back key... COMPLETED\r\n    Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n  Run selecionar_funcao.yaml... COMPLETED\r\n  Assert that \".*MURAL.*\" is visible... COMPLETED\r\n  Run verificar_perfil_coordenador.yaml...\r\n    Run ../nav/navegar_mural.yaml...\r\n      Tap on \".*MURAL.*\"... COMPLETED\r\n      Repeat 6 times...\r\n        Run flow when \"PULAR\" is visible...\r\n          Tap on \"PULAR\"... COMPLETED\r\n          Wait for animation to end... COMPLETED\r\n        Run flow when \"PULAR\" is visible... COMPLETED\r\n      Repeat 6 times... COMPLETED\r\n      Tap on (Optional) \"Mural | Tab 1 of 2\"...io.grpc.StatusRuntimeException: UNAVAILABLE\r\n\tat io.grpc.stub.ClientCalls.toStatusRuntimeException(ClientCalls.java:275)\r\n\tat io.grpc.stub.ClientCalls.getUnchecked(ClientCalls.java:256)\r\n\tat io.grpc.stub.ClientCalls.blockingUnaryCall(ClientCalls.java:169)\r\n\tat maestro_android.MaestroDriverGrpc$MaestroDriverBlockingStub.viewHierarchy(MaestroDriverGrpc.java:747)\r\n\tat maestro.drivers.AndroidDriver.callViewHierarchy(AndroidDriver.kt:366)\r\n\tat maestro.drivers.AndroidDriver.callViewHierarchy(AndroidDriver.kt:392)\r\n\tat maestro.drivers.AndroidDriver.callViewHierarchy$default(AndroidDriver.kt:364)\r\n\tat maestro.drivers.AndroidDriver.contentDescriptor$lambda$17(AndroidDriver.kt:326)\r\n\tat maestro.utils.Metrics.measured(Metrics.kt:48)\r\n\tat maestro.drivers.AndroidDriver.contentDescriptor(AndroidDriver.kt:325)\r\n\tat maestro.ViewHierarchy$Companion.from-8JJjmZI(ViewHierarchy.kt:29)\r\n\tat maestro.Maestro$findElementWithTimeout$found$1$1.invoke-prqvCes(Maestro.kt:441)\r\n\tat maestro.Maestro$findElementWithTimeout$found$1$1.invoke(Maestro.kt:440)\r\n\tat kotlinx.coroutines.InterruptibleKt.runInterruptibleInExpectedContext(Interruptible.kt:48)\r\n\tat kotlinx.coroutines.InterruptibleKt.access$runInterruptibleInExpectedContext(Interruptible.kt:1)\r\n\tat kotlinx.coroutines.InterruptibleKt$runInterruptible$2.invokeSuspend(Interruptible.kt:40)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)\r\n\tat kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)\r\n\tat kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)\r\n\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:820)\r\n\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)\r\n\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)\r\nCaused by: java.io.IOException: Command failed (host:transport:emulator-5554): device still authorizing\r\n\tat dadb.adbserver.AdbServer.send$dadb(AdbServer.kt:103)\r\n\tat dadb.adbserver.AdbServerDadb.open(AdbServer.kt:148)\r\n\tat maestro.drivers.AndroidDriver.channel$lambda$0(AndroidDriver.kt:81)\r\n\tat maestro.android.AdbSocket.connect(AdbSocketFactory.kt:40)\r\n\tat maestro.android.AdbSocket.connect(AdbSocketFactory.kt:44)\r\n\tat maestro.android.AdbSocketFactory.createSocket(AdbSocketFactory.kt:19)\r\n\tat maestro.android.AdbSocketFactory.createSocket(AdbSocketFactory.kt:25)\r\n\tat io.grpc.okhttp.OkHttpClientTransport$3.run(OkHttpClientTransport.java:535)\r\n\tat io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)\r\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)\r\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)\r\n\tat java.base/java.lang.Thread.run(Unknown Source)\r\n\r\n\r\n==== Debug output (logs & screenshots) ====\r\n\nC:\\Users\\pedro\\.maestro\\tests\\2026-07-14_001616\r\n??????????????????????????????????????????????????????????????????????????????????????????????????\n?                                                                                                ?\n?   Debug tests faster by easy access to test recordings, maestro logs, screenshots, and more.   ?\n?                                                                                                ?\n?   Run your flows on Maestro Cloud:                                                             ?\n?   maestro cloud app_file flows_folder/                                                         ?\n?                                                                                                ?\n??????????????????????????????????????????????????????????????????????????????????????????????????\n\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao",
+            "errorSummary": "Caused by: java.io.IOException: Command failed (host:transport:emulator-5554): device still authorizing"
+          }
+        },
+        {
+          "at": "2026-07-14T03:27:06.248Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601) · Passo: Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador · Ação: Assert that \".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Vers�o.*\" is visible · Flow: garantir_perfil_coordenador.yaml",
+          "meta": {
+            "runNumber": 12,
+            "result": "failed",
+            "exitCode": 1,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "Running on Medium_Phone\r\n > Flow 01_1_comunicado_enviar\r\nRun ../shared/auth/login_phjesus.yaml...\r\n  Run ensure_login_screen.yaml...\r\n    Launch app \"br.com.polygonus.mobile.amostra\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible...\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible... SKIPPED\r\n    Run flow when \"FAZER LOGIN\" is visible...\r\n    Run flow when \"FAZER LOGIN\" is visible... SKIPPED\r\n    Run flow when \"ENTRAR\" is not visible...\r\n      Run logout.yaml...\r\n        Run flow when \"Back\" is visible...\r\n        Run flow when \"Back\" is visible... SKIPPED\r\n        Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible...\r\n        Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible... SKIPPED\r\n        Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible...\r\n        Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible... SKIPPED\r\n        Assert that \"Pedro Jesus.*|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n        Tap on (Optional) \"Pedro Jesus.*\"... COMPLETED\r\n        Run flow when \"Sair|Perfil|Tutorial\" is not visible...\r\n        Run flow when \"Sair|Perfil|Tutorial\" is not visible... SKIPPED\r\n        Assert that \"Sair\" is visible... COMPLETED\r\n        Tap on \"Sair\"... COMPLETED\r\n        Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible...\r\n          Tap on \"Sair\"... COMPLETED\r\n        Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible... COMPLETED\r\n        Assert that \"ENTRAR\" is visible... COMPLETED\r\n      Run logout.yaml... COMPLETED\r\n    Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Assert that \"E-mail ou Login\" is visible... COMPLETED\r\n    Assert that \"Senha\" is visible... COMPLETED\r\n    Assert that \"Vers�o:.*\" is visible... COMPLETED\r\n  Run ensure_login_screen.yaml... COMPLETED\r\n  Run login_as.yaml...\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Tap on \"E-mail ou Login\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${LOGIN}... COMPLETED\r\n    Tap on \"Senha\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${SENHA}... COMPLETED\r\n    Tap on \"ENTRAR\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n  Run login_as.yaml... COMPLETED\r\nRun ../shared/auth/login_phjesus.yaml... COMPLETED\r\nRun ../shared/perfil/garantir_perfil_coordenador.yaml...\r\n  Run abrir_tela_perfil.yaml...\r\n    Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n    Wait for animation to end... COMPLETED\r\n    Tap on (Optional) \"Pedro Jesus\"... COMPLETED\r\n    Run flow when \"Perfil\" is not visible...\r\n    Run flow when \"Perfil\" is not visible... SKIPPED\r\n    Run flow when \"Perfil\" is not visible...\r\n    Run flow when \"Perfil\" is not visible... SKIPPED\r\n    Run flow when \"Perfil\" is not visible...\r\n    Run flow when \"Perfil\" is not visible... SKIPPED\r\n    Assert that \"Perfil\" is visible... COMPLETED\r\n    Tap on \"Perfil\"... COMPLETED\r\n    Assert that \".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Vers�o.*\" is visible... FAILED\r\n  Run abrir_tela_perfil.yaml... FAILED\r\nRun ../shared/perfil/garantir_perfil_coordenador.yaml... FAILED\r\n\nAssertion is false: \".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Vers�o.*\" is visible\r\n\nAssertion '\".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Vers�o.*\" is visible' failed. Check the UI hierarchy in debug artifacts to verify the element state and properties.\n\nPossible causes:\n- Element selector may be incorrect - check if there are similar elements with slightly different names/properties.\n- Element may be temporarily unavailable due to loading state\n- This could be a real regression that needs to be addressed\r\n\r\n==== Debug output (logs & screenshots) ====\r\n\nC:\\Users\\pedro\\.maestro\\tests\\2026-07-14_002708\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao",
+            "failedAction": "Assert that \".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Vers�o.*\" is visible",
+            "failedFlow": "garantir_perfil_coordenador.yaml",
+            "failedStepIndex": 1,
+            "failedStepLabel": "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
+            "errorSummary": "Assertion is false: \".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Vers�o.*\" is visible"
+          }
+        },
+        {
+          "at": "2026-07-14T03:29:46.903Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)",
+          "meta": {
+            "runNumber": 13,
+            "result": "success",
+            "exitCode": 0,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "r_comunicado.yaml...\r\n  Tap on \"Escreva seu texto aqui\"... COMPLETED\r\n  Input text ${TEXTO_COMUNICADO}... COMPLETED\r\nRun ../shared/mural/escrever_comunicado.yaml... COMPLETED\r\nRun ../shared/mural/enviar_comunicado.yaml...\r\n  Tap on \"Enviar comunicado\"... COMPLETED\r\n  Wait for animation to end... COMPLETED\r\nRun ../shared/mural/enviar_comunicado.yaml... COMPLETED\r\nAssert that \"Teste Comunicado\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml...\r\n  Run flow when \"ENTRAR\" is not visible...\r\n    Run logout.yaml...\r\n      Run flow when \"Back\" is visible...\r\n        Tap on \"Back\"... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Back\" is visible... COMPLETED\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible...\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible... SKIPPED\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible...\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible... SKIPPED\r\n      Assert that \"Pedro Jesus.*|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n      Tap on (Optional) \"Pedro Jesus.*\"... COMPLETED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible...\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible... SKIPPED\r\n      Assert that \"Sair\" is visible... COMPLETED\r\n      Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible...\r\n        Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible... COMPLETED\r\n      Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Run logout.yaml... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible...\r\n  Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n  Assert that \"ENTRAR\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml... COMPLETED\r\nRun ../shared/auth/login_etmenezes.yaml...\r\n  Run ensure_login_screen.yaml...\r\n    Launch app \"br.com.polygonus.mobile.amostra\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible...\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible... SKIPPED\r\n    Run flow when \"FAZER LOGIN\" is visible...\r\n    Run flow when \"FAZER LOGIN\" is visible... SKIPPED\r\n    Run flow when \"ENTRAR\" is not visible...\r\n    Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Assert that \"E-mail ou Login\" is visible... COMPLETED\r\n    Assert that \"Senha\" is visible... COMPLETED\r\n    Assert that \"Vers�o:.*\" is visible... COMPLETED\r\n  Run ensure_login_screen.yaml... COMPLETED\r\n  Run login_as.yaml...\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Tap on \"E-mail ou Login\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${LOGIN}... COMPLETED\r\n    Tap on \"Senha\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${SENHA}... COMPLETED\r\n    Tap on \"ENTRAR\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n      Tap on \"PULAR\"... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n    Run flow when \"PULAR\" is visible... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n  Run login_as.yaml... COMPLETED\r\nRun ../shared/auth/login_etmenezes.yaml... COMPLETED\r\nRun ../shared/nav/navegar_mural.yaml...\r\n  Tap on \".*MURAL.*\"... COMPLETED\r\n  Repeat 6 times...\r\n    Run flow when \"PULAR\" is visible...\r\n      Tap on \"PULAR\"... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n    Run flow when \"PULAR\" is visible... COMPLETED\r\n  Repeat 6 times... COMPLETED\r\n  Tap on (Optional) \"Mural | Tab 1 of 2\"... WARNED\r\n  Assert that \".*Recebidas.*|Responder comunicado|Show menu\" is visible... COMPLETED\r\n  Assert that \"PULAR\" is not visible... COMPLETED\r\nRun ../shared/nav/navegar_mural.yaml... COMPLETED\r\nAssert that \"Teste Comunicado\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml...\r\n  Run flow when \"ENTRAR\" is not visible...\r\n    Run logout.yaml...\r\n      Run flow when \"Back\" is visible...\r\n        Tap on \"Back\"... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Back\" is visible... COMPLETED\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible...\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible... SKIPPED\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible...\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible... SKIPPED\r\n      Assert that \"Pedro Jesus.*|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n      Tap on (Optional) \"Pedro Jesus.*\"... WARNED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible...\r\n        Tap on point (28%, 10%)... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible... COMPLETED\r\n      Assert that \"Sair\" is visible... COMPLETED\r\n      Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible...\r\n        Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible... COMPLETED\r\n      Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Run logout.yaml... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible...\r\n  Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n  Assert that \"ENTRAR\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml... COMPLETED\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:41:35.666Z",
+          "actor": "Pedro",
+          "action": "test_run",
+          "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)",
+          "meta": {
+            "runNumber": 14,
+            "result": "success",
+            "exitCode": 0,
+            "via": "maestro",
+            "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+            "output": "r_comunicado.yaml...\r\n  Tap on \"Escreva seu texto aqui\"... COMPLETED\r\n  Input text ${TEXTO_COMUNICADO}... COMPLETED\r\nRun ../shared/mural/escrever_comunicado.yaml... COMPLETED\r\nRun ../shared/mural/enviar_comunicado.yaml...\r\n  Tap on \"Enviar comunicado\"... COMPLETED\r\n  Wait for animation to end... COMPLETED\r\nRun ../shared/mural/enviar_comunicado.yaml... COMPLETED\r\nAssert that \"Teste Comunicado\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml...\r\n  Run flow when \"ENTRAR\" is not visible...\r\n    Run logout.yaml...\r\n      Run flow when \"Back\" is visible...\r\n        Tap on \"Back\"... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Back\" is visible... COMPLETED\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible...\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible... SKIPPED\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible...\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible... SKIPPED\r\n      Assert that \"Pedro Jesus.*|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n      Tap on (Optional) \"Pedro Jesus.*\"... COMPLETED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible...\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible... SKIPPED\r\n      Assert that \"Sair\" is visible... COMPLETED\r\n      Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible...\r\n        Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible... COMPLETED\r\n      Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Run logout.yaml... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible...\r\n  Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n  Assert that \"ENTRAR\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml... COMPLETED\r\nRun ../shared/auth/login_etmenezes.yaml...\r\n  Run ensure_login_screen.yaml...\r\n    Launch app \"br.com.polygonus.mobile.amostra\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible...\r\n    Run flow when \".*Acompanhe de perto tudo.*|Col�gio Polygonus\" is visible... SKIPPED\r\n    Run flow when \"FAZER LOGIN\" is visible...\r\n    Run flow when \"FAZER LOGIN\" is visible... SKIPPED\r\n    Run flow when \"ENTRAR\" is not visible...\r\n    Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Assert that \"E-mail ou Login\" is visible... COMPLETED\r\n    Assert that \"Senha\" is visible... COMPLETED\r\n    Assert that \"Vers�o:.*\" is visible... COMPLETED\r\n  Run ensure_login_screen.yaml... COMPLETED\r\n  Run login_as.yaml...\r\n    Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Tap on \"E-mail ou Login\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${LOGIN}... COMPLETED\r\n    Tap on \"Senha\"... COMPLETED\r\n    Erase text... COMPLETED\r\n    Input text ${SENHA}... COMPLETED\r\n    Tap on \"ENTRAR\"... COMPLETED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n    Run flow when \"PULAR\" is visible... SKIPPED\r\n    Run flow when \"PULAR\" is visible...\r\n      Tap on \"PULAR\"... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n    Run flow when \"PULAR\" is visible... COMPLETED\r\n    Assert that \"Pedro Jesus|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n  Run login_as.yaml... COMPLETED\r\nRun ../shared/auth/login_etmenezes.yaml... COMPLETED\r\nRun ../shared/nav/navegar_mural.yaml...\r\n  Tap on \".*MURAL.*\"... COMPLETED\r\n  Repeat 6 times...\r\n    Run flow when \"PULAR\" is visible...\r\n      Tap on \"PULAR\"... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n    Run flow when \"PULAR\" is visible... COMPLETED\r\n  Repeat 6 times... COMPLETED\r\n  Tap on (Optional) \"Mural | Tab 1 of 2\"... WARNED\r\n  Assert that \".*Recebidas.*|Responder comunicado|Show menu\" is visible... COMPLETED\r\n  Assert that \"PULAR\" is not visible... COMPLETED\r\nRun ../shared/nav/navegar_mural.yaml... COMPLETED\r\nAssert that \"Teste Comunicado\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml...\r\n  Run flow when \"ENTRAR\" is not visible...\r\n    Run logout.yaml...\r\n      Run flow when \"Back\" is visible...\r\n        Tap on \"Back\"... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Back\" is visible... COMPLETED\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible...\r\n      Run flow when \"Novo comunicado|Para:|Escreva seu texto aqui|Unidade\" is visible... SKIPPED\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible...\r\n      Run flow when \"Responder comunicado|Show menu|Teste Comunicado\" is visible... SKIPPED\r\n      Assert that \"Pedro Jesus.*|CARD�PIO|.*MURAL.*\" is visible... COMPLETED\r\n      Wait for animation to end... COMPLETED\r\n      Tap on (Optional) \"Pedro Jesus.*\"... WARNED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible...\r\n        Tap on point (28%, 10%)... COMPLETED\r\n        Wait for animation to end... COMPLETED\r\n      Run flow when \"Sair|Perfil|Tutorial\" is not visible... COMPLETED\r\n      Assert that \"Sair\" is visible... COMPLETED\r\n      Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible...\r\n        Tap on \"Sair\"... COMPLETED\r\n      Run flow when \"Tem certeza que deseja sair do aplicativo?\" is visible... COMPLETED\r\n      Assert that \"ENTRAR\" is visible... COMPLETED\r\n    Run logout.yaml... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible... COMPLETED\r\n  Run flow when \"ENTRAR\" is not visible...\r\n  Run flow when \"ENTRAR\" is not visible... SKIPPED\r\n  Assert that \"ENTRAR\" is visible... COMPLETED\r\nRun ../shared/auth/ensure_logged_out.yaml... COMPLETED\r\n",
+            "appVersion": "6.06.01 (60601)",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:51:56.655Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:00.232Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        },
+        {
+          "at": "2026-07-14T03:52:02.752Z",
+          "actor": "system",
+          "action": "checklist_synced",
+          "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)",
+          "meta": {
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_enviar",
+      "channel": "app",
+      "homologationStatus": "passou",
+      "recordType": "teste",
+      "executionMode": "automated",
+      "homologationId": "HOM-2026-001",
+      "build": "6.06.01 (60601)"
+    }
+  ]
+}

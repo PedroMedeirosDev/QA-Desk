@@ -1,0 +1,15 @@
+# Volta à home (card MURAL / header) a partir de qualquer tela autenticada.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      notVisible: ".*MURAL.*|CARDÁPIO|Pedro Jesus"
+    commands:
+      - pressKey: Back
+      - pressKey: Back
+      - pressKey: Back
+
+- extendedWaitUntil:
+    visible: ".*MURAL.*|CARDÁPIO|Pedro Jesus"
+    timeout: 15000

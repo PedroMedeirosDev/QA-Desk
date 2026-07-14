@@ -1,0 +1,8 @@
+# Envia o comunicado em composição.
+#
+# Fonte: bottom_bar_widget.dart → tooltip: "Enviar comunicado"
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn: "Enviar comunicado"
+- waitForAnimationToEnd

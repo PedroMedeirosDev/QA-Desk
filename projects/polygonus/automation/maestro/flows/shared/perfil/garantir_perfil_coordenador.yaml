@@ -1,0 +1,24 @@
+# Garante perfil Coordenador (PHJESUS).
+#
+# Forma correta:
+#   home (pode ter só CARDÁPIO) → foto/nome → Perfil →
+#   ler/selecionar Coordenador na lista → home com MURAL.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: abrir_tela_perfil.yaml
+    env:
+      NOME_USUARIO: "${NOME_PHJESUS}"
+
+- runFlow:
+    file: selecionar_funcao.yaml
+    env:
+      FUNCAO: "COORDENADOR"
+
+# Depois da função, o menu recarrega e o MURAL deve aparecer (ex.: "MURAL | 47")
+- extendedWaitUntil:
+    visible: ".*MURAL.*"
+    timeout: 30000
+
+- runFlow: verificar_perfil_coordenador.yaml

@@ -1,0 +1,14 @@
+# Confirma COORDENADOR: MURAL acessível após troca de perfil.
+# (Pendentes só aparece no dropdown de sentido — frágil no a11y; validação principal é o card MURAL.)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../nav/navegar_mural.yaml
+
+- assertVisible: ".*Recebidas.*|Responder comunicado|Show menu"
+
+- pressKey: Back
+
+- extendedWaitUntil:
+    visible: ".*MURAL.*"
+    timeout: 15000

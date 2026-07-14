@@ -1,0 +1,22 @@
+# Confirma PROFESSORES: ao abrir o filtro de sentido, NÃO deve haver Pendentes.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../nav/navegar_mural.yaml
+
+- tapOn:
+    text: ".*Recebidas.*"
+    optional: true
+- tapOn:
+    text: "Recebidas"
+    optional: true
+
+- assertNotVisible: "Pendentes"
+- assertVisible: "Enviadas"
+
+- pressKey: Back
+- pressKey: Back
+
+- extendedWaitUntil:
+    visible: ".*MURAL.*|CARDÁPIO|Pedro Jesus"
+    timeout: 15000

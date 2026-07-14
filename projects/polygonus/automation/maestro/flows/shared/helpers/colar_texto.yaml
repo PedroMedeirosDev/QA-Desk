@@ -1,0 +1,6 @@
+# Insere texto em campo focado.
+# Env: TEXTO
+
+appId: br.com.polygonus.mobile.amostra
+---
+- inputText: ${TEXTO}

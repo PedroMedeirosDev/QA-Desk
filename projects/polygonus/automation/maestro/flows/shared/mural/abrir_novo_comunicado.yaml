@@ -1,0 +1,34 @@
+# Abre o composer de novo comunicado no Mural.
+#
+# BoomMenu (FAB ~86%,88%):
+#   accessibilityText real (Flutter): "Comunicado\nAviso ou notícia de interesse geral"
+#   "Evento\nAtividade ou data comemorativa"
+#
+# Use ".*Aviso.*" — estável e não confunde com "Responder comunicado".
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    point: "86%, 88%"
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      notVisible: ".*Aviso.*"
+    commands:
+      - tapOn:
+          point: "90%, 90%"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: ".*Aviso.*"
+    timeout: 10000
+
+- tapOn: ".*Aviso.*"
+
+- extendedWaitUntil:
+    visible: "Novo comunicado"
+    timeout: 15000
+
+- assertVisible: "Para:"
+- assertVisible: "Turma"

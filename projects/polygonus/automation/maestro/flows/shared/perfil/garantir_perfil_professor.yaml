@@ -1,0 +1,21 @@
+# Garante perfil Professor (PHJESUS).
+#
+# home → foto/nome → Perfil → Professor → volta à home.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: abrir_tela_perfil.yaml
+    env:
+      NOME_USUARIO: "${NOME_PHJESUS}"
+
+- runFlow:
+    file: selecionar_funcao.yaml
+    env:
+      FUNCAO: "PROFESSORES"
+
+- extendedWaitUntil:
+    visible: ".*MURAL.*|CARDÁPIO"
+    timeout: 30000
+
+- runFlow: verificar_perfil_professor.yaml

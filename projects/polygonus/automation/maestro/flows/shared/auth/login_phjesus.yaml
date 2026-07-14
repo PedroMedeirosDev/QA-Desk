@@ -1,0 +1,14 @@
+# Login PHJESUS (professor/coordenador) — credenciais em flows/.env
+# Após este subflow, SEMPRE chame garantir_perfil_coordenador.yaml
+# ou garantir_perfil_professor.yaml — o MURAL depende da função escolhida.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ensure_login_screen.yaml
+
+- runFlow:
+    file: login_as.yaml
+    env:
+      LOGIN: ${LOGIN_PHJESUS}
+      SENHA: ${SENHA}
+      NOME_USUARIO: ${NOME_PHJESUS}

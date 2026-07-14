@@ -1,0 +1,44 @@
+# CT-SMOKE-01: Primeiro acesso — slides de apresentação e chegada ao login
+#
+# Fluxo: splash → 6 slides → tela de login.
+# O app tem 6 slides; o botão de avançar (arrow_forward) aparece nos primeiros 5.
+# No último slide aparece "FAZER LOGIN" e o botão de avançar some.
+
+appId: br.com.polygonus.mobile.amostra
+---
+# ── 1. Abre o app com estado completamente limpo ─────────────────────────────
+- launchApp:
+    clearState: true
+
+# ── 2. Avança pelos 5 primeiros slides ───────────────────────────────────────
+# Aguarda o primeiro slide carregar completamente antes de começar
+- waitForAnimationToEnd
+- assertVisible: "Colégio Polygonus"
+
+- tapOn:
+    point: "85%, 91%"
+- waitForAnimationToEnd
+- tapOn:
+    point: "85%, 91%"
+- waitForAnimationToEnd
+- tapOn:
+    point: "85%, 91%"
+- waitForAnimationToEnd
+- tapOn:
+    point: "85%, 91%"
+- waitForAnimationToEnd
+- tapOn:
+    point: "85%, 91%"
+- waitForAnimationToEnd
+
+# ── 3. Slide final: "Comece a usar agora mesmo" ───────────────────────────────
+- assertVisible: "FAZER LOGIN"
+- assertVisible: "RECUPERAR ACESSO POR EMAIL"
+
+# ── 4. Vai para a tela de login ───────────────────────────────────────────────
+- tapOn: "FAZER LOGIN"
+
+# ── 5. Verifica tela de login ────────────────────────────────────────────────
+- assertVisible: "ENTRAR"
+- assertVisible: "E-mail ou Login"
+- assertVisible: "Senha"

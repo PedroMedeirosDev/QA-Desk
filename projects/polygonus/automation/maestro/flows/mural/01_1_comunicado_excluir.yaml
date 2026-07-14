@@ -1,0 +1,40 @@
+# CT-MURAL-03: Excluir comunicado
+#
+# Pré-requisito: CT-MURAL-02 (existe "Teste Comunicado editado").
+# Contrato: ENTRAR → ação → ENTRAR
+#
+# STATUS: draft — STUDIO: more_vert + dialog de confirmação (OK?)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/auth/login_phjesus.yaml
+
+- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
+
+- runFlow: ../shared/nav/navegar_mural.yaml
+
+- tapOn:
+    text: "Enviadas"
+    optional: true
+
+- assertVisible: "Teste Comunicado editado"
+
+- tapOn:
+    text: "Mais opções"
+    optional: true
+- tapOn:
+    text: "More options"
+    optional: true
+
+- tapOn: "Excluir"
+
+- tapOn:
+    text: "OK"
+    optional: true
+- tapOn:
+    text: "Ok"
+    optional: true
+
+- assertNotVisible: "Teste Comunicado editado"
+
+- runFlow: ../shared/auth/ensure_logged_out.yaml

@@ -1,0 +1,12 @@
+# Subflow legado — preferir login_as.yaml + ensure_login_screen.yaml.
+# Mantido para regressions que chamam login.yaml diretamente.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ensure_login_screen.yaml
+
+- runFlow:
+    file: login_as.yaml
+    env:
+      LOGIN: ${LOGIN}
+      SENHA: ${SENHA}

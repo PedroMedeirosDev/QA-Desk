@@ -1,0 +1,7 @@
+# Subflow: toca card na home (texto em MAIÚSCULAS vindo do servidor)
+# Env: CARD_HOME (ex.: CONTEÚDO E FREQUÊNCIA, FALE CONOSCO, NOTAS PARCIAIS)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn: ${CARD_HOME}
+- waitForAnimationToEnd

@@ -1,0 +1,128 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+
+export type ToastVariant = "error" | "success" | "info";
+
+export type Toast = {
+  id: string;
+  variant: ToastVariant;
+  title?: string;
+  message: string;
+};
+
+type ToastInput = {
+  variant: ToastVariant;
+  title?: string;
+  message: string;
+  duration?: number;
+};
+
+const DEFAULT_DURATION: Record<ToastVariant, number> = {
+  error: 9000,
+  success: 4500,
+  info: 5000,
+};
+
+type ToastContextValue = {
+  toasts: Toast[];
+  push: (input: ToastInput) => void;
+  dismiss: (id: string) => void;
+};
+
+const ToastContext = createContext<ToastContextValue | null>(null);
+
+let idCounter = 0;
+
+export function toastErrorMessage(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
+}
+
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const dismiss = useCallback((id: string) => {
+    const timer = timers.current.get(id);
+    if (timer) clearTimeout(timer);
+    timers.current.delete(id);
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
+  const push = useCallback(
+    (input: ToastInput) => {
+      const id = `toast-${++idCounter}`;
+      const toast: Toast = {
+        id,
+        variant: input.variant,
+        title: input.title,
+        message: input.message,
+      };
+
+      setToasts((prev) => [...prev, toast].slice(-5));
+
+      const duration = input.duration ?? DEFAULT_DURATION[input.variant];
+      timers.current.set(
+        id,
+        setTimeout(() => dismiss(id), duration),
+      );
+    },
+    [dismiss],
+  );
+
+  useEffect(
+    () => () => {
+      timers.current.forEach((timer) => clearTimeout(timer));
+      timers.current.clear();
+    },
+    [],
+  );
+
+  return (
+    <ToastContext.Provider value={{ toasts, push, dismiss }}>
+      {children}
+    </ToastContext.Provider>
+  );
+}
+
+export function useToast() {
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error("useToast must be used within ToastProvider");
+
+  return {
+    error: (message: string, opts?: { title?: string; duration?: number }) =>
+      ctx.push({
+        variant: "error",
+        message,
+        title: opts?.title ?? "Erro",
+        duration: opts?.duration,
+      }),
+    success: (message: string, opts?: { title?: string; duration?: number }) =>
+      ctx.push({
+        variant: "success",
+        message,
+        title: opts?.title ?? "Sucesso",
+        duration: opts?.duration,
+      }),
+    info: (message: string, opts?: { title?: string; duration?: number }) =>
+      ctx.push({
+        variant: "info",
+        message,
+        title: opts?.title,
+        duration: opts?.duration,
+      }),
+    dismiss: ctx.dismiss,
+  };
+}
+
+export function useToasts() {
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error("useToasts must be used within ToastProvider");
+  return ctx;
+}

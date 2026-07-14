@@ -1,0 +1,36 @@
+# CT-MURAL-08: Criar Evento pelo BoomMenu do Mural
+#
+# Contrato: ENTRAR → ação → ENTRAR
+# Fonte: mural_widget.dart BoomMenu — "Evento"
+# STATUS: draft — STUDIO: FAB + tela de evento (campos variam)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/auth/login_phjesus.yaml
+
+- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
+
+- runFlow: ../shared/nav/navegar_mural.yaml
+
+- tapOn:
+    text: "Padrão"
+    optional: true
+
+- tapOn: "Evento"
+
+- extendedWaitUntil:
+    visible: "Evento"
+    timeout: 15000
+
+- runFlow:
+    file: ../shared/mural/escrever_comunicado.yaml
+    env:
+      TEXTO_COMUNICADO: "Teste Evento mural"
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- assertVisible:
+    text: "Teste Evento mural"
+    optional: true
+
+- runFlow: ../shared/auth/ensure_logged_out.yaml

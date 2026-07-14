@@ -1,0 +1,61 @@
+# Smoke HEURÍSTICO para Sentry POLYGONUS-FLUTTER-7P
+# "StateError: Bad state: RenderBox was not laid out: RenderTransform"
+#
+# ⚠️ NÃO é repro determinístico: o stacktrace do evento veio ofuscado (sem symbolication),
+# então não há tela/linha exata. Este flow exercita navegação + reconstruções de layout em
+# aparelho lento para tentar disparar a corrida de layout/animação. Veja o caso:
+#   testes/cases/CT-sentry-7P-renderbox-not-laid-out.md
+#
+# Pré-requisitos:
+#   - Build 6.05.24+60524, flavor "castelo", instalado no device/emulador (de preferência lento).
+#   - Sentry aberto filtrando: release:6.05.24+60524 is:unresolved
+#   - Credenciais via env (LOGIN / SENHA), como nos demais flows.
+
+appId: br.com.polygonus.mobile.castelo
+---
+# ── 1. Abre o app limpo ───────────────────────────────────────────────────────
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# ── 2. Login (reutiliza o subflow padrão) ─────────────────────────────────────
+- runFlow:
+    file: ../shared/auth/login.yaml
+    env:
+      LOGIN: ${LOGIN}
+      SENHA: ${SENHA}
+
+- extendedWaitUntil:
+    visible: "MURAL"
+    timeout: 15000
+
+# ── 3. Estressar layout/animação: repetir navegação ida-e-volta ───────────────
+# Abre e volta de telas com listas/animações várias vezes para provocar a corrida.
+- repeat:
+    times: 6
+    commands:
+      - tapOn:
+          text: "MURAL"
+          # Se o card vier com outro nome do servidor, ajuste (ver nota no login.yaml).
+      - waitForAnimationToEnd
+      - scroll
+      - scroll
+      - waitForAnimationToEnd
+      - back
+      - waitForAnimationToEnd
+
+# ── 4. Forçar reconstrução: teclado e rotação (gatilhos comuns de relayout) ────
+- runFlow:
+    when:
+      visible: "MURAL"
+    commands:
+      - tapOn:
+          text: "MURAL"
+      - waitForAnimationToEnd
+      - scroll
+      - back
+
+# ── 5. Sanidade: app continua de pé (sem crash) ───────────────────────────────
+- extendedWaitUntil:
+    visible: "MURAL"
+    timeout: 10000

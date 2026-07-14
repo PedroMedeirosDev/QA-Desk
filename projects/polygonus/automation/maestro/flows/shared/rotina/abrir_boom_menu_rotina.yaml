@@ -1,0 +1,8 @@
+# Subflow: abre o BoomMenu FAB na aba Rotina (professor/coordenador)
+# O botão "+" fica no canto inferior direito.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    point: "92%, 88%"
+- waitForAnimationToEnd

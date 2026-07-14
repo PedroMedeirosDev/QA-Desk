@@ -1,0 +1,11 @@
+# Smoke test: apenas verifica que o app abre sem crashar.
+# Substituído pelos flows em mural/, rotina/, etc.
+# Mantido aqui só para referência — não inclui login.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- launchApp:
+    clearState: false
+- assertVisible: "ENTRAR"
+  # Se o app estiver na tela de apresentação (primeiro acesso),
+  # este assert vai falhar — use 00_onboarding.yaml para esse caso.

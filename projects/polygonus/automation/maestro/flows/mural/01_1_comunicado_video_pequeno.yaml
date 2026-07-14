@@ -1,0 +1,45 @@
+# CT-MURAL-07: Comunicado com vídeo pequeno (galeria / addMedia)
+#
+# Contrato: ENTRAR → ação → ENTRAR
+# Pré-requisito: fixtures + FIXTURE_VIDEO no .env
+# STATUS: draft — STUDIO: picker galeria / anexar vídeo
+
+appId: br.com.polygonus.mobile.amostra
+---
+- addMedia:
+    - "../../fixtures/${FIXTURE_VIDEO}"
+
+- runFlow: ../shared/auth/login_phjesus.yaml
+
+- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
+
+- runFlow: ../shared/nav/navegar_mural.yaml
+
+- runFlow: ../shared/mural/abrir_novo_comunicado.yaml
+
+- runFlow: ../shared/mural/selecionar_turmas_comunicado.yaml
+
+- runFlow:
+    file: ../shared/mural/escrever_comunicado.yaml
+    env:
+      TEXTO_COMUNICADO: "Teste Comunicado video"
+
+- tapOn:
+    text: "Adicionar imagem da galeria"
+    optional: true
+
+- runFlow: ../shared/mural/pick_galeria_android.yaml
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- assertVisible: "Teste Comunicado video"
+
+- runFlow: ../shared/auth/ensure_logged_out.yaml
+
+- runFlow: ../shared/auth/login_etmenezes.yaml
+
+- runFlow: ../shared/nav/navegar_mural.yaml
+
+- assertVisible: "Teste Comunicado video"
+
+- runFlow: ../shared/auth/ensure_logged_out.yaml

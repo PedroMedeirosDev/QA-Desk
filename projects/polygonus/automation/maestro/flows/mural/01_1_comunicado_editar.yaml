@@ -1,0 +1,47 @@
+# CT-MURAL-02: Editar comunicado existente
+#
+# Pré-requisito: CT-MURAL-01 rodou (existe "Teste Comunicado").
+# Contrato: ENTRAR → ação → ENTRAR
+#
+# STATUS: draft — STUDIO: mapear ícone more_vert (sem tooltip "Mais opções" no código)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/auth/login_phjesus.yaml
+
+- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
+
+- runFlow: ../shared/nav/navegar_mural.yaml
+
+- tapOn:
+    text: "Enviadas"
+    optional: true
+
+- assertVisible: "Teste Comunicado"
+
+# STUDIO: PopupMenuButton Icons.more_vert — sem tooltip no código-fonte
+- tapOn:
+    text: "Mais opções"
+    optional: true
+- tapOn:
+    text: "More options"
+    optional: true
+
+- tapOn: "Editar"
+
+- extendedWaitUntil:
+    visible: "Editar comunicado"
+    timeout: 10000
+
+- eraseText: 50
+
+- runFlow:
+    file: ../shared/helpers/colar_texto.yaml
+    env:
+      TEXTO: "Teste Comunicado editado"
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- assertVisible: "Teste Comunicado editado"
+
+- runFlow: ../shared/auth/ensure_logged_out.yaml

@@ -1,0 +1,199 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2026-07-13",
+    "project": "polygonus"
+  },
+  "reports": [
+    {
+      "id": "BUG-2026-005",
+      "title": "Mural — excluir comunicado",
+      "description": "Excluir comunicado publicado.",
+      "steps": [
+        "Executar automação Maestro vinculada",
+        "Validar manualmente se necessário"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_excluir.yaml",
+        "label": "01_1_comunicado_excluir"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.210Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_excluir",
+      "channel": "app"
+    },
+    {
+      "id": "BUG-2026-004",
+      "title": "Mural — foto da galeria",
+      "description": "Anexar foto da galeria no comunicado.",
+      "steps": [
+        "Executar automação Maestro vinculada",
+        "Validar manualmente se necessário"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_foto_galeria.yaml",
+        "label": "01_1_comunicado_foto_galeria"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.210Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_foto_galeria",
+      "channel": "app"
+    },
+    {
+      "id": "BUG-2026-003",
+      "title": "Mural — enquete",
+      "description": "Criar comunicado com enquete.",
+      "steps": [
+        "Executar automação Maestro vinculada",
+        "Validar manualmente se necessário"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enquete.yaml",
+        "label": "01_1_comunicado_enquete"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.210Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_enquete",
+      "channel": "app"
+    },
+    {
+      "id": "BUG-2026-002",
+      "title": "Mural — editar comunicado",
+      "description": "Editar comunicado existente e validar persistência.",
+      "steps": [
+        "Executar automação Maestro vinculada",
+        "Validar manualmente se necessário"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_editar.yaml",
+        "label": "01_1_comunicado_editar"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.210Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_editar",
+      "channel": "app"
+    },
+    {
+      "id": "BUG-2026-001",
+      "title": "Mural — enviar comunicado de texto",
+      "description": "Coordenador envia comunicado de texto para turmas selecionadas.",
+      "steps": [
+        "Executar automação Maestro vinculada",
+        "Validar manualmente se necessário"
+      ],
+      "reportedAt": "2026-07-13",
+      "project": "polygonus",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
+        "label": "01_1_comunicado_enviar"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao"
+      ],
+      "history": [
+        {
+          "at": "2026-07-13T19:25:54.209Z",
+          "actor": "system",
+          "action": "homologation_checklist_created",
+          "detail": "Item checklist Mural (mural-backend-homologacao)"
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false,
+      "testKey": "mural/01_1_comunicado_enviar",
+      "channel": "app"
+    }
+  ]
+}

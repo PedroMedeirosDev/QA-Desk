@@ -1,0 +1,6 @@
+# Subflow legado — preferir ensure_logged_out.yaml
+# Mantido só para callers antigos.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ensure_logged_out.yaml

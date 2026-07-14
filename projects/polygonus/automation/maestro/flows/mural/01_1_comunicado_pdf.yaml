@@ -1,0 +1,42 @@
+# CT-MURAL-06: Comunicado com anexo PDF
+#
+# Contrato: ENTRAR → ação → ENTRAR
+# Pré-requisito: push fixtures + FIXTURE_PDF no .env (nome exato no device)
+# STATUS: draft — STUDIO: DocumentsUI / Anexar arquivo
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/auth/login_phjesus.yaml
+
+- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
+
+- runFlow: ../shared/nav/navegar_mural.yaml
+
+- runFlow: ../shared/mural/abrir_novo_comunicado.yaml
+
+- runFlow: ../shared/mural/selecionar_turmas_comunicado.yaml
+
+- runFlow:
+    file: ../shared/mural/escrever_comunicado.yaml
+    env:
+      TEXTO_COMUNICADO: "Teste Comunicado PDF"
+
+- runFlow:
+    file: ../shared/mural/anexar_arquivo_por_nome.yaml
+    env:
+      ANEXO_NOME: "${FIXTURE_PDF}"
+      ANEXO_PASTA: "Download"
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- assertVisible: "Teste Comunicado PDF"
+
+- runFlow: ../shared/auth/ensure_logged_out.yaml
+
+- runFlow: ../shared/auth/login_etmenezes.yaml
+
+- runFlow: ../shared/nav/navegar_mural.yaml
+
+- assertVisible: "Teste Comunicado PDF"
+
+- runFlow: ../shared/auth/ensure_logged_out.yaml

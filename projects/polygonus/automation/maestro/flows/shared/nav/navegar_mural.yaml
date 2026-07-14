@@ -1,0 +1,32 @@
+# Subflow: navega da home até a aba "Mural" dentro da seção Mural.
+# Pré-requisito: usuário já logado e na home (função com MURAL no menu).
+#
+# Card home: "MURAL" ou "MURAL | 47"
+# Pode haver vários spotlights "PULAR" (header + bottom tab).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn: ".*MURAL.*"
+
+# Fecha todos os coach marks (pode haver mais de um)
+- repeat:
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            visible: "PULAR"
+          commands:
+            - tapOn: "PULAR"
+            - waitForAnimationToEnd
+
+# Aba Mural (se ainda não estiver)
+- tapOn:
+    text: "Mural | Tab 1 of 2"
+    optional: true
+
+- extendedWaitUntil:
+    visible: ".*Recebidas.*|Responder comunicado|Show menu"
+    timeout: 15000
+
+# Garante que o tutorial sumiu
+- assertNotVisible: "PULAR"

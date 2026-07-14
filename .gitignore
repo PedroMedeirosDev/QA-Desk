@@ -1,23 +1,59 @@
-# Evidências locais (imagens/vídeos grandes)
-testes/evidence/*
-!testes/evidence/.gitkeep
+# Evidências locais por projeto
+projects/*/evidence/*
+!projects/*/evidence/.gitkeep
 
-# Saídas geradas (Sentry → support_record); manter pasta vazia no git
-testes/support/out/*
-!testes/support/out/.gitkeep
+# Saídas geradas (Sentry → support_record)
+projects/polygonus/support/out/*
+!projects/polygonus/support/out/.gitkeep
 
-# Código da empresa (clones locais — não versionar)
+# Inbox homologação Polygonus
+projects/polygonus/homologacao/inbox/*
+!projects/polygonus/homologacao/inbox/README.md
+!projects/polygonus/homologacao/inbox/.gitkeep
+
+# Anihype evidence
+projects/anihype/evidence/*
+!projects/anihype/evidence/.gitkeep
+
+# QA App — uploads de prints
+qa-app/data/uploads/
+
+# Código da empresa (clones locais)
 app-polygonus/
 polygonus-react/
 polygonus-mobile/
+polygonus-go/
+acropoly-server/
+polygonus-server/
+
+# Bot do Discord
+polygonus-discord-bot-base-atual/
+polygonus-discord-bot-base-atual.zip
 
 # Ambiente e segredos
 .env
 *.local
 
-# Comum em projetos de automação
 node_modules/
 __pycache__/
 *.pyc
 .pytest_cache/
 .idea/
+
+# Sentry-linear snapshot
+projects/polygonus/automation/sentry-linear/out/
+
+# Legado (pasta redirect)
+# testes/ — só README
+
+# Capturas debug Maestro (Studio)
+projects/polygonus/automation/maestro/flows/*.png
+
+qa-app/dist/
+
+
+# Playwright local auth / reports
+projects/polygonus/automation/playwright/.auth/
+projects/polygonus/automation/playwright/playwright-report/
+projects/polygonus/automation/playwright/test-results/
+projects/polygonus/automation/playwright/**/blob_storage/

@@ -1,0 +1,221 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tokens em variáveis CSS — permitem troca em runtime via html.dark */
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #f8fafc;
+  --primary: #0f172a;
+  --primary-foreground: #f8fafc;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+  --accent: #f1f5f9;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #94a3b8;
+  --brand: #2b73eb;
+  --brand-muted: #e8f0fe;
+  --success: #16a34a;
+  --success-muted: #dcfce7;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --primary: #f8fafc;
+  --primary-foreground: #0f172a;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --border: #1e293b;
+  --input: #0f172a;
+  --ring: #64748b;
+  --brand-muted: #1e293b;
+  --success: #22c55e;
+  --success-muted: #14532d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-muted: var(--brand-muted);
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+}
+
+/* Acentos por projeto — não altera background/card da shell */
+[data-theme="polygonus"] {
+  --primary: #2b73eb;
+  --primary-foreground: #ffffff;
+  --brand: #2b73eb;
+  --accent: #e8e67a;
+  --ring: #2b73eb;
+}
+
+:root:not(.dark) [data-theme="polygonus"] {
+  --brand-muted: #e8f0fe;
+  --success: #16a34a;
+  --success-muted: #dcfce7;
+}
+
+.dark [data-theme="polygonus"] {
+  --brand-muted: #1a2d52;
+  --accent: #e8e67a;
+  --success: #22c55e;
+  --success-muted: #14532d;
+}
+
+[data-theme="anihype"] {
+  --primary: #ff0080;
+  --primary-foreground: #ffffff;
+  --brand: #ff0080;
+  --accent: #7a00ff;
+  --ring: #ff0080;
+}
+
+:root:not(.dark) [data-theme="anihype"] {
+  --brand-muted: #fff0f7;
+  --success: #16a34a;
+  --success-muted: #dcfce7;
+}
+
+.dark [data-theme="anihype"] {
+  --brand-muted: #1a0010;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Segoe UI", system-ui, sans-serif;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply bg-input text-foreground placeholder:text-muted-foreground;
+  }
+
+  table tbody tr:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  }
+}
+
+@layer utilities {
+  .surface-brand {
+    background-color: var(--color-brand-muted);
+    border-color: color-mix(in srgb, var(--color-brand) 35%, transparent);
+    color: var(--color-foreground);
+  }
+
+  .btn-anihype-gradient {
+    background: linear-gradient(90deg, #ff0080 0%, #7a00ff 100%);
+    color: #fff;
+  }
+
+  .btn-anihype-gradient:hover {
+    filter: brightness(1.1);
+  }
+
+  .surface-success {
+    background-color: var(--color-success-muted);
+    border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+    color: var(--color-foreground);
+  }
+
+  /* Sidebar — tipografia */
+  .sidebar-nav {
+    font-family: "Segoe UI", "IBM Plex Sans", system-ui, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sidebar-kicker {
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .sidebar-heading {
+    font-size: 0.8125rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+
+  .sidebar-project-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  .sidebar-project-desc {
+    font-size: 0.6875rem;
+    font-weight: 450;
+    letter-spacing: 0.02em;
+  }
+
+  .sidebar-subitem {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  .sidebar-footer {
+    font-size: 0.6875rem;
+    font-weight: 450;
+    letter-spacing: 0.04em;
+  }
+
+  /* Redes sociais — hover com cor da marca */
+  .social-link {
+    @apply rounded-md p-1.5 text-muted-foreground transition-all duration-300;
+  }
+
+  .social-link:hover {
+    @apply scale-110;
+  }
+
+  .social-link-linkedin:hover {
+    color: #0a66c2;
+  }
+
+  :root:not(.dark) .social-link-github:hover {
+    color: #24292f;
+  }
+
+  .dark .social-link-github:hover {
+    color: #f0f6fc;
+  }
+
+  .social-link-youtube:hover {
+    color: #ff0000;
+  }
+
+  /* Instagram: cor de marca no ícone (sem caixa de gradiente — ficava desalinhada) */
+  .social-link-instagram:hover {
+    color: #e1306c;
+  }
+}

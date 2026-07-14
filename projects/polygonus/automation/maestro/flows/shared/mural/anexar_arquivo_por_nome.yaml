@@ -1,0 +1,57 @@
+# Seleciona arquivo no picker nativo (DocumentsUI) pelo nome visível.
+#
+# Env obrigatório:
+#   ANEXO_NOME — ex.: boleto_teste.pdf (nome exato no device, case-sensitive)
+#
+# Env opcional:
+#   ANEXO_PASTA — Download | Movies | Pictures (só orienta qual pasta tentar abrir)
+#
+# Pré-requisito: arquivo no device (scripts/push-maestro-fixtures.ps1 ou adb push).
+
+appId: br.com.polygonus.mobile.amostra
+---
+# Ícone de anexo (clip) no bottom bar da composição
+- tapOn:
+    text: "Anexar arquivo"
+    optional: true
+- tapOn:
+    point: "50%, 92%"
+    optional: true
+
+- tapOn: "Selecionar arquivo"
+
+# Pasta no picker (todos optional — o tap no nome costuma bastar)
+- tapOn:
+    text: "${ANEXO_PASTA}"
+    optional: true
+- tapOn:
+    text: "Downloads"
+    optional: true
+- tapOn:
+    text: "Download"
+    optional: true
+- tapOn:
+    text: "Movies"
+    optional: true
+- tapOn:
+    text: "Filmes"
+    optional: true
+- tapOn:
+    text: "Pictures"
+    optional: true
+- tapOn:
+    text: "Imagens"
+    optional: true
+
+# Nome exato do arquivo — o seletor mais estável
+- tapOn: "${ANEXO_NOME}"
+
+- tapOn:
+    text: "Abrir"
+    optional: true
+- tapOn:
+    text: "Open"
+    optional: true
+- tapOn:
+    text: "Selecionar"
+    optional: true

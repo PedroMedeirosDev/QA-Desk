@@ -1,0 +1,63 @@
+# PORTO SEGURO — chega em ENTRAR SEM limpar dados do app.
+#
+# Regra do produto: sessão e tutoriais persistem até clearState / clear data.
+# clearState:true reseta onboarding (PULAR etc.) e sessão — NÃO usar no CT normal.
+#
+# Estratégia:
+#   1. Já em ENTRAR → ok
+#   2. App aberto logado → logout (Back → nome → Sair)
+#   3. App morto → launchApp SEM clearState (restaura última sessão) → logout
+#   4. Onboarding só se ainda aparecer (1ª instalação)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- launchApp
+
+- runFlow:
+    when:
+      visible: "PULAR"
+    commands:
+      - tapOn: "PULAR"
+      - waitForAnimationToEnd
+
+# Onboarding só na 1ª vez (sem clearState não deve repetir)
+- runFlow:
+    when:
+      visible: ".*Acompanhe de perto tudo.*|Colégio Polygonus"
+    commands:
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "90%, 93%"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "FAZER LOGIN"
+    commands:
+      - tapOn: "FAZER LOGIN"
+
+# Logado em qualquer tela → logout gracioso
+- runFlow:
+    when:
+      notVisible: "ENTRAR"
+    commands:
+      - runFlow: logout.yaml
+
+- extendedWaitUntil:
+    visible: "ENTRAR"
+    timeout: 25000
+
+- assertVisible: "E-mail ou Login"
+- assertVisible: "Senha"
+- assertVisible: "Versão:.*"

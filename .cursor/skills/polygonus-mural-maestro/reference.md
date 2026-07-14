@@ -1,0 +1,110 @@
+# Mural Maestro — referência
+
+Complemento de `.cursor/skills/polygonus-mural-maestro/SKILL.md`.
+
+## Catálogo CT-MURAL (homologação)
+
+| ID | Flow | Notas |
+|----|------|--------|
+| 01 | `mural/01_1_comunicado_enviar.yaml` | Coord envia texto; ETMENEZES confere |
+| 02 | `mural/01_1_comunicado_editar.yaml` | Pré: 01; texto → `Teste Comunicado editado` |
+| 03 | `mural/01_1_comunicado_excluir.yaml` | Pré: 02; exclui editado |
+| 04 | `mural/01_1_comunicado_enquete.yaml` | Enquete Nova Sim/Não |
+| 05 | `mural/01_1_comunicado_foto_galeria.yaml` | `FIXTURE_FOTO` + picker; ETMENEZES salva/compartilha |
+| 06 | `mural/01_1_comunicado_pdf.yaml` | `FIXTURE_PDF` + DocumentsUI |
+| 07 | `mural/01_1_comunicado_video_pequeno.yaml` | `FIXTURE_VIDEO` / addMedia |
+| 08 | `mural/01_1_comunicado_evento.yaml` | BoomMenu → Evento |
+| 09 | `mural/01_1_filtro_enviadas.yaml` | Smoke filtro Enviadas |
+| 10 | `mural/01_1_comunicado_professor_pendente.yaml` | Professor envia → Coord vê Pendentes |
+
+Manual (não automatizar nesta suíte): gravação de câmera; vídeo médio/grande (timeout). Ver `flows/docs/mural-manual.md`.
+
+## Subflows por pasta
+
+```
+shared/auth/     ensure_login_screen, login_as, login_phjesus, login_etmenezes,
+                 ensure_logged_out, logout, logout_se_logado
+shared/perfil/   abrir_tela_perfil, selecionar_funcao, garantir_perfil_*, verificar_perfil_*
+shared/nav/      navegar_mural, voltar_para_home, navegar_home_card, navegar_rotina
+shared/mural/    abrir_novo_comunicado, selecionar_turmas_comunicado, escrever_comunicado,
+                 enviar_comunicado, anexar_arquivo_por_nome, pick_galeria_android
+```
+
+## Env / fixtures
+
+`.env` típico:
+
+```
+LOGIN_PHJESUS=PHJESUS
+LOGIN_ETMENEZES=ETMENEZES
+LOGIN_ACMENEZES=ACMENEZES
+SENHA=poly1000
+NOME_PHJESUS=Pedro Jesus
+FIXTURE_PDF=...
+FIXTURE_FOTO=...
+FIXTURE_VIDEO=...
+```
+
+Push de fixtures: scripts sob `projects/polygonus/automation/maestro` (ver README / `push-maestro-fixtures`).
+
+## Onboarding (ensure_login)
+
+Após `clearState`:
+
+1. Slides “Acompanhe de perto…” / “Colégio Polygonus” → taps `90%, 93%` (5×)
+2. `FAZER LOGIN` se aparecer
+3. Assert `ENTRAR`, `E-mail ou Login`, `Senha`, `Versão:.*`
+
+`login_as` espera home com card MURAL (perfil com menu).
+
+## Anti-padrões (aprendidos na prática)
+
+| Evitar | Fazer |
+|--------|--------|
+| Usar ACMENEZES para enviar | Só PHJESUS (+ perfil) |
+| Trocar perfil por atalho errado / Instagram | foto/nome → Perfil → lista |
+| Labels `Coordenador` / `Professor` (title case) | `COORDENADOR` / `PROFESSORES` |
+| Tap `Comunicado` genérico no BoomMenu | `.*Aviso.*` |
+| `clearState: true` em todo CT | logout via nome → Sair; clear só em `reset_app_state` |
+| Logout pelo drawer hamburger | Voltar do Mural → nome → **Sair** |
+| Back cego sem abrir o menu | Back até home, depois tap no nome |
+| Vários Studios + batch paralelo | 1 device, CLI, um CT por vez se ANR |
+| Path absoluto com espaço no `maestro test` | cwd maestro + path relativo |
+| Assumir home já tem MURAL | Garantir perfil antes de `navegar_mural` |
+| Editar/excluir sem filtro Enviadas | Abrir Enviadas primeiro (CTs 02/03) |
+
+## Pontos que ainda precisam do Studio
+
+Marcar no YAML e validar no device:
+
+1. FAB BoomMenu (coordenada) se API/densidade mudar
+2. Overflow `more_vert` (Editar/Excluir/anexos)
+3. Dialog excluir (`OK` / `Ok` / outro)
+4. DocumentsUI / galeria nativa
+5. Campos da tela Evento
+6. Menu de tipos de enquete
+
+## Diagnóstico de falha (qa-app)
+
+`parseMaestroFailure` extrai do stdout:
+
+- ação: linha `… FAILED` que não é `Run …`
+- flow: `Run …/arquivo.yaml... FAILED`
+- passo humano: heurística por keywords do flow/ação × `steps[]` do CT
+
+Histórico mostra `v{appVersion}` + bloco “Onde falhou”. Editor destaca o passo.
+
+## Comandos úteis
+
+```bash
+cd projects/polygonus/automation/maestro
+adb devices
+maestro --udid emulator-5554 test flows/shared/auth/ensure_login_screen.yaml
+maestro --udid emulator-5554 test flows/mural/01_1_comunicado_enviar.yaml
+```
+
+Versão instalada (igual login):
+
+```bash
+adb shell dumpsys package br.com.polygonus.mobile.amostra | findstr version
+```

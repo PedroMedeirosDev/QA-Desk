@@ -1,0 +1,29 @@
+# Seleção de turmas no comunicado.
+#
+# Fontes:
+#   - turmaLabel = "Turma"
+#   - MultiSelectDialog: title default "Selecionar", hint "Procurar...", botão "OK"
+#
+# Env opcional:
+#   SELECIONAR_TODAS_TURMAS=false + TURMA_MURAL para uma turma só
+#
+# STUDIO: confirmar se "Selecionar"/"Todos" aparecem no dialog desta build.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn: "Turma"
+
+- assertVisible: "Procurar..."
+
+- tapOn:
+    text: "Selecionar"
+    optional: true
+- tapOn:
+    text: "Todos"
+    optional: true
+
+- tapOn:
+    text: "${TURMA_MURAL}"
+    optional: true
+
+- tapOn: "OK"

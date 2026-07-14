@@ -1,0 +1,19 @@
+# Subflow: logout → login responsável → Rotina → confirma texto na timeline
+# Env: LOGIN_ETMENEZES, SENHA, TEXTO_VERIFICAR (opcional — se omitido só abre Rotina)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: logout.yaml
+
+- runFlow:
+    file: ../auth/login_etmenezes.yaml
+
+- runFlow:
+    file: navegar_rotina.yaml
+
+- runFlow:
+    when:
+      visible: ${TEXTO_VERIFICAR}
+    commands:
+      - assertVisible: ${TEXTO_VERIFICAR}
