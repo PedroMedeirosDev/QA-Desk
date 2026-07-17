@@ -1,42 +1,30 @@
 # CT-MURAL-06: Comunicado com anexo PDF
 #
-# Contrato: ENTRAR → ação → ENTRAR
-# Pré-requisito: push fixtures + FIXTURE_PDF no .env (nome exato no device)
-# STATUS: draft — STUDIO: DocumentsUI / Anexar arquivo
+# Mesmo padrão do CT-05 (foto): fase 1 envia → fase 2 qa-app valida por ID + responsável.
+# Pré-requisito: push fixtures + FIXTURE_PDF no .env
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ../shared/auth/login_phjesus.yaml
-
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- runFlow: ../shared/mural/abrir_novo_comunicado.yaml
-
-- runFlow: ../shared/mural/selecionar_turmas_comunicado.yaml
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
 - runFlow:
-    file: ../shared/mural/escrever_comunicado.yaml
+    file: ../shared/mural/composer_novo_comunicado.yaml
     env:
       TEXTO_COMUNICADO: "Teste Comunicado PDF"
 
 - runFlow:
     file: ../shared/mural/anexar_arquivo_por_nome.yaml
     env:
-      ANEXO_NOME: "${FIXTURE_PDF}"
+      # Preferir literal: ${FIXTURE_PDF} com espaço falha em runFlow aninhado (vira undefined).
+      ANEXO_NOME: "PDF TESTE.pdf"
       ANEXO_PASTA: "Download"
 
 - runFlow: ../shared/mural/enviar_comunicado.yaml
 
-- assertVisible: "Teste Comunicado PDF"
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
 
-- runFlow: ../shared/auth/ensure_logged_out.yaml
-
-- runFlow: ../shared/auth/login_etmenezes.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- assertVisible: "Teste Comunicado PDF"
-
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

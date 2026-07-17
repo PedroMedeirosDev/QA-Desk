@@ -1,0 +1,11 @@
+# Filtro Recebidas — dropdown TipoSentido.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: selecionar_filtro_sentido.yaml
+    env:
+      FILTRO: "Recebidas|Recebidos"
+      FILTRO_TAP: "Recebidas|Recebidos"
+
+- assertVisible: "Recebidas|Recebidos"

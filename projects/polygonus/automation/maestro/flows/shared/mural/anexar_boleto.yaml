@@ -1,0 +1,18 @@
+# Clipe → Boleto (anexo).
+# Período / mês corrente / competência ficam nos subflows selecionar_periodo_*.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: abrir_menu_anexo_clip.yaml
+
+- tapOn: "Boleto"
+- waitForAnimationToEnd
+
+# Se o dialog Período abrir de novo, o CT chama selecionar_periodo_* em seguida.
+- runFlow:
+    when:
+      notVisible: "Período|Periodo|Mes corrente|Mês corrente"
+    commands:
+      - extendedWaitUntil:
+          visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
+          timeout: 10000

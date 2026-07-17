@@ -1,0 +1,21 @@
+# Só age se o diálogo/progresso de compressão de vídeo estiver na tela.
+# Não falha em comunicado texto/evento sem vídeo.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible: "Compressão em andamento|aguardar o término da compressão|compressão dos vídeos"
+    commands:
+      - tapOn: "Fechar"
+      - waitForAnimationToEnd
+      # Thumbnail mostra progresso (content-desc "100" quando pronto)
+      - extendedWaitUntil:
+          visible: "100|Novo comunicado|Editar comunicado|Novo evento|Para:"
+          timeout: 120000
+      - runFlow:
+          when:
+            visible: "Compressão em andamento|aguardar o término da compressão"
+          commands:
+            - tapOn: "Fechar"
+            - waitForAnimationToEnd

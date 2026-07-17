@@ -6,6 +6,7 @@ import {
   appendHistory,
   assertProject,
   nextTestId,
+  nextBugId,
   readCatalog,
   uploadsDir,
   writeCatalog,
@@ -13,6 +14,12 @@ import {
 import { deriveTestKey, findByTestKey } from "../test-key.js";
 import { CURRENT_USER } from "../config/user.js";
 import type { EvidenceFile, ProjectSlug, TestRecord } from "../types.js";
+import {
+  CT_DRAFT_EXAMPLE,
+  CT_FIELDS_LLM_SYSTEM_PROMPT,
+  normalizeCtFields,
+  type CtDraftFields,
+} from "../../src/lib/ct-field-contract.js";
 
 function param(req: Request, key: string): string {
   const v = req.params[key];
@@ -41,21 +48,40 @@ const upload = multer({
 
 export const testsRouter = Router({ mergeParams: true });
 
-testsRouter.get("/", (req, res) => {
+testsRouter.get("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
-  res.json(readCatalog(project));
+  res.json(await readCatalog(project));
 });
 
-testsRouter.get("/:id", (req, res) => {
+/**
+ * Normaliza rascunho de CT (IA / N8N / corretor).
+ * Move "Pré-requisito:" da description → preconditions; valida campos vazios.
+ */
+testsRouter.post("/normalize-fields", (req, res) => {
+  assertProject(param(req, "slug"));
+  const body = (req.body ?? {}) as CtDraftFields;
+  const result = normalizeCtFields(body);
+  res.json({
+    ...result,
+    meta: {
+      example: CT_DRAFT_EXAMPLE,
+      llmSystemPrompt: CT_FIELDS_LLM_SYSTEM_PROMPT,
+      schemaPath:
+        "projects/polygonus/automation/n8n/ct-draft.schema.json",
+    },
+  });
+});
+
+testsRouter.get("/:id", async (req, res) => {
   const project = assertProject(param(req, "slug"));
-  const test = readCatalog(project).reports.find((r) => r.id === param(req, "id"));
+  const test = (await readCatalog(project)).reports.find((r) => r.id === param(req, "id"));
   if (!test) return res.status(404).json({ error: "Teste não encontrado" });
   res.json(test);
 });
 
-testsRouter.post("/", (req, res) => {
+testsRouter.post("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
-  const catalog = readCatalog(project);
+  const catalog = await readCatalog(project);
   const body = req.body as Partial<TestRecord>;
 
   if (!body.title?.trim()) {
@@ -76,7 +102,7 @@ testsRouter.post("/", (req, res) => {
   }
 
   const recordType = body.recordType ?? (body.campaign ? "teste" : "bug");
-  const id = nextTestId(project, catalog);
+  const id = recordType === "bug" ? nextBugId(project, catalog) : nextTestId(project, catalog);
   const now = new Date().toISOString();
   const report: TestRecord = {
     id,
@@ -116,13 +142,13 @@ testsRouter.post("/", (req, res) => {
   });
 
   catalog.reports.unshift(report);
-  writeCatalog(project, catalog);
+  await writeCatalog(project, catalog);
   res.status(201).json(report);
 });
 
-testsRouter.put("/:id", (req, res) => {
+testsRouter.put("/:id", async (req, res) => {
   const project = assertProject(param(req, "slug"));
-  const catalog = readCatalog(project);
+  const catalog = await readCatalog(project);
   const testId = param(req, "id");
   const idx = catalog.reports.findIndex((r) => r.id === testId);
   if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
@@ -184,13 +210,13 @@ testsRouter.put("/:id", (req, res) => {
   }
 
   catalog.reports[idx] = updated;
-  writeCatalog(project, catalog);
+  await writeCatalog(project, catalog);
   res.json(updated);
 });
 
-testsRouter.post("/:id/evidence", upload.single("file"), (req, res) => {
+testsRouter.post("/:id/evidence", upload.single("file"), async (req, res) => {
   const project = assertProject(param(req, "slug"));
-  const catalog = readCatalog(project);
+  const catalog = await readCatalog(project);
   const testId = param(req, "id");
   const idx = catalog.reports.findIndex((r) => r.id === testId);
   if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
@@ -217,6 +243,6 @@ testsRouter.post("/:id/evidence", upload.single("file"), (req, res) => {
   });
 
   catalog.reports[idx] = report;
-  writeCatalog(project, catalog);
+  await writeCatalog(project, catalog);
   res.status(201).json(evidence);
 });

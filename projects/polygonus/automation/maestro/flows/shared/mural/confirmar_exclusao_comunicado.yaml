@@ -1,0 +1,10 @@
+# Confirma dialog de exclusão (polyConfirmDialog → Sim / Não).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Sim|Tem certeza|deseja excluir"
+    timeout: 8000
+
+- tapOn: "Sim"
+- waitForAnimationToEnd

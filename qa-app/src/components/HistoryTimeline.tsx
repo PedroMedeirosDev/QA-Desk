@@ -12,17 +12,21 @@ import {
 import type { HistoryEntry } from "@/types/test-record";
 import { cn } from "@/lib/utils";
 
-function ResultBadge({ result }: { result: "success" | "failed" }) {
+function ResultBadge({
+  result,
+}: {
+  result: "success" | "failed" | "cancelled";
+}) {
   return (
     <span
       className={cn(
         "rounded-full border px-2 py-0.5 text-[0.65rem] font-medium uppercase tracking-wide",
-        result === "success"
-          ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
-          : "border-red-500/40 bg-red-500/15 text-red-400",
+        result === "success" && "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
+        result === "failed" && "border-red-500/40 bg-red-500/15 text-red-400",
+        result === "cancelled" && "border-amber-500/40 bg-amber-500/15 text-amber-300",
       )}
     >
-      {result === "success" ? "Passou" : "Falhou"}
+      {result === "success" ? "Passou" : result === "failed" ? "Falhou" : "Cancelado"}
     </span>
   );
 }
@@ -88,6 +92,21 @@ function FailureCallout({ entry }: { entry: HistoryEntry }) {
   );
 }
 
+function CancelledCallout({ entry }: { entry: HistoryEntry }) {
+  const subtitle = historyEntrySubtitle(entry);
+  return (
+    <div className="mt-2 rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+      <p className="font-medium text-amber-300">Teste cancelado manualmente</p>
+      {subtitle && <p className="mt-1 text-amber-200/90">{subtitle}</p>}
+      {typeof entry.meta?.failedAction === "string" && entry.meta.failedAction && (
+        <p className="mt-1 font-mono text-[0.7rem] text-amber-200/80">
+          {entry.meta.failedAction}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function HistoryItem({ entry }: { entry: HistoryEntry }) {
   const result = historyRunResult(entry);
   const subtitle = historyEntrySubtitle(entry);
@@ -106,11 +125,12 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
         </span>
       </div>
 
-      {subtitle && (
+      {subtitle && result !== "cancelled" && (
         <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
       )}
 
-      <FailureCallout entry={entry} />
+      {result === "failed" && <FailureCallout entry={entry} />}
+      {result === "cancelled" && <CancelledCallout entry={entry} />}
 
       {log && (
         <div className="mt-2 space-y-2">
@@ -119,9 +139,10 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
               <p
                 className={cn(
                   "min-w-0 flex-1 rounded-md border px-3 py-2 font-mono text-xs",
-                  result === "failed"
-                    ? "border-red-500/30 bg-red-500/5 text-red-300"
-                    : "border-border bg-muted/40 text-muted-foreground",
+                  result === "failed" && "border-red-500/30 bg-red-500/5 text-red-300",
+                  result === "cancelled" && "border-amber-500/30 bg-amber-500/5 text-amber-200",
+                  result === "success" && "border-border bg-muted/40 text-muted-foreground",
+                  !result && "border-border bg-muted/40 text-muted-foreground",
                 )}
               >
                 {log.preview}
@@ -141,7 +162,14 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
               <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" />
               {log.hasMore ? "Ver log completo" : "Detalhe do log"}
             </summary>
-            <pre className="mt-2 max-h-56 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs text-muted-foreground whitespace-pre-wrap">
+            <pre
+              className={cn(
+                "mt-2 max-h-56 overflow-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap",
+                result === "cancelled"
+                  ? "border-amber-500/25 bg-amber-500/5 text-amber-100"
+                  : "bg-muted/40 text-muted-foreground",
+              )}
+            >
               {log.full || rawOutput}
             </pre>
           </details>

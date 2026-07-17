@@ -1,0 +1,24 @@
+# Preenche Novo comunicado com texto + enquete + foto + PDF + vídeo (sem enviar).
+# Env: TEXTO_COMUNICADO
+#
+# Pré-requisito: addMedia (FIXTURE_FOTO, FIXTURE_VIDEO) + push PDF no device.
+# STATUS: draft — validar ordem dos anexos e pickers nativos no emulador.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: composer_novo_comunicado.yaml
+    env:
+      TEXTO_COMUNICADO: ${TEXTO_COMUNICADO}
+
+- runFlow: adicionar_enquete_nova.yaml
+- runFlow: adicionar_foto_galeria.yaml
+
+- runFlow:
+    file: anexar_arquivo_por_nome.yaml
+    env:
+      ANEXO_NOME: "${FIXTURE_PDF}"
+      ANEXO_PASTA: "Download"
+
+# Vídeo pequeno — mesmo fluxo de galeria (CT-07)
+- runFlow: adicionar_foto_galeria.yaml

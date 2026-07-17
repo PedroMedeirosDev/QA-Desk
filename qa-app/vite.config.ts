@@ -10,6 +10,17 @@ export default defineConfig({
   },
   server: {
     port: 5174,
-    proxy: { "/api": "http://localhost:3001" },
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq, req) => {
+            if (req.url?.includes("stream=1")) {
+              proxyReq.setHeader("Accept-Encoding", "identity");
+            }
+          });
+        },
+      },
+    },
   },
 });

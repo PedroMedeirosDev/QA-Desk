@@ -1,16 +1,23 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
+import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import {
   appendHistory,
   assertProject,
   nextTestId,
   readCatalog,
+  uploadsDir,
   writeCatalog,
 } from "../storage.js";
+import type { EvidenceFile } from "../types.js";
 import {
   createMuralHomologationRecords,
   listMaestroFlows,
-  runMaestroFlow,
+  needsMuralIdPipeline,
+  runMaestroFlowWithMuralCardId,
 } from "../automation.js";
+import { captureMuralCardId } from "../mural-card-id.js";
 import { MURAL_HOMOLOGATION_SLUG } from "../homologation-config.js";
 import {
   computeHomologationProgress,
@@ -18,16 +25,38 @@ import {
   linkTestsToHomologation,
   readHomologationCatalog,
   resolveHomologationForTest,
-  syncMuralHomologation,
   writeHomologationCatalog,
 } from "../homologations.js";
+import {
+  cancelMaestroRun,
+  clearMaestroRunCancelled,
+  getActiveMaestroRun,
+} from "../maestro-run-registry.js";
+import {
+  appendRunSessionOutput,
+  clearRunSession,
+  getRunSession,
+  markRunSessionPersisted,
+  persistCancelledRunSession,
+  registerRunSession,
+} from "../maestro-run-session.js";
 import {
   deriveTestKey,
   findByTestKey,
   nextRunNumber,
   testKeyFromFlow,
+  applyAutomationReadinessAfterRun,
 } from "../test-key.js";
+import { normalizeMaestroOutput } from "../maestro-output.js";
+import {
+  ensureAndroidDeviceReady,
+  getAndroidDeviceStatus,
+  isAutoEmulatorEnabled,
+  startAndroidEmulator,
+  waitForAndroidDevice,
+} from "../android-device.js";
 import { CURRENT_USER } from "../config/user.js";
+import { recordTestRun } from "../db/test-runs.js";
 import type { TestRecord } from "../types.js";
 
 function param(req: { params: Record<string, string | string[] | undefined> }, key: string) {
@@ -42,15 +71,74 @@ automationRouter.get("/flows", (req, res) => {
   res.json(listMaestroFlows(module));
 });
 
-automationRouter.post("/mural-checklist", (req, res) => {
+automationRouter.get("/device", async (_req, res) => {
+  try {
+    res.json(await getAndroidDeviceStatus());
+  } catch (err) {
+    res.status(500).json({
+      error: err instanceof Error ? err.message : "Erro ao consultar device",
+    });
+  }
+});
+
+automationRouter.get("/mural-card-id", (req, res) => {
+  if (process.env.QA_AUTOMATION_RUN !== "1") {
+    return res.status(403).json({
+      error: "Automação local desabilitada. Defina QA_AUTOMATION_RUN=1 no .env",
+    });
+  }
+
+  const rawIndex = typeof req.query.index === "string" ? req.query.index : "0";
+  const index = Number.parseInt(rawIndex, 10);
+
+  try {
+    const idComunicado = captureMuralCardId(Number.isFinite(index) ? index : 0);
+    if (!idComunicado) {
+      return res.status(404).json({
+        error: "ID do card não encontrado (confira filtro Enviadas e lista visível).",
+      });
+    }
+    res.json({ idComunicado, index: Number.isFinite(index) ? index : 0 });
+  } catch (err) {
+    res.status(500).json({
+      error: err instanceof Error ? err.message : "Erro ao capturar ID do card",
+    });
+  }
+});
+
+automationRouter.post("/emulator/start", async (req, res) => {
+  if (process.env.QA_AUTOMATION_RUN !== "1") {
+    return res.status(403).json({
+      error: "Automação local desabilitada. Defina QA_AUTOMATION_RUN=1 no .env",
+    });
+  }
+
+  const wait = req.query.wait === "1";
+
+  try {
+    const start = await startAndroidEmulator();
+    if (!wait) {
+      return res.json(start);
+    }
+
+    const status = await waitForAndroidDevice({ timeoutMs: 180_000 });
+    res.json({ ...start, ready: status.ready, status });
+  } catch (err) {
+    res.status(500).json({
+      error: err instanceof Error ? err.message : "Falha ao iniciar emulador",
+    });
+  }
+});
+
+automationRouter.post("/mural-checklist", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   if (project !== "polygonus") {
     return res.status(400).json({ error: "Checklist Mural só para polygonus" });
   }
 
-  const homCatalog = readHomologationCatalog(project);
+  const homCatalog = await readHomologationCatalog(project);
   const mural = findHomologationBySlug(homCatalog, MURAL_HOMOLOGATION_SLUG)!;
-  const catalog = readCatalog(project);
+  const catalog = await readCatalog(project);
   const created: TestRecord[] = [];
   const skipped: string[] = [];
 
@@ -62,11 +150,17 @@ automationRouter.post("/mural-checklist", (req, res) => {
     if (existing) {
       existing.homologationId = mural.id;
       existing.campaign = MURAL_HOMOLOGATION_SLUG;
+      // Catálogo canônico → descrição / pré-condições / resultado esperado / passos
+      existing.title = body.title ?? existing.title;
+      existing.description = body.description ?? existing.description;
+      existing.preconditions = body.preconditions ?? existing.preconditions;
+      existing.expectedResult = body.expectedResult ?? existing.expectedResult;
+      if (body.steps?.length) existing.steps = body.steps;
       skipped.push(existing.id);
       appendHistory(existing, {
         actor: "system",
         action: "checklist_synced",
-        detail: `Checklist sincronizado — vinculado à ${mural.title}`,
+        detail: `Checklist sincronizado — campos do CT atualizados (${mural.title})`,
         meta: { homologationId: mural.id, homologationSlug: mural.slug },
       });
       continue;
@@ -79,6 +173,8 @@ automationRouter.post("/mural-checklist", (req, res) => {
       recordType: "teste",
       title: body.title!,
       description: body.description ?? "",
+      preconditions: body.preconditions,
+      expectedResult: body.expectedResult,
       steps: body.steps ?? [],
       reportedAt: body.reportedAt!,
       project,
@@ -108,8 +204,8 @@ automationRouter.post("/mural-checklist", (req, res) => {
   }
 
   linkTestsToHomologation(catalog, mural);
-  writeCatalog(project, catalog);
-  writeHomologationCatalog(project, homCatalog);
+  await writeCatalog(project, catalog);
+  await writeHomologationCatalog(project, homCatalog);
 
   const progress = computeHomologationProgress(mural, catalog);
 
@@ -126,6 +222,33 @@ automationRouter.post("/mural-checklist", (req, res) => {
   });
 });
 
+automationRouter.post("/runs/cancel", async (req, res) => {
+  if (process.env.QA_AUTOMATION_RUN !== "1") {
+    return res.status(403).json({
+      error: "Execução local desabilitada. Defina QA_AUTOMATION_RUN=1 no .env",
+    });
+  }
+
+  const body = (req.body ?? {}) as { runId?: string };
+  const active = getActiveMaestroRun();
+  const cancelled = cancelMaestroRun(body.runId);
+  const persisted = body.runId
+    ? (
+        await persistCancelledRunSession(
+          body.runId,
+          "\n[qa-app] Execução cancelada pelo usuário.\n",
+        )
+      ).persisted
+    : false;
+  res.json({
+    cancelled: cancelled || Boolean(body.runId),
+    persisted,
+    active: active
+      ? { runId: active.runId, testId: active.testId, flowPath: active.flowPath }
+      : null,
+  });
+});
+
 automationRouter.post("/tests/:id/run", async (req, res) => {
   if (process.env.QA_AUTOMATION_RUN !== "1") {
     return res.status(403).json({
@@ -135,8 +258,12 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
 
   const project = assertProject(param(req, "slug"));
   const testId = param(req, "id");
-  const body = (req.body ?? {}) as { homologationId?: string };
-  const catalog = readCatalog(project);
+  const body = (req.body ?? {}) as {
+    homologationId?: string;
+    recordVideo?: boolean;
+  };
+  const recordVideo = Boolean(body.recordVideo);
+  const catalog = await readCatalog(project);
   const idx = catalog.reports.findIndex((r) => r.id === testId);
   if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
 
@@ -149,10 +276,23 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     req.query.stream === "1" ||
     String(req.headers.accept ?? "").includes("application/x-ndjson");
 
-  const homologation = resolveHomologationForTest(project, report, body.homologationId);
+  const homologation = await resolveHomologationForTest(project, report, body.homologationId);
   const runNumber = nextRunNumber(report.history);
+  const runId = randomUUID();
   const startedAt = new Date().toISOString();
   const outputTail = (text: string, max = 6000) => text.slice(-max);
+
+  registerRunSession({
+    runId,
+    project,
+    testId: report.id,
+    runNumber,
+    startedAt,
+    flowPath: report.automation.flowPath,
+    homologationId: homologation?.id,
+    homologationSlug: homologation?.slug,
+    homologationTitle: homologation?.title,
+  });
 
   const {
     createLineSplitter,
@@ -163,6 +303,8 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
   const send = (obj: unknown) => {
     if (!stream) return;
     res.write(`${JSON.stringify(obj)}\n`);
+    const flush = (res as Response & { flush?: () => void }).flush;
+    flush?.();
   };
 
   if (stream) {
@@ -175,34 +317,144 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
       testId: report.id,
       title: report.title,
       runNumber,
-      flowPath: report.automation.flowPath,
+      runId,
+      project,
+      flowPath: report.automation!.flowPath,
       phase: labelForFlowPath(report.automation.flowPath),
     });
     send({ type: "log", line: "Iniciando Maestro (CLI)…" });
+    appendRunSessionOutput(runId, "Iniciando Maestro (CLI)…\n");
+  }
+
+  try {
+    await ensureAndroidDeviceReady({
+      autoStart: isAutoEmulatorEnabled(),
+      onProgress: (message) => {
+        if (stream) {
+          appendRunSessionOutput(runId, `${message}\n`);
+          send({ type: "progress", phase: message, status: "running" });
+          send({ type: "log", line: message });
+        }
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Device Android indisponível";
+    if (stream) {
+      send({ type: "error", message });
+      return res.end();
+    }
+    return res.status(503).json({ error: message });
+  }
+
+  if (stream) {
     send({
       type: "progress",
-      phase: "Aguardando device / Maestro…",
-      action: report.automation.flowPath,
+      phase: labelForFlowPath(report.automation.flowPath),
+      action: report.automation.flowPath.split("/").pop(),
+      flowFile: report.automation.flowPath.split("/").pop(),
       status: "running",
     });
   }
 
+  let lastOutputAt = Date.now();
+  const heartbeat = stream
+    ? setInterval(() => {
+        const idleMs = Date.now() - lastOutputAt;
+        if (idleMs >= 20_000) {
+          send({
+            type: "heartbeat",
+            idleMs,
+            phase:
+              idleMs >= 120_000
+                ? "Maestro sem saída há 2+ min — pode estar travado"
+                : "Maestro em execução (aguardando saída)…",
+          });
+        }
+      }, 15_000)
+    : null;
+
   const splitter = createLineSplitter((line) => {
-    send({ type: "log", line });
+    lastOutputAt = Date.now();
+    const normalized = normalizeMaestroOutput(line);
+    appendRunSessionOutput(runId, `${normalized}\n`);
+    send({ type: "log", line: normalized });
     const info = interpretMaestroLine(line);
-    if (info?.phase || info?.action) {
+    if (info?.phase || info?.action || info?.flowFile) {
       send({
         type: "progress",
         phase: info.phase,
         action: info.action,
+        flowFile: info.flowFile,
         status: info.status,
       });
     }
   });
 
-  const result = await runMaestroFlow(report.automation.flowPath, {
-    onOutput: (chunk) => splitter.push(chunk),
-  });
+  if (needsMuralIdPipeline(report.automation.flowPath)) {
+    const pipelineMsg =
+      "[qa-app] Pipeline ID ativo (pré-ação editar/excluir OU pós-envio assert/responsável)";
+    appendRunSessionOutput(runId, `${pipelineMsg}\n`);
+    send({ type: "log", line: pipelineMsg });
+    send({
+      type: "progress",
+      phase: "Pipeline ID (adb + Maestro)",
+      status: "running",
+    });
+  }
+
+  let screenRec: Awaited<
+    ReturnType<typeof import("../screen-record.js").startAdbScreenRecord>
+  > | null = null;
+  let videoPaths: string[] = [];
+  let videoNote = "";
+
+  if (recordVideo) {
+    const { startAdbScreenRecord } = await import("../screen-record.js");
+    const videoDir = path.join(uploadsDir(project, report.id), "runs", runId);
+    send({ type: "log", line: "[qa-app] Gravação de vídeo (adb screenrecord) iniciada…" });
+    appendRunSessionOutput(runId, "[qa-app] Gravação de vídeo iniciada…\n");
+    try {
+      screenRec = startAdbScreenRecord({
+        localDir: videoDir,
+        onLog: (line) => {
+          appendRunSessionOutput(runId, `${line}\n`);
+          send({ type: "log", line });
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      send({
+        type: "log",
+        line: `[qa-app] Não foi possível iniciar screenrecord: ${msg}`,
+      });
+    }
+  }
+
+  let result;
+  try {
+    result = await runMaestroFlowWithMuralCardId(report.automation.flowPath, {
+      onOutput: (chunk) => splitter.push(chunk),
+      runMeta: { runId, project, testId: report.id },
+    });
+  } finally {
+    if (heartbeat) clearInterval(heartbeat);
+    clearMaestroRunCancelled(runId);
+    if (screenRec) {
+      try {
+        const stopped = await screenRec.stop();
+        videoPaths = stopped.localPaths;
+        videoNote = stopped.note;
+        send({ type: "log", line: `[qa-app] ${videoNote}` });
+        appendRunSessionOutput(runId, `[qa-app] ${videoNote}\n`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        send({
+          type: "log",
+          line: `[qa-app] Falha ao finalizar vídeo: ${msg}`,
+        });
+      }
+    }
+  }
   splitter.flush();
 
   const output = outputTail(result.output);
@@ -218,25 +470,29 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
   }
 
   if (homologation && result.appVersion) {
-    const homCatalog = readHomologationCatalog(project);
+    const homCatalog = await readHomologationCatalog(project);
     const idxHom = homCatalog.homologations.findIndex((h) => h.id === homologation.id);
     if (idxHom >= 0) {
       homCatalog.homologations[idxHom] = {
         ...homCatalog.homologations[idxHom],
         build: result.appVersion,
       };
-      writeHomologationCatalog(project, homCatalog);
+      await writeHomologationCatalog(project, homCatalog);
     }
   }
 
   report.automation = {
     ...report.automation,
     lastRunAt: new Date().toISOString(),
-    lastRunStatus: result.ok ? "success" : "failed",
+    lastRunStatus: result.cancelled
+      ? "cancelled"
+      : result.ok
+        ? "success"
+        : "failed",
     lastRunOutput: output,
   };
 
-  if (report.recordType !== "bug") {
+  if (report.recordType !== "bug" && !result.cancelled) {
     report.homologationStatus = result.ok ? "passou" : "falhou";
   }
 
@@ -257,42 +513,137 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
         .join(" · ")
     : undefined;
 
-  appendHistory(report, {
-    at: startedAt,
-    actor: CURRENT_USER.actor,
-    action: "test_run",
-    detail: [
-      homologation ? `Homologação: ${homologation.title}` : undefined,
-      result.appVersion ? `App ${result.appVersion}` : undefined,
-      failureDetail,
-    ]
-      .filter(Boolean)
-      .join(" · "),
-    meta: {
+  const alreadyPersisted = getRunSession(runId)?.persisted ?? false;
+
+  const videoEvidence: EvidenceFile[] = [];
+  for (const localPath of videoPaths) {
+    try {
+      const filename = path.basename(localPath);
+      const destDir = uploadsDir(project, report.id);
+      const destName = `${runId.slice(0, 8)}_${filename}`;
+      const destPath = path.join(destDir, destName);
+      if (path.resolve(localPath) !== path.resolve(destPath)) {
+        fs.copyFileSync(localPath, destPath);
+      }
+      const st = fs.statSync(destPath);
+      videoEvidence.push({
+        fileId: randomUUID(),
+        type: "video",
+        filename: destName,
+        mimeType: "video/mp4",
+        sizeBytes: st.size,
+        uploadedAt: new Date().toISOString(),
+        storageKey: `uploads/${project}/${report.id}/${destName}`,
+      });
+    } catch {
+      /* ignore copy errors */
+    }
+  }
+  if (videoEvidence.length) {
+    report.evidence = [...(report.evidence ?? []), ...videoEvidence];
+  }
+
+  if (!alreadyPersisted) {
+    appendHistory(report, {
+      at: startedAt,
+      actor: CURRENT_USER.actor,
+      action: "test_run",
+      detail: [
+        result.cancelled ? "Cancelado pelo usuário" : undefined,
+        homologation ? `Homologação: ${homologation.title}` : undefined,
+        result.appVersion ? `App ${result.appVersion}` : undefined,
+        failureDetail,
+        recordVideo
+          ? videoEvidence.length
+            ? `Vídeo: ${videoEvidence.length} arquivo(s)`
+            : videoNote || "Vídeo solicitado"
+          : undefined,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      meta: {
+        runNumber,
+        runId,
+        result: result.cancelled ? "cancelled" : result.ok ? "success" : "failed",
+        exitCode: result.exitCode,
+        via: "maestro",
+        flowPath: report.automation!.flowPath,
+        output,
+        appVersion: result.appVersion,
+        homologationId: homologation?.id,
+        homologationSlug: homologation?.slug,
+        failedAction: failure?.failedAction,
+        failedFlow: failure?.failedFlow,
+        failedStepIndex: failure?.failedStepIndex,
+        failedStepLabel: failure?.failedStepLabel,
+        errorSummary: failure?.errorSummary,
+        recordVideo,
+        videoFiles: videoEvidence.map((e) => e.storageKey),
+      },
+    });
+    markRunSessionPersisted(runId);
+  } else {
+    const fresh = await readCatalog(project);
+    const updated = fresh.reports.find((r) => r.id === testId);
+    if (updated) Object.assign(report, updated);
+  }
+
+  if (report.automation && !alreadyPersisted) {
+    const promoted = applyAutomationReadinessAfterRun(report.automation, report.history);
+    if (promoted) {
+      appendHistory(report, {
+        actor: CURRENT_USER.actor,
+        action: "automation_passed",
+        detail: "Flow promovido para pronto (2 execuções com sucesso no emulador)",
+        meta: { readiness: "ready", via: "maestro" },
+      });
+    }
+  }
+
+  if (!alreadyPersisted) {
+    catalog.reports[idx] = report;
+    await writeCatalog(project, catalog);
+    await recordTestRun({
+      project,
+      testId: report.id,
+      runId,
       runNumber,
-      result: result.ok ? "success" : "failed",
+      status: result.cancelled ? "cancelled" : result.ok ? "success" : "failed",
       exitCode: result.exitCode,
-      via: "maestro",
-      flowPath: report.automation.flowPath,
+      flowPath: report.automation?.flowPath,
       output,
       appVersion: result.appVersion,
       homologationId: homologation?.id,
-      homologationSlug: homologation?.slug,
-      failedAction: failure?.failedAction,
-      failedFlow: failure?.failedFlow,
-      failedStepIndex: failure?.failedStepIndex,
-      failedStepLabel: failure?.failedStepLabel,
-      errorSummary: failure?.errorSummary,
-    },
-  });
+      startedAt,
+      meta: {
+        via: "maestro",
+        failedAction: failure?.failedAction,
+        failedFlow: failure?.failedFlow,
+        failedStepIndex: failure?.failedStepIndex,
+        failedStepLabel: failure?.failedStepLabel,
+        errorSummary: failure?.errorSummary,
+        recordVideo,
+      },
+      evidencePaths: videoEvidence.map((e) => e.storageKey),
+    });
+  }
 
-  catalog.reports[idx] = report;
-  writeCatalog(project, catalog);
+  clearRunSession(runId);
+
+  const { analyzeMaestroOutputAsync } = await import("../maestro-run-analysis.js");
+  analyzeMaestroOutputAsync(result.output, {
+    testId: report.id,
+    flowPath: report.automation.flowPath,
+    runNumber,
+    ok: result.ok,
+  });
 
   const payload = {
     ok: result.ok,
     exitCode: result.exitCode,
     runNumber,
+    runId,
+    cancelled: result.cancelled,
     output,
     appVersion: result.appVersion,
     failure,

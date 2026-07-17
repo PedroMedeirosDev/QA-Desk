@@ -1,8 +1,54 @@
-# Envia o comunicado em composição.
+# Envia comunicado ou evento em composição.
+# Semantics: mural_composer_enviar
 #
-# Fonte: bottom_bar_widget.dart → tooltip: "Enviar comunicado"
+# Com anexo o composer pode demorar a fechar — timeout alto.
+# Retry se ainda em Novo/Editar comunicado ou Novo evento.
+# Pré-requisito eventos: emulador em America/Sao_Paulo (senão BrasilTime.UnmarshalJSON).
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- tapOn: "Enviar comunicado"
+- runFlow: aguardar_compressao_video.yaml
+
+- tapOn:
+    id: mural_composer_enviar
+
+- runFlow:
+    when:
+      visible: "Compressão em andamento|aguardar o término da compressão|compressão dos vídeos"
+    commands:
+      - tapOn: "Fechar"
+      - waitForAnimationToEnd
+      - runFlow: aguardar_compressao_video.yaml
+      - tapOn:
+          id: mural_composer_enviar
+
+# Falha conhecida: fuso GMT → offset ".00000:00" no payload do evento
+- runFlow:
+    when:
+      visible: "BrasilTime|formato inválido|Atenção!"
+    commands:
+      - tapOn: "Fechar"
+      - waitForAnimationToEnd
+      - assertVisible: "NEVER_MATCH_FUSO_EMULADOR_GMT"
+
+- extendedWaitUntil:
+    visible: "Recebidas|Enviadas|Enviados|Show menu"
+    timeout: 90000
+
+- runFlow:
+    when:
+      visible: "Novo comunicado|Editar comunicado|Novo evento"
+    commands:
+      - waitForAnimationToEnd
+      - runFlow: aguardar_compressao_video.yaml
+      - tapOn:
+          id: mural_composer_enviar
+          optional: true
+      - extendedWaitUntil:
+          visible: "Recebidas|Enviadas|Enviados|Show menu"
+          timeout: 60000
+
+- assertVisible: "Recebidas|Enviadas|Enviados|Show menu"
+- assertNotVisible: "Novo comunicado|Editar comunicado|Novo evento"
+
 - waitForAnimationToEnd

@@ -1,0 +1,51 @@
+{
+  "name": "Polygonus Maestro post-run",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "maestro-run",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-maestro",
+      "name": "Webhook Maestro",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "polygonus-maestro-run"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body ?? $input.first().json;\nconst alerts = body.alerts ?? [];\nconst errors = alerts.filter(a => a.level === 'error');\nconst warns = alerts.filter(a => a.level === 'warn');\nreturn [{\n  json: {\n    ok: body.ok,\n    flow: body.meta?.flow,\n    stepCount: body.counts?.steps,\n    failed: body.counts?.failed,\n    errorMessages: errors.map(e => e.message).join(' | '),\n    warnMessages: warns.map(w => w.message).join(' | '),\n    raw: body\n  }\n}];"
+      },
+      "id": "code-parse",
+      "name": "Parse alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { received: true, ok: $json.ok, errors: $json.errorMessages } }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Maestro": {
+      "main": [[{ "node": "Parse alerts", "type": "main", "index": 0 }]]
+    },
+    "Parse alerts": {
+      "main": [[{ "node": "Respond", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "polygonus-qa" }]
+}

@@ -1,0 +1,11 @@
+# Fecha overlay do filtro — só se menu aberto (1× pressKey Back).
+# Menu aberto = Pendentes/Aprovadas… visíveis. Sem overlay → flow inteiro SKIPPED.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible: "Pendentes|Aprovadas|Reprovadas|Arquivadas"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd

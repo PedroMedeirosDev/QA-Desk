@@ -1,0 +1,6 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- runScript: ../shared/helpers/capturar_id_mural_http.js
+- evalScript: '${console.log("HTTP_DEBUG=" + output.httpDebug)}'
+- evalScript: '${console.log("ID=" + output.idComunicado)}'
+- assertTrue: ${output.idComunicado.length > 3}

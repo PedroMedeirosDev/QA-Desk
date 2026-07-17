@@ -1,48 +1,77 @@
-# Autentica a partir da tela ENTRAR e espera a home (header com nome).
+# Autentica a partir da tela ENTRAR.
 #
-# Env obrigatório:
-#   LOGIN / SENHA
-# Env opcional:
-#   NOME_USUARIO — nome no header (ex.: "Pedro Jesus"); se omitido, aceita CARDÁPIO
-#
-# NÃO exige MURAL aqui: o card MURAL só aparece depois de selecionar
-# a função Coordenador/Professor na tela Perfil (ver garantir_perfil_*).
+# Env: LOGIN, SENHA, NOME_USUARIO (opcional)
+# Semantics: auth_login_usuario, auth_login_senha, auth_login_entrar
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- assertVisible: "ENTRAR"
+- runFlow:
+    when:
+      visible:
+        id: "auth_login_usuario"
+    commands:
+      - tapOn:
+          id: "auth_login_usuario"
 
-- tapOn: "E-mail ou Login"
+- runFlow:
+    when:
+      notVisible:
+        id: "auth_login_usuario"
+    commands:
+      - tapOn: "E-mail ou Login"
+
 - eraseText
 - inputText: ${LOGIN}
 
-- tapOn: "Senha"
+- runFlow:
+    when:
+      visible:
+        id: "auth_login_senha"
+    commands:
+      - tapOn:
+          id: "auth_login_senha"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "auth_login_senha"
+    commands:
+      - tapOn: "Senha"
+
 - eraseText
 - inputText: ${SENHA}
 
-- tapOn: "ENTRAR"
+- runFlow:
+    when:
+      visible:
+        id: "auth_login_entrar"
+    commands:
+      - tapOn:
+          id: "auth_login_entrar"
 
-# Spotlight / tutorial pós-login
 - runFlow:
     when:
-      visible: "PULAR"
+      notVisible:
+        id: "auth_login_entrar"
     commands:
-      - tapOn: "PULAR"
-      - waitForAnimationToEnd
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - tapOn: "PULAR"
-      - waitForAnimationToEnd
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - tapOn: "PULAR"
-      - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "ENTRAR"
+          commands:
+            - runFlow:
+                when:
+                  visible: "E-mail ou Login"
+                commands:
+                  - tapOn: "ENTRAR"
 
-# Home: header com nome OU ao menos um card (CARDÁPIO)
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "PULAR"
+    commands:
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
 - extendedWaitUntil:
-    visible: "Pedro Jesus|CARDÁPIO|.*MURAL.*"
-    timeout: 30000
+    visible: "${NOME_USUARIO}"
+    timeout: 15000

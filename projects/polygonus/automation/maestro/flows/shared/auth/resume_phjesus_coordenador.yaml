@@ -1,0 +1,104 @@
+# Estabelece sessão PHJESUS + COORDENADOR sem logout/login desnecessário.
+#
+# Sessão persistida:
+#   PHJESUS — Pedro Jesus
+#   ETMENEZES (responsável) — header: filhos "Ana, Bruno, Davi"
+#   ACMENEZES (aluno) — header: só "Ana" (nome da aluna)
+# Se outro usuário estiver logado → logout + login PHJESUS.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- launchApp
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "PULAR|ENTRAR|FAZER LOGIN|${NOME_PHJESUS}|Pedro Jesus|Pedro|${NOME_ETMENEZES}|${NOME_ACMENEZES}|Ana|Bruno|Davi|Show menu|Responder comunicado|Mural da Rotina|Selecionar|Versão|.*MURAL.*|CARDÁPIO|CARDAPIO|Colégio Polygonus"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible: "PULAR"
+    commands:
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
+- runFlow:
+    when:
+      visible: "FAZER LOGIN"
+    commands:
+      - tapOn: "FAZER LOGIN"
+
+- runFlow:
+    when:
+      visible: "Show menu|Responder comunicado"
+      notVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "PULAR"
+          commands:
+            - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
+# ETMENEZES = responsável — header lista filhos (Bruno/Davi ou string completa; não só "Ana")
+- runFlow:
+    when:
+      visible: "${NOME_ETMENEZES}|Bruno|Davi"
+      notVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+    commands:
+      - runFlow:
+          when:
+            visible: "PULAR"
+          commands:
+            - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+      - runFlow: logout.yaml
+      - runFlow:
+          file: login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            # Fallback literal: ${NOME_PHJESUS} com espaço vira undefined no Maestro
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+# ACMENEZES = aluno — header só o nome da aluna (Ana), sem Bruno/Davi
+- runFlow:
+    when:
+      visible: "${NOME_ACMENEZES}|Ana"
+      notVisible: "Bruno|Davi|${NOME_PHJESUS}|Pedro Jesus|Pedro"
+    commands:
+      - runFlow: logout.yaml
+      - runFlow:
+          file: login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- runFlow:
+    when:
+      visible: "ENTRAR"
+    commands:
+      - runFlow:
+          file: login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- runFlow:
+    when:
+      notVisible: "ENTRAR"
+    commands:
+      - runFlow:
+          when:
+            notVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+          commands:
+            - runFlow: logout.yaml
+            - runFlow:
+                file: login_as.yaml
+                env:
+                  LOGIN: ${LOGIN_PHJESUS}
+                  SENHA: ${SENHA}
+                  NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- runFlow: ../perfil/garantir_perfil_coordenador.yaml

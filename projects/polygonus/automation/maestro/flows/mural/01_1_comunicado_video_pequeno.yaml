@@ -1,45 +1,31 @@
-# CT-MURAL-07: Comunicado com vídeo pequeno (galeria / addMedia)
+# CT-MURAL-07: Comunicado com vídeo pequeno (anexo clip)
 #
-# Contrato: ENTRAR → ação → ENTRAR
-# Pré-requisito: fixtures + FIXTURE_VIDEO no .env
-# STATUS: draft — STUDIO: picker galeria / anexar vídeo
+# Vídeo/PDF usam o ícone clipe (mural_composer_anexo), NÃO a galeria (extrema esquerda).
+# Fase 1: envia → Enviadas. Fase 2 (qa-app): adb ID → assert + ETMENEZES.
+#
+# Pré-requisito: Video_teste.mp4 em fixtures/ + push para /sdcard/Download (ou Movies)
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- addMedia:
-    - "../../fixtures/${FIXTURE_VIDEO}"
-
-- runFlow: ../shared/auth/login_phjesus.yaml
-
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- runFlow: ../shared/mural/abrir_novo_comunicado.yaml
-
-- runFlow: ../shared/mural/selecionar_turmas_comunicado.yaml
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
 - runFlow:
-    file: ../shared/mural/escrever_comunicado.yaml
+    file: ../shared/mural/composer_novo_comunicado.yaml
     env:
       TEXTO_COMUNICADO: "Teste Comunicado video"
 
-- tapOn:
-    text: "Adicionar imagem da galeria"
-    optional: true
-
-- runFlow: ../shared/mural/pick_galeria_android.yaml
+- runFlow:
+    file: ../shared/mural/anexar_arquivo_por_nome.yaml
+    env:
+      ANEXO_NOME: "Video_teste.mp4"
+      ANEXO_PASTA: "Download"
 
 - runFlow: ../shared/mural/enviar_comunicado.yaml
 
-- assertVisible: "Teste Comunicado video"
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
 
-- runFlow: ../shared/auth/ensure_logged_out.yaml
-
-- runFlow: ../shared/auth/login_etmenezes.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- assertVisible: "Teste Comunicado video"
-
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

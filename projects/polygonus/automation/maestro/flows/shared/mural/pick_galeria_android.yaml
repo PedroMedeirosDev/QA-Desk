@@ -1,28 +1,48 @@
-# Seleciona primeira mídia no picker nativo do Android (após addMedia ou adb push).
-# Use com optional taps — IDs variam por API 30–34.
+# Seleciona mídia no picker nativo Android (após addMedia ou adb push).
+#
+# DocumentsUI recente (Medium_Phone):
+#   chips Images | Audio | Videos | Documents
+#   lista "Recent" com "Foto_1 (1).jpeg" + icon_thumb
+# Fluxo: filtrar Images → tocar Foto_1 / thumbnail → Select se aparecer
 
 appId: br.com.polygonus.mobile.amostra
 ---
+# Filtrar só imagens (evita pegar xml/dump da lista Recent)
 - tapOn:
-    id: "com.google.android.providers.media.module:id/icon_thumbnail"
+    text: "Images|Imagens|Fotos|Photos"
     optional: true
+- waitForAnimationToEnd
+
+# Preferência: fixture do addMedia (nome pode ganhar " (1)")
 - tapOn:
-    id: "com.google.android.documentsui:id/thumbnail"
+    text: "Foto_1.*|Foto_1"
     optional: true
+
+- runFlow:
+    when:
+      notVisible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
+    commands:
+      - tapOn:
+          id: "com.google.android.documentsui:id/icon_thumb"
+          index: 0
+          optional: true
+      - tapOn:
+          id: "com.google.android.providers.media.module:id/icon_thumbnail"
+          index: 0
+          optional: true
+      - tapOn:
+          id: "com.google.android.documentsui:id/thumbnail"
+          optional: true
+      - tapOn:
+          text: ".*\\.jpe?g|.*\\.png|.*\\.webp"
+          index: 0
+          optional: true
+
+- waitForAnimationToEnd
+
+# Confirmar seleção (alguns builds pedem barra superior)
 - tapOn:
-    id: "com.google.android.documentsui:id/icon_thumb"
+    text: "Select|Selecionar|Open|Abrir|Done|Concluir|OK"
     optional: true
-# Fallback: primeiro item da grade
-- tapOn:
-    index: 0
-    optional: true
-# Confirmar seleção (alguns pickers)
-- tapOn:
-    text: "Concluir"
-    optional: true
-- tapOn:
-    text: "OK"
-    optional: true
-- tapOn:
-    text: "Done"
-    optional: true
+
+- waitForAnimationToEnd

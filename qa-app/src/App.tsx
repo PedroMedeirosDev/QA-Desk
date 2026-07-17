@@ -7,6 +7,7 @@ import { CHANNEL_LABELS } from "@/config/channels";
 import { getProject, PROJECTS } from "@/config/projects";
 import { TestEditorPage } from "@/pages/TestEditorPage";
 import { TestListPage } from "@/pages/TestListPage";
+import { BugListPage } from "@/pages/BugListPage";
 import { HomologationPage } from "@/pages/HomologationPage";
 import { HomologationsListPage } from "@/pages/HomologationsListPage";
 import { parseProjectRoute } from "@/lib/project-paths";
@@ -43,15 +44,20 @@ function ProjectLayout() {
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {route.view === "homologations-list" || route.view === "homologation"
                     ? "Homologações"
-                    : "Registro de Testes"}
+                    : route.view === "bugs-list"
+                      ? "Bugs reportados"
+                      : "Registro de Testes"}
                 </p>
                 <h1 className="truncate text-lg font-semibold">
                   {route.view === "homologations-list"
                     ? "Todas as seções"
                     : route.view === "homologation"
                       ? "Detalhe da campanha"
-                      : (current?.label ?? slug)}
-                  {route.channel && route.view === "list" && (
+                      : route.view === "bugs-list"
+                        ? (current?.label ?? slug)
+                        : (current?.label ?? slug)}
+                  {route.channel &&
+                    (route.view === "list" || route.view === "bugs-list") && (
                     <span className="ml-2 text-primary">· {CHANNEL_LABELS[route.channel]}</span>
                   )}
                 </h1>
@@ -64,6 +70,8 @@ function ProjectLayout() {
         <main className="min-h-0 flex-1 overflow-y-auto bg-background px-6 py-6">
           {route.view === "list" ? (
             <TestListPage project={slug} channel={route.channel} />
+          ) : route.view === "bugs-list" ? (
+            <BugListPage project={slug} channel={route.channel} />
           ) : route.view === "homologations-list" ? (
             <HomologationsListPage project={slug} />
           ) : route.view === "homologation" && route.homSlug ? (
@@ -74,6 +82,7 @@ function ProjectLayout() {
               channel={route.channel}
               id={route.isNew ? undefined : route.id}
               isNew={route.isNew}
+              editorKind={route.editorKind}
             />
           )}
         </main>

@@ -1,0 +1,7 @@
+# Debug: abre Mural coordenador e pausa para inspecionar filtro.
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- extendedWaitUntil:
+    visible: ".*Recebidas.*|Show menu|Responder comunicado"
+    timeout: 15000

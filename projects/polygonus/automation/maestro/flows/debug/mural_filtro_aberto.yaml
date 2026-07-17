@@ -1,0 +1,17 @@
+# Debug: abre dropdown de filtro no Mural.
+# Semantics: mural_filtro_sentido
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: mural_filtro_sentido
+
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_filtro_sentido"
+    commands:
+      - tapOn:
+          text: "Recebidas|Enviadas|Enviados|Pendentes"
+          rightOf: "Back"
+          optional: true

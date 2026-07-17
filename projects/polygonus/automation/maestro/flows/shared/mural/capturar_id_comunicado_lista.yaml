@@ -1,0 +1,87 @@
+# Copia o badge "ID 123456" do card na lista (Enviadas/Recebidas).
+#
+# Preferência: output.idComunicado → env → copyTextFrom (frágil no content-desc).
+# Env opcional: TEXTO_ANCORAGEM — confirma envio por texto se ID não capturar.
+# CT-02/03: ID vem da qa-app/adb.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: seed_id_comunicado_env.yaml
+    env:
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${MURAL_ID}
+
+- evalScript: |
+    ${(() => {
+      output.needIdFallback = !(output.idComunicado && String(output.idComunicado).length > 3);
+      var t = "";
+      try {
+        if (typeof TEXTO_ANCORAGEM !== "undefined" && TEXTO_ANCORAGEM) {
+          t = String(TEXTO_ANCORAGEM).trim();
+        }
+      } catch (e) {}
+      output.textoAncoragem = (t && t !== "undefined") ? t : "";
+      output.hasTextoAncoragem = output.textoAncoragem.length > 2;
+    })()}
+
+- runFlow:
+    when:
+      true: ${output.needIdFallback}
+    commands:
+      - copyTextFrom:
+          id: "mural_card_menu"
+          index: 0
+          optional: true
+      - evalScript: '${output.idComunicado = ((maestro.copiedText || "").match(/ID\\s*[0-9]+/) || [])[0] || output.idComunicado || ""}'
+      - copyTextFrom:
+          text: "ID [0-9]+"
+          index: 0
+          optional: true
+      - evalScript: '${output.idComunicado = ((maestro.copiedText || "").match(/ID\\s*[0-9]+/) || [])[0] || output.idComunicado || ""}'
+      - evalScript: '${if (output.idComunicado && output.idComunicado.indexOf("ID") < 0) output.idComunicado = "ID " + output.idComunicado.trim()}'
+
+- evalScript: |
+    ${(() => {
+      output.hasIdComunicado = !!(output.idComunicado && String(output.idComunicado).length > 3);
+    })()}
+
+# Sem ID: aba Mural + pull-to-refresh (anexo atrasa a lista) + texto
+- runFlow:
+    when:
+      true: ${!output.hasIdComunicado && output.hasTextoAncoragem}
+    commands:
+      - tapOn:
+          text: "Mural | Tab 1 of 2"
+          optional: true
+      - tapOn:
+          text: "Mural"
+          optional: true
+      - swipe:
+          start: "50%, 28%"
+          end: "50%, 72%"
+          duration: 400
+      - waitForAnimationToEnd
+      - swipe:
+          start: "50%, 28%"
+          end: "50%, 72%"
+          duration: 400
+      - waitForAnimationToEnd
+      - scrollUntilVisible:
+          element:
+            text: ${output.textoAncoragem}
+          direction: DOWN
+          timeout: 20000
+          optional: true
+      - scrollUntilVisible:
+          element:
+            text: ${output.textoAncoragem}
+          direction: UP
+          timeout: 8000
+          optional: true
+      - extendedWaitUntil:
+          visible: ${output.textoAncoragem}
+          timeout: 25000
+      - assertVisible: ".*ID\\s*[0-9]+.*"
+
+- assertTrue: ${output.hasIdComunicado || output.hasTextoAncoragem}

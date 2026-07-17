@@ -21,10 +21,10 @@ function param(req: { params: Record<string, string | string[] | undefined> }, k
 
 export const homologationsRouter = Router({ mergeParams: true });
 
-homologationsRouter.get("/", (req, res) => {
+homologationsRouter.get("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
-  const homCatalog = readHomologationCatalog(project);
-  const testCatalog = readCatalog(project);
+  const homCatalog = await readHomologationCatalog(project);
+  const testCatalog = await readCatalog(project);
 
   const list = homCatalog.homologations.map((h) => ({
     ...h,
@@ -34,7 +34,7 @@ homologationsRouter.get("/", (req, res) => {
   res.json({ meta: homCatalog.meta, homologations: list });
 });
 
-homologationsRouter.post("/", (req, res) => {
+homologationsRouter.post("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const body = req.body as {
     title?: string;
@@ -49,7 +49,7 @@ homologationsRouter.post("/", (req, res) => {
     return res.status(400).json({ error: "Título é obrigatório" });
   }
 
-  const homCatalog = readHomologationCatalog(project);
+  const homCatalog = await readHomologationCatalog(project);
   const homologation = createHomologation(homCatalog, {
     project,
     title: body.title,
@@ -60,11 +60,11 @@ homologationsRouter.post("/", (req, res) => {
     build: body.build,
   });
 
-  const testCatalog = readCatalog(project);
+  const testCatalog = await readCatalog(project);
   const linked = linkTestsToHomologation(testCatalog, homologation);
 
-  writeHomologationCatalog(project, homCatalog);
-  if (linked > 0) writeCatalog(project, testCatalog);
+  await writeHomologationCatalog(project, homCatalog);
+  if (linked > 0) await writeCatalog(project, testCatalog);
 
   res.status(201).json({
     homologation,
@@ -73,27 +73,27 @@ homologationsRouter.post("/", (req, res) => {
   });
 });
 
-homologationsRouter.get("/:homSlug", (req, res) => {
+homologationsRouter.get("/:homSlug", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const homSlug = param(req, "homSlug");
-  const homCatalog = readHomologationCatalog(project);
+  const homCatalog = await readHomologationCatalog(project);
   const homologation = findHomologationBySlug(homCatalog, homSlug);
 
   if (!homologation) {
     return res.status(404).json({ error: "Homologação não encontrada" });
   }
 
-  const testCatalog = readCatalog(project);
+  const testCatalog = await readCatalog(project);
   res.json({
     homologation,
     progress: computeHomologationProgress(homologation, testCatalog),
   });
 });
 
-homologationsRouter.put("/:homSlug", (req, res) => {
+homologationsRouter.put("/:homSlug", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const homSlug = param(req, "homSlug");
-  const homCatalog = readHomologationCatalog(project);
+  const homCatalog = await readHomologationCatalog(project);
   const idx = homCatalog.homologations.findIndex(
     (h) => h.slug === homSlug || h.id === homSlug,
   );
@@ -138,11 +138,11 @@ homologationsRouter.put("/:homSlug", (req, res) => {
   }
 
   homCatalog.homologations[idx] = updated;
-  writeHomologationCatalog(project, homCatalog);
+  await writeHomologationCatalog(project, homCatalog);
 
-  const testCatalog = readCatalog(project);
+  const testCatalog = await readCatalog(project);
   if (body.testKeys) linkTestsToHomologation(testCatalog, updated);
-  if (body.testKeys) writeCatalog(project, testCatalog);
+  if (body.testKeys) await writeCatalog(project, testCatalog);
 
   res.json({
     homologation: updated,
@@ -151,7 +151,7 @@ homologationsRouter.put("/:homSlug", (req, res) => {
 });
 
 /** Sincroniza escopo + vínculos dos testes (checklist Mural) */
-homologationsRouter.post("/:homSlug/sync", (req, res) => {
+homologationsRouter.post("/:homSlug/sync", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const homSlug = param(req, "homSlug");
 
@@ -159,9 +159,9 @@ homologationsRouter.post("/:homSlug/sync", (req, res) => {
     return res.status(400).json({ error: "Sync automático só para homologação Mural por enquanto" });
   }
 
-  const { homCatalog, testCatalog, mural, linked } = syncMuralHomologation(project);
-  writeHomologationCatalog(project, homCatalog);
-  writeCatalog(project, testCatalog);
+  const { homCatalog, testCatalog, mural, linked } = await syncMuralHomologation(project);
+  await writeHomologationCatalog(project, homCatalog);
+  await writeCatalog(project, testCatalog);
 
   res.json({
     homologation: mural,
@@ -171,16 +171,16 @@ homologationsRouter.post("/:homSlug/sync", (req, res) => {
   });
 });
 
-homologationsRouter.post("/:homSlug/link-tests", (req, res) => {
+homologationsRouter.post("/:homSlug/link-tests", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const homSlug = param(req, "homSlug");
-  const homCatalog = readHomologationCatalog(project);
+  const homCatalog = await readHomologationCatalog(project);
   const homologation = findHomologationBySlug(homCatalog, homSlug);
   if (!homologation) return res.status(404).json({ error: "Homologação não encontrada" });
 
-  const testCatalog = readCatalog(project);
+  const testCatalog = await readCatalog(project);
   const linked = linkTestsToHomologation(testCatalog, homologation);
-  writeCatalog(project, testCatalog);
+  await writeCatalog(project, testCatalog);
 
   res.json({
     linked,

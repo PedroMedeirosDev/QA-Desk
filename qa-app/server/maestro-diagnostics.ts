@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { normalizeMaestroOutput } from "./maestro-output.js";
 
 const DEFAULT_APP_ID = "br.com.polygonus.mobile.amostra";
 
@@ -78,7 +79,7 @@ export function resolveAppVersionForRun(): string | undefined {
 
 /** Extrai ação/flow que falhou do stdout do Maestro. */
 export function parseMaestroFailure(output: string): MaestroFailureInfo | undefined {
-  const text = output.replace(/\r\n/g, "\n");
+  const text = normalizeMaestroOutput(output).replace(/\r\n/g, "\n");
   const lines = text.split("\n").map((l) => l.trimEnd());
 
   let failedAction: string | undefined;
@@ -133,8 +134,12 @@ const FLOW_HINTS: Array<{ match: RegExp; keywords: string[] }> = [
     keywords: ["perfil", "coordenador", "professor", "função", "funcao", "foto/nome"],
   },
   {
-    match: /navegar_mural|voltar_para_home/i,
-    keywords: ["mural", "card"],
+    match: /navegar_mural|voltar_para_home|teardown_estavel/i,
+    keywords: ["mural", "card", "teardown", "home"],
+  },
+  {
+    match: /filtrar_enviadas|selecionar_filtro_sentido/i,
+    keywords: ["enviadas", "filtro", "confirmar"],
   },
   {
     match: /abrir_novo_comunicado/i,
@@ -153,8 +158,8 @@ const FLOW_HINTS: Array<{ match: RegExp; keywords: string[] }> = [
     keywords: ["enviar"],
   },
   {
-    match: /ensure_logged_out|logout/i,
-    keywords: ["sair", "logout", "login"],
+    match: /verificar_responsavel_ve|login_etmenezes|ensure_logged_out/i,
+    keywords: ["etmenezes", "responsável", "responsavel", "logout", "confirmar"],
   },
 ];
 

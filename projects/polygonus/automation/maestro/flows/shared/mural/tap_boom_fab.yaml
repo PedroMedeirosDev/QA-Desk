@@ -1,0 +1,28 @@
+# FAB → aguarda itens do BoomMenu aparecerem (sem 2º tap prematuro que fecha o menu).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: mural_boom_fab
+    optional: true
+
+- extendedWaitUntil:
+    visible:
+      id: "mural_boom_comunicado"
+    timeout: 5000
+
+# Fallback: coordenada só se o item do menu não apareceu no tempo
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_boom_comunicado"
+    commands:
+      - tapOn:
+          point: "86%, 88%"
+      - extendedWaitUntil:
+          visible:
+            id: "mural_boom_comunicado"
+          timeout: 5000
+
+- assertVisible:
+    id: "mural_boom_comunicado"

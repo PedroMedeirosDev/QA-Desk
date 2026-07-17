@@ -1,0 +1,7 @@
+# Debug: captura ID do 1º card em Enviadas
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml
+- runFlow: ../shared/mural/capturar_id_ultimo_comunicado.yaml
+- assertTrue: ${output.idComunicado.indexOf("ID") >= 0}

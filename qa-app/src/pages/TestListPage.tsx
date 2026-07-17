@@ -1,28 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ExternalLink, ListChecks, Play, Plus } from "lucide-react";
+import { Bug, ExternalLink, ListChecks, Play, Plus } from "lucide-react";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
 import { api } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
-import { useRunProgress } from "@/lib/run-progress";
+import { useRunProgress, RUN_CANCELLED_MESSAGE } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { countTestRuns } from "@/lib/history";
 import {
+  projectBugsListPath,
   projectDetailPath,
   projectHomologationsListPath,
   projectNewPath,
 } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
 import { CHANNEL_LABELS, getProjectChannels, type ProductChannel } from "@/config/channels";
-import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
+import type { ProjectSlug, TestRecord } from "@/types/test-record";
 import {
-  BUG_STATUS_LABELS,
   displayStatus,
-  formatTestId,
+  formatRecordId,
   inferChannel,
   isTestCase,
 } from "@/types/test-record";
+import { sortTestRecords } from "@/lib/test-sort";
 import type { HomologationWithProgress } from "@/types/homologation";
 
 const EMPTY_CHANNEL_HINT: Record<ProductChannel, string> = {
@@ -42,7 +43,6 @@ export function TestListPage({
   const toast = useToast();
   const { runAutomation, running: liveRunning } = useRunProgress();
   const [reports, setReports] = useState<TestRecord[]>([]);
-  const [statusFilter, setStatusFilter] = useState<BugStatus | "todos">("todos");
   const [campaignOnly, setCampaignOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [runningId, setRunningId] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function TestListPage({
   }, [project]);
 
   const filtered = useMemo(() => {
-    let list = reports;
+    let list = reports.filter(isTestCase);
     if (routeChannel) {
       list = list.filter((r) => inferChannel(r) === routeChannel);
     }
@@ -83,11 +83,8 @@ export function TestListPage({
       const slugs = new Set(channelHomologations.map((h) => h.slug));
       list = list.filter((r) => r.campaign && slugs.has(r.campaign));
     }
-    if (statusFilter !== "todos") {
-      list = list.filter((r) => !isTestCase(r) && r.status === statusFilter);
-    }
-    return list;
-  }, [reports, routeChannel, statusFilter, campaignOnly, channelHomologations]);
+    return sortTestRecords(list, channelHomologations);
+  }, [reports, routeChannel, campaignOnly, channelHomologations]);
 
   const homologationCount = channelHomologations.length;
 
@@ -105,10 +102,15 @@ export function TestListPage({
       const res = await runAutomation({
         project,
         testId: id,
-        title: report?.title ?? formatTestId(id),
+        title: report?.title ?? formatRecordId(id, report),
       });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
-      if (res.ok) {
+      if (res.cancelled) {
+        toast.info(`Execução #${res.runNumber} cancelada${ver}`, {
+          title: "Maestro",
+          duration: 8000,
+        });
+      } else if (res.ok) {
         toast.success(`Execução #${res.runNumber} passou${ver}`);
       } else {
         const where =
@@ -121,7 +123,13 @@ export function TestListPage({
       }
       reload({ soft: true });
     } catch (err) {
-      toast.error(toastErrorMessage(err, "Erro ao executar"));
+      const msg = toastErrorMessage(err, "Erro ao executar");
+      if (msg === RUN_CANCELLED_MESSAGE) {
+        toast.info("Execução cancelada", { title: "Maestro", duration: 8000 });
+        reload({ soft: true });
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setRunningId(null);
     }
@@ -152,19 +160,6 @@ export function TestListPage({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm text-muted-foreground">Status (bugs)</label>
-          <select
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as BugStatus | "todos")}
-          >
-            <option value="todos">Todos</option>
-            {Object.entries(BUG_STATUS_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
           {homologationCount > 0 && (
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -179,6 +174,14 @@ export function TestListPage({
             {filtered.length} teste(s)
             {routeChannel && hasChannels ? ` · ${CHANNEL_LABELS[routeChannel]}` : ""}
           </span>
+          <button
+            type="button"
+            onClick={() => navigate(projectBugsListPath(project, routeChannel))}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            <Bug className="size-3.5" />
+            Ver bugs reportados
+          </button>
         </div>
         <button
           type="button"
@@ -232,7 +235,9 @@ export function TestListPage({
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium">{r.title}</p>
-                      <p className="font-mono text-xs text-muted-foreground">{formatTestId(r.id)}</p>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {formatRecordId(r.id, r)}
+                      </p>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1.5">

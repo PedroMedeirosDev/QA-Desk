@@ -1,0 +1,12 @@
+# PHJESUS coordenador + Mural aberto (reutiliza sessão quando possível).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../auth/resume_phjesus_coordenador.yaml
+
+# Já na lista do Mural — não entra de novo pelo card home
+- runFlow:
+    when:
+      notVisible: "Show menu|Recebidas|Enviadas|Pendentes|Responder comunicado"
+    commands:
+      - runFlow: ../nav/navegar_mural.yaml

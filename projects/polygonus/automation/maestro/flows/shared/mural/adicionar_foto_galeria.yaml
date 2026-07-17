@@ -1,0 +1,37 @@
+# Anexa imagem da galeria.
+# Semantics: mural_composer_galeria
+#
+# DocumentsUI (API 33+ emulator): chips Images/Audio/Videos + "Recent"
+# — NÃO esperar "Photos|Galeria|Select" na abertura.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: mural_composer_galeria
+
+# Permissão (primeira vez)
+- runFlow:
+    when:
+      visible: "Allow|ALLOW|Permitir|While using|Durante o uso"
+    commands:
+      - tapOn: "Allow|ALLOW|Permitir|While using the app|Durante o uso do app"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Images|Recent|Recentes|Fotos|Photos|Galeria|Select|Selecionar|Show roots|Foto_1|Documents"
+    timeout: 12000
+
+- runFlow:
+    when:
+      notVisible: "Images|Recent|Recentes|Fotos|Photos|Galeria|Select|Selecionar|Show roots|Foto_1"
+    commands:
+      - tapOn: "Adicionar imagem da galeria"
+      - extendedWaitUntil:
+          visible: "Images|Recent|Recentes|Fotos|Photos|Galeria|Select|Selecionar|Show roots|Foto_1"
+          timeout: 10000
+
+- runFlow: pick_galeria_android.yaml
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
+    timeout: 10000

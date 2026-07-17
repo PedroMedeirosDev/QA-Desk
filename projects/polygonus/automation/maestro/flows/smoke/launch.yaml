@@ -1,44 +1,31 @@
 # CT-SMOKE-01: Primeiro acesso — slides de apresentação e chegada ao login
 #
-# Fluxo: splash → 6 slides → tela de login.
-# O app tem 6 slides; o botão de avançar (arrow_forward) aparece nos primeiros 5.
-# No último slide aparece "FAZER LOGIN" e o botão de avançar some.
+# Semantics: auth_onboarding_avancar (fallback coordenada)
 
 appId: br.com.polygonus.mobile.amostra
 ---
-# ── 1. Abre o app com estado completamente limpo ─────────────────────────────
 - launchApp:
     clearState: true
 
-# ── 2. Avança pelos 5 primeiros slides ───────────────────────────────────────
-# Aguarda o primeiro slide carregar completamente antes de começar
 - waitForAnimationToEnd
 - assertVisible: "Colégio Polygonus"
 
-- tapOn:
-    point: "85%, 91%"
-- waitForAnimationToEnd
-- tapOn:
-    point: "85%, 91%"
-- waitForAnimationToEnd
-- tapOn:
-    point: "85%, 91%"
-- waitForAnimationToEnd
-- tapOn:
-    point: "85%, 91%"
-- waitForAnimationToEnd
-- tapOn:
-    point: "85%, 91%"
-- waitForAnimationToEnd
+- repeat:
+    times: 5
+    commands:
+      - runFlow:
+          file: ../shared/helpers/tap_id_or_point.yaml
+          env:
+            SEM_ID: auth_onboarding_avancar
+            FALLBACK_POINT: "85%, 91%"
+            AFTER_VISIBLE: "FAZER LOGIN|ENTRAR|Acompanhe de perto"
+      - waitForAnimationToEnd
 
-# ── 3. Slide final: "Comece a usar agora mesmo" ───────────────────────────────
 - assertVisible: "FAZER LOGIN"
 - assertVisible: "RECUPERAR ACESSO POR EMAIL"
 
-# ── 4. Vai para a tela de login ───────────────────────────────────────────────
 - tapOn: "FAZER LOGIN"
 
-# ── 5. Verifica tela de login ────────────────────────────────────────────────
 - assertVisible: "ENTRAR"
 - assertVisible: "E-mail ou Login"
 - assertVisible: "Senha"

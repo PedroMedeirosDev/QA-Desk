@@ -1,0 +1,20 @@
+# Item Evento no BoomMenu.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: mural_boom_evento
+
+- extendedWaitUntil:
+    visible: "Novo evento|Evento|Para:"
+    timeout: 8000
+
+- runFlow:
+    when:
+      notVisible: "Novo evento|Para:"
+      visible: "comemorativa"
+    commands:
+      - tapOn: "comemorativa"
+      - extendedWaitUntil:
+          visible: "Novo evento|Evento|Para:"
+          timeout: 5000

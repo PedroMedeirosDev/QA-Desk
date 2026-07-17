@@ -1,0 +1,14 @@
+# Fecha coach marks / onboarding (botão PULAR).
+# Até 4 spotlights — na prática 1–2 após login; loop sai rápido quando não há PULAR.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- repeat:
+    times: 4
+    commands:
+      - runFlow:
+          when:
+            visible: "PULAR"
+          commands:
+            - tapOn: "PULAR"
+            - waitForAnimationToEnd

@@ -1,0 +1,17 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml
+- runFlow: ../shared/mural/abrir_menu_primeiro_comunicado.yaml
+- tapOn: "Estatísticas"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 8000
+- copyTextFrom:
+    text: "ID [0-9]+"
+    optional: true
+- evalScript: '${output.id = ((maestro.copiedText || "").match(/ID\\s*[0-9]+/) || [])[0] || ""}'
+- pressKey: Back
+- waitForAnimationToEnd
+- assertTrue: ${output.id.length > 0}

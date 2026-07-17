@@ -1,0 +1,9 @@
+# Filtro Pendentes — dropdown TipoSentido.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: selecionar_filtro_sentido.yaml
+    env:
+      FILTRO: Pendentes
+      FILTRO_TAP: "Pendentes"

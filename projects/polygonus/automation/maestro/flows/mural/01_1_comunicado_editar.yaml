@@ -1,47 +1,43 @@
-# CT-MURAL-02: Editar comunicado existente
+# CT-MURAL-02 — Editar comunicado (Enviadas)
 #
-# Pré-requisito: CT-MURAL-01 rodou (existe "Teste Comunicado").
-# Contrato: ENTRAR → ação → ENTRAR
+# Pré-requisito: ao menos 1 comunicado em Enviadas (qualquer texto).
+# Edita o mais recente; valida pelo ID capturado + texto novo.
 #
-# STATUS: draft — STUDIO: mapear ícone more_vert (sem tooltip "Mais opções" no código)
+# Via qa-app: prep → adb captura ID → executa flow gerado com ID literal
+# (este YAML é o registro do CT; o runtime pode substituí-lo por .generated/).
+# Via CLI: maestro test -e ID_COMUNICADO=<digitos> mural/01_1_comunicado_editar.yaml
+#
+# Contrato: resume → ação → teardown
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ../shared/auth/login_phjesus.yaml
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
+# ID injetado pela qa-app em flows/.env + -e (evalScript inline no flow raiz).
+- evalScript: |
+    ${(() => {
+      if (output.idComunicado && String(output.idComunicado).length > 3) return;
+      var raw = "";
+      try {
+        if (typeof ID_COMUNICADO !== "undefined" && ID_COMUNICADO) {
+          raw = String(ID_COMUNICADO).trim();
+        }
+      } catch (e) {}
+      var digits = raw.replace(/[^0-9]/g, "");
+      if (digits.length > 0) {
+        output.idComunicado = "ID " + digits;
+      } else if (!output.idComunicado) {
+        output.idComunicado = "";
+      }
+    })()}
 
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- tapOn:
-    text: "Enviadas"
-    optional: true
-
-- assertVisible: "Teste Comunicado"
-
-# STUDIO: PopupMenuButton Icons.more_vert — sem tooltip no código-fonte
-- tapOn:
-    text: "Mais opções"
-    optional: true
-- tapOn:
-    text: "More options"
-    optional: true
-
-- tapOn: "Editar"
-
-- extendedWaitUntil:
-    visible: "Editar comunicado"
-    timeout: 10000
-
-- eraseText: 50
+- assertTrue: ${(output.idComunicado || "").length > 3}
 
 - runFlow:
-    file: ../shared/helpers/colar_texto.yaml
+    file: ../shared/mural/editar_comunicado_lista.yaml
     env:
-      TEXTO: "Teste Comunicado editado"
+      NOVO_TEXTO: "Teste Comunicado editado CT02"
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${output.idComunicado}
 
-- runFlow: ../shared/mural/enviar_comunicado.yaml
-
-- assertVisible: "Teste Comunicado editado"
-
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml

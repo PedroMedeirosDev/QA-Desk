@@ -1,0 +1,22 @@
+# Clipe → Correspondência → Declaração de IR → Ok.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: abrir_menu_anexo_clip.yaml
+
+- tapOn: "Correspondência|Correspondencia"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Selecionar correspondência|Selecionar correspondencia|Declaração de IR|Declaracao de IR"
+    timeout: 8000
+
+- tapOn: "Declaração de IR|Declaracao de IR|.*declara[cç][aã]o.*IR.*"
+- waitForAnimationToEnd
+
+- tapOn: "Ok|OK"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
+    timeout: 10000

@@ -8,7 +8,10 @@ import type {
   TestRecord,
 } from "./types.js";
 
-function migrateTestId(id: string): string {
+const READINESS_PASS_THRESHOLD = 2;
+
+function migrateTestId(id: string, recordType?: TestRecord["recordType"]): string {
+  if (recordType === "bug") return id;
   return id.replace(/^BUG-/, "TEST-");
 }
 
@@ -67,6 +70,28 @@ export function countTestRuns(history: HistoryEntry[]): number {
   ).length;
 }
 
+/** Passes Maestro com `meta.result === "success"` (ou legado `automation_passed`). */
+export function countSuccessfulAutomationRuns(history: HistoryEntry[]): number {
+  return history.filter(
+    (h) =>
+      (h.action === "test_run" && h.meta?.result === "success") ||
+      h.action === "automation_passed",
+  ).length;
+}
+
+/** Promove `readiness` para `ready` após 2 passes. Retorna true se acabou de promover. */
+export function applyAutomationReadinessAfterRun(
+  automation: NonNullable<TestRecord["automation"]>,
+  history: HistoryEntry[],
+): boolean {
+  const wasReady = automation.readiness === "ready";
+  if (countSuccessfulAutomationRuns(history) >= READINESS_PASS_THRESHOLD) {
+    automation.readiness = "ready";
+    return !wasReady;
+  }
+  return false;
+}
+
 export function nextRunNumber(history: HistoryEntry[]): number {
   return countTestRuns(history) + 1;
 }
@@ -112,7 +137,7 @@ export function normalizeCatalog(catalog: TestCatalog): { catalog: TestCatalog; 
   let changed = false;
 
   for (const report of catalog.reports) {
-    const migratedId = migrateTestId(report.id);
+    const migratedId = migrateTestId(report.id, report.recordType);
     if (migratedId !== report.id) {
       report.id = migratedId;
       for (const ev of report.evidence ?? []) {
@@ -143,6 +168,11 @@ export function normalizeCatalog(catalog: TestCatalog): { catalog: TestCatalog; 
     if (report.executionMode !== mode) {
       report.executionMode = mode;
       changed = true;
+    }
+    if (report.automation?.flowPath) {
+      if (applyAutomationReadinessAfterRun(report.automation, report.history)) {
+        changed = true;
+      }
     }
   }
 

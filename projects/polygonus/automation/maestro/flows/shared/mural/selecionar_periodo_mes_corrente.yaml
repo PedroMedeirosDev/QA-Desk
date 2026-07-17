@@ -1,0 +1,18 @@
+# Dialog "Período": marca "Mes corrente" → Ok.
+# Pré-requisito: dialog já aberto (após Inadimplentes ou Clipe → Boleto).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Período|Periodo|Mes corrente|Mês corrente|mês corrente"
+    timeout: 8000
+
+- tapOn: "Mes corrente|Mês corrente|mês corrente|.*[Mm]es corrente.*"
+- waitForAnimationToEnd
+
+- tapOn: "Ok|OK"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
+    timeout: 10000

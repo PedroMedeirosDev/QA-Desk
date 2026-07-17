@@ -1,26 +1,26 @@
-# Seleciona arquivo no picker nativo (DocumentsUI) pelo nome visível.
+# Clipe → Arquivo → picker nativo pelo nome (PDF, vídeo, etc.).
 #
 # Env obrigatório:
-#   ANEXO_NOME — ex.: boleto_teste.pdf (nome exato no device, case-sensitive)
+#   ANEXO_NOME — ex.: PDF TESTE.pdf / Video_teste.mp4 (nome no device)
 #
 # Env opcional:
-#   ANEXO_PASTA — Download | Movies | Pictures (só orienta qual pasta tentar abrir)
+#   ANEXO_PASTA — Download | Movies | Pictures
 #
-# Pré-requisito: arquivo no device (scripts/push-maestro-fixtures.ps1 ou adb push).
+# Pré-requisito: arquivo no device (adb push em /sdcard/Download).
 
 appId: br.com.polygonus.mobile.amostra
 ---
-# Ícone de anexo (clip) no bottom bar da composição
-- tapOn:
-    text: "Anexar arquivo"
-    optional: true
-- tapOn:
-    point: "50%, 92%"
-    optional: true
+- runFlow: abrir_menu_anexo_clip.yaml
 
+# Menu do clipe: "Selecionar arquivo" (não "Arquivo").
 - tapOn: "Selecionar arquivo"
+- waitForAnimationToEnd
 
-# Pasta no picker (todos optional — o tap no nome costuma bastar)
+- extendedWaitUntil:
+    visible: "Images|Recent|Downloads|Download|Documents|Show roots|${ANEXO_NOME}|Abrir|Open"
+    timeout: 12000
+
+# Pasta no picker (optional — o tap no nome costuma bastar)
 - tapOn:
     text: "${ANEXO_PASTA}"
     optional: true
@@ -42,8 +42,10 @@ appId: br.com.polygonus.mobile.amostra
 - tapOn:
     text: "Imagens"
     optional: true
+- tapOn:
+    text: "Documents"
+    optional: true
 
-# Nome exato do arquivo — o seletor mais estável
 - tapOn: "${ANEXO_NOME}"
 
 - tapOn:
@@ -55,3 +57,8 @@ appId: br.com.polygonus.mobile.amostra
 - tapOn:
     text: "Selecionar"
     optional: true
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
+    timeout: 10000

@@ -1,0 +1,15 @@
+# Traz o app para o primeiro plano (sem clearState).
+#
+# CUIDADO: launchApp recarrega a Activity — pode reexibir coach marks (PULAR).
+# Não usar no meio do CT; só recuperação manual se o emulador minimizou.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- launchApp
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "PULAR"
+    commands:
+      - runFlow: dismiss_coachmarks_pular.yaml

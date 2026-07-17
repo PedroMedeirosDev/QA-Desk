@@ -1,0 +1,36 @@
+# Abre menu ⋮ do 1º comunicado em Enviadas.
+# Header também tem Show menu — usar index 1 (1º card).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Show menu"
+    timeout: 10000
+
+- runFlow:
+    when:
+      visible: "Remetente|Destinatário|CARDÁPIO|Filtrar"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd
+
+- tapOn:
+    text: "Show menu"
+    index: 1
+
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+    commands:
+      - tapOn:
+          text: "Show menu"
+          index: 0
+          optional: true
+      - tapOn:
+          id: "mural_card_menu"
+          index: 0
+          optional: true
+
+- extendedWaitUntil:
+    visible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+    timeout: 8000

@@ -1,9 +1,41 @@
 # Preenche o texto do comunicado.
 # Env: TEXTO_COMUNICADO
 #
-# Fonte: pt_BR.json → writeYourMessageHere = "Escreva seu texto aqui"
+# mural_composer_texto existe no app, mas no emulador tap no id pode cair no
+# ícone de enquete (bottom bar). Usar hint "Escreva seu texto aqui" + recovery.
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- tapOn: "Escreva seu texto aqui"
+- extendedWaitUntil:
+    visible: "Novo comunicado"
+    timeout: 15000
+
+- extendedWaitUntil:
+    visible: "Escreva seu texto aqui"
+    timeout: 10000
+
+- runFlow: fechar_menu_enquete_acidental.yaml
+
+- scrollUntilVisible:
+    element:
+      text: "Escreva seu texto aqui"
+    direction: DOWN
+    timeout: 8000
+    optional: true
+
+- tapOn:
+    text: "Escreva seu texto aqui"
+
+- runFlow: fechar_menu_enquete_acidental.yaml
+
+# Fallback: área central do card de texto (acima da bottom bar)
+- runFlow:
+    when:
+      visible: "Nova"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd
+      - tapOn:
+          point: "50%, 45%"
+
 - inputText: ${TEXTO_COMUNICADO}

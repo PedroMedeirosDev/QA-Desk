@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDatabaseEnabled } from "./db/config.js";
+import { readCatalogFromDb, writeCatalogToDb } from "./db/pg-catalog.js";
 import { findHomologationBySlug, readHomologationCatalog } from "./homologations.js";
 import { normalizeCatalog } from "./test-key.js";
 import type { HistoryEntry, ProjectSlug, TestCatalog, TestRecord } from "./types.js";
@@ -38,7 +40,7 @@ export function ensureDirs(project: ProjectSlug) {
   fs.mkdirSync(path.join(UPLOADS_ROOT, project), { recursive: true });
 }
 
-export function readCatalog(project: ProjectSlug): TestCatalog {
+function readCatalogFromFile(project: ProjectSlug): TestCatalog {
   ensureDirs(project);
   migrateLegacyCatalog(project);
   const file = catalogPath(project);
@@ -50,9 +52,22 @@ export function readCatalog(project: ProjectSlug): TestCatalog {
     fs.writeFileSync(file, JSON.stringify(empty, null, 2));
     return empty;
   }
-  const raw = JSON.parse(fs.readFileSync(file, "utf8")) as TestCatalog;
+  return JSON.parse(fs.readFileSync(file, "utf8")) as TestCatalog;
+}
+
+function writeCatalogToFile(project: ProjectSlug, catalog: TestCatalog) {
+  ensureDirs(project);
+  catalog.meta.updatedAt = new Date().toISOString().slice(0, 10);
+  catalog.meta.project = project;
+  fs.writeFileSync(catalogPath(project), `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
+}
+
+async function normalizeAndLinkHomologations(
+  project: ProjectSlug,
+  raw: TestCatalog,
+): Promise<{ catalog: TestCatalog; changed: boolean }> {
   const { catalog, changed } = normalizeCatalog(raw);
-  const homCatalog = readHomologationCatalog(project);
+  const homCatalog = await readHomologationCatalog(project);
   let homChanged = false;
   for (const report of catalog.reports) {
     if (!report.campaign && !report.homologationId) continue;
@@ -66,14 +81,48 @@ export function readCatalog(project: ProjectSlug): TestCatalog {
       homChanged = true;
     }
   }
-  if (changed || homChanged) writeCatalog(project, catalog);
+  return { catalog, changed: changed || homChanged };
+}
+
+export async function readCatalog(project: ProjectSlug): Promise<TestCatalog> {
+  if (isDatabaseEnabled()) {
+    let catalog = await readCatalogFromDb(project);
+    if (catalog.reports.length === 0) {
+      const fromFile = readCatalogFromFile(project);
+      if (fromFile.reports.length > 0) {
+        const { catalog: normalized, changed } = await normalizeAndLinkHomologations(
+          project,
+          fromFile,
+        );
+        await writeCatalogToDb(project, normalized);
+        if (changed) writeCatalogToFile(project, normalized);
+        return normalized;
+      }
+    }
+    const { catalog: normalized, changed } = await normalizeAndLinkHomologations(project, catalog);
+    if (changed) await writeCatalogToDb(project, normalized);
+    return normalized;
+  }
+
+  const raw = readCatalogFromFile(project);
+  const { catalog, changed } = await normalizeAndLinkHomologations(project, raw);
+  if (changed) writeCatalogToFile(project, catalog);
   return catalog;
 }
 
-export function writeCatalog(project: ProjectSlug, catalog: TestCatalog) {
+export async function writeCatalog(project: ProjectSlug, catalog: TestCatalog): Promise<void> {
   catalog.meta.updatedAt = new Date().toISOString().slice(0, 10);
   catalog.meta.project = project;
-  fs.writeFileSync(catalogPath(project), `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
+  if (isDatabaseEnabled()) {
+    await writeCatalogToDb(project, catalog);
+    return;
+  }
+  writeCatalogToFile(project, catalog);
+}
+
+/** Lê o JSON do disco (migração / backup), sem Postgres. */
+export function readCatalogFileOnly(project: ProjectSlug): TestCatalog {
+  return readCatalogFromFile(project);
 }
 
 export function appendHistory(
@@ -90,13 +139,27 @@ export function appendHistory(
 }
 
 export function nextTestId(project: ProjectSlug, catalog: TestCatalog) {
+  return nextRecordId(project, catalog, "teste");
+}
+
+export function nextBugId(project: ProjectSlug, catalog: TestCatalog) {
+  return nextRecordId(project, catalog, "bug");
+}
+
+function nextRecordId(
+  project: ProjectSlug,
+  catalog: TestCatalog,
+  recordType: "teste" | "bug",
+) {
+  const prefix = recordType === "bug" ? "BUG" : "TEST";
   const year = new Date().getFullYear();
+  const re = new RegExp(`^${prefix}-${year}-(\\d+)$`);
   const nums = catalog.reports
-    .map((r) => r.id.match(/(?:BUG|TEST)-\d{4}-(\d+)/))
+    .map((r) => r.id.match(re))
     .filter(Boolean)
     .map((m) => parseInt(m![1], 10));
   const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  return `TEST-${year}-${String(next).padStart(3, "0")}`;
+  return `${prefix}-${year}-${String(next).padStart(3, "0")}`;
 }
 
 export function uploadsDir(project: ProjectSlug, testId: string) {

@@ -1,0 +1,41 @@
+# Abre o menu ⋮ do comunicado mais recente em Enviadas.
+# Grava output.idComunicado antes de abrir o menu (ou usa ID já seedado).
+#
+# Env opcional:
+#   SKIP_FILTRAR_ENVIADAS=1 — já está em Enviadas (prep/qa-app); evita reabrir o dropdown
+
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: |
+    ${(() => {
+      var skip = false;
+      try {
+        if (typeof SKIP_FILTRAR_ENVIADAS !== "undefined" && SKIP_FILTRAR_ENVIADAS) {
+          skip = String(SKIP_FILTRAR_ENVIADAS) === "1" || String(SKIP_FILTRAR_ENVIADAS).toLowerCase() === "true";
+        }
+      } catch (e) {}
+      output.skipFiltrarEnviadas = skip;
+    })()}
+
+- runFlow:
+    when:
+      true: ${!output.skipFiltrarEnviadas}
+    file: filtrar_enviadas.yaml
+
+- runFlow:
+    file: seed_id_comunicado_env.yaml
+    env:
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${MURAL_ID}
+
+- runFlow:
+    when:
+      true: ${!(output.idComunicado && String(output.idComunicado).length > 3)}
+    file: capturar_id_ultimo_comunicado.yaml
+    env:
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${MURAL_ID}
+
+- assertTrue: ${(output.idComunicado || "").length > 3}
+
+- runFlow: abrir_menu_primeiro_comunicado.yaml

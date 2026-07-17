@@ -1,0 +1,54 @@
+# Retomada CT-06: DocumentsUI picker já aberto (após Selecionar arquivo).
+# Escolhe PDF TESTE.pdf → envia → Enviadas.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Show roots|Downloads|Download|Recent|Images|PDF TESTE.pdf"
+    timeout: 10000
+
+- tapOn:
+    text: "Show roots"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Downloads"
+    optional: true
+- tapOn:
+    text: "Download"
+    optional: true
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element: "PDF TESTE.pdf"
+    direction: DOWN
+    timeout: 12000
+    optional: true
+
+- tapOn: "PDF TESTE.pdf"
+
+- tapOn:
+    text: "Abrir"
+    optional: true
+- tapOn:
+    text: "Open"
+    optional: true
+- tapOn:
+    text: "Selecionar"
+    optional: true
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
+    timeout: 15000
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

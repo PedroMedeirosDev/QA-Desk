@@ -1,0 +1,29 @@
+# Troca para ETMENEZES e confirma comunicado no Mural pelo ID (obrigatório).
+#
+# Env: ID_COMUNICADO — "ID 9082697" ou dígitos / ${output.idComunicado}
+
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: |
+    ${(() => {
+      var raw = output.idComunicado || "";
+      try {
+        if (typeof ID_COMUNICADO !== "undefined" && ID_COMUNICADO) {
+          raw = String(ID_COMUNICADO).trim() || raw;
+        }
+      } catch (e) {}
+      var digits = String(raw).replace(/[^0-9]/g, "");
+      output.hasIdComunicado = digits.length > 3;
+      if (output.hasIdComunicado) output.idComunicado = "ID " + digits;
+    })()}
+
+- assertTrue: ${output.hasIdComunicado}
+
+- runFlow: ../auth/ensure_logged_out.yaml
+- runFlow: ../auth/login_etmenezes.yaml
+- runFlow: ../nav/navegar_mural.yaml
+
+- runFlow:
+    file: assert_comunicado_por_id.yaml
+    env:
+      ID_COMUNICADO: ${output.idComunicado}

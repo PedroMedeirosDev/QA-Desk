@@ -1,0 +1,15 @@
+# Preenche Novo comunicado até o texto (sem enviar).
+# Env obrigatório: TEXTO_COMUNICADO
+#
+# Padrão: turmas → alvo Todos (filtro ao lado de Para:) → texto.
+# Reutilize antes de enquete, anexos ou enviar.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: abrir_novo_comunicado.yaml
+- runFlow: selecionar_turmas_comunicado.yaml
+- runFlow: selecionar_alvo_todos.yaml
+- runFlow:
+    file: escrever_comunicado.yaml
+    env:
+      TEXTO_COMUNICADO: ${TEXTO_COMUNICADO}

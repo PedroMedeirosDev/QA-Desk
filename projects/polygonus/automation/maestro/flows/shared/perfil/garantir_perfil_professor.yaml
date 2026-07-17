@@ -7,7 +7,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: abrir_tela_perfil.yaml
     env:
-      NOME_USUARIO: "${NOME_PHJESUS}"
+      NOME_USUARIO: "Pedro Jesus|Pedro"
 
 - runFlow:
     file: selecionar_funcao.yaml
@@ -15,7 +15,7 @@ appId: br.com.polygonus.mobile.amostra
       FUNCAO: "PROFESSORES"
 
 - extendedWaitUntil:
-    visible: ".*MURAL.*|CARDÁPIO"
+    visible: ".*MURAL.*"
     timeout: 30000
 
 - runFlow: verificar_perfil_professor.yaml

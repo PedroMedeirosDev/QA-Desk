@@ -1,0 +1,23 @@
+# Confirma comunicado na lista — validação por ID (texto só como âncora opcional).
+#
+# Env opcional:
+#   TEXTO_COMUNICADO — âncora para achar o card na lista
+#   ID_COMUNICADO    — id fixo; senão captura da UI → output.idComunicado
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: capturar_id_comunicado_lista.yaml
+    env:
+      TEXTO_ANCORAGEM: ${TEXTO_COMUNICADO}
+      ID_COMUNICADO: ${ID_COMUNICADO}
+
+- runFlow: assert_comunicado_por_id.yaml
+
+- runFlow:
+    when:
+      visible: "${TEXTO_COMUNICADO}"
+    commands:
+      - assertVisible:
+          text: "${TEXTO_COMUNICADO}"
+          optional: true

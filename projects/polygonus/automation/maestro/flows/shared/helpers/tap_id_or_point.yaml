@@ -1,0 +1,18 @@
+# Tap por id; fallback em coordenada SÓ se AFTER_VISIBLE não aparecer.
+#
+# Env: SEM_ID, FALLBACK_POINT, AFTER_VISIBLE
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: "${SEM_ID}"
+    optional: true
+
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      notVisible: "${AFTER_VISIBLE}"
+    commands:
+      - tapOn:
+          point: "${FALLBACK_POINT}"

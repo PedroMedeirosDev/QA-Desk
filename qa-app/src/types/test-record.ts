@@ -40,7 +40,7 @@ export interface AutomationLink {
   /** draft = ainda mapeando no Studio · ready = validado 2× no emulador */
   readiness?: "draft" | "ready";
   lastRunAt?: string;
-  lastRunStatus?: "idle" | "running" | "success" | "failed";
+  lastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
   lastRunOutput?: string;
 }
 
@@ -68,6 +68,12 @@ export interface TestRecord {
   priority?: "baixa" | "media" | "alta" | "critica";
   severity?: "baixa" | "media" | "alta" | "critica";
   build?: string;
+  /** Ex.: API 33 — emulador Medium_Phone */
+  osVersion?: string;
+  /** Ex.: emulador, celular físico, emulador + celular */
+  deviceLabel?: string;
+  /** Logs, JSON da API, stack — substitui "Console" no report mobile */
+  technicalEvidence?: string;
   evidence?: EvidenceFile[];
   automation?: AutomationLink;
   comments?: Array<{ at: string; author: string; text: string }>;
@@ -150,6 +156,20 @@ export function inferChannel(
 
 export function isTestCase(record: Pick<TestRecord, "recordType" | "campaign">): boolean {
   return (record.recordType ?? (record.campaign ? "teste" : "bug")) === "teste";
+}
+
+export function isBugReport(record: Pick<TestRecord, "recordType" | "campaign">): boolean {
+  return !isTestCase(record);
+}
+
+/** Exibe BUG-… para bugs e TEST-… para casos de teste */
+export function formatRecordId(
+  id: string,
+  record?: Pick<TestRecord, "recordType" | "campaign">,
+): string {
+  const asBug = record ? isBugReport(record) : id.startsWith("BUG-");
+  if (asBug) return id.replace(/^TEST-/, "BUG-");
+  return id.replace(/^BUG-/, "TEST-");
 }
 
 export function displayStatus(record: TestRecord): {

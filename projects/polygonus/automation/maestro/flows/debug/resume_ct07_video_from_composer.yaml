@@ -1,0 +1,25 @@
+# Retomada CT-07: vídeo já anexado no composer (compressão ok / 100).
+# Só envia → Enviadas.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible: "Compressão em andamento|aguardar o término da compressão"
+    commands:
+      - tapOn: "Fechar"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:"
+    timeout: 10000
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

@@ -1,0 +1,15 @@
+# Filtro no Mural — wrapper sobre selecionar_filtro_sentido (semantics).
+#
+# Env:
+#   FILTRO     — label no header (ex.: Enviadas)
+#   FILTRO_TAP — regex no menu (ex.: Enviadas|Enviados)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: selecionar_filtro_sentido.yaml
+    env:
+      FILTRO: ${FILTRO}
+      FILTRO_TAP: ${FILTRO_TAP}
+
+- assertVisible: "${FILTRO}|${FILTRO_TAP}"

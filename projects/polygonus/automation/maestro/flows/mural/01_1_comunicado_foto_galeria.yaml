@@ -1,70 +1,28 @@
-# CT-MURAL-05: Comunicado com foto da galeria + salvar/compartilhar anexo
+# CT-MURAL-05: Comunicado com foto da galeria + Compartilhar anexos
 #
-# Contrato: ENTRAR → ação → ENTRAR
-# Fonte tooltip: galleryButtonHint = "Adicionar imagem da galeria"
-#
-# Pré-requisito: fixtures + FIXTURE_FOTO no .env
-# STATUS: draft — STUDIO: picker nativo Android + overflow menu
+# Fase 1: addMedia → composer + foto → Enviadas.
+# Fase 2 (qa-app): adb ID → assert → ETMENEZES → Compartilhar anexos → teardown.
+# Critério compartilhar: só abrir o item (download); não concluir share sheet.
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - addMedia:
-    - "../../fixtures/${FIXTURE_FOTO}"
+    - "../../fixtures/Foto_1.jpeg"
 
-# ── PARTE 1 — Enviar como PHJESUS ─────────────────────────────────────────────
-- runFlow: ../shared/auth/login_phjesus.yaml
-
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- runFlow: ../shared/mural/abrir_novo_comunicado.yaml
-
-- runFlow: ../shared/mural/selecionar_turmas_comunicado.yaml
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
 - runFlow:
-    file: ../shared/mural/escrever_comunicado.yaml
+    file: ../shared/mural/composer_novo_comunicado.yaml
     env:
       TEXTO_COMUNICADO: "Teste Comunicado foto"
 
-- tapOn: "Adicionar imagem da galeria"
-
-- runFlow: ../shared/mural/pick_galeria_android.yaml
-
+- runFlow: ../shared/mural/adicionar_foto_galeria.yaml
 - runFlow: ../shared/mural/enviar_comunicado.yaml
 
-# ── PARTE 2 — Verificar como ETMENEZES ────────────────────────────────────────
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
 
-- runFlow: ../shared/auth/login_etmenezes.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- assertVisible: "Teste Comunicado foto"
-
-- tapOn:
-    text: "Mais opções"
-    optional: true
-- tapOn:
-    text: "More options"
-    optional: true
-
-- assertVisible: "Salvar anexos"
-- tapOn: "Salvar anexos"
-
-- tapOn:
-    text: "Mais opções"
-    optional: true
-- tapOn:
-    text: "More options"
-    optional: true
-
-- assertVisible: "Compartilhar anexos"
-- tapOn: "Compartilhar anexos"
-
-- assertVisible:
-    text: "Compartilhar"
-    optional: true
-
-# ── TEARDOWN ──────────────────────────────────────────────────────────────────
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

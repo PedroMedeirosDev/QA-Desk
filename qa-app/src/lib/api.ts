@@ -9,6 +9,15 @@ export interface AutomationFlow {
   module?: string;
 }
 
+export interface AndroidDeviceStatus {
+  ready: boolean;
+  devices: Array<{ serial: string; state: string; kind: "emulator" | "physical" }>;
+  primarySerial?: string;
+  avdName: string;
+  booting: boolean;
+  message: string;
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
@@ -58,6 +67,15 @@ export const api = {
     return request<AutomationFlow[]>(`/api/projects/${project}/automation/flows${q}`);
   },
 
+  getDeviceStatus: (project: ProjectSlug) =>
+    request<AndroidDeviceStatus>(`/api/projects/${project}/automation/device`),
+
+  startEmulator: (project: ProjectSlug, wait = true) =>
+    request<{ started: boolean; message: string; ready?: boolean; status?: AndroidDeviceStatus }>(
+      `/api/projects/${project}/automation/emulator/start${wait ? "?wait=1" : ""}`,
+      { method: "POST" },
+    ),
+
   createMuralChecklist: (project: ProjectSlug) =>
     request<{
       created: number;
@@ -71,7 +89,11 @@ export const api = {
       { method: "POST" },
     ),
 
-  runAutomation: (project: ProjectSlug, id: string, homologationId?: string) =>
+  runAutomation: (
+    project: ProjectSlug,
+    id: string,
+    opts?: { homologationId?: string; recordVideo?: boolean },
+  ) =>
     request<{
       ok: boolean;
       exitCode: number | null;
@@ -90,7 +112,10 @@ export const api = {
     }>(`/api/projects/${project}/automation/tests/${id}/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(homologationId ? { homologationId } : {}),
+      body: JSON.stringify({
+        ...(opts?.homologationId ? { homologationId: opts.homologationId } : {}),
+        ...(opts?.recordVideo ? { recordVideo: true } : {}),
+      }),
     }),
 
   listHomologations: (project: ProjectSlug) =>

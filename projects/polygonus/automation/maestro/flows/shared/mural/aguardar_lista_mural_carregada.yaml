@@ -1,0 +1,23 @@
+# Aguarda lista do Mural (pós-envio). Leve — sem repeat longo.
+#
+# Env opcional: TEXTO_ANCORAGEM
+
+appId: br.com.polygonus.mobile.amostra
+---
+- waitForAnimationToEnd
+
+- runFlow: voltar_lista_mural_se_necessario.yaml
+
+- runFlow: fechar_dropdown_filtro_sentido.yaml
+
+- extendedWaitUntil:
+    visible: "Show menu|Responder comunicado"
+    timeout: 15000
+
+- runFlow:
+    when:
+      visible: "${TEXTO_ANCORAGEM}"
+    commands:
+      - extendedWaitUntil:
+          visible: "${TEXTO_ANCORAGEM}"
+          timeout: 10000

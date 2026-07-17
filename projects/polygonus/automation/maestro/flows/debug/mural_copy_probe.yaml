@@ -1,0 +1,20 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml
+- copyTextFrom:
+    text: "Pedro Henrique Medeiros de Jesus"
+    index: 0
+    optional: true
+- evalScript: '${output.c1 = maestro.copiedText || ""}'
+- copyTextFrom:
+    id: "mural_card_menu"
+    index: 0
+    optional: true
+- evalScript: '${output.c2 = maestro.copiedText || ""}'
+- copyTextFrom:
+    text: "Teste Comunicado"
+    index: 0
+    optional: true
+- evalScript: '${output.c3 = maestro.copiedText || ""}'
+- assertTrue: ${(output.c1 + output.c2 + output.c3).length > 0}

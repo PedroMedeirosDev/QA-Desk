@@ -1,0 +1,65 @@
+# Deixa o app na lista Enviadas (para captura de ID via adb pela qa-app).
+# Não faz teardown — Maestro encerra e libera o device.
+#
+# Sempre valida usuário PHJESUS + perfil COORDENADOR (mesmo se já estiver no Mural).
+#
+# launchApp: só se a UI ainda não responde (app em background / frio).
+# Evita o flash duplo de home: prep launchApp + resume launchApp no setup.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: '${output.prepFeito = false}'
+
+# App frio / background — um único bring-to-front antes de decidir o caminho
+- runFlow:
+    when:
+      notVisible: "ENTRAR|FAZER LOGIN|${NOME_PHJESUS}|Pedro Jesus|Pedro|Show menu|Responder comunicado|.*MURAL.*|Versão:.*"
+    commands:
+      - launchApp
+      - waitForAnimationToEnd
+
+# --- Já no Mural ---
+- runFlow:
+    when:
+      visible:
+        id: "mural_card_menu"
+    commands:
+      # Usuário errado → setup (resume faz launchApp se precisar)
+      - runFlow:
+          when:
+            notVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+          commands:
+            - runFlow: setup_coordenador_mural.yaml
+            - runFlow: filtrar_enviadas.yaml
+            - runFlow: aguardar_lista_mural_carregada.yaml
+            - evalScript: '${output.prepFeito = true}'
+
+      # PHJESUS — confirma COORDENADOR em Perfil (sai do Mural → home → Perfil → home → Mural)
+      - runFlow:
+          when:
+            visible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+            true: ${!output.prepFeito}
+          commands:
+            - runFlow: ../perfil/garantir_perfil_coordenador.yaml
+            - runFlow: ../nav/navegar_mural.yaml
+            - runFlow: filtrar_enviadas.yaml
+            - runFlow: aguardar_lista_mural_carregada.yaml
+            - evalScript: '${output.prepFeito = true}'
+
+# --- Fora do Mural: um setup (launchApp só dentro do resume) ---
+- runFlow:
+    when:
+      true: ${!output.prepFeito}
+    commands:
+      - runFlow: setup_coordenador_mural.yaml
+      - runFlow: filtrar_enviadas.yaml
+      - runFlow: aguardar_lista_mural_carregada.yaml
+      - evalScript: '${output.prepFeito = true}'
+
+- extendedWaitUntil:
+    visible:
+      id: "mural_card_menu"
+    timeout: 10000
+
+- assertVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+- assertVisible: "Enviadas|Enviados"

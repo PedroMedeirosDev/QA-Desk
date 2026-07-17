@@ -1,0 +1,109 @@
+# Substitui texto no composer (Novo / Editar comunicado).
+# Env: TEXTO (obrigatório), TEXTO_ANTIGO (opcional — se visível no a11y)
+#
+# Em edição: Select all é frágil no emulador. Nunca fazer eraseText:1 sem
+# seleção confirmada (senão apaga 1 letra e o inputText entra no meio).
+# Fallback: apagar muitos caracteres com o campo focado.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado"
+    timeout: 8000
+
+- runFlow: fechar_menu_enquete_acidental.yaml
+
+# Foco no corpo do comunicado
+- tapOn:
+    below: "Para:"
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: ${TEXTO_ANTIGO}
+    commands:
+      - tapOn: ${TEXTO_ANTIGO}
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "Escreva seu texto aqui"
+    commands:
+      - tapOn: "Escreva seu texto aqui"
+      - waitForAnimationToEnd
+
+# --- Novo comunicado: limpa rascunho residual ---
+- runFlow:
+    when:
+      visible: "Novo comunicado"
+    commands:
+      - eraseText: 120
+
+# --- Editar: limpar texto existente de forma segura ---
+- runFlow:
+    when:
+      visible: "Editar comunicado"
+    commands:
+      # Preferência: long-press no texto antigo (seleciona melhor que below Para:)
+      - runFlow:
+          when:
+            visible: ${TEXTO_ANTIGO}
+          commands:
+            - longPressOn: ${TEXTO_ANTIGO}
+            - waitForAnimationToEnd
+
+      - runFlow:
+          when:
+            notVisible: "Selecionar tudo|Select all|Select All|Recortar|Cut|Copiar|Copy"
+          commands:
+            - longPressOn:
+                below: "Para:"
+            - waitForAnimationToEnd
+
+      # Select all confirmado → 1 erase limpa a seleção inteira
+      - runFlow:
+          when:
+            visible: "Selecionar tudo|Select all|Select All"
+          commands:
+            - tapOn: "Selecionar tudo|Select all|Select All"
+            - waitForAnimationToEnd
+            - eraseText: 1
+            - waitForAnimationToEnd
+
+      # Sem menu de seleção: NÃO usar eraseText:1 — apaga só 1 char e corrompe o texto.
+      # Várias passadas de backspace com o campo focado.
+      - runFlow:
+          when:
+            notVisible: "Selecionar tudo|Select all|Select All"
+          commands:
+            - tapOn:
+                below: "Para:"
+            - waitForAnimationToEnd
+            - eraseText: 200
+            - eraseText: 200
+            - waitForAnimationToEnd
+
+      # Fecha toolbar nativa se ainda aberta
+      - runFlow:
+          when:
+            visible: "Recortar|Cut|Copiar|Copy|Colar|Paste|Selecionar tudo|Select all"
+          commands:
+            - pressKey: Back
+            - waitForAnimationToEnd
+            - tapOn:
+                below: "Para:"
+            - waitForAnimationToEnd
+
+- runFlow:
+    file: ../helpers/colar_texto.yaml
+    env:
+      TEXTO: ${TEXTO}
+
+# Exige o texto novo como string completa (evita passar com lixo no meio)
+- extendedWaitUntil:
+    visible: ${TEXTO}
+    timeout: 8000
+
+# Se sobrou lixo colado no mesmo bloco, o assert acima pode falhar (certo).
+# Reforço: hint de vazio não deve aparecer após colar.
+- assertNotVisible: "Escreva seu texto aqui"

@@ -1,0 +1,14 @@
+# Chega em ENTRAR sem launchApp quando já está na tela de login.
+# Use após ensure_logged_out — evita recarregar o app.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      notVisible: "ENTRAR"
+    commands:
+      - runFlow: ensure_login_screen.yaml
+
+- extendedWaitUntil:
+    visible: "ENTRAR"
+    timeout: 12000

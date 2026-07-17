@@ -1,67 +1,85 @@
 # Logout → ENTRAR via menu do usuário (NÃO drawer).
+# Idempotente: se já estiver em ENTRAR, não faz nada.
 #
-# Caminho correto:
-#   1. No Mural: 1× botão AppBar "Back" (não empilhar com pressKey)
-#   2. Tocar no NOME no topo
-#   3. Menu: Perfil | Tutorial | Sair → "Sair"
-#   4. Confirmar modal se aparecer
+# CARDÁPIO no loop de Back = home de PHJESUS em SUPORTE (não prova outro perfil).
 
 appId: br.com.polygonus.mobile.amostra
 ---
-# Voltar do Mural pelo botão do AppBar (content-desc "Back")
 - runFlow:
     when:
-      visible: "Back"
+      visible: "ENTRAR"
     commands:
-      - tapOn: "Back"
-      - waitForAnimationToEnd
-
-# Fallbacks se ainda estiver em tela interna sem botão Back
-- runFlow:
-    when:
-      visible: "Novo comunicado|Para:|Escreva seu texto aqui|Unidade"
-    commands:
-      - pressKey: Back
-      - waitForAnimationToEnd
+      - assertVisible: "ENTRAR"
 
 - runFlow:
     when:
-      visible: "Responder comunicado|Show menu|Teste Comunicado"
+      notVisible: "ENTRAR"
     commands:
-      - pressKey: Back
-      - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "Back"
+          commands:
+            - tapOn: "Back"
+            - waitForAnimationToEnd
+            - runFlow: ../mural/fechar_gravacao_pendente.yaml
 
-- extendedWaitUntil:
-    visible: "Pedro Jesus.*|CARDÁPIO|.*MURAL.*"
-    timeout: 20000
+      - repeat:
+          times: 5
+          commands:
+            - runFlow:
+                when:
+                  notVisible: "ENTRAR|Pedro Jesus|Pedro|Ana|Bruno|Davi|CARDÁPIO|CARDAPIO"
+                  visible: "Back|Show menu|Responder comunicado|Comunicado"
+                commands:
+                  - pressKey: Back
+                  - waitForAnimationToEnd
+                  - runFlow: ../mural/fechar_gravacao_pendente.yaml
+                  - tapOn:
+                      text: "CANCELAR"
+                      optional: true
+                  - tapOn:
+                      text: "Cancelar"
+                      optional: true
 
-- waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "PULAR"
+          commands:
+            - runFlow: ../nav/dismiss_coachmarks_pular.yaml
 
-# Menu do header (Perfil / Tutorial / Sair)
-- tapOn:
-    text: "Pedro Jesus.*"
-    optional: true
+      - runFlow:
+          when:
+            visible: "ENTRAR"
+          commands:
+            - assertVisible: "ENTRAR"
 
-- runFlow:
-    when:
-      notVisible: "Sair|Perfil|Tutorial"
-    commands:
-      - tapOn:
-          point: "28%, 10%"
-      - waitForAnimationToEnd
-
-- extendedWaitUntil:
-    visible: "Sair"
-    timeout: 10000
-
-- tapOn: "Sair"
-
-- runFlow:
-    when:
-      visible: "Tem certeza que deseja sair do aplicativo?"
-    commands:
-      - tapOn: "Sair"
-
-- extendedWaitUntil:
-    visible: "ENTRAR"
-    timeout: 20000
+      - runFlow:
+          when:
+            notVisible: "ENTRAR"
+          commands:
+            - extendedWaitUntil:
+                visible: ".*MURAL.*|CARDÁPIO|CARDAPIO|Pedro Jesus|Pedro|Ana|Bruno|Davi"
+                timeout: 12000
+            - waitForAnimationToEnd
+            # Menu do usuário — qualquer nome no header (PHJESUS, ETMENEZES, …)
+            - tapOn:
+                point: "28%, 10%"
+            - runFlow:
+                when:
+                  notVisible: "Sair|Perfil|Tutorial"
+                commands:
+                  - tapOn:
+                      point: "10%, 10%"
+                  - waitForAnimationToEnd
+            - extendedWaitUntil:
+                visible: "Sair"
+                timeout: 8000
+            - tapOn: "Sair"
+            - runFlow:
+                when:
+                  visible: "Tem certeza que deseja sair do aplicativo?"
+                commands:
+                  - tapOn: "Sair"
+            - extendedWaitUntil:
+                visible: "ENTRAR"
+                timeout: 12000

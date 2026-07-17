@@ -1,0 +1,20 @@
+# Abre menu ⋮ do comunicado (ID capturado ou âncora de texto).
+#
+# Env:
+#   TEXTO_ALVO    — âncora para capturar ID na lista
+#   ID_COMUNICADO — opcional; senão captura → output.idComunicado
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: filtrar_enviadas.yaml
+
+- runFlow:
+    file: capturar_id_comunicado_lista.yaml
+    env:
+      TEXTO_ANCORAGEM: ${TEXTO_ALVO}
+      ID_COMUNICADO: ${ID_COMUNICADO}
+
+- runFlow:
+    file: abrir_menu_tres_pontos.yaml
+    env:
+      ITEM_ANCORAGEM: ${output.idComunicado}

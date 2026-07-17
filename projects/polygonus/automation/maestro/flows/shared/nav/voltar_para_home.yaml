@@ -1,15 +1,30 @@
-# Volta à home (card MURAL / header) a partir de qualquer tela autenticada.
+# Volta à home autenticada a partir de telas internas.
+#
+# CARDÁPIO NÃO é home genérica — só indica PHJESUS em SUPORTE.
+# Após CTs Mural (coordenador/professor), a home tem card MURAL.
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow:
     when:
-      notVisible: ".*MURAL.*|CARDÁPIO|Pedro Jesus"
+      notVisible: ".*MURAL.*"
     commands:
-      - pressKey: Back
-      - pressKey: Back
-      - pressKey: Back
+      - repeat:
+          times: 5
+          commands:
+            - runFlow:
+                when:
+                  notVisible: ".*MURAL.*"
+                commands:
+                  - pressKey: Back
+                  - waitForAnimationToEnd
+      - runFlow:
+          when:
+            notVisible: ".*MURAL.*"
+          commands:
+            - launchApp
+            - waitForAnimationToEnd
 
 - extendedWaitUntil:
-    visible: ".*MURAL.*|CARDÁPIO|Pedro Jesus"
+    visible: ".*MURAL.*"
     timeout: 15000

@@ -1,0 +1,26 @@
+# Normaliza env ID_COMUNICADO / MURAL_ID → output.idComunicado ("ID 123456").
+# Env: ID_COMUNICADO (dígitos), MURAL_ID ("ID 123" ou dígitos)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: |
+    ${(() => {
+      if (output.idComunicado && String(output.idComunicado).length > 3) return;
+      var raw = "";
+      try {
+        if (typeof MURAL_ID !== "undefined" && MURAL_ID) raw = String(MURAL_ID).trim();
+      } catch (e) {}
+      if (!raw) {
+        try {
+          if (typeof ID_COMUNICADO !== "undefined" && ID_COMUNICADO) {
+            raw = String(ID_COMUNICADO).trim();
+          }
+        } catch (e) {}
+      }
+      var digits = raw.replace(/[^0-9]/g, "");
+      if (digits.length > 0) {
+        output.idComunicado = "ID " + digits;
+      } else if (!output.idComunicado) {
+        output.idComunicado = "";
+      }
+    })()}

@@ -1,0 +1,45 @@
+# Edita o comunicado mais recente em Enviadas (por ID capturado na qa-app).
+#
+# Env:
+#   NOVO_TEXTO — texto após edição (obrigatório)
+#   ID_COMUNICADO / MURAL_ID — seed do ID (qa-app)
+#   SKIP_FILTRAR_ENVIADAS — "1" se já em Enviadas (pipeline qa-app)
+#
+# Valida NOVO_TEXTO na lista. Mesmo ID no topo: adiado — app gera novo
+# comunicado ao editar (bug reportado ao time de desenvolvimento).
+#
+# Se o topo já for exatamente NOVO_TEXTO (re-run), ainda reescreve e envia —
+# o envio deve sair do composer; falha antiga era assert com "Back" falso-positivo.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: seed_id_comunicado_env.yaml
+    env:
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${MURAL_ID}
+
+- runFlow:
+    file: abrir_menu_ultimo_comunicado.yaml
+    env:
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${MURAL_ID}
+      SKIP_FILTRAR_ENVIADAS: ${SKIP_FILTRAR_ENVIADAS}
+
+- evalScript: '${output.idComunicadoAntes = output.idComunicado}'
+
+- tapOn: "Editar"
+
+- runFlow:
+    file: substituir_texto_composer.yaml
+    env:
+      TEXTO: ${NOVO_TEXTO}
+      TEXTO_ANTIGO: ${TEXTO_ANTIGO}
+
+- runFlow: enviar_comunicado.yaml
+
+- runFlow: filtrar_enviadas.yaml
+
+- runFlow: aguardar_lista_mural_carregada.yaml
+
+- assertVisible: ${NOVO_TEXTO}

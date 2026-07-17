@@ -1,0 +1,101 @@
+# Abre o ⋮ do card do ID validado e toca Compartilhar anexos.
+#
+# Env (preferência):
+#   ID_COMUNICADO — dígitos ou "ID 9083459" (mesmo da fase adb / assert)
+# Fallback:
+#   ITEM_ANCORAGEM — texto do comunicado (só se ID ausente)
+#
+# O ⋮ é mural_card_menu com ID no content-desc — NÃO usar index 0
+# (Destaque fica no topo de Recebidas do responsável).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: |
+    ${(() => {
+      var digits = "";
+      try {
+        if (typeof ID_COMUNICADO !== "undefined" && ID_COMUNICADO) {
+          digits = String(ID_COMUNICADO).replace(/[^0-9]/g, "");
+        }
+      } catch (e) {}
+      if (!digits && output.idComunicado) {
+        digits = String(output.idComunicado).replace(/[^0-9]/g, "");
+      }
+      output.menuIdDigits = digits;
+      output.menuIdRegex = digits.length > 3 ? (".*ID\\s*" + digits + ".*") : "";
+      output.hasMenuId = digits.length > 3;
+
+      var t = "";
+      try {
+        if (typeof ITEM_ANCORAGEM !== "undefined" && ITEM_ANCORAGEM) t = String(ITEM_ANCORAGEM).trim();
+      } catch (e) {}
+      if (!t || t === "undefined") {
+        try {
+          if (typeof ITEM_TEXTO !== "undefined" && ITEM_TEXTO) t = String(ITEM_TEXTO).trim();
+        } catch (e) {}
+      }
+      output.itemAncora = (t && t !== "undefined") ? t : "";
+    })()}
+
+- assertTrue: ${output.hasMenuId || (output.itemAncora && output.itemAncora.length > 2)}
+
+# ── Âncora por ID (caminho preferido com Destaque no topo) ──
+- runFlow:
+    when:
+      true: ${output.hasMenuId}
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: ${output.menuIdRegex}
+          direction: DOWN
+          timeout: 15000
+          optional: true
+      - assertVisible: ${output.menuIdRegex}
+      # O próprio mural_card_menu carrega o ID no content-desc
+      - tapOn:
+          id: "mural_card_menu"
+          text: ${output.menuIdRegex}
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      true: ${output.hasMenuId}
+      notVisible: "Compartilhar anexos|Salvar anexos"
+    commands:
+      - tapOn:
+          text: "Show menu"
+          below: ${output.menuIdRegex}
+          optional: true
+      - waitForAnimationToEnd
+
+# ── Fallback texto (só sem ID) ──
+- runFlow:
+    when:
+      true: ${!output.hasMenuId}
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: ${output.itemAncora}
+          direction: DOWN
+          timeout: 12000
+          optional: true
+      - assertVisible: ${output.itemAncora}
+      - tapOn:
+          id: "mural_card_menu"
+          below: ${output.itemAncora}
+          optional: true
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Compartilhar anexos|Salvar anexos"
+    timeout: 8000
+
+- tapOn: "Compartilhar anexos"
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "Compartilhar|Share|Nearby|Bluetooth|Messages|Gmail|Drive"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd

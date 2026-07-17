@@ -1,0 +1,43 @@
+# Lista Mural → home autenticada (1× Back por iteração).
+# NÃO usa launchApp — reinicia sessão e reexibe tutoriais (PULAR).
+#
+# Home PHJESUS: Pedro Jesus | Home ETMENEZES (responsável): filhos | Home ACMENEZES (aluno): Ana
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible: "PULAR"
+    commands:
+      - runFlow: dismiss_coachmarks_pular.yaml
+
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            visible: "Show menu|Responder comunicado"
+          commands:
+            - pressKey: Back
+            - waitForAnimationToEnd
+            - runFlow: ../mural/fechar_gravacao_pendente.yaml
+
+- runFlow:
+    when:
+      visible: "Show menu|Responder comunicado"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd
+      - runFlow: ../mural/fechar_gravacao_pendente.yaml
+
+- runFlow:
+    when:
+      visible: "PULAR"
+    commands:
+      - runFlow: dismiss_coachmarks_pular.yaml
+
+- extendedWaitUntil:
+    visible: "${NOME_PHJESUS}|Pedro Jesus|Pedro|${NOME_ETMENEZES}|Bruno|Davi|${NOME_ACMENEZES}|.*MURAL.*"
+    timeout: 10000
+
+- assertNotVisible: "Show menu"

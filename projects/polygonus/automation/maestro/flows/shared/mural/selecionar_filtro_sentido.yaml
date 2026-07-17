@@ -1,0 +1,59 @@
+# Seleciona filtro TipoSentido (dropdown no header do Mural).
+#
+# Env:
+#   FILTRO     — regex do valor no header (ex.: Enviadas|Enviados)
+#   FILTRO_TAP — regex do item no menu (ex.: Enviadas|Enviados)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Back"
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible:
+      id: "mural_filtro_sentido"
+    timeout: 8000
+
+# Já no filtro certo (comum após enviar → Enviadas ou Enviados)
+- runFlow:
+    when:
+      visible: "${FILTRO}"
+    commands:
+      - assertVisible: "${FILTRO}"
+
+# Trocar filtro
+- runFlow:
+    when:
+      notVisible: "${FILTRO}"
+    commands:
+      - tapOn:
+          text: "Recebidas|Recebidos|Enviadas|Enviados|Pendentes|Aprovadas"
+          rightOf: "Back"
+          optional: true
+      - waitForAnimationToEnd
+
+      - runFlow:
+          when:
+            notVisible: "${FILTRO_TAP}"
+          commands:
+            - tapOn:
+                id: mural_filtro_sentido
+            - waitForAnimationToEnd
+
+      - extendedWaitUntil:
+          visible: "${FILTRO_TAP}"
+          timeout: 10000
+
+      - tapOn: "${FILTRO_TAP}"
+      - waitForAnimationToEnd
+
+      - runFlow: fechar_dropdown_filtro_sentido.yaml
+
+- extendedWaitUntil:
+    visible: "Show menu|Responder comunicado|${FILTRO}"
+    timeout: 10000
+
+- assertVisible: "${FILTRO}"

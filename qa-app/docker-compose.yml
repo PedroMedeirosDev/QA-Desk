@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qa-app-postgres
+    restart: unless-stopped
+    ports:
+      # 5433 no host — evita conflito com Postgres nativo na 5432 (comum no Windows)
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: qa
+      POSTGRES_PASSWORD: qa
+      POSTGRES_DB: qa_app
+    volumes:
+      - qa_app_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qa -d qa_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  qa_app_pgdata:

@@ -13,33 +13,27 @@ appId: br.com.polygonus.mobile.amostra
 ---
 - launchApp
 
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - tapOn: "PULAR"
-      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "PULAR|ENTRAR|FAZER LOGIN|Colégio Polygonus|.*Acompanhe de perto.*"
+    timeout: 20000
+
+- runFlow: ../nav/dismiss_coachmarks_pular.yaml
 
 # Onboarding só na 1ª vez (sem clearState não deve repetir)
 - runFlow:
     when:
       visible: ".*Acompanhe de perto tudo.*|Colégio Polygonus"
     commands:
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
+      - repeat:
+          times: 5
+          commands:
+            - runFlow:
+                file: ../helpers/tap_id_or_point.yaml
+                env:
+                  SEM_ID: auth_onboarding_avancar
+                  FALLBACK_POINT: "90%, 93%"
+                  AFTER_VISIBLE: "FAZER LOGIN|ENTRAR|Acompanhe de perto"
+            - waitForAnimationToEnd
 
 - runFlow:
     when:

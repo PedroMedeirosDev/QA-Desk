@@ -1,0 +1,42 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml
+- evalScript: |
+    ${(() => {
+      function adbPath() {
+        var home = java.lang.System.getenv("ANDROID_HOME");
+        if (home == null || home.length === 0) home = java.lang.System.getenv("ANDROID_SDK_ROOT");
+        var sep = java.io.File.separator;
+        if (home != null && home.length > 0) {
+          return home + sep + "platform-tools" + sep + (sep === "\\" ? "adb.exe" : "adb");
+        }
+        return sep === "\\" ? "adb.exe" : "adb";
+      }
+      function runAdb(args) {
+        var list = new java.util.ArrayList();
+        list.add(adbPath());
+        for (var i = 0; i < args.length; i++) list.add(String(args[i]));
+        var pb = new java.lang.ProcessBuilder(list);
+        pb.redirectErrorStream(true);
+        var p = pb.start();
+        var reader = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream(), "UTF-8"));
+        var line, out = "";
+        while ((line = reader.readLine()) != null) { out += line; }
+        p.waitFor();
+        return out;
+      }
+      output.adbPathUsed = adbPath();
+      try {
+        output.dumpOut = runAdb(["shell", "uiautomator", "dump", "/sdcard/uidump_mural.xml"]);
+        output.xml = runAdb(["shell", "cat", "/sdcard/uidump_mural.xml"]);
+        output.xmlLen = output.xml ? output.xml.length : 0;
+        var m = output.xml.match(/resource-id="mural_card_menu"[^>]*content-desc="([^"]*)"/);
+        output.desc = m ? m[1] : "NO_MATCH";
+        var idm = output.desc.match(/ID\s*([0-9]+)/);
+        output.idFromAdb = idm ? ("ID " + idm[1]) : "NO_ID";
+      } catch (e) {
+        output.adbErr = String(e);
+      }
+    })()}
+- assertTrue: ${output.idFromAdb.indexOf("ID") >= 0}

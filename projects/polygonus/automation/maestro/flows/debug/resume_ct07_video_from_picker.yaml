@@ -1,0 +1,58 @@
+# Retomada CT-07: DocumentsUI já aberto; escolhe Video_teste.mp4 → envia → Enviadas.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Show roots|Downloads|Download|Recent|Images|Video_teste.mp4|README.md"
+    timeout: 10000
+
+# Recarrega pasta (cleanup pode ter apagado e re-push acabou de rodar).
+- tapOn:
+    text: "Show roots"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Downloads"
+    optional: true
+- tapOn:
+    text: "Download"
+    optional: true
+- waitForAnimationToEnd
+
+- swipe:
+    start: "50%, 35%"
+    end: "50%, 75%"
+    duration: 400
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element: "Video_teste.mp4"
+    direction: DOWN
+    timeout: 15000
+
+- tapOn: "Video_teste.mp4"
+
+- tapOn:
+    text: "Abrir"
+    optional: true
+- tapOn:
+    text: "Open"
+    optional: true
+- tapOn:
+    text: "Selecionar"
+    optional: true
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
+    timeout: 20000
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

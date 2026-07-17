@@ -1,0 +1,13 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: |
+    ${(() => {
+      try {
+        var res = http.get("http://127.0.0.1:3001/api/health");
+        output.httpStatus = res.status;
+        output.httpBody = JSON.stringify(res.body);
+      } catch (e) {
+        output.httpErr = String(e);
+      }
+    })()}
+- assertTrue: ${output.httpStatus === 200}

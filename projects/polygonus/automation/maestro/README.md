@@ -94,13 +94,39 @@ Crie **um** AVD primeiro, homologue nele; depois, se precisar, replique outra AP
 
 ## Rodar um fluxo (CLI)
 
-Na pasta do fluxo ou apontando o arquivo:
+Na pasta `projects/polygonus/automation/maestro` (ou apontando o arquivo):
 
 ```bash
-maestro test flows/seu_fluxo.yaml
+maestro test --config config.yaml --test-output-dir .maestro-output flows/seu_fluxo.yaml
 ```
 
 Com um device só, o Maestro usa esse. Com vários: `maestro --device <serial> test ...` (o serial é o da lista `adb devices`).
+
+## Limpeza automática de artefatos
+
+Os testes geram dois tipos de lixo:
+
+| Origem | O que acumula | Política |
+|--------|----------------|----------|
+| **Salvar / Compartilhar anexos** | Downloads no emulador (`Download/`, cache do app) — o Compartilhar **baixa antes** do share sheet | Removidos após run **PASS** |
+| **Maestro** | PNG de cada passo em `.maestro-output/` | Pasta do run apagada em **PASS**; mantida em **FAIL** |
+
+A **qa-app** e o `run-mural-suite.mjs` já chamam `scripts/cleanup-test-artifacts.mjs` ao terminar cada flow.
+
+Limpeza manual ou agendada (Task Scheduler / cron):
+
+```powershell
+cd projects/polygonus/automation/maestro
+# Cópias no emulador + runs Maestro > 14 dias
+.\scripts\cleanup-test-artifacts.ps1 -Emulator -PruneDays 14
+
+# Só simular
+node scripts/cleanup-test-artifacts.mjs --emulator --prune-days 14 --dry-run
+```
+
+**Histórico antigo:** você pode ter ~100+ pastas em `%USERPROFILE%\.maestro\tests` (261 PNG, ~78 MB). Os runs novos vão para `.maestro-output/` no repo; a pasta antiga pode ser apagada manualmente quando quiser.
+
+Originais protegidos (nunca removidos): arquivos em `fixtures/` (`Foto_1.jpeg`, `PDF TESTE.pdf`, `Video_teste.mp4`, …).
 
 ## Cloud vs Local
 

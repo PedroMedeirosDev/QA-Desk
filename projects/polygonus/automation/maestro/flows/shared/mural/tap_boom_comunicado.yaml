@@ -1,0 +1,22 @@
+# Item Comunicado no BoomMenu → abre composer.
+# Toca assim que mural_boom_comunicado está visível (menu ainda aberto).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: mural_boom_comunicado
+
+- extendedWaitUntil:
+    visible: "Novo comunicado"
+    timeout: 8000
+
+# Fallback: subtitle exclusivo do item no BoomMenu (ASCII, sem colidir com enquete)
+- runFlow:
+    when:
+      notVisible: "Novo comunicado|Para:"
+      visible: "interesse geral"
+    commands:
+      - tapOn: "interesse geral"
+      - extendedWaitUntil:
+          visible: "Novo comunicado"
+          timeout: 5000

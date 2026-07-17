@@ -1,39 +1,18 @@
 # CT-MURAL-04: Comunicado com enquete ("Nova")
 #
-# Contrato: ENTRAR → ação → ENTRAR
-# Fonte tooltip: poolButtonHint = "Adicionar enquete ou aviso de recebimento"
-#
-# STATUS: draft — STUDIO: menu de tipos de enquete + campos Opção 1/2
+# Fase 1: setup → composer + enquete → Enviadas.
+# Fase 2 (qa-app): adb ID → assert por ID → teardown.
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ../shared/auth/login_phjesus.yaml
-
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- runFlow: ../shared/mural/abrir_novo_comunicado.yaml
-
-- runFlow: ../shared/mural/selecionar_turmas_comunicado.yaml
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
 - runFlow:
-    file: ../shared/mural/escrever_comunicado.yaml
+    file: ../shared/mural/composer_novo_comunicado.yaml
     env:
       TEXTO_COMUNICADO: "Teste Comunicado enquete"
 
-- tapOn: "Adicionar enquete ou aviso de recebimento"
-
-- assertVisible: "Nova"
-- tapOn: "Nova"
-
-- tapOn: "Opção 1"
-- inputText: "Sim"
-- tapOn: "Opção 2 (Opcional)"
-- inputText: "Não"
-
+- runFlow: ../shared/mural/adicionar_enquete_nova.yaml
 - runFlow: ../shared/mural/enviar_comunicado.yaml
 
-- assertVisible: "Teste Comunicado enquete"
-
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

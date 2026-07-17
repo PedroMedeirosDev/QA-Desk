@@ -33,6 +33,7 @@ polygonus-discord-bot-base-atual.zip
 
 # Ambiente e segredos
 .env
+.mural-run.env
 *.local
 
 node_modules/
@@ -50,7 +51,16 @@ projects/polygonus/automation/sentry-linear/out/
 # Capturas debug Maestro (Studio)
 projects/polygonus/automation/maestro/flows/*.png
 
+# Artefatos Maestro (screenshots por run — mantidos só em falha)
+projects/polygonus/automation/maestro/.maestro-output/
+projects/polygonus/automation/maestro/flows/.generated/
+projects/polygonus/automation/maestro/.maestro-analysis/
+projects/polygonus/automation/maestro/debug-ui*.xml
+projects/polygonus/automation/maestro/hierarchy_dump.json
+projects/polygonus/automation/maestro/flows/.env.testprobe
+
 qa-app/dist/
+qa-app/.env
 
 
 # Playwright local auth / reports

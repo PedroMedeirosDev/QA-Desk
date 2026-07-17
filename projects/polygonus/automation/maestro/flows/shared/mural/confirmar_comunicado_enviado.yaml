@@ -1,0 +1,22 @@
+# Pós-envio: confirma na lista Enviadas pelo ID (obrigatório) → home.
+#
+# Pré-requisito: filtrar_enviadas + ID seedado (qa-app adb ou -e ID_COMUNICADO).
+# Env: ID_COMUNICADO / MURAL_ID / output.idComunicado
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: seed_id_comunicado_env.yaml
+    env:
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${MURAL_ID}
+
+- assertTrue: ${(output.idComunicado || "").length > 3}
+
+- runFlow:
+    file: assert_comunicado_por_id.yaml
+    env:
+      ID_COMUNICADO: ${output.idComunicado}
+      MURAL_ID: ${output.idComunicado}
+
+- runFlow: ../nav/voltar_home_apos_mural.yaml

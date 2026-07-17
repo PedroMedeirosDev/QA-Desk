@@ -1,0 +1,86 @@
+# Menu ⋮ de um comunicado (âncora = texto OU badge ID).
+#
+# Env: ITEM_ANCORAGEM — ex.: "ID 9082697" ou "Teste Comunicado"
+# Legado: ITEM_TEXTO (mesmo papel que ITEM_ANCORAGEM)
+#
+# Semantics: mural_card_menu
+# Evitar vários taps seguidos no card: abre o detalhe e some o popup.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: '${output.itemAncora = (ITEM_ANCORAGEM && ITEM_ANCORAGEM.length > 0) ? ITEM_ANCORAGEM : ITEM_TEXTO}'
+
+- scrollUntilVisible:
+    element:
+      text: "${output.itemAncora}"
+    direction: DOWN
+    timeout: 15000
+    optional: true
+
+- assertVisible: ${output.itemAncora}
+
+# Se o tap anterior abriu o detalhe, volta à lista (tapOn Back — não pressKey)
+- runFlow:
+    when:
+      visible: "Comunicado"
+      notVisible: "Recebidas|Enviadas|Enviados|Pendentes|JUL\\.|Mural | Tab"
+    commands:
+      - runFlow: voltar_lista_mural_se_necessario.yaml
+      - scrollUntilVisible:
+          element:
+            text: "${output.itemAncora}"
+          direction: DOWN
+          timeout: 8000
+          optional: true
+
+# 1) ⋮ logo abaixo do texto (card correto na lista)
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+    commands:
+      - tapOn:
+          id: "mural_card_menu"
+          below: "${output.itemAncora}"
+          optional: true
+      - waitForAnimationToEnd
+
+# 2) Fallback: Show menu relativo (content-desc do overflow)
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+    commands:
+      - tapOn:
+          text: "Show menu"
+          below: "${output.itemAncora}"
+          optional: true
+      - waitForAnimationToEnd
+
+# 3) Se abriu detalhe: ⋮ no header do detalhe
+- runFlow:
+    when:
+      visible: "Comunicado"
+      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos|Recebidas|Enviadas"
+    commands:
+      - tapOn:
+          id: "mural_card_menu"
+          optional: true
+      - tapOn:
+          text: "Show menu"
+          optional: true
+      - waitForAnimationToEnd
+
+# 4) Último recurso: sair do detalhe se ainda estiver lá + 1º ⋮ da lista
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+    commands:
+      - runFlow: voltar_lista_mural_se_necessario.yaml
+      - tapOn:
+          id: "mural_card_menu"
+          index: 0
+          optional: true
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+    timeout: 8000

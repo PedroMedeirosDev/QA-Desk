@@ -5,37 +5,71 @@
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- extendedWaitUntil:
-    visible: "Pedro Jesus|CARDÁPIO|.*MURAL.*"
-    timeout: 20000
+- runFlow:
+    when:
+      visible: "PULAR"
+    commands:
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
+# Home real — não confundir com tutorial "Mural em destaque" (também tem "MURAL")
+- runFlow:
+    when:
+      visible:
+        id: "home_menu_usuario"
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "home_menu_usuario"
+          timeout: 12000
+
+- runFlow:
+    when:
+      notVisible:
+        id: "home_menu_usuario"
+    commands:
+      - extendedWaitUntil:
+          visible: "${NOME_USUARIO}"
+          timeout: 12000
+
+- assertNotVisible: "PULAR"
 
 - waitForAnimationToEnd
 
-- tapOn:
-    text: "Pedro Jesus"
-    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "home_menu_usuario"
+    commands:
+      - tapOn:
+          id: "home_menu_usuario"
 
 - runFlow:
     when:
-      notVisible: "Perfil"
+      notVisible:
+        id: "home_menu_usuario"
     commands:
       - tapOn:
-          text: "Pedro"
+          text: "${NOME_USUARIO}"
           optional: true
-
-- runFlow:
-    when:
-      notVisible: "Perfil"
-    commands:
-      - tapOn:
-          point: "10%, 10%"
-
-- runFlow:
-    when:
-      notVisible: "Perfil"
-    commands:
-      - tapOn:
-          point: "28%, 10%"
+      - runFlow:
+          when:
+            notVisible: "Perfil"
+          commands:
+            - tapOn:
+                text: "Pedro"
+                optional: true
+      - runFlow:
+          when:
+            notVisible: "Perfil"
+          commands:
+            - tapOn:
+                point: "10%, 10%"
+      - runFlow:
+          when:
+            notVisible: "Perfil"
+          commands:
+            - tapOn:
+                point: "28%, 10%"
 
 - extendedWaitUntil:
     visible: "Perfil"
@@ -45,4 +79,4 @@ appId: br.com.polygonus.mobile.amostra
 
 - extendedWaitUntil:
     visible: ".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Versão.*"
-    timeout: 20000
+    timeout: 12000

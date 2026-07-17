@@ -1,0 +1,22 @@
+# Sai do detalhe "Comunicado" → volta à lista do Mural.
+#
+# Usa tapOn "Back" (seta na UI do app) — NÃO pressKey Back.
+# Botão Back do celular (pressKey) na lista FECHA a lista inteira (home).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible: "Comunicado"
+      notVisible: "Show menu"
+    commands:
+      - tapOn: "Back"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "Responder comunicado"
+      notVisible: "Show menu"
+    commands:
+      - tapOn: "Back"
+      - waitForAnimationToEnd

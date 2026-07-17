@@ -1,15 +1,16 @@
 # Confirma PROFESSORES: ao abrir o filtro de sentido, NÃO deve haver Pendentes.
+# Semantics: mural_filtro_sentido
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow: ../nav/navegar_mural.yaml
 
 - tapOn:
-    text: ".*Recebidas.*"
-    optional: true
-- tapOn:
-    text: "Recebidas"
-    optional: true
+    id: mural_filtro_sentido
+
+- extendedWaitUntil:
+    visible: "Recebidas|Enviadas|Enviados"
+    timeout: 5000
 
 - assertNotVisible: "Pendentes"
 - assertVisible: "Enviadas"
@@ -18,5 +19,5 @@ appId: br.com.polygonus.mobile.amostra
 - pressKey: Back
 
 - extendedWaitUntil:
-    visible: ".*MURAL.*|CARDÁPIO|Pedro Jesus"
+    visible: ".*MURAL.*"
     timeout: 15000

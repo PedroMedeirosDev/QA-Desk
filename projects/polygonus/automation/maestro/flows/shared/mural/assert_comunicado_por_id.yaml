@@ -1,0 +1,43 @@
+# Confirma comunicado na lista pelo badge ID (content-desc composto do menu).
+#
+# content-desc real: "Pedro… | há 4min | ID 9083330 | Alunos…"
+# → assertVisible exato de "ID 9083330" FALHA; usar regex .*ID\s*DIGITS.*
+
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: |
+    ${(() => {
+      var digits = "";
+      try {
+        if (typeof ID_COMUNICADO !== "undefined" && ID_COMUNICADO) {
+          digits = String(ID_COMUNICADO).replace(/[^0-9]/g, "");
+        }
+      } catch (e) {}
+      if (!digits) {
+        try {
+          if (typeof MURAL_ID !== "undefined" && MURAL_ID) {
+            digits = String(MURAL_ID).replace(/[^0-9]/g, "");
+          }
+        } catch (e) {}
+      }
+      if (!digits && output.idComunicado) {
+        digits = String(output.idComunicado).replace(/[^0-9]/g, "");
+      }
+      output.idAssert = digits.length > 0 ? ("ID " + digits) : "";
+      output.idAssertRegex = digits.length > 0 ? (".*ID\\s*" + digits + ".*") : "";
+    })()}
+
+- assertTrue: ${(output.idAssertRegex || "").length > 6}
+
+- runFlow:
+    when:
+      notVisible: ${output.idAssertRegex}
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: ${output.idAssertRegex}
+          direction: DOWN
+          timeout: 8000
+          optional: true
+
+- assertVisible: ${output.idAssertRegex}

@@ -1,45 +1,54 @@
-# Contrato Maestro — porto seguro (ENTRAR)
+# Contrato Maestro — sessão estável (sem logout entre CTs)
 
-Todo CT da suíte **começa e termina** na tela de login (`ENTRAR` visível).
+CTs **terminam** em home autenticada (`teardown_estavel_sessao.yaml`) — **não** forçam ENTRAR.
+
+**Início Mural (PHJESUS):** `resume_phjesus_coordenador.yaml` reutiliza sessão, troca usuário/perfil só se necessário.
 
 ## Subflows oficiais
 
 | Arquivo | Quando usar |
 |---------|-------------|
-| `shared/auth/ensure_login_screen.yaml` | Início — chega em `ENTRAR` **sem** limpar dados |
-| `shared/auth/login_as.yaml` | Digita LOGIN/SENHA e espera home |
-| `shared/auth/login_phjesus.yaml` / `login_etmenezes.yaml` | ensure + login_as com credenciais do `.env` |
-| `shared/auth/ensure_logged_out.yaml` | Fim — volta para `ENTRAR` (idempotente) |
-| `shared/auth/logout.yaml` | Back (se no Mural) → nome → menu → **Sair** |
-| `shared/auth/reset_app_state.yaml` | **Só sob demanda** — `clearState` (reseta tutorial + sessão) |
-
-## Sessão e tutoriais (importante)
-
-O app **permanece logado** no último perfil até logout explícito ou limpeza de dados.
-Tutoriais (`PULAR`, onboarding) **só voltam** se limpar dados (`clearState: true` / clear data).
-
-Por isso o porto seguro **não** usa `clearState`. Use `reset_app_state.yaml` só quando quiser recomeçar do zero.
+| `shared/auth/resume_phjesus_coordenador.yaml` | Início CT Mural — **reutiliza** sessão PHJESUS+coordenador |
+| `shared/auth/login_phjesus.yaml` | Alias → `resume_phjesus_coordenador.yaml` |
+| `shared/auth/teardown_estavel_sessao.yaml` | **Fim de CT** — Back + home (mantém login) |
+| `shared/auth/ensure_logged_out.yaml` | **Só troca de usuário** (início de `verificar_responsavel_ve`) |
+| `shared/auth/logout.yaml` | Back → nome → menu → **Sair** |
+| `shared/auth/reset_app_state.yaml` | **Só sob demanda** — `clearState` |
 
 ## Template de CT
 
 ```yaml
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ../shared/auth/login_phjesus.yaml   # = ensure + login
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 # ... ação + asserts ...
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml
 ```
 
-Com dois usuários:
+CT enviar (texto) — coordenador envia, responsável confirma, logout na home:
 
 ```yaml
-- runFlow: ../shared/auth/login_phjesus.yaml
-# ... ação A ...
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- runFlow: publicar_comunicado_texto.yaml
+- runFlow: filtrar_enviadas.yaml
+- assertVisible: "${TEXTO_COMUNICADO}"
+- runFlow:
+    file: ../shared/mural/verificar_responsavel_ve.yaml
+    env:
+      TEXTO_COMUNICADO: "..."
 - runFlow: ../shared/auth/ensure_logged_out.yaml
-- runFlow: ../shared/auth/login_etmenezes.yaml
-# ... assert B ...
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- assertVisible: "ENTRAR"
 ```
+
+Próximo CT Mural: `resume_phjesus_coordenador` no setup (relogin PHJESUS).
+
+## CARDÁPIO (não confundir)
+
+`CARDÁPIO` visível na home **só** indica PHJESUS logado em **SUPORTE**. Não usar como prova de Coordenador, Professor, home genérica ou outro usuário. Perfil: tela **Perfil** → `COORDENADOR` / `PROFESSORES` / …
+
+## Sessão e tutoriais
+
+O app **permanece logado** no último perfil. Tutoriais (`PULAR`) só voltam com `clearState` / clear data.
 
 ## Strings confirmadas no código (`polygonus-mobile`)
 
@@ -60,6 +69,7 @@ Com dois usuários:
 | Filtros | `types.dart` | `Recebidas` / `Enviadas` / `Pendentes` / `Aprovadas` |
 | Menu item | `mensagem_widget.dart` | `Editar` / `Excluir` / `Salvar anexos` / `Compartilhar anexos` |
 | Galeria | `galleryButtonHint` | `Adicionar imagem da galeria` |
+| Documento | `documentButtonHint` | `Adicionar documento` → menu `Selecionar arquivo` |
 | Enquete | `poolButtonHint` | `Adicionar enquete ou aviso de recebimento` |
 
 ## STUDIO — mapear manualmente
@@ -69,7 +79,7 @@ Itens **sem** texto estável no código (ícone / coordenadas / locale):
 1. **FAB BoomMenu** — abrir o menu “Padrão” antes de tocar em `Comunicado`
 2. **Overflow `Icons.more_vert`** — sem tooltip no código; Material pode expor `Mais opções` / `More options`
 3. **Card home** — texto vem do servidor (`nomMenuItem`); default esperado `MURAL`
-4. **Dialog excluir** — confirmar se o botão é `OK` / `Ok` / outro
+4. **Dialog excluir** — confirmar com `Sim` / `Não`
 5. **Picker galeria / DocumentsUI** — varia por API Android
 6. **Onboarding slides** — só na 1ª instalação (ou após `reset_app_state`); coordenada `90%, 93%`
 7. **Menu foto/nome** — Perfil / Tutorial / **Sair** (logout correto; não usar drawer)
@@ -101,8 +111,8 @@ Outros logins:
 
 | Login | Papel |
 |-------|-------|
-| `ETMENEZES` | Responsável (visualiza) |
-| `ACMENEZES` | **Aluno** (Eliza) — não envia comunicado |
+| `ETMENEZES` | **Responsável** — home: nomes dos filhos (`Ana, Bruno, Davi`) |
+| `ACMENEZES` | **Aluno** (Ana) — home: só o nome da aluna; não confundir com ETMENEZES |
 
 ## Credenciais
 

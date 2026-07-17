@@ -1,0 +1,26 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml
+- copyTextFrom:
+    childOf:
+      id: "mural_card_menu"
+      index: 0
+    index: 0
+- evalScript: '${output.child0 = maestro.copiedText || ""}'
+- copyTextFrom:
+    childOf:
+      id: "mural_card_menu"
+      index: 0
+    index: 1
+    optional: true
+- evalScript: '${output.child1 = maestro.copiedText || ""}'
+- copyTextFrom:
+    childOf:
+      id: "mural_card_menu"
+      index: 0
+    index: 2
+    optional: true
+- evalScript: '${output.child2 = maestro.copiedText || ""}'
+- assertTrue: ${false}
+- inputText: ${"c0=" + output.child0 + " c1=" + output.child1 + " c2=" + output.child2}

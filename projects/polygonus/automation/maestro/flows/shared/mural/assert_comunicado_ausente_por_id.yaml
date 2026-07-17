@@ -1,0 +1,28 @@
+# Confirma que o comunicado com o ID informado não está visível na lista.
+# Regex no content-desc composto (ver assert_comunicado_por_id.yaml).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: |
+    ${(() => {
+      var digits = "";
+      try {
+        if (typeof ID_COMUNICADO !== "undefined" && ID_COMUNICADO && String(ID_COMUNICADO).trim().length > 0) {
+          digits = String(ID_COMUNICADO).replace(/[^0-9]/g, "");
+        }
+      } catch (e) {}
+      if (!digits) {
+        var raw = output.idComunicadoAntes || output.idComunicado || "";
+        digits = String(raw).replace(/[^0-9]/g, "");
+      }
+      output.idAssert = digits.length > 0 ? ("ID " + digits) : "";
+      output.idAssertRegex = digits.length > 0 ? (".*ID\\s*" + digits + ".*") : "";
+    })()}
+
+- assertTrue: ${(output.idAssertRegex || "").length > 6}
+
+- runFlow: filtrar_enviadas.yaml
+
+- runFlow: aguardar_lista_mural_carregada.yaml
+
+- assertNotVisible: ${output.idAssertRegex}

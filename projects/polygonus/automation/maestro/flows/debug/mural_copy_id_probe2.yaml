@@ -1,0 +1,24 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml
+- copyTextFrom:
+    text: "ID [0-9]+"
+    leftOf:
+      text: "Show menu"
+      index: 1
+    optional: true
+- evalScript: '${output.a = maestro.copiedText || ""}'
+- copyTextFrom:
+    below:
+      id: "mural_card_menu"
+      index: 0
+    index: 0
+    optional: true
+- evalScript: '${output.b = maestro.copiedText || ""}'
+- copyTextFrom:
+    text: "Teste Comunicado"
+    index: 0
+    optional: true
+- evalScript: '${output.c = maestro.copiedText || ""}'
+- assertTrue: ${((output.a + output.b + output.c).match(/ID\\s*[0-9]+/) || []).length > 0}

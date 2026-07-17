@@ -1,17 +1,28 @@
 # Seleção de turmas no comunicado.
-#
-# Fontes:
-#   - turmaLabel = "Turma"
-#   - MultiSelectDialog: title default "Selecionar", hint "Procurar...", botão "OK"
+# Semantics: mural_composer_turma
 #
 # Env opcional:
 #   SELECIONAR_TODAS_TURMAS=false + TURMA_MURAL para uma turma só
-#
-# STUDIO: confirmar se "Selecionar"/"Todos" aparecem no dialog desta build.
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- tapOn: "Turma"
+- tapOn:
+    id: mural_composer_turma
+
+- extendedWaitUntil:
+    visible: "Procurar..."
+    timeout: 5000
+
+- runFlow:
+    when:
+      notVisible: "Procurar..."
+    commands:
+      - tapOn: "Turma"
+      - extendedWaitUntil:
+          visible: "Procurar..."
+          timeout: 5000
+
+- waitForAnimationToEnd
 
 - assertVisible: "Procurar..."
 
@@ -27,3 +38,9 @@ appId: br.com.polygonus.mobile.amostra
     optional: true
 
 - tapOn: "OK"
+
+- waitForAnimationToEnd
+
+- runFlow: fechar_menu_enquete_acidental.yaml
+
+- assertVisible: "Escreva seu texto aqui"

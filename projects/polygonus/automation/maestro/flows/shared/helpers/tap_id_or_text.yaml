@@ -1,0 +1,18 @@
+# Tap por id; fallback em texto SÓ se AFTER_VISIBLE não aparecer (evita duplo tap).
+#
+# Env: SEM_ID, FALLBACK_TEXT, AFTER_VISIBLE
+# Ex.: boom → AFTER_VISIBLE: "Novo comunicado" (não use .*Aviso.* — bate na enquete)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: "${SEM_ID}"
+    optional: true
+
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      notVisible: "${AFTER_VISIBLE}"
+    commands:
+      - tapOn: "${FALLBACK_TEXT}"

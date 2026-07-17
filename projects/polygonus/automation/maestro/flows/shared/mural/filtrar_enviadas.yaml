@@ -1,0 +1,9 @@
+# Filtro Enviadas — dropdown TipoSentido (types.dart).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: selecionar_filtro_sentido.yaml
+    env:
+      FILTRO: "Enviadas|Enviados"
+      FILTRO_TAP: "Enviadas|Enviados"

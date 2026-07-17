@@ -1,0 +1,10 @@
+# Fluxo completo de envio de texto (composer + publicar).
+# Env obrigatório: TEXTO_COMUNICADO
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: composer_novo_comunicado.yaml
+    env:
+      TEXTO_COMUNICADO: ${TEXTO_COMUNICADO}
+- runFlow: enviar_comunicado.yaml

@@ -1,0 +1,46 @@
+# Filtro de alvos ao lado de "Para:" (default: Alunos) → Todos → Ok.
+#
+# Dialog: "Selecionar Destinatário" (checkboxes Alunos/Responsáveis/…/Todos).
+# Rodar logo após selecionar_turmas_comunicado.
+# Semantics desejado: mural_composer_alvo (ainda não no app → regex/texto).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- assertVisible: "Para:"
+
+# Preferência: semantics (quando o app publicar)
+- runFlow:
+    when:
+      visible:
+        id: "mural_composer_alvo"
+    commands:
+      - tapOn:
+          id: "mural_composer_alvo"
+
+# Fallback: chip "Alunos" à direita de Para:
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_composer_alvo"
+    commands:
+      - tapOn:
+          text: "Alunos|.*Alunos.*"
+          rightOf: "Para:"
+          optional: true
+      - runFlow:
+          when:
+            notVisible: "Selecionar Destinatário|Todos|Responsáveis|Responsaveis"
+          commands:
+            - tapOn: "Alunos|.*Alunos.*"
+
+- extendedWaitUntil:
+    visible: "Selecionar Destinatário|Todos|Responsáveis|Responsaveis"
+    timeout: 6000
+
+# Marca Todos (pode já vir marcado) e confirma o dialog
+- tapOn: "Todos"
+- waitForAnimationToEnd
+- tapOn: "Ok|OK"
+- waitForAnimationToEnd
+
+- assertVisible: "Para:|Novo comunicado|Escreva seu texto aqui"

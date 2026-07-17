@@ -1,51 +1,49 @@
-# Seleciona a função na lista do dropdown Perfil (tela Perfil).
+# Seleciona função no dropdown Perfil (só se ainda não estiver ativa).
 #
-# Env: FUNCAO — texto exacto na lista (build amostra):
-#   COORDENADOR | PROFESSORES | SUPORTE | SECRETARIA | RESPONSAVEIS
-#
-# Abre a lista tocando NO VALOR ATUAL (uma vez) e só então escolhe FUNCAO.
-# Não toque outras opções no meio — isso seleciona o item errado.
+# Env: FUNCAO — COORDENADOR | PROFESSORES | SUPORTE | …
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - extendedWaitUntil:
-    visible: ".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|SECRETARIA|Versão.*"
-    timeout: 15000
+    visible: ".*Unidade.*|Versão.*"
+    timeout: 12000
 
+# Já correto — volta à home
+- runFlow:
+    when:
+      visible: "${FUNCAO}"
+    commands:
+      - pressKey: Back
+      - extendedWaitUntil:
+          visible: ".*MURAL.*"
+          timeout: 12000
+
+# Precisa trocar — só na tela Perfil (Unidade). Home com SUPORTE/CARDÁPIO não entra aqui.
 - runFlow:
     when:
       notVisible: "${FUNCAO}"
+      visible: ".*Unidade.*"
+      notVisible: ".*MURAL.*"
     commands:
       - runFlow:
           when:
-            visible: "SUPORTE"
+            visible:
+              id: "perfil_dropdown_funcao"
           commands:
-            - tapOn: "SUPORTE"
+            - tapOn:
+                id: "perfil_dropdown_funcao"
             - tapOn: "${FUNCAO}"
       - runFlow:
           when:
-            visible: "SECRETARIA"
+            notVisible:
+              id: "perfil_dropdown_funcao"
           commands:
-            - tapOn: "SECRETARIA"
-            - tapOn: "${FUNCAO}"
-      - runFlow:
-          when:
-            visible: "RESPONSAVEIS"
-          commands:
-            - tapOn: "RESPONSAVEIS"
-            - tapOn: "${FUNCAO}"
-      - runFlow:
-          when:
-            visible: "PROFESSORES"
-          commands:
-            - tapOn: "PROFESSORES"
+            - tapOn: "SUPORTE|PROFESSORES|SECRETARIA|RESPONSAVEIS|COORDENADOR"
             - tapOn: "${FUNCAO}"
       - extendedWaitUntil:
           visible: "${FUNCAO}"
-          timeout: 25000
-
-- pressKey: Back
-
-- extendedWaitUntil:
-    visible: "Pedro Jesus|CARDÁPIO|.*MURAL.*"
-    timeout: 30000
+          timeout: 12000
+      - pressKey: Back
+      - extendedWaitUntil:
+          visible: ".*MURAL.*"
+          timeout: 15000

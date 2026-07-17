@@ -1,27 +1,18 @@
 # CT-MURAL-09: Filtro Enviadas no Mural
 #
-# Contrato: ENTRAR → ação → ENTRAR
-# Strings: types.dart — Recebidas / Enviadas / Pendentes / Aprovadas
-# STATUS: draft — depende de ao menos 1 comunicado já enviado
+# Contrato: resume → ação → teardown
+# Pré-requisito: ao menos 1 comunicado enviado (CT-MURAL-01).
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ../shared/auth/login_phjesus.yaml
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml
+- assertVisible: "Enviados|Enviadas|Teste Comunicado"
 
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- tapOn: "Enviadas"
-
+- runFlow: ../shared/mural/filtrar_recebidas.yaml
 - extendedWaitUntil:
-    visible: "Enviadas"
+    visible: "Recebidas|Responder comunicado"
     timeout: 10000
 
-- assertVisible: "Enviadas"
-
-- tapOn:
-    text: "Recebidas"
-    optional: true
-
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml

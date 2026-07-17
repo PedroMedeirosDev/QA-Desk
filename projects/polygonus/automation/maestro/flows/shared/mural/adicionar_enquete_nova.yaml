@@ -1,0 +1,46 @@
+# Enquete na composição (tap intencional no ícone enquete).
+# Semantics: mural_composer_enquete
+#
+# Maestro inputText só aceita ASCII (issue #146).
+# Parênteses em "(Opcional)" quebram regex — escapar ou usar .*Opcao 2.*
+
+appId: br.com.polygonus.mobile.amostra
+---
+- tapOn:
+    id: mural_composer_enquete
+
+- extendedWaitUntil:
+    visible: "Nova"
+    timeout: 5000
+
+- runFlow:
+    when:
+      notVisible: "Nova"
+    commands:
+      - tapOn: "Adicionar enquete ou aviso de recebimento"
+      - extendedWaitUntil:
+          visible: "Nova"
+          timeout: 5000
+
+- assertVisible: "Nova"
+- tapOn: "Nova"
+- waitForAnimationToEnd
+
+# Opção 1
+- tapOn: ".*Opcao 1.*|.*Opção 1.*"
+- inputText: "Sim"
+- hideKeyboard
+- waitForAnimationToEnd
+
+# Opção 2 — pode estar abaixo do teclado; \( \) evita grupo regex
+- scrollUntilVisible:
+    element:
+      text: ".*Opcao 2.*|.*Opção 2.*"
+    direction: DOWN
+    timeout: 6000
+    optional: true
+
+- tapOn: ".*Opcao 2.*|.*Opção 2.*|Opcao 2 \\(Opcional\\)|Opção 2 \\(Opcional\\)"
+- inputText: "Nao"
+- hideKeyboard
+- waitForAnimationToEnd

@@ -1,15 +1,21 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Play, Plus, Trash2, Upload } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft, Bug, Copy, Play, Plus, Smartphone, Sparkles, Trash2, Upload, Video } from "lucide-react";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
-import { api, type AutomationFlow } from "@/lib/api";
+import { api, type AutomationFlow, type AndroidDeviceStatus } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
-import { useRunProgress } from "@/lib/run-progress";
+import { useRunProgress, QA_RUN_FINISHED_EVENT, type LiveRunState } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { HistoryTimeline } from "@/components/HistoryTimeline";
 import { countTestRuns, historyRunFailure, activeFailedRun } from "@/lib/history";
-import { projectDetailPath, projectListPath } from "@/lib/project-paths";
+import {
+  projectBugDetailPath,
+  projectBugsListPath,
+  projectDetailPath,
+  projectListPath,
+  projectNewBugPath,
+} from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
 import { getProjectChannels, type ProductChannel } from "@/config/channels";
 import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
@@ -18,18 +24,22 @@ import {
   CHANNEL_LABELS,
   HOMOLOGATION_LABELS,
   RECORD_TYPE_LABELS,
-  formatTestId,
+  formatRecordId,
+  isBugReport,
   isTestCase,
 } from "@/types/test-record";
+import { copyDiscordReport, formatDiscordReport } from "@/lib/discord-report";
+import { polishTestForm } from "@/lib/text-corrector";
 
 const emptyDraft = (
   project: ProjectSlug,
   channel?: ProductChannel,
+  kind: "teste" | "bug" = "teste",
 ): Partial<TestRecord> => ({
   project,
   channel: channel ?? (project === "polygonus" ? "app" : undefined),
-  recordType: "teste",
-  homologationStatus: "pendente",
+  recordType: kind,
+  homologationStatus: kind === "teste" ? "pendente" : undefined,
   executionMode: "manual",
   title: "",
   description: "",
@@ -39,9 +49,12 @@ const emptyDraft = (
   actualResult: "",
   platform: channel === "app" ? "android" : "web",
   module: "",
-  status: "rascunho",
+  status: kind === "bug" ? "reportado" : "rascunho",
   priority: "media",
   build: "",
+  osVersion: "",
+  deviceLabel: "emulador",
+  technicalEvidence: "",
   showInPortfolio: false,
 });
 
@@ -50,20 +63,32 @@ export function TestEditorPage({
   channel,
   id,
   isNew = !id,
+  editorKind = "teste",
 }: {
   project: ProjectSlug;
   channel?: ProductChannel;
   id?: string;
   isNew?: boolean;
+  editorKind?: "teste" | "bug";
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { runAutomation, running: liveRunning } = useRunProgress();
   const [tab, setTab] = useState<"detalhes" | "historico">("detalhes");
-  const [form, setForm] = useState<Partial<TestRecord>>(emptyDraft(project, channel));
+  const [form, setForm] = useState<Partial<TestRecord>>(emptyDraft(project, channel, editorKind));
   const [saving, setSaving] = useState(false);
   const [flows, setFlows] = useState<AutomationFlow[]>([]);
   const [running, setRunning] = useState(false);
+  const [deviceStatus, setDeviceStatus] = useState<AndroidDeviceStatus | null>(null);
+  const [startingEmulator, setStartingEmulator] = useState(false);
+  const [recordVideo, setRecordVideo] = useState(() => {
+    try {
+      return sessionStorage.getItem("qa-record-video") === "1";
+    } catch {
+      return false;
+    }
+  });
   const busyRun = running || liveRunning;
 
   const isHomologation = isTestCase(form);
@@ -75,12 +100,96 @@ export function TestEditorPage({
   }, [project]);
 
   useEffect(() => {
-    if (!isNew && id) {
-      api.getTest(project, id).then(setForm).catch(() => toast.error("Teste não encontrado"));
-    } else {
-      setForm(emptyDraft(project, channel));
+    if (!isHomologation || !form.automation?.flowPath || isNew) {
+      setDeviceStatus(null);
+      return;
     }
-  }, [project, id, isNew, channel]);
+
+    let cancelled = false;
+    const poll = () => {
+      api
+        .getDeviceStatus(project)
+        .then((status) => {
+          if (!cancelled) setDeviceStatus(status);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setDeviceStatus({
+              ready: false,
+              devices: [],
+              avdName: "Medium_Phone",
+              booting: false,
+              message: "Não foi possível consultar adb (API local)",
+            });
+          }
+        });
+    };
+
+    poll();
+    const timer = window.setInterval(poll, startingEmulator ? 2000 : 8000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [project, isHomologation, form.automation?.flowPath, isNew, startingEmulator]);
+
+  async function startEmulator() {
+    setStartingEmulator(true);
+    try {
+      const res = await api.startEmulator(project, true);
+      if (res.status) setDeviceStatus(res.status);
+      toast.success(res.message);
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Falha ao ligar emulador"));
+    } finally {
+      setStartingEmulator(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!isNew && id) {
+      api.getTest(project, id).then(setForm).catch(() => toast.error("Registro não encontrado"));
+    } else {
+      const fromTest = (location.state as { draft?: Partial<TestRecord> } | null)?.draft;
+      setForm(fromTest ?? emptyDraft(project, channel, editorKind));
+    }
+  }, [project, id, isNew, channel, editorKind, location.state]);
+
+  useEffect(() => {
+    if (isNew || !id) return;
+    const onFinished = (event: Event) => {
+      const detail = (event as CustomEvent<LiveRunState>).detail;
+      if (detail.testId && detail.testId !== id) return;
+      void api.getTest(project, id).then(setForm);
+      if (detail.result) setTab("historico");
+    };
+    window.addEventListener(QA_RUN_FINISHED_EVENT, onFinished);
+    return () => window.removeEventListener(QA_RUN_FINISHED_EVENT, onFinished);
+  }, [project, id, isNew]);
+
+  useEffect(() => {
+    if (isNew || !id || !form.id) return;
+    const ch = form.channel ?? channel;
+    if (editorKind === "bug" && isTestCase(form)) {
+      navigate(projectDetailPath(project, id, ch), { replace: true });
+    } else if (editorKind === "teste" && isBugReport(form)) {
+      navigate(projectBugDetailPath(project, id, ch), { replace: true });
+    }
+  }, [form.id, form.recordType, form.campaign, editorKind, id, isNew, navigate, project, channel]);
+
+  function listPathFor(record: Partial<TestRecord>) {
+    const ch = record.channel ?? channel;
+    return isBugReport(record as TestRecord)
+      ? projectBugsListPath(project, ch)
+      : projectListPath(project, ch);
+  }
+
+  function detailPathFor(recordId: string, record: Partial<TestRecord>) {
+    const ch = record.channel ?? channel;
+    return isBugReport(record as TestRecord)
+      ? projectBugDetailPath(project, recordId, ch)
+      : projectDetailPath(project, recordId, ch);
+  }
 
   function update<K extends keyof TestRecord>(key: K, value: TestRecord[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -90,10 +199,9 @@ export function TestEditorPage({
     setSaving(true);
     try {
       if (isNew) {
-        const created = await api.createTest(project, form);
-        navigate(projectDetailPath(project, created.id, created.channel ?? channel), {
-          replace: true,
-        });
+        const payload = { ...form, recordType: editorKind };
+        const created = await api.createTest(project, payload);
+        navigate(detailPathFor(created.id, created), { replace: true });
       } else if (id) {
         const updated = await api.updateTest(project, id, form);
         setForm(updated);
@@ -126,12 +234,16 @@ export function TestEditorPage({
       const res = await runAutomation({
         project,
         testId: id,
-        title: form.title || formatTestId(id),
+        title: form.title || formatRecordId(id, form as TestRecord),
+        recordVideo,
       });
       setForm(res.report);
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
+      const vids = (res.report.evidence ?? []).filter((e) => e.type === "video");
       if (res.ok) {
-        toast.success(`Execução #${res.runNumber} passou${ver}`);
+        toast.success(
+          `Execução #${res.runNumber} passou${ver}${vids.length ? ` · ${vids.length} vídeo(s)` : ""}`,
+        );
       } else {
         const where =
           res.failure?.failedStepLabel ??
@@ -140,7 +252,6 @@ export function TestEditorPage({
         toast.error(`Execução #${res.runNumber} falhou${ver} — ${where}`, {
           title: "Maestro",
         });
-        // Mantém a aba atual — o painel de progresso já mostra o erro
       }
     } catch (e) {
       toast.error(toastErrorMessage(e, "Erro ao executar"));
@@ -168,11 +279,83 @@ export function TestEditorPage({
     setForm(await api.getTest(project, id));
   }
 
+  function applyTextPolish() {
+    const polished = polishTestForm({
+      title: form.title,
+      steps: form.steps,
+      expectedResult: form.expectedResult,
+      actualResult: form.actualResult,
+      description: form.description,
+      preconditions: form.preconditions,
+    });
+    setForm((f) => ({
+      ...f,
+      steps: polished.steps.length ? polished.steps : f.steps,
+      expectedResult: polished.expectedResult || f.expectedResult,
+      actualResult: polished.actualResult || f.actualResult,
+      description: polished.description || f.description,
+      preconditions: polished.preconditions || f.preconditions,
+    }));
+    if (polished.changes.length) {
+      toast.success(`Texto ajustado: ${polished.changes.join("; ")}`);
+    } else if (polished.warnings.length) {
+      toast.info(`Campos incompletos: ${polished.warnings[0]}`);
+    } else {
+      toast.success("Nenhuma alteração necessária");
+    }
+    if (polished.warnings.length > 1) {
+      console.info("[ct-fields]", polished.warnings);
+    }
+  }
+
+  async function copyReportForDiscord() {
+    const text = formatDiscordReport(form, {
+      osVersion: form.osVersion,
+      deviceLabel: form.deviceLabel,
+      technicalEvidence: form.technicalEvidence,
+    });
+    const ok = await copyDiscordReport(text);
+    if (ok) toast.success("Report copiado — cole no Discord");
+    else toast.error("Não foi possível copiar (permissão do navegador)");
+  }
+
+  function reportBugFromTest() {
+    if (!form.id || !isTestCase(form)) return;
+    const failed = activeFailedRun(form.history ?? []);
+    navigate(projectNewBugPath(project, channel ?? form.channel), {
+      state: {
+        draft: {
+          ...emptyDraft(project, channel ?? form.channel, "bug"),
+          title: form.title ? `Bug: ${form.title}` : "Bug encontrado",
+          description:
+            failed?.detail ??
+            form.actualResult ??
+            "Defeito observado durante execução do caso de teste.",
+          preconditions: form.preconditions,
+          steps: form.steps?.filter(Boolean).length ? form.steps : [""],
+          expectedResult: form.expectedResult,
+          actualResult: form.actualResult ?? failed?.detail,
+          module: form.module,
+          platform: form.platform,
+          build: form.build,
+          osVersion: form.osVersion,
+          deviceLabel: form.deviceLabel,
+          technicalEvidence: form.technicalEvidence,
+          tags: [`origem:${form.id}`],
+        },
+      },
+    });
+  }
+
+  const isMobileChannel =
+    form.channel === "app" || form.platform === "android" || form.platform === "ios";
+  const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Link
-          to={projectListPath(project, channel ?? form.channel)}
+          to={listPathFor(form)}
           className={cn(actionBtnBase, actionBtn.back, "size-9 px-0")}
           title="Voltar à lista"
         >
@@ -180,9 +363,13 @@ export function TestEditorPage({
         </Link>
         <div>
           <p className="font-mono text-xs text-muted-foreground">
-            {isNew ? "Novo teste" : formatTestId(form.id ?? "")}
+            {isNew
+              ? editingBug
+                ? "Novo bug"
+                : "Novo teste"
+              : formatRecordId(form.id ?? "", form as TestRecord)}
           </p>
-          {!isNew && (
+          {!isNew && isTestCase(form) && (
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <ExecutionModeBadge record={form} />
               <AutomationReadinessBadge record={form} />
@@ -241,15 +428,25 @@ export function TestEditorPage({
               />
             </Field>
             <div>
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-sm font-medium">Passos do teste</span>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                  onClick={() => update("steps", [...(form.steps ?? []), ""])}
-                >
-                  <Plus className="size-3" /> Adicionar passo
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/50"
+                    onClick={applyTextPolish}
+                    title="Normaliza numeração, espaços e unicode"
+                  >
+                    <Sparkles className="size-3" /> Corrigir texto
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                    onClick={() => update("steps", [...(form.steps ?? []), ""])}
+                  >
+                    <Plus className="size-3" /> Adicionar passo
+                  </button>
+                </div>
               </div>
               {(() => {
                 const failed = activeFailedRun(form.history ?? []);
@@ -347,7 +544,7 @@ export function TestEditorPage({
             )}
 
             <div>
-              <span className="text-sm font-medium">Evidência (prints)</span>
+              <span className="text-sm font-medium">Evidência (prints / vídeos)</span>
               <div className="mt-2 flex flex-wrap gap-3">
                 {(form.evidence ?? []).map((ev) => (
                   <a
@@ -356,12 +553,20 @@ export function TestEditorPage({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block overflow-hidden rounded-md border"
+                    title={ev.filename}
                   >
-                    <img
-                      src={api.evidenceUrl(ev.storageKey)}
-                      alt={ev.filename}
-                      className="h-24 w-auto object-cover"
-                    />
+                    {ev.type === "video" ? (
+                      <span className="flex h-24 w-36 flex-col items-center justify-center gap-1 bg-muted/40 text-xs text-muted-foreground">
+                        <Video className="size-6" />
+                        Vídeo
+                      </span>
+                    ) : (
+                      <img
+                        src={api.evidenceUrl(ev.storageKey)}
+                        alt={ev.filename}
+                        className="h-24 w-auto object-cover"
+                      />
+                    )}
                   </a>
                 ))}
               </div>
@@ -395,7 +600,7 @@ export function TestEditorPage({
             )}
             <PropSelect
               label="Natureza"
-              value={form.recordType ?? "teste"}
+              value={form.recordType ?? editorKind}
               options={Object.entries(RECORD_TYPE_LABELS).map(([k, v]) => ({
                 value: k,
                 label: v,
@@ -404,6 +609,7 @@ export function TestEditorPage({
                 update("recordType", v as TestRecord["recordType"]);
                 if (v === "teste") update("homologationStatus", "pendente");
               }}
+              disabled={editorKind === "bug" || (!isNew && isTestCase(form))}
             />
 
             {isHomologation ? (
@@ -456,7 +662,38 @@ export function TestEditorPage({
                 title="Mesma versão exibida na tela de login; atualizada a cada execução"
               />
             </Field>
+            {isMobileChannel && (
+              <>
+                <Field label="SO / API (report)">
+                  <input
+                    className="w-full rounded-md border px-3 py-2 text-sm"
+                    value={form.osVersion ?? ""}
+                    onChange={(e) => update("osVersion", e.target.value)}
+                    placeholder="Ex.: Android API 33 — Medium_Phone"
+                  />
+                </Field>
+                <Field label="Dispositivo (report)">
+                  <input
+                    className="w-full rounded-md border px-3 py-2 text-sm"
+                    value={form.deviceLabel ?? ""}
+                    onChange={(e) => update("deviceLabel", e.target.value)}
+                    placeholder="emulador, celular, emulador + celular"
+                  />
+                </Field>
+                {!isHomologation && (
+                  <Field label="Evidência técnica (report)">
+                    <textarea
+                      className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                      value={form.technicalEvidence ?? ""}
+                      onChange={(e) => update("technicalEvidence", e.target.value)}
+                      placeholder="JSON datEnvio, log Maestro, stack…"
+                    />
+                  </Field>
+                )}
+              </>
+            )}
 
+            {isHomologation && (
             <div className="space-y-2 border-t pt-3">
               <span className="text-sm font-medium">Maestro</span>
               {form.automation?.flowPath ? (
@@ -502,19 +739,99 @@ export function TestEditorPage({
                 </select>
               )}
               {!isNew && form.automation?.flowPath && (
-                <button
-                  type="button"
-                  onClick={() => void runMaestro()}
-                  disabled={busyRun || saving}
-                  className={cn(actionBtnBase, actionBtn.run, "w-full")}
-                >
-                  <Play className="size-4" />
-                  {busyRun ? "Executando…" : "Executar teste"}
-                </button>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2 rounded-md border bg-muted/20 px-2.5 py-2 text-xs text-muted-foreground">
+                    <span
+                      className={cn(
+                        "mt-1 size-2 shrink-0 rounded-full",
+                        deviceStatus?.ready
+                          ? "bg-emerald-500"
+                          : deviceStatus?.booting || startingEmulator
+                            ? "bg-amber-400 animate-pulse"
+                            : "bg-muted-foreground/40",
+                      )}
+                      aria-hidden
+                    />
+                    <span>
+                      {startingEmulator
+                        ? `Ligando ${deviceStatus?.avdName ?? "emulador"}…`
+                        : (deviceStatus?.message ?? "Consultando device Android…")}
+                    </span>
+                  </div>
+                  {!deviceStatus?.ready && (
+                    <button
+                      type="button"
+                      onClick={() => void startEmulator()}
+                      disabled={startingEmulator || busyRun || saving}
+                      className={cn(actionBtnBase, actionBtn.back, "w-full")}
+                      title={`Inicia o AVD ${deviceStatus?.avdName ?? "Medium_Phone"} via Android SDK`}
+                    >
+                      <Smartphone className="size-4" />
+                      {startingEmulator ? "Aguardando boot…" : "Ligar emulador"}
+                    </button>
+                  )}
+                  <label className="flex cursor-pointer items-start gap-2 rounded-md border px-2.5 py-2 text-xs text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={recordVideo}
+                      disabled={busyRun}
+                      onChange={(e) => {
+                        const on = e.target.checked;
+                        setRecordVideo(on);
+                        try {
+                          sessionStorage.setItem("qa-record-video", on ? "1" : "0");
+                        } catch {
+                          /* ignore */
+                        }
+                      }}
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">Gravar vídeo</span>
+                      <span className="mt-0.5 block leading-snug">
+                        adb screenrecord em paralelo (chunks de ~3 min). Arquivos ficam em Evidência.
+                      </span>
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => void runMaestro()}
+                    disabled={busyRun || saving || startingEmulator}
+                    className={cn(actionBtnBase, actionBtn.run, "w-full")}
+                  >
+                    {recordVideo ? <Video className="size-4" /> : <Play className="size-4" />}
+                    {busyRun
+                      ? "Executando…"
+                      : recordVideo
+                        ? "Executar com vídeo"
+                        : "Executar teste"}
+                  </button>
+                </div>
               )}
             </div>
+            )}
 
             <div className="flex flex-col gap-2 pt-2">
+              {isHomologation && !isNew && (
+                <button
+                  type="button"
+                  onClick={reportBugFromTest}
+                  className={cn(actionBtnBase, actionBtn.back, "w-full")}
+                  title="Abre um novo bug com dados deste caso de teste"
+                >
+                  <Bug className="size-4" />
+                  Reportar bug deste teste
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => void copyReportForDiscord()}
+                className={cn(actionBtnBase, actionBtn.back, "w-full")}
+                title="Formato enxuto para Discord"
+              >
+                <Copy className="size-4" />
+                Copiar report Discord
+              </button>
               <button
                 type="button"
                 onClick={() => void save()}
@@ -573,18 +890,21 @@ function PropSelect({
   value,
   options,
   onChange,
+  disabled,
 }: {
   label: string;
   value: string;
   options: { value: string; label: string }[];
   onChange: (v: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-sm font-medium">{label}</span>
       <select
-        className="w-full rounded-md border px-3 py-2 text-sm"
+        className="w-full rounded-md border px-3 py-2 text-sm disabled:opacity-60"
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
       >
         {options.map((o) => (

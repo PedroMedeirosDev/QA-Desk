@@ -50,7 +50,7 @@ export interface AutomationLink {
   /** draft = ainda mapeando no Studio · ready = validado 2× no emulador */
   readiness?: "draft" | "ready";
   lastRunAt?: string;
-  lastRunStatus?: "idle" | "running" | "success" | "failed";
+  lastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
   lastRunOutput?: string;
 }
 
@@ -81,6 +81,9 @@ export interface TestRecord {
   priority?: "baixa" | "media" | "alta" | "critica";
   severity?: "baixa" | "media" | "alta" | "critica";
   build?: string;
+  osVersion?: string;
+  deviceLabel?: string;
+  technicalEvidence?: string;
   evidence?: EvidenceFile[];
   automation?: AutomationLink;
   comments?: Array<{ at: string; author: string; text: string }>;

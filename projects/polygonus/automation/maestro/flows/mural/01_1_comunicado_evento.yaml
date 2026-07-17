@@ -1,36 +1,25 @@
-# CT-MURAL-08: Criar Evento pelo BoomMenu do Mural
+# CT-MURAL-08: Evento padrão (sem "Dia inteiro")
 #
-# Contrato: ENTRAR → ação → ENTRAR
-# Fonte: mural_widget.dart BoomMenu — "Evento"
-# STATUS: draft — STUDIO: FAB + tela de evento (campos variam)
+# Turmas + alvo Todos → texto "Evento Padrao" (ASCII — Maestro inputText não aceita ã).
+# Fase 1: envia → Enviadas. Fase 2 (qa-app): adb ID → assert + ETMENEZES.
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ../shared/auth/login_phjesus.yaml
-
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- tapOn:
-    text: "Padrão"
-    optional: true
-
-- tapOn: "Evento"
-
-- extendedWaitUntil:
-    visible: "Evento"
-    timeout: 15000
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
 - runFlow:
-    file: ../shared/mural/escrever_comunicado.yaml
+    file: ../shared/mural/composer_novo_evento.yaml
     env:
-      TEXTO_COMUNICADO: "Teste Evento mural"
+      TEXTO_COMUNICADO: "Evento Padrao"
+      TITULO_EVENTO: "Evento Padrao"
+      DIA_INTEIRO: "0"
 
 - runFlow: ../shared/mural/enviar_comunicado.yaml
 
-- assertVisible:
-    text: "Teste Evento mural"
-    optional: true
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
 
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

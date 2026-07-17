@@ -1,0 +1,25 @@
+# Novo evento: turmas → alvo Todos → (opcional Dia inteiro) → título/texto.
+#
+# Env obrigatório: TEXTO_COMUNICADO
+# Env opcional:
+#   DIA_INTEIRO=1 — liga o toggle "Dia inteiro"
+#   TITULO_EVENTO — senão usa o mesmo texto do corpo
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: abrir_novo_evento.yaml
+- assertVisible: "Para:|Novo evento"
+
+- runFlow: selecionar_turmas_comunicado.yaml
+- runFlow: selecionar_alvo_todos.yaml
+
+- runFlow:
+    when:
+      true: ${DIA_INTEIRO == "1"}
+    file: marcar_dia_inteiro.yaml
+
+- runFlow:
+    file: escrever_evento.yaml
+    env:
+      TEXTO_COMUNICADO: ${TEXTO_COMUNICADO}
+      TITULO_EVENTO: ${TITULO_EVENTO}

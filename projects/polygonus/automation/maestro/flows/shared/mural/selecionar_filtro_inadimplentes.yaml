@@ -1,0 +1,12 @@
+# Composer → funil → Inadimplentes (abre dialog Período / opções).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: abrir_filtro_extras_composer.yaml
+
+- tapOn: "Inadimplentes|Inadimplente"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Período|Periodo|Mes corrente|Mês corrente|mês corrente|Ok|OK"
+    timeout: 8000

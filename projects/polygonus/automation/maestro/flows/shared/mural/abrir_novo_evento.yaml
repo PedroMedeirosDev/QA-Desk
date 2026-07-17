@@ -1,0 +1,11 @@
+# BoomMenu → Evento
+# Semantics: mural_boom_fab, mural_boom_evento
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: tap_boom_fab.yaml
+- runFlow: tap_boom_evento.yaml
+
+- extendedWaitUntil:
+    visible: "Evento|Novo evento|Para:|Escreva seu texto aqui"
+    timeout: 8000

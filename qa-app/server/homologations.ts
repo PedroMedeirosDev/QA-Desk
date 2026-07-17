@@ -1,20 +1,23 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDatabaseEnabled } from "./db/config.js";
+import {
+  readHomologationCatalogFromDb,
+  writeHomologationCatalogToDb,
+} from "./db/pg-homologations.js";
 import { MURAL_HOMOLOGATION_SLUG, muralTestKeys } from "./homologation-config.js";
 import { CURRENT_USER } from "./config/user.js";
 import type {
   Homologation,
   HomologationCatalog,
   HomologationChangeScope,
-  HomologationCycleStatus,
   HomologationProgress,
   ProjectSlug,
   TestCatalog,
-  TestHomologationStatus,
   TestRecord,
 } from "./types.js";
-import { readCatalog, writeCatalog } from "./storage.js";
+import { readCatalog } from "./storage.js";
 import { findByTestKey } from "./test-key.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -24,26 +27,69 @@ function homologationsPath(project: ProjectSlug) {
   return path.join(DATA_ROOT, project, "homologations.json");
 }
 
-export function readHomologationCatalog(project: ProjectSlug): HomologationCatalog {
+function readHomologationCatalogFromFile(project: ProjectSlug): HomologationCatalog {
   const file = homologationsPath(project);
   fs.mkdirSync(path.dirname(file), { recursive: true });
 
   if (!fs.existsSync(file)) {
-    const catalog = seedDefaultHomologations(project);
-    writeHomologationCatalog(project, catalog);
-    return catalog;
+    return seedDefaultHomologations(project);
   }
 
-  const raw = JSON.parse(fs.readFileSync(file, "utf8")) as HomologationCatalog;
+  return JSON.parse(fs.readFileSync(file, "utf8")) as HomologationCatalog;
+}
+
+function writeHomologationCatalogToFile(project: ProjectSlug, catalog: HomologationCatalog) {
+  catalog.meta.updatedAt = new Date().toISOString().slice(0, 10);
+  catalog.meta.project = project;
+  fs.mkdirSync(path.dirname(homologationsPath(project)), { recursive: true });
+  fs.writeFileSync(homologationsPath(project), `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
+}
+
+export async function readHomologationCatalog(
+  project: ProjectSlug,
+): Promise<HomologationCatalog> {
+  if (isDatabaseEnabled()) {
+    let catalog = await readHomologationCatalogFromDb(project);
+    if (catalog.homologations.length === 0) {
+      const fromFile = readHomologationCatalogFromFile(project);
+      const { catalog: ensured, changed } = ensureMuralHomologation(project, fromFile);
+      if (ensured.homologations.length > 0) {
+        await writeHomologationCatalogToDb(project, ensured);
+        if (changed || !fs.existsSync(homologationsPath(project))) {
+          writeHomologationCatalogToFile(project, ensured);
+        }
+        return ensured;
+      }
+    }
+    const { catalog: ensured, changed } = ensureMuralHomologation(project, catalog);
+    if (changed) await writeHomologationCatalogToDb(project, ensured);
+    return ensured;
+  }
+
+  const raw = readHomologationCatalogFromFile(project);
   const { catalog, changed } = ensureMuralHomologation(project, raw);
-  if (changed) writeHomologationCatalog(project, catalog);
+  if (changed || !fs.existsSync(homologationsPath(project))) {
+    writeHomologationCatalogToFile(project, catalog);
+  }
   return catalog;
 }
 
-export function writeHomologationCatalog(project: ProjectSlug, catalog: HomologationCatalog) {
+export async function writeHomologationCatalog(
+  project: ProjectSlug,
+  catalog: HomologationCatalog,
+): Promise<void> {
   catalog.meta.updatedAt = new Date().toISOString().slice(0, 10);
   catalog.meta.project = project;
-  fs.writeFileSync(homologationsPath(project), `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
+  if (isDatabaseEnabled()) {
+    await writeHomologationCatalogToDb(project, catalog);
+    return;
+  }
+  writeHomologationCatalogToFile(project, catalog);
+}
+
+/** Lê o JSON do disco (migração / backup), sem Postgres. */
+export function readHomologationCatalogFileOnly(project: ProjectSlug): HomologationCatalog {
+  return readHomologationCatalogFromFile(project);
 }
 
 function seedDefaultHomologations(project: ProjectSlug): HomologationCatalog {
@@ -270,12 +316,12 @@ export function appendHomologationHistory(
   });
 }
 
-export function resolveHomologationForTest(
+export async function resolveHomologationForTest(
   project: ProjectSlug,
   test: TestRecord,
   explicitId?: string,
-): Homologation | undefined {
-  const catalog = readHomologationCatalog(project);
+): Promise<Homologation | undefined> {
+  const catalog = await readHomologationCatalog(project);
   if (explicitId) {
     return findHomologationById(catalog, explicitId) ?? findHomologationBySlug(catalog, explicitId);
   }
@@ -289,9 +335,9 @@ export function resolveHomologationForTest(
 }
 
 /** Sincroniza testKeys da homologação Mural com testes existentes no catálogo */
-export function syncMuralHomologation(project: ProjectSlug) {
-  const homCatalog = readHomologationCatalog(project);
-  const testCatalog = readCatalog(project);
+export async function syncMuralHomologation(project: ProjectSlug) {
+  const homCatalog = await readHomologationCatalog(project);
+  const testCatalog = await readCatalog(project);
   const mural = findHomologationBySlug(homCatalog, MURAL_HOMOLOGATION_SLUG);
   if (!mural) throw new Error("Homologação Mural não encontrada");
 

@@ -1,4 +1,5 @@
 import type { HistoryEntry } from "@/types/test-record";
+import { normalizeMaestroOutput } from "@/lib/maestro-output";
 
 const RUN_ACTIONS = new Set(["test_run", "automation_passed", "automation_failed"]);
 
@@ -35,15 +36,23 @@ export function historyEntryTitle(entry: HistoryEntry): string {
 
 export function historyRunResult(
   entry: HistoryEntry,
-): "success" | "failed" | undefined {
+): "success" | "failed" | "cancelled" | undefined {
   if (entry.action !== "test_run") return undefined;
   const result = entry.meta?.result;
-  return result === "success" || result === "failed" ? result : undefined;
+  if (result === "success" || result === "failed" || result === "cancelled") {
+    return result;
+  }
+  return undefined;
 }
 
 /** Contexto curto — evita repetir número/status já mostrados no título. */
 export function historyEntrySubtitle(entry: HistoryEntry): string | undefined {
   if (entry.action === "test_run") {
+    if (entry.meta?.result === "cancelled") {
+      return entry.detail?.includes("Cancelado")
+        ? entry.detail
+        : "Cancelado pelo usuário";
+    }
     const parts: string[] = [];
     if (entry.meta?.via === "maestro") parts.push("Maestro");
     if (typeof entry.meta?.appVersion === "string" && entry.meta.appVersion) {
@@ -134,7 +143,7 @@ export function formatMaestroLog(output: string): {
   full: string;
   hasMore: boolean;
 } {
-  const full = output
+  const full = normalizeMaestroOutput(output)
     .replace(/\r\n/g, "\n")
     .replace(REPO_PATH_PREFIX, "")
     .split("\n")
@@ -152,6 +161,7 @@ export function formatMaestroLog(output: string): {
 
   const lines = full.split("\n").filter(Boolean);
   const priority =
+    lines.find((line) => /cancelad/i.test(line)) ??
     lines.find((line) =>
       /instrumentation could not|Assertion is false|Unknown Property|Invalid File|Flow path does not exist|Element not found/i.test(
         line,

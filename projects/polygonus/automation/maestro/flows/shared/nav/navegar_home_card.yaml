@@ -1,7 +1,23 @@
-# Subflow: toca card na home (texto em MAIÚSCULAS vindo do servidor)
-# Env: CARD_HOME (ex.: CONTEÚDO E FREQUÊNCIA, FALE CONOSCO, NOTAS PARCIAIS)
+# Subflow: toca card na home.
+# Env: CARD_HOME — texto do card (ex.: CONTEÚDO E FREQUÊNCIA) ou .*MURAL.*
+#
+# Semantics: home_card_mural quando o destino é o Mural.
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- tapOn: ${CARD_HOME}
+- runFlow:
+    when:
+      visible:
+        id: "home_card_mural"
+    commands:
+      - tapOn:
+          id: "home_card_mural"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "home_card_mural"
+    commands:
+      - tapOn: ${CARD_HOME}
+
 - waitForAnimationToEnd

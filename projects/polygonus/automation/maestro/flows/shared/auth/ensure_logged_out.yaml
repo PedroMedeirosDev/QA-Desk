@@ -21,4 +21,4 @@ appId: br.com.polygonus.mobile.amostra
 
 - extendedWaitUntil:
     visible: "ENTRAR"
-    timeout: 25000
+    timeout: 15000

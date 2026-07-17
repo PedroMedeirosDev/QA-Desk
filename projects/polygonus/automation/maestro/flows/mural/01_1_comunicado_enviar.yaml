@@ -1,42 +1,18 @@
 # CT-MURAL-01: Enviar comunicado de texto
 #
-# Contrato: ENTRAR → ação → ENTRAR
-# Perfil: PHJESUS (coordenador) · verificação: ETMENEZES
-# Texto: "Teste Comunicado"
+# Fase 1 (este YAML): setup → publicar → Enviadas (para adb capturar ID).
+# Fase 2 (qa-app): adb → assert por ID → ETMENEZES → teardown.
 #
-# STATUS: ready — passou no CLI (emulador) com porto seguro sem clearState + logout nome/Sair
+# Via CLI puro: após este flow, rode com -e ID_COMUNICADO=<digitos> o verify gerado
+# ou use npx tsx server/scripts/run-ct-mural.ts 01
 
 appId: br.com.polygonus.mobile.amostra
 ---
-# ── 0. PORTO SEGURO + SETUP ───────────────────────────────────────────────────
-- runFlow: ../shared/auth/login_phjesus.yaml
-
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
-
-# ── 1. AÇÃO ───────────────────────────────────────────────────────────────────
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- runFlow: ../shared/mural/abrir_novo_comunicado.yaml
-
-- runFlow: ../shared/mural/selecionar_turmas_comunicado.yaml
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
 - runFlow:
-    file: ../shared/mural/escrever_comunicado.yaml
+    file: ../shared/mural/publicar_comunicado_texto.yaml
     env:
       TEXTO_COMUNICADO: "Teste Comunicado"
 
-- runFlow: ../shared/mural/enviar_comunicado.yaml
-
-- assertVisible: "Teste Comunicado"
-
-# ── 2. VERIFICAÇÃO (outro perfil) ─────────────────────────────────────────────
-- runFlow: ../shared/auth/ensure_logged_out.yaml
-
-- runFlow: ../shared/auth/login_etmenezes.yaml
-
-- runFlow: ../shared/nav/navegar_mural.yaml
-
-- assertVisible: "Teste Comunicado"
-
-# ── 3. TEARDOWN ───────────────────────────────────────────────────────────────
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

@@ -1,0 +1,11 @@
+# Liga o toggle "Dia inteiro" no composer de Evento.
+# Só chamar quando o CT for Evento Dia Inteiro.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Dia inteiro|Dia Inteiro"
+    timeout: 8000
+
+- tapOn: "Dia inteiro|Dia Inteiro"
+- waitForAnimationToEnd

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ListChecks } from "lucide-react";
+import { Bug, ChevronLeft, ChevronRight, ClipboardList, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   CHANNEL_LABELS,
@@ -10,7 +10,7 @@ import {
 } from "@/config/channels";
 import { getProject, PROJECTS } from "@/config/projects";
 import { ProjectLogo } from "@/components/ProjectLogo";
-import { projectHomologationsListPath, projectListPath, isHomologationPath } from "@/lib/project-paths";
+import { projectBugsListPath, projectHomologationsListPath, projectListPath, isHomologationPath } from "@/lib/project-paths";
 import type { ProjectSlug } from "@/types/test-record";
 
 const STORAGE_KEY = "qa-sidebar-collapsed";
@@ -179,48 +179,72 @@ export function ProjectSidebar({
               )}
 
               {showChannels && sub && (
-                <div className={cn("ml-3 border-l pl-2", sub.rail)}>
-                  <ul className="space-y-0.5">
-                    {channels.map((ch) => {
-                      const chActive = activeChannel === ch.id && !onHomologations;
-                      const testsPath = projectListPath(project.slug, ch.id);
+                <div className={cn("ml-3 space-y-3 border-l pl-2", sub.rail)}>
+                  {channels.map((ch) => {
+                    const testsPath = projectListPath(project.slug, ch.id);
+                    const bugsPath = projectBugsListPath(project.slug, ch.id);
+                    const onBugs = location.pathname.startsWith(bugsPath);
+                    const onTests =
+                      activeChannel === ch.id &&
+                      !onHomologations &&
+                      !onBugs &&
+                      !location.pathname.startsWith(bugsPath) &&
+                      (location.pathname === testsPath ||
+                        location.pathname.startsWith(`${testsPath}/`));
 
-                      return (
-                        <li key={ch.id}>
-                          <Link
-                            to={testsPath}
-                            className={cn(
-                              "sidebar-subitem block rounded-md px-2.5 py-1.5 transition-colors",
-                              subLinkClass(themeSub, chActive ? "active" : "idle"),
-                            )}
-                            aria-current={chActive ? "page" : undefined}
-                          >
-                            {CHANNEL_LABELS[ch.id]}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                    return (
+                      <div key={ch.id} className="space-y-1">
+                        <p className="sidebar-subitem px-2.5 text-[0.65rem] font-semibold uppercase tracking-wider opacity-60">
+                          {CHANNEL_LABELS[ch.id]}
+                        </p>
+                        <ul className="space-y-0.5">
+                          <li>
+                            <Link
+                              to={testsPath}
+                              className={cn(
+                                "sidebar-subitem flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors",
+                                subLinkClass(themeSub, onTests ? "active" : "idle"),
+                              )}
+                              aria-current={onTests ? "page" : undefined}
+                            >
+                              <ClipboardList className="size-3.5 shrink-0 opacity-80" />
+                              Testes
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              to={bugsPath}
+                              className={cn(
+                                "sidebar-subitem flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors",
+                                subLinkClass(themeSub, onBugs ? "active" : "idle"),
+                              )}
+                              aria-current={onBugs ? "page" : undefined}
+                            >
+                              <Bug className="size-3.5 shrink-0 opacity-80" />
+                              Bugs
+                            </Link>
+                          </li>
+                        </ul>
+                      </div>
+                    );
+                  })}
+                  <div className={cn("border-t pt-2", sub.rail)}>
+                    <Link
+                      to={homPath}
+                      className={cn(
+                        "sidebar-subitem flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors",
+                        homologationsLinkClass(themeSub, onHomologations),
+                      )}
+                      aria-current={onHomologations ? "page" : undefined}
+                    >
+                      <ListChecks className="size-3.5 shrink-0 opacity-90" />
+                      Homologações
+                    </Link>
+                  </div>
                 </div>
               )}
 
-              {!collapsed && active && (
-                <div className="ml-3 mt-1">
-                  <Link
-                    to={homPath}
-                    className={cn(
-                      "sidebar-subitem flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-colors",
-                      homologationsLinkClass(themeSub, onHomologations),
-                    )}
-                    aria-current={onHomologations ? "page" : undefined}
-                  >
-                    <ListChecks className="size-3.5 shrink-0 opacity-90" />
-                    Homologações
-                  </Link>
-                </div>
-              )}
-
-              {collapsed && active && (
+              {collapsed && active && sub && (
                 <CollapsedTooltip label="Homologações">
                   <Link
                     to={homPath}

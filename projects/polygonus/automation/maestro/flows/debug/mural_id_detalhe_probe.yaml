@@ -1,0 +1,20 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+- runFlow: ../shared/mural/filtrar_enviadas.yaml
+- tapOn:
+    text: "Teste Comunicado"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Comunicado|Show menu"
+    timeout: 8000
+- copyTextFrom:
+    text: "ID [0-9]+"
+    optional: true
+- evalScript: '${output.fromDetail = maestro.copiedText || ""}'
+- copyTextFrom:
+    id: "mural_card_menu"
+    optional: true
+- evalScript: '${output.fromDetail2 = maestro.copiedText || ""}'
+- assertTrue: ${((output.fromDetail + output.fromDetail2).match(/ID\\s*[0-9]+/) || []).length > 0}

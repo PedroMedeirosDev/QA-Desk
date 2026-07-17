@@ -1,0 +1,11 @@
+# Fecha popup de enquete se o tap errado abriu o menu (Nova / templates).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible: "Nova"
+      visible: "Estou Ciente|Sim/N.o|Sim/No"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd

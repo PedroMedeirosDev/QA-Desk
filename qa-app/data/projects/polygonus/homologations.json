@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-07-14",
+    "updatedAt": "2026-07-16",
     "project": "polygonus"
   },
   "homologations": [
@@ -17,14 +17,14 @@
       "testKeys": [
         "mural/01_1_comunicado_enviar",
         "mural/01_1_comunicado_editar",
+        "mural/01_1_comunicado_excluir",
         "mural/01_1_comunicado_enquete",
         "mural/01_1_comunicado_foto_galeria",
-        "mural/01_1_comunicado_excluir",
         "mural/01_1_comunicado_pdf",
         "mural/01_1_comunicado_video_pequeno",
         "mural/01_1_comunicado_evento",
         "mural/01_1_filtro_enviadas",
-        "mural/01_1_comunicado_professor_pendente"
+        "mural/01_1_comunicado_completo_e2e"
       ],
       "startedAt": "2026-07-13T20:35:02.142Z",
       "history": [
@@ -36,7 +36,7 @@
         }
       ],
       "changeScope": "backend",
-      "build": "6.06.01 (60601)"
+      "build": "6.06.03 (60603)"
     }
   ]
 }

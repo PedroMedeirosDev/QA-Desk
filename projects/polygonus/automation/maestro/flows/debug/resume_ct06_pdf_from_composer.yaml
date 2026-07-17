@@ -1,0 +1,39 @@
+# Retomada CT-06: app já no composer com "Teste Comunicado PDF".
+# Não refaz setup/login/turmas — só anexo → enviar → Enviadas.
+# Env: FIXTURE_PDF (ex.: PDF TESTE.pdf)
+
+appId: br.com.polygonus.mobile.amostra
+---
+# Se hideKeyboard/Back abriu o diálogo, fica no rascunho.
+- runFlow:
+    when:
+      visible: "Gravação Pendente|As últimas alterações"
+    commands:
+      - tapOn: "Não|Nao"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:"
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible:
+      id: "mural_composer_anexo"
+    timeout: 8000
+
+- runFlow:
+    file: ../shared/mural/anexar_arquivo_por_nome.yaml
+    env:
+      # Literal (evita ${FIXTURE_PDF} → undefined com espaço no valor)
+      ANEXO_NOME: "PDF TESTE.pdf"
+      ANEXO_PASTA: "Download"
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

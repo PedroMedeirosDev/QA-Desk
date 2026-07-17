@@ -1,0 +1,28 @@
+# Abre o menu do ícone clipe (mural_composer_anexo).
+# Opções reais (content-desc): Selecionar arquivo | Boleto | Correspondência
+
+appId: br.com.polygonus.mobile.amostra
+---
+# Não usar hideKeyboard aqui — no composer pode abrir "Gravação Pendente".
+- runFlow:
+    when:
+      visible: "Gravação Pendente|As últimas alterações"
+    commands:
+      - tapOn: "Não|Nao"
+      - waitForAnimationToEnd
+
+- tapOn:
+    id: mural_composer_anexo
+
+- extendedWaitUntil:
+    visible: "Selecionar arquivo|Boleto|Correspondência|Correspondencia"
+    timeout: 6000
+
+- runFlow:
+    when:
+      notVisible: "Selecionar arquivo|Boleto|Correspondência|Correspondencia"
+    commands:
+      - tapOn: "Adicionar documento"
+      - extendedWaitUntil:
+          visible: "Selecionar arquivo|Boleto|Correspondência|Correspondencia"
+          timeout: 5000

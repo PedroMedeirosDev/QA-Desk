@@ -1,0 +1,33 @@
+# CT-MURAL-E2E: Comunicado completo → editar → excluir
+#
+# Contrato: resume → criar → editar → excluir → teardown
+# Pré-requisito: fixtures no device (push-maestro-fixtures.ps1) + .env FIXTURE_*
+#
+# CTs isolados (04–07) permanecem para depurar um anexo por vez.
+# STATUS: draft — calibrar pickers de galeria/PDF/vídeo na composição única.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- addMedia:
+    - "../../fixtures/Foto_1.jpeg"
+    - "../../fixtures/Video_teste.mp4"
+
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+
+- runFlow:
+    file: ../shared/mural/composer_comunicado_completo.yaml
+    env:
+      TEXTO_COMUNICADO: "Teste Comunicado completo"
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- assertVisible: "Teste Comunicado completo"
+
+- runFlow:
+    file: ../shared/mural/editar_comunicado_lista.yaml
+    env:
+      NOVO_TEXTO: "Teste Comunicado completo editado"
+
+- runFlow: ../shared/mural/excluir_comunicado_lista.yaml
+
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml

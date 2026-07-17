@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEnv } from "./load-env.js";
+import { storageMode } from "./db/config.js";
 import { testsRouter } from "./routes/tests.js";
 import { homologationsRouter } from "./routes/homologations.js";
 import { automationRouter } from "./routes/automation.js";
@@ -25,6 +26,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     mode: IS_PROD ? "production" : "development",
+    storage: storageMode(),
     automationRun: process.env.QA_AUTOMATION_RUN === "1",
   });
 });
@@ -61,6 +63,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 app.listen(PORT, HOST, () => {
   const automationRun = process.env.QA_AUTOMATION_RUN === "1";
   console.log(`QA App ${IS_PROD ? "PRODUCTION" : "API"} http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
+  console.log(`Storage: ${storageMode()}${storageMode() === "json" ? " (defina DATABASE_URL para Postgres)" : ""}`);
   console.log(
     automationRun
       ? "Maestro: execução habilitada (QA_AUTOMATION_RUN=1)"

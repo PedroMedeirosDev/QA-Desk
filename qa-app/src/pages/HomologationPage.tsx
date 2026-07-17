@@ -10,7 +10,7 @@ import {
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
 import { api } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
-import { useRunProgress } from "@/lib/run-progress";
+import { useRunProgress, RUN_CANCELLED_MESSAGE } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { projectDetailPath, projectHomologationsListPath } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
@@ -247,6 +247,12 @@ export function HomologationPage({
             homologationId: homologation.id,
             batchLabel: `${i + 1}/${queue.length}`,
           });
+          if (res.cancelled) {
+            toast.info("Campanha interrompida pelo usuário.", {
+              title: "Execução em lote",
+            });
+            break;
+          }
           const ver = res.appVersion ? ` · v${res.appVersion}` : "";
           if (res.ok) {
             passed += 1;
@@ -262,9 +268,16 @@ export function HomologationPage({
             });
           }
         } catch (e) {
+          const msg = toastErrorMessage(e, "erro");
+          if (msg === RUN_CANCELLED_MESSAGE) {
+            toast.info("Campanha interrompida pelo usuário.", {
+              title: "Execução em lote",
+            });
+            break;
+          }
           failed += 1;
           toast.error(
-            `${item.title} — ${toastErrorMessage(e, "erro")} (seguindo…)`,
+            `${item.title} — ${msg} (seguindo…)`,
             { title: "Maestro" },
           );
         }

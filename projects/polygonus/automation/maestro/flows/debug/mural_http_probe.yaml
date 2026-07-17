@@ -1,0 +1,4 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- evalScript: '${output.httpProbe = (typeof http !== "undefined") ? "yes" : "no"}'
+- assertTrue: ${output.httpProbe === "yes"}

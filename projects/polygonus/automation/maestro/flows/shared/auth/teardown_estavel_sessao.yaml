@@ -1,0 +1,40 @@
+# Teardown leve — fecha overlays e volta à home autenticada (card MURAL).
+
+# NÃO faz logout: próximo CT usa resume_phjesus_coordenador.
+
+#
+
+# Não pressiona Back se já estiver na home com MURAL.
+
+
+
+appId: br.com.polygonus.mobile.amostra
+
+---
+
+- runFlow:
+
+    when:
+
+      notVisible: ".*MURAL.*"
+
+    commands:
+
+      - pressKey: Back
+
+      - waitForAnimationToEnd
+
+      - pressKey: Back
+
+      - waitForAnimationToEnd
+
+      - runFlow: ../nav/voltar_para_home.yaml
+
+
+
+- extendedWaitUntil:
+
+    visible: ".*MURAL.*"
+
+    timeout: 15000
+

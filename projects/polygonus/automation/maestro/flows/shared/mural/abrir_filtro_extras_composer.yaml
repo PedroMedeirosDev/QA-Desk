@@ -1,0 +1,23 @@
+# Ícone de filtro (funil) no app bar do composer — superior direita.
+# Abre o menu de filtros extras (ex.: Inadimplentes).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- assertVisible: "Novo comunicado|Novo evento|Para:"
+
+- tapOn:
+    text: "Filtrar|Filter|Show filter|Filtros"
+    optional: true
+
+- runFlow:
+    when:
+      notVisible: "Inadimplentes|Inadimplente|Período|Periodo|Limpar filtro"
+    commands:
+      # Funil no canto superior direito (app bar)
+      - tapOn:
+          point: "92%, 7%"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Inadimplentes|Inadimplente|Período|Periodo|Limpar|Filtro"
+    timeout: 6000

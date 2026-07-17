@@ -1,0 +1,52 @@
+# Preenche título (opcional) + corpo do evento.
+# Env: TEXTO_COMUNICADO (corpo — obrigatório)
+# Env opcional: TITULO_EVENTO (default = TEXTO_COMUNICADO)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Novo evento|Evento"
+    timeout: 15000
+
+- extendedWaitUntil:
+    visible: "Escreva seu texto aqui|Título do evento|Titulo do evento"
+    timeout: 10000
+
+# Título do evento (campo acima do toggle Dia inteiro)
+- runFlow:
+    when:
+      visible: "Título do evento|Titulo do evento"
+    commands:
+      - tapOn: "Título do evento|Titulo do evento"
+      - eraseText
+      - evalScript: |
+          ${(() => {
+            var t = "";
+            try {
+              if (typeof TITULO_EVENTO !== "undefined" && TITULO_EVENTO && String(TITULO_EVENTO) !== "undefined") {
+                t = String(TITULO_EVENTO).trim();
+              }
+            } catch (e) {}
+            if (!t) {
+              try {
+                if (typeof TEXTO_COMUNICADO !== "undefined" && TEXTO_COMUNICADO) {
+                  t = String(TEXTO_COMUNICADO).trim();
+                }
+              } catch (e) {}
+            }
+            output.tituloEvento = t || "Evento";
+          })()}
+      - inputText: ${output.tituloEvento}
+      # Evitar hideKeyboard — pode abrir "Gravação Pendente" no composer.
+      - waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "Escreva seu texto aqui"
+    direction: DOWN
+    timeout: 8000
+    optional: true
+
+- tapOn: "Escreva seu texto aqui"
+- inputText: ${TEXTO_COMUNICADO}
+- waitForAnimationToEnd

@@ -1,0 +1,23 @@
+# Retomada CT-08: já em Novo evento com turmas/alvo. Só título+corpo → enviar → Enviadas.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Novo evento|Para:"
+    timeout: 10000
+
+- runFlow:
+    file: ../shared/mural/escrever_evento.yaml
+    env:
+      TEXTO_COMUNICADO: "Evento Padrao"
+      TITULO_EVENTO: "Evento Padrao"
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

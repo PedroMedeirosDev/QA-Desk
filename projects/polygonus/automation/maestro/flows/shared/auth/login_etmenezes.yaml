@@ -1,11 +1,14 @@
 # Login ETMENEZES (responsável) — credenciais em flows/.env
+#
+# NOME_USUARIO: fallbacks literais se NOME_ETMENEZES não vier no env.
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ensure_login_screen.yaml
+- runFlow: assert_entrar_screen.yaml
 
 - runFlow:
     file: login_as.yaml
     env:
       LOGIN: ${LOGIN_ETMENEZES}
       SENHA: ${SENHA}
+      NOME_USUARIO: "Bruno|Davi|Ana|.*MURAL.*"

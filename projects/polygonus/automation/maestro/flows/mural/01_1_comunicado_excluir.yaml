@@ -1,40 +1,40 @@
-# CT-MURAL-03: Excluir comunicado
+# CT-MURAL-03 — Excluir comunicado (Enviadas)
 #
-# Pré-requisito: CT-MURAL-02 (existe "Teste Comunicado editado").
-# Contrato: ENTRAR → ação → ENTRAR
+# Pré-requisito: ao menos 1 comunicado em Enviadas (qualquer texto).
+# Exclui o mais recente; confirma que o ID capturado desapareceu.
 #
-# STATUS: draft — STUDIO: more_vert + dialog de confirmação (OK?)
+# Via qa-app: prep → adb captura ID → flow gerado com ID literal (.generated/).
+# Via CLI: maestro test -e ID_COMUNICADO=<digitos> mural/01_1_comunicado_excluir.yaml
+#
+# Contrato: resume → ação → teardown
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ../shared/auth/login_phjesus.yaml
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
-- runFlow: ../shared/perfil/garantir_perfil_coordenador.yaml
+- evalScript: |
+    ${(() => {
+      if (output.idComunicado && String(output.idComunicado).length > 3) return;
+      var raw = "";
+      try {
+        if (typeof ID_COMUNICADO !== "undefined" && ID_COMUNICADO) {
+          raw = String(ID_COMUNICADO).trim();
+        }
+      } catch (e) {}
+      var digits = raw.replace(/[^0-9]/g, "");
+      if (digits.length > 0) {
+        output.idComunicado = "ID " + digits;
+      } else if (!output.idComunicado) {
+        output.idComunicado = "";
+      }
+    })()}
 
-- runFlow: ../shared/nav/navegar_mural.yaml
+- assertTrue: ${(output.idComunicado || "").length > 3}
 
-- tapOn:
-    text: "Enviadas"
-    optional: true
+- runFlow:
+    file: ../shared/mural/excluir_comunicado_lista.yaml
+    env:
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${output.idComunicado}
 
-- assertVisible: "Teste Comunicado editado"
-
-- tapOn:
-    text: "Mais opções"
-    optional: true
-- tapOn:
-    text: "More options"
-    optional: true
-
-- tapOn: "Excluir"
-
-- tapOn:
-    text: "OK"
-    optional: true
-- tapOn:
-    text: "Ok"
-    optional: true
-
-- assertNotVisible: "Teste Comunicado editado"
-
-- runFlow: ../shared/auth/ensure_logged_out.yaml
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml

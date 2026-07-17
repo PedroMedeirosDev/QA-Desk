@@ -15,7 +15,7 @@ Complemento de `.cursor/skills/polygonus-mural-maestro/SKILL.md`.
 | 07 | `mural/01_1_comunicado_video_pequeno.yaml` | `FIXTURE_VIDEO` / addMedia |
 | 08 | `mural/01_1_comunicado_evento.yaml` | BoomMenu → Evento |
 | 09 | `mural/01_1_filtro_enviadas.yaml` | Smoke filtro Enviadas |
-| 10 | `mural/01_1_comunicado_professor_pendente.yaml` | Professor envia → Coord vê Pendentes |
+| 10 | `mural/01_1_comunicado_completo_e2e.yaml` | E2E — texto + enquete + anexos → editar → excluir |
 
 Manual (não automatizar nesta suíte): gravação de câmera; vídeo médio/grande (timeout). Ver `flows/docs/mural-manual.md`.
 
@@ -26,7 +26,10 @@ shared/auth/     ensure_login_screen, login_as, login_phjesus, login_etmenezes,
                  ensure_logged_out, logout, logout_se_logado
 shared/perfil/   abrir_tela_perfil, selecionar_funcao, garantir_perfil_*, verificar_perfil_*
 shared/nav/      navegar_mural, voltar_para_home, navegar_home_card, navegar_rotina
-shared/mural/    abrir_novo_comunicado, selecionar_turmas_comunicado, escrever_comunicado,
+shared/mural/    setup_coordenador_mural, composer_novo_comunicado, publicar_comunicado_texto,
+                 filtrar_mural, filtrar_enviadas, abrir_menu_tres_pontos, editar/excluir_comunicado_lista,
+                 adicionar_enquete_nova, adicionar_foto_galeria, verificar_responsavel_ve,
+                 abrir_novo_comunicado, selecionar_turmas_comunicado, escrever_comunicado,
                  enviar_comunicado, anexar_arquivo_por_nome, pick_galeria_android
 ```
 
@@ -72,6 +75,8 @@ Após `clearState`:
 | Path absoluto com espaço no `maestro test` | cwd maestro + path relativo |
 | Assumir home já tem MURAL | Garantir perfil antes de `navegar_mural` |
 | Editar/excluir sem filtro Enviadas | Abrir Enviadas primeiro (CTs 02/03) |
+| Reimplementar captura de ID ad-hoc | Usar `PIPELINE_ID_MURAL.md` + helpers shared |
+| `uiautomator dump` no meio do Maestro | Dump só com Maestro parado (pipeline qa-app) |
 
 ## Pontos que ainda precisam do Studio
 

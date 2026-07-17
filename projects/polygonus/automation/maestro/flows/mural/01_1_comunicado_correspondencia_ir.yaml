@@ -1,0 +1,24 @@
+# CT-MURAL-12: Comunicado com Correspondência — Declaração de IR
+#
+# Clipe → Correspondência → Declaração de IR → Ok.
+# Fase 1: envia → Enviadas. Fase 2 (qa-app): adb ID → assert + ETMENEZES.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/mural/setup_coordenador_mural.yaml
+
+- runFlow:
+    file: ../shared/mural/composer_novo_comunicado.yaml
+    env:
+      TEXTO_COMUNICADO: "Teste Comunicado declaracao IR"
+
+- runFlow: ../shared/mural/anexar_correspondencia_declaracao_ir.yaml
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

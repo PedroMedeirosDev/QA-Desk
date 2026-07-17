@@ -1,0 +1,24 @@
+# n8n local — homologação Maestro (Polygonus-QA)
+# Uso: docker compose up -d
+# UI:  http://localhost:5678
+# Webhook (após importar workflow): http://localhost:5678/webhook/maestro-run
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: polygonus-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - TZ=America/Sao_Paulo
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
