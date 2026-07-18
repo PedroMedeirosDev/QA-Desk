@@ -49,19 +49,61 @@ function idFromMenuDesc(desc: string): string | null {
   return idMatch?.[1] ? `ID ${idMatch[1]}` : null;
 }
 
-/** Lê o ID do N-ésimo card Mural (0 = mais recente em Enviadas). */
+type CardMenuNode = {
+  text: string;
+  contentDesc: string;
+  rawTag: string;
+};
+
+/** Extrai nodes mural_card_menu (attrs em qualquer ordem). */
+function parseMuralCardMenus(xml: string): CardMenuNode[] {
+  const tags = xml.match(/<node\b[^>]*resource-id="mural_card_menu"[^>]*>/g) ?? [];
+  return tags.map((rawTag) => ({
+    rawTag,
+    text: (rawTag.match(/\btext="([^"]*)"/) || [])[1] ?? "",
+    contentDesc: decodeDesc((rawTag.match(/\bcontent-desc="([^"]*)"/) || [])[1] ?? ""),
+  }));
+}
+
+/**
+ * Lê o ID do N-ésimo card Mural (0 = mais recente em Enviadas).
+ *
+ * Comunicado: ID vem no content-desc de mural_card_menu.
+ * Evento: o badge "ID N" pode aparecer VISUALMENTE, mas o content-desc fica
+ * vazio (só text=titulo) — uiautomator não vê o ID. Nesse caso retorna null
+ * e loga o diagnóstico (BUG-2026-004).
+ */
 export function captureMuralCardId(cardIndex = 0): string | null {
   const index = Number.isFinite(cardIndex) && cardIndex >= 0 ? Math.floor(cardIndex) : 0;
   const xml = dumpUiXml();
-
-  const pattern = /resource-id="mural_card_menu"[^>]*content-desc="([^"]*)"/g;
-  let match: RegExpExecArray | null = null;
-  for (let i = 0; i <= index; i++) {
-    match = pattern.exec(xml);
-    if (!match) return null;
+  const cards = parseMuralCardMenus(xml);
+  const card = cards[index];
+  if (!card) {
+    console.warn(
+      `[mural-card-id] card index ${index} ausente (só ${cards.length} mural_card_menu)`,
+    );
+    return null;
   }
 
-  return idFromMenuDesc(match[1]);
+  const fromDesc = idFromMenuDesc(card.contentDesc);
+  if (fromDesc) return fromDesc;
+
+  // Fallback: text="ID 123" no próprio tag (raro)
+  const fromTextAttr = card.text.match(/^ID\s*([0-9]+)$/i);
+  if (fromTextAttr?.[1]) return `ID ${fromTextAttr[1]}`;
+
+  // Diagnóstico — típico de Evento: text preenchido, content-desc vazio, ID só no pixel
+  const anyIdInXml = [...xml.matchAll(/(?:text|content-desc)="([^"]*ID\s*[0-9]+[^"]*)"/g)].map(
+    (m) => decodeDesc(m[1]).slice(0, 80),
+  );
+  console.warn(
+    `[mural-card-id] card#${index} SEM ID na acessibilidade` +
+      ` · text=${JSON.stringify(card.text)}` +
+      ` · content-desc=${JSON.stringify(card.contentDesc.slice(0, 60))}` +
+      ` · IDs visíveis noutros nodes: ${anyIdInXml.length ? anyIdInXml.join(" || ") : "(nenhum)"}` +
+      ` · (se o badge aparece na tela = BUG-2026-004: falta Semantics no evento)`,
+  );
+  return null;
 }
 
 export type MuralCardSnapshot = {
@@ -72,13 +114,11 @@ export type MuralCardSnapshot = {
 /** Lista IDs visíveis (ordem da hierarquia = topo → baixo). */
 export function listMuralCardIds(): MuralCardSnapshot[] {
   const xml = dumpUiXml();
-  const pattern = /resource-id="mural_card_menu"[^>]*content-desc="([^"]*)"/g;
   const out: MuralCardSnapshot[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(xml))) {
-    const id = idFromMenuDesc(match[1]);
+  for (const card of parseMuralCardMenus(xml)) {
+    const id = idFromMenuDesc(card.contentDesc);
     if (id) {
-      out.push({ idComunicado: id, contentDesc: decodeDesc(match[1]) });
+      out.push({ idComunicado: id, contentDesc: card.contentDesc });
     }
   }
   return out;

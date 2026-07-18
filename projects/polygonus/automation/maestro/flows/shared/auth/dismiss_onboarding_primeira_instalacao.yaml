@@ -1,0 +1,34 @@
+# Slides da 1ª instalação (5 setas → FAZER LOGIN).
+# Só roda se o botão avançar existir. Entre slides: espera curta (não animation default).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible:
+        id: "auth_onboarding_avancar"
+    commands:
+      - repeat:
+          times: 6
+          commands:
+            - tapOn:
+                id: "auth_onboarding_avancar"
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 500
+
+      - extendedWaitUntil:
+          visible: "FAZER LOGIN|ENTRAR|E-mail ou Login"
+          timeout: 10000
+
+      - runFlow:
+          when:
+            visible: "FAZER LOGIN"
+            notVisible: "ENTRAR|E-mail ou Login"
+          commands:
+            - tapOn: "FAZER LOGIN"
+
+- extendedWaitUntil:
+    visible: "FAZER LOGIN|ENTRAR|E-mail ou Login|Pedro Jesus|Pedro|.*MURAL.*"
+    timeout: 5000
+    optional: true

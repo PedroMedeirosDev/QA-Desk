@@ -12,7 +12,7 @@ Fonte: orientação do gestor sobre a org `polygonus-br`.
 
 ## Clones locais (somente leitura)
 
-Pastas na **raiz** do Polygonus-QA, **gitignored** — para diff de código e foco de teste:
+Pastas na **raiz** do QA Desk, **gitignored** — para diff de código e foco de teste:
 
 ```
 polygonus-mobile/

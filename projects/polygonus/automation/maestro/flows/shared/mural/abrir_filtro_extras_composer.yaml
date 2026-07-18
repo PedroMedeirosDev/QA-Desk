@@ -1,5 +1,5 @@
 # Ícone de filtro (funil) no app bar do composer — superior direita.
-# Abre o menu de filtros extras (ex.: Inadimplentes).
+# Abre o menu de filtros extras (Inadimplentes, Adimplentes, Bolsistas, …).
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -11,13 +11,14 @@ appId: br.com.polygonus.mobile.amostra
 
 - runFlow:
     when:
-      notVisible: "Inadimplentes|Inadimplente|Período|Periodo|Limpar filtro"
+      notVisible: "Inadimplentes|Inadimplente|Adimplentes|Adimplente|Pagantes|Pagante|Bolsista|bolsista|faltas|média|media|Limpar filtro|Período|Periodo"
     commands:
       # Funil no canto superior direito (app bar)
       - tapOn:
           point: "92%, 7%"
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500
 
 - extendedWaitUntil:
-    visible: "Inadimplentes|Inadimplente|Período|Periodo|Limpar|Filtro"
+    visible: "Inadimplentes|Inadimplente|Adimplentes|Adimplente|Pagantes|Pagante|Bolsista|bolsista|faltas|média|media|Limpar|Filtro|Período|Periodo"
     timeout: 6000

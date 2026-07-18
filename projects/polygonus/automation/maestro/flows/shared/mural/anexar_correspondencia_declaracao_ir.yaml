@@ -1,22 +1,45 @@
-# Clipe → Correspondência → Declaração de IR → Ok.
+# Clipe → Correspondência → escolhe documento (amostra) → Ok.
+#
+# Fluxo real na amostra:
+# 1) Lista inicial (ex.: "Aviso de Debito n 02...")
+# 2) Ao tocar, abre lista com mais itens — inclui "Declaracao IR"
+# 3) Seleciona "Declaracao IR" → Ok
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow: abrir_menu_anexo_clip.yaml
 
 - tapOn: "Correspondência|Correspondencia"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - extendedWaitUntil:
-    visible: "Selecionar correspondência|Selecionar correspondencia|Declaração de IR|Declaracao de IR"
+    visible: "Selecionar correspondência|Selecionar correspondencia|Aviso de Débito|Aviso de Debito|OK|Ok"
     timeout: 8000
 
-- tapOn: "Declaração de IR|Declaracao de IR|.*declara[cç][aã]o.*IR.*"
-- waitForAnimationToEnd
+# Abre a lista completa (primeiro item visivel costuma ser Aviso de Debito)
+- runFlow:
+    when:
+      visible: "Aviso de Débito|Aviso de Debito|.*Aviso de D.*"
+    commands:
+      - tapOn: "Aviso de Débito|Aviso de Debito|.*Aviso de D.*"
+      - waitForAnimationToEnd:
+          timeout: 500
+- extendedWaitUntil:
+    visible: "Declaração IR|Declaracao IR|Declaração de IR|Declaracao de IR|carta|OK|Ok"
+    timeout: 10000
 
+- scrollUntilVisible:
+    element: "Declaração IR|Declaracao IR|Declaração de IR|Declaracao de IR"
+    direction: DOWN
+    timeout: 8000
+    optional: true
+
+- tapOn: "Declaração IR|Declaracao IR|Declaração de IR|Declaracao de IR"
+- waitForAnimationToEnd:
+    timeout: 500
 - tapOn: "Ok|OK"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - extendedWaitUntil:
     visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
     timeout: 10000

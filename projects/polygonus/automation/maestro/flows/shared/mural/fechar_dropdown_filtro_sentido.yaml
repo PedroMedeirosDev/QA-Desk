@@ -8,4 +8,5 @@ appId: br.com.polygonus.mobile.amostra
       visible: "Pendentes|Aprovadas|Reprovadas|Arquivadas"
     commands:
       - pressKey: Back
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500

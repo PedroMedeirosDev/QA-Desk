@@ -1,0 +1,10 @@
+# FILTRO-03: Envio com filtro Alunos abaixo da média (conferência manual).
+# STATUS: draft
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: ".*abaixo da m[eé]dia.*|Alunos abaixo da média|Alunos abaixo da media|Abaixo da média"
+      TEXTO_COMUNICADO: "Teste filtro Alunos abaixo da media"

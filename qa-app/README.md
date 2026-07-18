@@ -1,6 +1,6 @@
-# QA App
+# QA Desk (app)
 
-Aplicação web do **QA Automate** — registro de testes e homologação multi-projeto.
+Aplicação web do **QA Desk** — registro de testes e homologação multi-projeto.
 
 Especificação: [`SPEC.md`](SPEC.md) · Deploy: [`DEPLOY.md`](DEPLOY.md)
 

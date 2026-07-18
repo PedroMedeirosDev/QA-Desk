@@ -26,6 +26,8 @@ appId: br.com.polygonus.mobile.amostra
     start: "50%, 28%"
     end: "50%, 72%"
     duration: 400
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500
 
 - runFlow: ../shared/mural/filtrar_enviadas.yaml
+

@@ -19,27 +19,8 @@ appId: br.com.polygonus.mobile.amostra
 
 - runFlow: ../nav/dismiss_coachmarks_pular.yaml
 
-# Onboarding só na 1ª vez (sem clearState não deve repetir)
-- runFlow:
-    when:
-      visible: ".*Acompanhe de perto tudo.*|Colégio Polygonus"
-    commands:
-      - repeat:
-          times: 5
-          commands:
-            - runFlow:
-                file: ../helpers/tap_id_or_point.yaml
-                env:
-                  SEM_ID: auth_onboarding_avancar
-                  FALLBACK_POINT: "90%, 93%"
-                  AFTER_VISIBLE: "FAZER LOGIN|ENTRAR|Acompanhe de perto"
-            - waitForAnimationToEnd
-
-- runFlow:
-    when:
-      visible: "FAZER LOGIN"
-    commands:
-      - tapOn: "FAZER LOGIN"
+# Onboarding só na 1ª vez (wipe / clearState)
+- runFlow: dismiss_onboarding_primeira_instalacao.yaml
 
 # Logado em qualquer tela → logout gracioso
 - runFlow:

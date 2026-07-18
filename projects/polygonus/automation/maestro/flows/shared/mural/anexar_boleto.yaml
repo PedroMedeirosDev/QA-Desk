@@ -6,8 +6,8 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow: abrir_menu_anexo_clip.yaml
 
 - tapOn: "Boleto"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 # Se o dialog Período abrir de novo, o CT chama selecionar_periodo_* em seguida.
 - runFlow:
     when:

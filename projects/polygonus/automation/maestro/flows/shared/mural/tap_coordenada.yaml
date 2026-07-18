@@ -5,4 +5,5 @@ appId: br.com.polygonus.mobile.amostra
 ---
 - tapOn:
     point: "${COORD}"
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500

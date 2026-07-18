@@ -1,14 +1,21 @@
-# Fecha coach marks / onboarding (botão PULAR).
-# Até 4 spotlights — na prática 1–2 após login; loop sai rápido quando não há PULAR.
+# Fecha coach marks (PULAR) só se estiver na tela.
+# when:visible = checagem única (não espera); sem PULAR o flow pula na hora.
+# Antes: 2× tap optional + wait sempre (~800ms+) mesmo sem coachmark.
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- repeat:
-    times: 4
+- runFlow:
+    when:
+      visible: "PULAR"
     commands:
+      - tapOn: "PULAR"
+      - waitForAnimationToEnd:
+          timeout: 400
+      # Segundo coachmark residual (raro)
       - runFlow:
           when:
             visible: "PULAR"
           commands:
             - tapOn: "PULAR"
-            - waitForAnimationToEnd
+            - waitForAnimationToEnd:
+                timeout: 400

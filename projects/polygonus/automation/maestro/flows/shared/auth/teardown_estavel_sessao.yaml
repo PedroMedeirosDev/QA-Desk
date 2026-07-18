@@ -22,12 +22,12 @@ appId: br.com.polygonus.mobile.amostra
 
       - pressKey: Back
 
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
       - pressKey: Back
 
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
       - runFlow: ../nav/voltar_para_home.yaml
 
 

@@ -17,14 +17,15 @@ appId: br.com.polygonus.mobile.amostra
                   notVisible: ".*MURAL.*"
                 commands:
                   - pressKey: Back
-                  - waitForAnimationToEnd
+                  - waitForAnimationToEnd:
+                      timeout: 500
       - runFlow:
           when:
             notVisible: ".*MURAL.*"
           commands:
             - launchApp
-            - waitForAnimationToEnd
-
+            - waitForAnimationToEnd:
+                timeout: 500
 - extendedWaitUntil:
     visible: ".*MURAL.*"
     timeout: 15000

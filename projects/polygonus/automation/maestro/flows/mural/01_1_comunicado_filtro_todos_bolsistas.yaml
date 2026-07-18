@@ -1,0 +1,10 @@
+# FILTRO-06: Envio com filtro Todos os bolsistas (conferência manual).
+# STATUS: draft
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: "Todos os bolsistas|Todos os Bolsistas|.*[Tt]odos os bolsistas.*"
+      TEXTO_COMUNICADO: "Teste filtro Todos os bolsistas"

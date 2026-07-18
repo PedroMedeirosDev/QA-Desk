@@ -20,7 +20,8 @@ appId: br.com.polygonus.mobile.amostra
             visible: "Back"
           commands:
             - tapOn: "Back"
-            - waitForAnimationToEnd
+            - waitForAnimationToEnd:
+                timeout: 500
             - runFlow: ../mural/fechar_gravacao_pendente.yaml
 
       - repeat:
@@ -32,7 +33,8 @@ appId: br.com.polygonus.mobile.amostra
                   visible: "Back|Show menu|Responder comunicado|Comunicado"
                 commands:
                   - pressKey: Back
-                  - waitForAnimationToEnd
+                  - waitForAnimationToEnd:
+                      timeout: 500
                   - runFlow: ../mural/fechar_gravacao_pendente.yaml
                   - tapOn:
                       text: "CANCELAR"
@@ -41,11 +43,7 @@ appId: br.com.polygonus.mobile.amostra
                       text: "Cancelar"
                       optional: true
 
-      - runFlow:
-          when:
-            visible: "PULAR"
-          commands:
-            - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
 
       - runFlow:
           when:
@@ -60,7 +58,8 @@ appId: br.com.polygonus.mobile.amostra
             - extendedWaitUntil:
                 visible: ".*MURAL.*|CARDÁPIO|CARDAPIO|Pedro Jesus|Pedro|Ana|Bruno|Davi"
                 timeout: 12000
-            - waitForAnimationToEnd
+            - waitForAnimationToEnd:
+                timeout: 500
             # Menu do usuário — qualquer nome no header (PHJESUS, ETMENEZES, …)
             - tapOn:
                 point: "28%, 10%"
@@ -70,7 +69,8 @@ appId: br.com.polygonus.mobile.amostra
                 commands:
                   - tapOn:
                       point: "10%, 10%"
-                  - waitForAnimationToEnd
+                  - waitForAnimationToEnd:
+                      timeout: 500
             - extendedWaitUntil:
                 visible: "Sair"
                 timeout: 8000

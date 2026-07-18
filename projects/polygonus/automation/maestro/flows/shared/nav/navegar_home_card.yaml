@@ -20,4 +20,5 @@ appId: br.com.polygonus.mobile.amostra
     commands:
       - tapOn: ${CARD_HOME}
 
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500

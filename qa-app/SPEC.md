@@ -1,7 +1,7 @@
 # QA Application — Especificação (rascunho para revisão)
 
 > **Status:** em revisão — não implementar além deste escopo até aprovação.  
-> **Pasta no repo:** `qa-app/` — produto **QA Automate**, multi-projeto (`polygonus`, `anihype`).  
+> **Pasta no repo:** `qa-app/` — produto **QA Desk**, multi-projeto (`polygonus`, `anihype`, …).  
 > **Dados:** `data/projects/<slug>/bugs.json`
 
 ---

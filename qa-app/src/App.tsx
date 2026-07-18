@@ -10,6 +10,7 @@ import { TestListPage } from "@/pages/TestListPage";
 import { BugListPage } from "@/pages/BugListPage";
 import { HomologationPage } from "@/pages/HomologationPage";
 import { HomologationsListPage } from "@/pages/HomologationsListPage";
+import { DashboardPage } from "@/pages/DashboardPage";
 import { parseProjectRoute } from "@/lib/project-paths";
 import type { ProjectSlug } from "@/types/test-record";
 
@@ -42,20 +43,24 @@ function ProjectLayout() {
               )}
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {route.view === "homologations-list" || route.view === "homologation"
-                    ? "Homologações"
-                    : route.view === "bugs-list"
-                      ? "Bugs reportados"
-                      : "Registro de Testes"}
+                  {route.view === "dashboard"
+                    ? "Dashboard"
+                    : route.view === "homologations-list" || route.view === "homologation"
+                      ? "Homologações"
+                      : route.view === "bugs-list"
+                        ? "Bugs reportados"
+                        : "Registro de Testes"}
                 </p>
                 <h1 className="truncate text-lg font-semibold">
-                  {route.view === "homologations-list"
-                    ? "Todas as seções"
-                    : route.view === "homologation"
-                      ? "Detalhe da campanha"
-                      : route.view === "bugs-list"
-                        ? (current?.label ?? slug)
-                        : (current?.label ?? slug)}
+                  {route.view === "dashboard"
+                    ? "Visão geral QA"
+                    : route.view === "homologations-list"
+                      ? "Todas as seções"
+                      : route.view === "homologation"
+                        ? "Detalhe da campanha"
+                        : route.view === "bugs-list"
+                          ? (current?.label ?? slug)
+                          : (current?.label ?? slug)}
                   {route.channel &&
                     (route.view === "list" || route.view === "bugs-list") && (
                     <span className="ml-2 text-primary">· {CHANNEL_LABELS[route.channel]}</span>
@@ -68,7 +73,9 @@ function ProjectLayout() {
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto bg-background px-6 py-6">
-          {route.view === "list" ? (
+          {route.view === "dashboard" ? (
+            <DashboardPage project={slug} />
+          ) : route.view === "list" ? (
             <TestListPage project={slug} channel={route.channel} />
           ) : route.view === "bugs-list" ? (
             <BugListPage project={slug} channel={route.channel} />

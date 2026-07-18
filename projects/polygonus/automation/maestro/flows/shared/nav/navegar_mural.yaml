@@ -23,11 +23,7 @@ appId: br.com.polygonus.mobile.amostra
           commands:
             - tapOn: ".*MURAL.*"
 
-      - runFlow:
-          when:
-            visible: "PULAR"
-          commands:
-            - runFlow: dismiss_coachmarks_pular.yaml
+      - runFlow: dismiss_coachmarks_pular.yaml
 
 # Aba Mural (bottom) — evita ficar na aba Rotina com cards Vestimenta/Humor
 - tapOn:
@@ -41,4 +37,4 @@ appId: br.com.polygonus.mobile.amostra
     visible: ".*Recebidas.*|Enviados|Enviadas|Pendentes|Responder comunicado|Show menu"
     timeout: 12000
 
-- assertNotVisible: "PULAR"
+- runFlow: dismiss_coachmarks_pular.yaml

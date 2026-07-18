@@ -8,11 +8,11 @@ appId: br.com.polygonus.mobile.amostra
     timeout: 8000
 
 - tapOn: "Mes corrente|Mês corrente|mês corrente|.*[Mm]es corrente.*"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - tapOn: "Ok|OK"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - extendedWaitUntil:
     visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
     timeout: 10000

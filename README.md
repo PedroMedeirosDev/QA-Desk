@@ -1,9 +1,9 @@
-# QA Automate
+# QA Desk
 
 Repositório **multi-projeto** de qualidade de software: homologação, casos de teste, automação (Maestro / Playwright) e aplicação web de registro de bugs.
 
-> **Nome do produto:** QA Automate  
-> **Pasta local sugerida:** `qa-automate` (renomeie de `Polygonus-QA` quando conveniente — ver [`RENAMING.md`](RENAMING.md))
+> **Produto:** [QA Desk](https://github.com/PedroMedeirosDev/QA-Desk)  
+> **App:** pasta `qa-app/` · multi-projeto (`polygonus`, `anihype`, …)
 
 ## Projetos
 
@@ -20,9 +20,9 @@ Detalhes: [`projects/README.md`](projects/README.md)
 |--------------|-----|
 | **`projects/`** | Um diretório por cliente/produto (cases, automação, evidência) |
 | **`shared/`** | Templates e recursos comuns |
-| **`qa-app/`** | Aplicação web de QA (registro de bugs, histórico, upload) — [`qa-app/SPEC.md`](qa-app/SPEC.md) |
-| **`scripts/`** | Sincronização de clones da empresa |
-| **`polygonus-mobile/`**, **`polygonus-react/`** | Clones locais Polygonus (gitignored) |
+| **`qa-app/`** | **QA Desk** — app web (bugs, homologação, runs Maestro) — [`qa-app/SPEC.md`](qa-app/SPEC.md) |
+| **`scripts/`** | Sincronização de clones locais (gitignored) |
+| **`polygonus-mobile/`**, **`polygonus-react/`** | Clones locais (gitignored — não versionar) |
 | **`testes/`** | Redirect legado → ver [`testes/README.md`](testes/README.md) |
 
 ## Escopo de homologação
@@ -33,13 +33,13 @@ Detalhes: [`projects/README.md`](projects/README.md)
 | Web | Sim |
 | iOS | Não neste ambiente |
 
-## Clones Polygonus (somente leitura)
+## Clones locais (somente leitura)
 
 ```powershell
 .\sync.bat
 ```
 
-## QA App (fase 1)
+## QA Desk (app)
 
 ```powershell
 cd qa-app
@@ -50,14 +50,4 @@ npm run dev
 - API: http://localhost:3001  
 - UI: http://localhost:5174  
 
-## Fluxo Polygonus (referência)
-
-1. `.\sync.bat` — atualizar clones  
-2. [`projects/polygonus/homologacao/`](projects/polygonus/homologacao/) — planejar sessão  
-3. [`projects/polygonus/automation/maestro/`](projects/polygonus/automation/maestro/) — E2E mobile  
-4. [`projects/polygonus/automation/playwright/`](projects/polygonus/automation/playwright/) — E2E web  
-5. **QA App** — registrar bug, anexar print, histórico  
-
-## Migração jul/2026
-
-O conteúdo de `testes/` foi reorganizado em `projects/polygonus/` + `shared/templates/`. Links antigos: [`testes/README.md`](testes/README.md).
+Credenciais e `.env` ficam **só locais** (gitignored). Use `flows/.env.example` como modelo — **nunca** commitar senhas reais.

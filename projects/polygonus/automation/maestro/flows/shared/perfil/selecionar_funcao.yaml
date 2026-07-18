@@ -47,3 +47,16 @@ appId: br.com.polygonus.mobile.amostra
       - extendedWaitUntil:
           visible: ".*MURAL.*"
           timeout: 15000
+
+# Safety: se ainda no Perfil (ambos os when acima skiparam), volta à home
+- runFlow:
+    when:
+      visible: ".*Unidade.*|Versão.*"
+      notVisible: ".*MURAL.*|Show menu|Recebidas|Enviadas"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+      - extendedWaitUntil:
+          visible: ".*MURAL.*|Show menu|Pedro Jesus|Pedro|home_card_mural"
+          timeout: 15000

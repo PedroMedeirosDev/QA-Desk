@@ -39,8 +39,9 @@ appId: br.com.polygonus.mobile.amostra
 
 # Marca Todos (pode já vir marcado) e confirma o dialog
 - tapOn: "Todos"
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500
 - tapOn: "Ok|OK"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - assertVisible: "Para:|Novo comunicado|Escreva seu texto aqui"

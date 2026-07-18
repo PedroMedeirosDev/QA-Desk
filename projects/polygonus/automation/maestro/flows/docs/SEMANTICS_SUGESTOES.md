@@ -144,3 +144,6 @@ Maestro: `tapOn: id: "nome_aqui"`
 
 | Logout Sair | `logout.yaml` |
 
+| Toggle Dia inteiro (evento) | `marcar_dia_inteiro.yaml` — preferir `Semantics(identifier: mural_evento_dia_inteiro)` no Switch |
+
+

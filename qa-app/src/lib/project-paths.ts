@@ -7,7 +7,8 @@ export type ProjectRouteView =
   | "bugs-list"
   | "editor"
   | "homologation"
-  | "homologations-list";
+  | "homologations-list"
+  | "dashboard";
 
 export interface ParsedProjectRoute {
   view: ProjectRouteView;
@@ -74,11 +75,19 @@ export function projectHomologationPath(project: ProjectSlug, homSlug: string): 
   return `${projectRootPath(project)}/homologacao/${homSlug}`;
 }
 
+export function projectDashboardPath(project: ProjectSlug): string {
+  return `${projectRootPath(project)}/dashboard`;
+}
+
 export function isHomologationPath(project: ProjectSlug, pathname: string): boolean {
   const root = projectRootPath(project);
   return (
     pathname === `${root}/homologacoes` || pathname.startsWith(`${root}/homologacao/`)
   );
+}
+
+export function isDashboardPath(project: ProjectSlug, pathname: string): boolean {
+  return pathname === projectDashboardPath(project);
 }
 
 export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedProjectRoute {
@@ -95,7 +104,10 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
   const [first, second, third] = segments;
 
   if (channels.length > 0) {
-    // Rotas de homologação no nível do projeto (todas as seções)
+    // Rotas de projeto (sem canal)
+    if (first === "dashboard") {
+      return { view: "dashboard" };
+    }
     if (first === "homologacoes") {
       return { view: "homologations-list" };
     }
@@ -133,6 +145,7 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
     return { view: "editor", channel, id: second, editorKind: "teste" };
   }
 
+  if (first === "dashboard") return { view: "dashboard" };
   if (first === "homologacoes") return { view: "homologations-list" };
   if (first === "homologacao") {
     if (!second) {

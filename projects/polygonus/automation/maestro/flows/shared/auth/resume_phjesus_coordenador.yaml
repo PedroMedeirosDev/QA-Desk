@@ -9,17 +9,29 @@
 appId: br.com.polygonus.mobile.amostra
 ---
 - launchApp
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Picker residual (DocumentsUI) — até 3× Back se ainda aberto
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            visible: "Show roots|Recent|Downloads|Files|Allow|WHILE USING|While using|Open from|Abrir de"
+          commands:
+            - pressKey: Back
+            - waitForAnimationToEnd:
+                timeout: 500
 
 - extendedWaitUntil:
-    visible: "PULAR|ENTRAR|FAZER LOGIN|${NOME_PHJESUS}|Pedro Jesus|Pedro|${NOME_ETMENEZES}|${NOME_ACMENEZES}|Ana|Bruno|Davi|Show menu|Responder comunicado|Mural da Rotina|Selecionar|Versão|.*MURAL.*|CARDÁPIO|CARDAPIO|Colégio Polygonus"
+    visible: "PULAR|ENTRAR|FAZER LOGIN|Pedro Jesus|Pedro|Ana|Bruno|Davi|Show menu|Responder comunicado|Mural da Rotina|Selecionar|Versão|.*MURAL.*|CARDÁPIO|CARDAPIO|Colégio Polygonus|.*Acompanhe de perto.*|Confira o rendimento|Comece a usar"
     timeout: 30000
 
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+# 1ª instalação — no-op se já logado (sem botão avancar)
+- runFlow: dismiss_onboarding_primeira_instalacao.yaml
+
+- runFlow: ../nav/dismiss_coachmarks_pular.yaml
 
 - runFlow:
     when:
@@ -33,12 +45,9 @@ appId: br.com.polygonus.mobile.amostra
       notVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
     commands:
       - pressKey: Back
-      - waitForAnimationToEnd
-      - runFlow:
-          when:
-            visible: "PULAR"
-          commands:
-            - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+      - waitForAnimationToEnd:
+          timeout: 500
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
 
 # ETMENEZES = responsável — header lista filhos (Bruno/Davi ou string completa; não só "Ana")
 - runFlow:
@@ -46,11 +55,7 @@ appId: br.com.polygonus.mobile.amostra
       visible: "${NOME_ETMENEZES}|Bruno|Davi"
       notVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
     commands:
-      - runFlow:
-          when:
-            visible: "PULAR"
-          commands:
-            - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
       - runFlow: logout.yaml
       - runFlow:
           file: login_as.yaml

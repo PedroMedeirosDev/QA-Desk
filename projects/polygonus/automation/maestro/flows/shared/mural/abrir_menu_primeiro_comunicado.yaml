@@ -12,8 +12,8 @@ appId: br.com.polygonus.mobile.amostra
       visible: "Remetente|Destinatário|CARDÁPIO|Filtrar"
     commands:
       - pressKey: Back
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - tapOn:
     text: "Show menu"
     index: 1

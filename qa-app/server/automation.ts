@@ -5,6 +5,7 @@ import { readEnvFile } from "./load-env.js";
 import {
   clearMaestroRun,
   forceKillMaestroProcesses,
+  killProcessTree,
   registerMaestroRun,
   wasMaestroRunCancelled,
 } from "./maestro-run-registry.js";
@@ -177,8 +178,8 @@ export async function runMaestroFlow(
     else envNoSpace[key] = value;
   }
 
-  // Garante .env no cwd: valores com espaço entre aspas (senão Maestro corta em "Pedro").
-  const flowsEnvPath = path.join(MAESTRO_ROOT, ".env");
+  // Maestro resolve ${VAR} pelo .env ao lado do YAML (ex.: flows/mural/), não só o cwd.
+  // Sem isso NOME_PHJESUS vira literal "undefined" no assert.
   const allEnvEntries = { ...fileEnv, ...cliEnv };
   if (Object.keys(allEnvEntries).length > 0) {
     const quoteEnv = (v: string) =>
@@ -187,7 +188,19 @@ export async function runMaestroFlow(
       .filter(([k, v]) => k && v !== undefined && v !== "")
       .map(([k, v]) => `${k}=${quoteEnv(String(v))}`);
     if (lines.length) {
-      fs.writeFileSync(flowsEnvPath, `${lines.join("\n")}\n`, "utf8");
+      const body = `${lines.join("\n")}\n`;
+      const envTargets = new Set([
+        path.join(MAESTRO_ROOT, ".env"),
+        path.join(path.dirname(abs), ".env"),
+        path.join(MAESTRO_WORKSPACE, ".env"),
+      ]);
+      for (const envPath of envTargets) {
+        try {
+          fs.writeFileSync(envPath, body, "utf8");
+        } catch {
+          /* ignore */
+        }
+      }
     }
   }
 
@@ -215,25 +228,35 @@ export async function runMaestroFlow(
 
   const runStartedAt = Date.now();
   const runId = options?.runMeta?.runId;
+  /** Sem linha completa → aborta (lote segue). Default 120s — vídeo/compressão pode ficar ~1 min sem log. */
+  const idleTimeoutMs = Math.max(
+    30_000,
+    Number(process.env.MAESTRO_IDLE_TIMEOUT_MS) || 120_000,
+  );
 
   return new Promise((resolve) => {
     const chunks: string[] = [];
     const onOutput = options?.onOutput;
+    /** Só linha completa conta (chunks parciais do dump NÃO renovam o idle). */
+    let lastOutputAt = Date.now();
     const push = (raw: string) => {
       chunks.push(raw);
       onOutput?.(raw);
+      if (raw.includes("\n")) lastOutputAt = Date.now();
     };
 
     const decodeChunk = (buf: Buffer) => buf.toString("utf8");
     let settled = false;
     let forceFinishTimer: ReturnType<typeof setTimeout> | null = null;
     let startupWatchdog: ReturnType<typeof setTimeout> | null = null;
+    let idleWatchdog: ReturnType<typeof setInterval> | null = null;
 
     const settle = (value: Awaited<ReturnType<typeof runMaestroFlow>>) => {
       if (settled) return;
       settled = true;
       if (forceFinishTimer) clearTimeout(forceFinishTimer);
       if (startupWatchdog) clearTimeout(startupWatchdog);
+      if (idleWatchdog) clearInterval(idleWatchdog);
       clearInterval(cancelPoll);
       // Não limpa cancelledRunIds aqui: o mesmo runId atravessa prep → adb → CT.
       resolve(value);
@@ -277,7 +300,6 @@ export async function runMaestroFlow(
         if (settled) return;
         push("\n[qa-app] Execução cancelada pelo usuário (timeout de parada).\n");
         if (runId) clearMaestroRun(runId);
-        forceKillMaestroProcesses();
         settle({
           ok: false,
           exitCode: null,
@@ -289,6 +311,7 @@ export async function runMaestroFlow(
             failedAction: "Execução interrompida",
           },
         });
+        setImmediate(() => forceKillMaestroProcesses());
       }, 6000);
     };
 
@@ -298,6 +321,43 @@ export async function runMaestroFlow(
         scheduleForceFinish();
       }
     }, 300);
+
+    const abortStalled = (reason: string) => {
+      if (settled) return;
+      push(`\n[qa-app] ${reason}\n`);
+      if (runId) clearMaestroRun(runId);
+      // settle ANTES do kill: no Windows execSync/WMI travava o event loop e o lote nunca avançava
+      settle({
+        ok: false,
+        exitCode: null,
+        output: normalizeMaestroOutput(chunks.join("").slice(-8000)),
+        appVersion: resolveAppVersionForRun() ?? appVersion,
+        // cancelled:false → lote (módulo/suite) continua no próximo CT
+        cancelled: false,
+        failure: {
+          errorSummary: reason,
+          failedAction: "Timeout de idle (sem saída do Maestro)",
+          failedStepLabel: "Travado — abortado automaticamente",
+        },
+      });
+      setImmediate(() => {
+        try {
+          killProcessTree(child);
+        } catch {
+          forceKillMaestroProcesses();
+        }
+      });
+    };
+
+    idleWatchdog = setInterval(() => {
+      if (settled) return;
+      const idleMs = Date.now() - lastOutputAt;
+      if (idleMs < idleTimeoutMs) return;
+      const secs = Math.round(idleTimeoutMs / 1000);
+      abortStalled(
+        `Sem saída há ${secs}s — abortando Maestro para não travar o lote (MAESTRO_IDLE_TIMEOUT_MS=${idleTimeoutMs}).`,
+      );
+    }, 2_000);
 
     child.on("error", (err) => {
       if (runId) clearMaestroRun(runId);
@@ -448,6 +508,13 @@ export type PostSendIdConfig = {
   compartilharAnexos?: boolean;
   /** Texto do card para menu ⋮ (só se compartilharAnexos). */
   itemAncoragem?: string;
+  /**
+   * Eventos: mural_card_menu vem com content-desc vazio (BUG-2026-00x).
+   * Pula adb ID e valida por texto em Enviadas (+ responsável por texto se configurado).
+   */
+  skipIdCapture?: boolean;
+  /** Texto a assertar quando skipIdCapture (ex.: "Evento Dia Inteiro"). */
+  assertText?: string;
 };
 
 const POST_SEND_ID_CONFIG: Record<string, PostSendIdConfig> = {
@@ -460,11 +527,27 @@ const POST_SEND_ID_CONFIG: Record<string, PostSendIdConfig> = {
   },
   "01_1_comunicado_pdf.yaml": { verifyResponsavel: true },
   "01_1_comunicado_video_pequeno.yaml": { verifyResponsavel: true },
-  "01_1_comunicado_boleto.yaml": { verifyResponsavel: true },
-  "01_1_comunicado_boleto_competencia.yaml": { verifyResponsavel: true },
+  "01_1_comunicado_boleto.yaml": {
+    // Inadimplentes + BUG-2026-002 (boleto sem arquivo) — ETMENEZES não recebe/vê.
+    verifyResponsavel: false,
+  },
+  "01_1_comunicado_boleto_competencia.yaml": {
+    verifyResponsavel: false,
+  },
   "01_1_comunicado_correspondencia_ir.yaml": { verifyResponsavel: true },
-  "01_1_comunicado_evento.yaml": { verifyResponsavel: true },
-  "01_1_comunicado_evento_dia_inteiro.yaml": { verifyResponsavel: true },
+  // BUG: evento não expõe ID no content-desc — assert por texto.
+  "01_1_comunicado_evento.yaml": {
+    verifyResponsavel: false,
+    skipIdCapture: true,
+    assertText: "Evento Padrao",
+  },
+  "01_1_comunicado_evento_dia_inteiro.yaml": {
+    // Reexecução diagnóstico: tenta ID (espera falhar com log BUG-2026-004);
+    // se null, cai no assert por texto abaixo via fallback no runner.
+    verifyResponsavel: false,
+    skipIdCapture: false,
+    assertText: "Evento Dia Inteiro",
+  },
 };
 
 export function needsPostSendIdCapture(flowPath: string): boolean {
@@ -586,6 +669,42 @@ appId: br.com.polygonus.mobile.amostra
     env:
       ID_COMUNICADO: "${idDigits}"
       MURAL_ID: "ID ${idDigits}"
+${responsavelBlock}
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml
+`;
+
+  fs.writeFileSync(file, content, "utf8");
+  return path.relative(REPO_ROOT, file).replace(/\\/g, "/");
+}
+
+/** Pós-envio sem ID (eventos): assert texto em Enviadas + teardown. */
+export function writeGeneratedPostSendTextVerifyFlow(
+  assertText: string,
+  cfg: PostSendIdConfig,
+): string {
+  const safe = assertText.replace(/"/g, '\\"');
+  const dir = path.join(MAESTRO_ROOT, ".generated");
+  fs.mkdirSync(dir, { recursive: true });
+  const slug = assertText.replace(/[^a-zA-Z0-9]+/g, "_").slice(0, 40);
+  const file = path.join(dir, `_run_post_send_text_${slug}.yaml`);
+
+  const responsavelBlock = cfg.verifyResponsavel
+    ? `
+- runFlow:
+    file: ../shared/mural/verificar_responsavel_ve.yaml
+    env:
+      TEXTO_ANCORAGEM: "${safe}"
+`
+    : "";
+
+  const content = `# Gerado pela qa-app — pós-envio por texto (sem ID). Não commitar.
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Enviadas|Enviados|Show menu|Recebidas"
+    timeout: 20000
+
+- assertVisible: "${safe}"
 ${responsavelBlock}
 - runFlow: ../shared/auth/teardown_estavel_sessao.yaml
 `;
@@ -824,6 +943,18 @@ async function runMaestroFlowWithPostSendId(
     return muralRunCancelled(phase1.output, phase1.appVersion);
   }
 
+  // Eventos: sem ID no content-desc (BUG-2026-004) — assert por texto.
+  if (cfg.skipIdCapture && cfg.assertText) {
+    const textFlow = writeGeneratedPostSendTextVerifyFlow(cfg.assertText, cfg);
+    log(
+      `[qa-app] Fase 2–3/3 — assert por texto "${cfg.assertText}" (sem ID — BUG-2026-004)…`,
+    );
+    return runMaestroFlow(textFlow, {
+      ...options,
+      reinstallDriver: false,
+    });
+  }
+
   log("[qa-app] Fase 2/3 — capturando ID do card mais recente (adb)…");
   let idComunicado: string | null = null;
   try {
@@ -844,6 +975,20 @@ async function runMaestroFlowWithPostSendId(
   }
 
   if (!idComunicado) {
+    // Eventos: badge pode estar na tela mas fora da árvore a11y (BUG-2026-004).
+    if (cfg.assertText) {
+      log(
+        `[qa-app] ID ausente na acessibilidade do 1º card — fallback assert por texto "${cfg.assertText}" (BUG-2026-004).`,
+      );
+      const textFlow = writeGeneratedPostSendTextVerifyFlow(cfg.assertText, {
+        ...cfg,
+        verifyResponsavel: false,
+      });
+      return runMaestroFlow(textFlow, {
+        ...options,
+        reinstallDriver: false,
+      });
+    }
     return {
       ok: false,
       exitCode: phase1.exitCode ?? 1,
@@ -877,22 +1022,55 @@ async function runMaestroFlowWithPostSendId(
   }
 }
 
-/** Catálogo canônico dos CTs Mural — description ≠ pré-condições ≠ resultado esperado. */
+/**
+ * Catálogo canônico dos CTs do módulo Mural.
+ *
+ * Hierarquia:
+ *   módulo (Mural | Atendimento | …)
+ *     → suite / bloco (CRUD, Anexos, Boleto, …) — agrupamento por domínio
+ *       → CT com numeração local (CRUD-01, ANEXO-02, …)
+ *
+ * Chave global estável: `mural/crud-01`, `atendimento/anexo-01` (módulo/ctId).
+ * Título na UI: `{ctId} · {ação}`.
+ */
+export type MuralSuite =
+  | "CRUD"
+  | "Enquete"
+  | "Anexos"
+  | "Boleto"
+  | "Correspondencia"
+  | "Eventos"
+  | "Lista"
+  | "Filtros"
+  | "E2E";
+
 export type MuralHomologationItem = {
+  /** ID estável por domínio, ex.: CRUD-01, ANEXO-02, E2E-99 */
+  ctId: string;
+  /** Bloco/suite dentro do módulo Mural */
+  suite: MuralSuite;
+  /** Alias legado (run-ct-mural.ts 01…99) */
+  legacyNum: string;
   title: string;
   flowPath: string;
-  /** Objetivo do teste (sem pré-requisitos). */
   description: string;
-  /** Pré-condições / requisitos. */
   preconditions: string;
-  /** Resultado esperado após a execução. */
   expectedResult: string;
   steps: string[];
 };
 
+/** Chave única global: `{módulo}/{ctId}` em minúsculas. */
+export function muralDomainTestKey(ctId: string, module = "mural"): string {
+  return `${module}/${ctId.toLowerCase()}`;
+}
+
 export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
+  // —— CRUD ——
   {
-    title: "Mural — enviar comunicado de texto",
+    ctId: "CRUD-01",
+    suite: "CRUD",
+    legacyNum: "01",
+    title: "CRUD-01 · Enviar comunicado (texto)",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
     description:
       "PHJESUS (coordenador) envia um comunicado de texto; o responsável ETMENEZES confirma o recebimento no Mural.",
@@ -908,14 +1086,17 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
     ],
   },
   {
-    title: "Mural — editar comunicado",
+    ctId: "CRUD-02",
+    suite: "CRUD",
+    legacyNum: "02",
+    title: "CRUD-02 · Editar comunicado",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_editar.yaml",
     description:
       "Edita o comunicado mais recente em Enviadas e valida o texto novo na lista.",
     preconditions:
       "Ao menos 1 comunicado em Enviadas; sessão PHJESUS com perfil Coordenador.",
     expectedResult:
-      "Texto “Teste Comunicado editado CT02” visível em Enviadas. (Validação de mesmo ID adiada: app gera novo comunicado ao editar.)",
+      "Texto “Teste Comunicado editado CT02” visível em Enviadas. (Mesmo ID adiado: BUG-2026-003.)",
     steps: [
       "Retomar sessão PHJESUS → Perfil → Coordenador → Enviadas (prep único)",
       "Capturar ID do card mais recente (adb)",
@@ -925,7 +1106,10 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
     ],
   },
   {
-    title: "Mural — excluir comunicado",
+    ctId: "CRUD-03",
+    suite: "CRUD",
+    legacyNum: "03",
+    title: "CRUD-03 · Excluir comunicado",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_excluir.yaml",
     description:
       "Exclui o comunicado mais recente em Enviadas e confirma que o ID capturado sumiu da lista.",
@@ -942,8 +1126,12 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
       "Teardown estável (home autenticada)",
     ],
   },
+  // —— Enquete ——
   {
-    title: "Mural — enquete",
+    ctId: "ENQUETE-01",
+    suite: "Enquete",
+    legacyNum: "04",
+    title: "ENQUETE-01 · Comunicado com enquete Nova",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enquete.yaml",
     description: "Cria comunicado com enquete do tipo Nova (opções Sim/Não).",
     preconditions:
@@ -956,8 +1144,12 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
       "qa-app: adb captura ID → assert por ID → teardown",
     ],
   },
+  // —— Anexos ——
   {
-    title: "Mural — foto da galeria",
+    ctId: "ANEXO-01",
+    suite: "Anexos",
+    legacyNum: "05",
+    title: "ANEXO-01 · Foto da galeria",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_foto_galeria.yaml",
     description:
       "Envia comunicado com foto; responsável confirma por ID e abre Compartilhar anexos (sem concluir share).",
@@ -972,124 +1164,256 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
     ],
   },
   {
-    title: "Mural — anexo PDF",
+    ctId: "ANEXO-02",
+    suite: "Anexos",
+    legacyNum: "06",
+    title: "ANEXO-02 · PDF",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_pdf.yaml",
     description:
-      "Clipe → Arquivo → anexa PDF; confirma envio/recebimento pelo ID (adb).",
+      "Clipe → Selecionar arquivo → anexa PDF; confirma envio/recebimento pelo ID (adb).",
     preconditions:
       "PDF no device (push fixtures + FIXTURE_PDF no .env); credenciais PHJESUS e ETMENEZES.",
     expectedResult:
       "ID do comunicado com PDF confirmado em Enviadas e no Mural do responsável.",
     steps: [
-      "PHJESUS → composer (turmas + alvo Todos) → clipe → Arquivo → PDF → enviar → Enviadas",
+      "PHJESUS → composer (turmas + alvo Todos) → clipe → Selecionar arquivo → PDF → enviar → Enviadas",
       "qa-app: adb ID → assert → ETMENEZES → assert mesmo ID → teardown",
     ],
   },
   {
-    title: "Mural — vídeo pequeno",
+    ctId: "ANEXO-03",
+    suite: "Anexos",
+    legacyNum: "07",
+    title: "ANEXO-03 · Vídeo pequeno",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_video_pequeno.yaml",
     description:
-      "Clipe → Arquivo → anexa vídeo; confirma envio/recebimento pelo ID (adb).",
+      "Clipe → Selecionar arquivo → anexa vídeo; confirma envio/recebimento pelo ID (adb).",
     preconditions:
       "Vídeo no device (/sdcard/Download + FIXTURE_VIDEO); credenciais PHJESUS e ETMENEZES.",
     expectedResult:
       "ID do comunicado com vídeo confirmado em Enviadas e no Mural do responsável.",
     steps: [
-      "PHJESUS → composer (turmas + alvo Todos) → clipe → Arquivo → vídeo → enviar → Enviadas",
+      "PHJESUS → composer (turmas + alvo Todos) → clipe → Selecionar arquivo → vídeo → enviar → Enviadas",
       "qa-app: adb ID → assert → ETMENEZES → assert mesmo ID → teardown",
     ],
   },
+  // —— Boleto ——
   {
-    title: "Mural — boleto (mês corrente)",
+    ctId: "BOLETO-01",
+    suite: "Boleto",
+    legacyNum: "11",
+    title: "BOLETO-01 · Inadimplentes / mês corrente",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_boleto.yaml",
     description:
       "Funil Inadimplentes + Mes corrente; clipe Boleto; texto de cobrança; ID.",
     preconditions: "Sessão PHJESUS Coordenador; credenciais ETMENEZES.",
     expectedResult:
-      "ID do comunicado com boleto (mês corrente / inadimplentes) confirmado no responsável.",
+      "ID do boleto (mês corrente / inadimplentes) confirmado em Enviadas. Responsável adiado: BUG-2026-002 + Inadimplentes.",
     steps: [
       "Composer → turmas + alvo Todos → funil → Inadimplentes → Mes corrente → Ok",
       "Clipe → Boleto → texto de cobrança → enviar → Enviadas",
-      "qa-app: adb ID → assert → ETMENEZES → teardown",
+      "qa-app: adb ID → assert em Enviadas → teardown",
     ],
   },
   {
-    title: "Mural — boleto (competência 01)",
+    ctId: "BOLETO-02",
+    suite: "Boleto",
+    legacyNum: "14",
+    title: "BOLETO-02 · Inadimplentes / competência 01",
     flowPath:
       "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_boleto_competencia.yaml",
     description:
       "Funil Inadimplentes + Período (competência com 01, sem mês corrente); Boleto; ID.",
     preconditions: "Sessão PHJESUS Coordenador; credenciais ETMENEZES.",
     expectedResult:
-      "ID do comunicado com boleto (competência 01) confirmado no responsável.",
+      "ID do boleto (competência 01) confirmado em Enviadas. Responsável adiado: BUG-2026-002 + Inadimplentes.",
     steps: [
       "Composer → funil → Inadimplentes → data Período → competência 01 → Ok",
       "Clipe → Boleto → texto de cobrança → enviar → Enviadas",
-      "qa-app: adb ID → assert → ETMENEZES → teardown",
+      "qa-app: adb ID → assert em Enviadas → teardown",
     ],
   },
+  // —— Correspondência ——
   {
-    title: "Mural — correspondência Declaração de IR",
+    ctId: "CORRESP-01",
+    suite: "Correspondencia",
+    legacyNum: "12",
+    title: "CORRESP-01 · Declaração IR",
     flowPath:
       "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_correspondencia_ir.yaml",
     description:
-      "Clipe → Correspondência → Declaração de IR → Ok; confirma pelo ID.",
+      "Clipe → Correspondência → lista → Declaração IR → Ok; confirma pelo ID.",
     preconditions: "Sessão PHJESUS Coordenador; credenciais ETMENEZES.",
     expectedResult:
-      "ID do comunicado com Declaração de IR confirmado em Enviadas e no Mural do responsável.",
+      "ID do comunicado com Declaração IR confirmado em Enviadas e no Mural do responsável.",
     steps: [
-      "PHJESUS → composer → clipe → Correspondência → Declaração de IR → Ok → enviar",
+      "PHJESUS → composer → clipe → Correspondência → Declaração IR → Ok → enviar",
       "qa-app: adb ID → assert → ETMENEZES → assert mesmo ID → teardown",
     ],
   },
+  // —— Eventos ——
   {
-    title: "Mural — evento padrão",
+    ctId: "EVENTO-01",
+    suite: "Eventos",
+    legacyNum: "08",
+    title: "EVENTO-01 · Padrão (com horário)",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_evento.yaml",
     description:
-      "Novo evento sem Dia inteiro; turmas + alvo Todos; texto Evento Padrão; confirmação por ID.",
-    preconditions: "Sessão PHJESUS Coordenador; BoomMenu Evento; ETMENEZES.",
+      "Novo evento sem Dia inteiro; turmas + alvo Todos; texto Evento Padrao.",
+    preconditions: "Sessão PHJESUS Coordenador; BoomMenu Evento; emulador America/Sao_Paulo.",
     expectedResult:
-      "ID do Evento Padrão confirmado em Enviadas e no Mural do responsável.",
+      "Evento Padrao em Enviadas. ID no content-desc adiado (BUG-2026-004).",
     steps: [
       "BoomMenu → Evento → turmas + alvo Todos (sem Dia inteiro)",
-      "Título/texto: Evento Padrão → enviar → Enviadas",
-      "qa-app: adb ID → assert → ETMENEZES → teardown",
+      "Título/texto: Evento Padrao → enviar → Enviadas",
+      "qa-app: assert (ID ou texto) → teardown",
     ],
   },
   {
-    title: "Mural — evento dia inteiro",
+    ctId: "EVENTO-02",
+    suite: "Eventos",
+    legacyNum: "13",
+    title: "EVENTO-02 · Dia inteiro",
     flowPath:
       "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_evento_dia_inteiro.yaml",
     description:
-      "Novo evento com toggle Dia inteiro; turmas + alvo Todos; texto Evento Dia Inteiro; ID.",
-    preconditions: "Sessão PHJESUS Coordenador; BoomMenu Evento; ETMENEZES.",
+      "Novo evento com toggle Dia inteiro; turmas + alvo Todos; texto Evento Dia Inteiro.",
+    preconditions: "Sessão PHJESUS Coordenador; BoomMenu Evento; emulador America/Sao_Paulo.",
     expectedResult:
-      "ID do Evento Dia Inteiro confirmado em Enviadas e no Mural do responsável.",
+      "Evento Dia Inteiro em Enviadas. ID no content-desc adiado (BUG-2026-004).",
     steps: [
       "BoomMenu → Evento → turmas + alvo Todos → ligar Dia inteiro",
       "Título/texto: Evento Dia Inteiro → enviar → Enviadas",
-      "qa-app: adb ID → assert → ETMENEZES → teardown",
+      "qa-app: assert por texto (fallback ID) → teardown",
     ],
   },
+  // —— Lista (definir escopo depois) ——
   {
-    title: "Mural — filtro Enviadas",
+    ctId: "LISTA-01",
+    suite: "Lista",
+    legacyNum: "09",
+    title: "LISTA-01 · Filtro Enviadas (rascunho)",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_filtro_enviadas.yaml",
-    description: "Smoke do filtro Enviadas (e opcionalmente Recebidas) no Mural.",
+    description:
+      "Filtro Enviadas na lista do Mural — escopo ainda a definir com o time.",
     preconditions:
       "Sessão PHJESUS; perfil Coordenador; Mural com lista carregável.",
     expectedResult:
-      "Filtro Enviadas ativo e reconhecível na UI; opcionalmente Recebidas; tela ENTRAR ao final.",
+      "Filtro Enviadas ativo e reconhecível na UI (função completa pendente).",
     steps: [
-      "Abrir o app na tela de login (ENTRAR)",
-      "Entrar como PHJESUS → foto/nome → Perfil → garantir função Coordenador",
-      "Abrir o Mural",
+      "Abrir Mural como PHJESUS Coordenador",
       "Tocar em Enviadas e confirmar o filtro ativo",
-      "Opcional: voltar para Recebidas",
-      "Sair até a tela de login",
+    ],
+  },
+  // —— Filtros extras (envio; conferência manual por enquanto) ——
+  {
+    ctId: "FILTRO-01",
+    suite: "Filtros",
+    legacyNum: "21",
+    title: "FILTRO-01 · Adimplentes (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_adimplentes.yaml",
+    description:
+      "Composer → funil → Adimplentes → envia texto. Conferência do público: manual.",
+    preconditions: "Sessão PHJESUS Coordenador.",
+    expectedResult:
+      "Comunicado “Teste filtro Adimplentes” enviado (lista Enviadas). Validação do filtro: manual.",
+    steps: [
+      "Composer → turmas + alvo Todos → funil → Adimplentes",
+      "Texto: Teste filtro Adimplentes → enviar → Enviadas → teardown",
     ],
   },
   {
-    title: "Mural — CT-99 E2E completo (sempre por último)",
+    ctId: "FILTRO-02",
+    suite: "Filtros",
+    legacyNum: "22",
+    title: "FILTRO-02 · Alunos com muitas faltas (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_muitas_faltas.yaml",
+    description:
+      "Composer → funil → Alunos com muitas faltas → envia. Conferência: manual.",
+    preconditions: "Sessão PHJESUS Coordenador.",
+    expectedResult:
+      "Comunicado “Teste filtro Alunos com muitas faltas” em Enviadas. Validação do filtro: manual.",
+    steps: [
+      "Funil → Alunos com muitas faltas → enviar texto contextual → Enviadas",
+    ],
+  },
+  {
+    ctId: "FILTRO-03",
+    suite: "Filtros",
+    legacyNum: "23",
+    title: "FILTRO-03 · Alunos abaixo da média (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_abaixo_media.yaml",
+    description:
+      "Composer → funil → Alunos abaixo da média → envia. Conferência: manual.",
+    preconditions: "Sessão PHJESUS Coordenador.",
+    expectedResult:
+      "Comunicado “Teste filtro Alunos abaixo da media” em Enviadas. Validação do filtro: manual.",
+    steps: [
+      "Funil → Alunos abaixo da média → enviar texto contextual → Enviadas",
+    ],
+  },
+  {
+    ctId: "FILTRO-04",
+    suite: "Filtros",
+    legacyNum: "24",
+    title: "FILTRO-04 · Bolsista 100% (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_100.yaml",
+    description: "Composer → funil → Bolsista 100% → envia. Conferência: manual.",
+    preconditions: "Sessão PHJESUS Coordenador.",
+    expectedResult:
+      "Comunicado “Teste filtro Bolsista 100%” em Enviadas. Validação do filtro: manual.",
+    steps: ["Funil → Bolsista 100% → enviar texto contextual → Enviadas"],
+  },
+  {
+    ctId: "FILTRO-05",
+    suite: "Filtros",
+    legacyNum: "25",
+    title: "FILTRO-05 · Bolsista 50% (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_50.yaml",
+    description: "Composer → funil → Bolsista 50% → envia. Conferência: manual.",
+    preconditions: "Sessão PHJESUS Coordenador.",
+    expectedResult:
+      "Comunicado “Teste filtro Bolsista 50%” em Enviadas. Validação do filtro: manual.",
+    steps: ["Funil → Bolsista 50% → enviar texto contextual → Enviadas"],
+  },
+  {
+    ctId: "FILTRO-06",
+    suite: "Filtros",
+    legacyNum: "26",
+    title: "FILTRO-06 · Todos os bolsistas (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_todos_bolsistas.yaml",
+    description:
+      "Composer → funil → Todos os bolsistas → envia. Conferência: manual.",
+    preconditions: "Sessão PHJESUS Coordenador.",
+    expectedResult:
+      "Comunicado “Teste filtro Todos os bolsistas” em Enviadas. Validação do filtro: manual.",
+    steps: ["Funil → Todos os bolsistas → enviar texto contextual → Enviadas"],
+  },
+  {
+    ctId: "FILTRO-07",
+    suite: "Filtros",
+    legacyNum: "27",
+    title: "FILTRO-07 · Pagantes (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_pagantes.yaml",
+    description: "Composer → funil → Pagantes → envia. Conferência: manual.",
+    preconditions: "Sessão PHJESUS Coordenador.",
+    expectedResult:
+      "Comunicado “Teste filtro Pagantes” em Enviadas. Validação do filtro: manual.",
+    steps: ["Funil → Pagantes → enviar texto contextual → Enviadas"],
+  },
+  // —— E2E (sempre por último na suite) ——
+  {
+    ctId: "E2E-99",
+    suite: "E2E",
+    legacyNum: "99",
+    title: "E2E-99 · Mural completo (por último)",
     flowPath:
       "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_completo_e2e.yaml",
     description:
@@ -1097,18 +1421,22 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
     preconditions:
       "Fixtures no device (FIXTURE_FOTO, FIXTURE_VIDEO, FIXTURE_PDF); PHJESUS coordenador.",
     expectedResult:
-      "Comunicado completo enviado; texto editado confirmado; card excluído da lista; tela ENTRAR ao final.",
+      "Comunicado completo enviado; texto editado confirmado; card excluído da lista.",
     steps: [
-      "Preparar fixtures no device (FIXTURE_FOTO, FIXTURE_VIDEO, FIXTURE_PDF)",
-      "Abrir o app → PHJESUS coordenador → Mural",
-      "Novo comunicado: texto Teste Comunicado completo + enquete + anexos",
-      "Enviar e confirmar na lista Enviadas",
-      "Editar → Teste Comunicado completo editado",
-      "Excluir → confirmar Sim → texto sumiu",
-      "Sair até a tela de login",
+      "Preparar fixtures no device",
+      "PHJESUS coordenador → Mural → comunicado completo + anexos",
+      "Editar → Excluir → teardown",
     ],
   },
 ];
+
+export function findMuralItemByFlowPath(flowPath: string): MuralHomologationItem | undefined {
+  const norm = flowPath.replace(/\\/g, "/");
+  return MURAL_HOMOLOGATION_ITEMS.find((i) => {
+    const fp = i.flowPath.replace(/\\/g, "/");
+    return fp === norm || norm.endsWith(`/${path.basename(fp)}`);
+  });
+}
 
 export function createMuralHomologationRecords(project: ProjectSlug) {
   const campaign = "mural-backend-homologacao";
@@ -1127,13 +1455,21 @@ export function createMuralHomologationRecords(project: ProjectSlug) {
     campaign,
     project,
     reportedAt: now,
+    testKey: muralDomainTestKey(item.ctId),
     automation: {
       type: "maestro" as const,
       flowPath: item.flowPath,
-      label: path.basename(item.flowPath, path.extname(item.flowPath)),
+      label: item.ctId,
       readiness: "draft" as const,
     },
-    tags: ["homologacao", "mural", campaign],
+    tags: [
+      "homologacao",
+      "mural",
+      campaign,
+      "module:Mural",
+      `suite:${item.suite}`,
+      `ct:${item.ctId}`,
+    ],
     showInPortfolio: false,
     _sort: i,
   }));

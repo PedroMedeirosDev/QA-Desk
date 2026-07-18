@@ -6,8 +6,8 @@
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - extendedWaitUntil:
     visible: "Back"
     timeout: 8000
@@ -33,23 +33,23 @@ appId: br.com.polygonus.mobile.amostra
           text: "Recebidas|Recebidos|Enviadas|Enviados|Pendentes|Aprovadas"
           rightOf: "Back"
           optional: true
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
       - runFlow:
           when:
             notVisible: "${FILTRO_TAP}"
           commands:
             - tapOn:
                 id: mural_filtro_sentido
-            - waitForAnimationToEnd
-
+            - waitForAnimationToEnd:
+                timeout: 500
       - extendedWaitUntil:
           visible: "${FILTRO_TAP}"
           timeout: 10000
 
       - tapOn: "${FILTRO_TAP}"
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
       - runFlow: fechar_dropdown_filtro_sentido.yaml
 
 - extendedWaitUntil:

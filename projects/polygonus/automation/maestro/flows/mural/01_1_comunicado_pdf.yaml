@@ -15,8 +15,8 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/anexar_arquivo_por_nome.yaml
     env:
-      # Preferir literal: ${FIXTURE_PDF} com espaço falha em runFlow aninhado (vira undefined).
-      ANEXO_NOME: "PDF TESTE.pdf"
+      # Sem espaço — DocumentsUI às vezes não expõe "PDF TESTE.pdf" como texto tocável
+      ANEXO_NOME: "PDF_TESTE.pdf|PDF TESTE.pdf|PDF_TESTE|PDF TESTE"
       ANEXO_PASTA: "Download"
 
 - runFlow: ../shared/mural/enviar_comunicado.yaml
@@ -25,6 +25,8 @@ appId: br.com.polygonus.mobile.amostra
     start: "50%, 28%"
     end: "50%, 72%"
     duration: 400
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500
 
 - runFlow: ../shared/mural/filtrar_enviadas.yaml
+

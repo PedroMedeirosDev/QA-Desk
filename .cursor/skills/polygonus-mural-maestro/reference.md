@@ -2,20 +2,22 @@
 
 Complemento de `.cursor/skills/polygonus-mural-maestro/SKILL.md`.
 
-## Catálogo CT-MURAL (homologação)
+## Catálogo Mural (por suite / domínio)
 
-| ID | Flow | Notas |
-|----|------|--------|
-| 01 | `mural/01_1_comunicado_enviar.yaml` | Coord envia texto; ETMENEZES confere |
-| 02 | `mural/01_1_comunicado_editar.yaml` | Pré: 01; texto → `Teste Comunicado editado` |
-| 03 | `mural/01_1_comunicado_excluir.yaml` | Pré: 02; exclui editado |
-| 04 | `mural/01_1_comunicado_enquete.yaml` | Enquete Nova Sim/Não |
-| 05 | `mural/01_1_comunicado_foto_galeria.yaml` | `FIXTURE_FOTO` + picker; ETMENEZES salva/compartilha |
-| 06 | `mural/01_1_comunicado_pdf.yaml` | `FIXTURE_PDF` + DocumentsUI |
-| 07 | `mural/01_1_comunicado_video_pequeno.yaml` | `FIXTURE_VIDEO` / addMedia |
-| 08 | `mural/01_1_comunicado_evento.yaml` | BoomMenu → Evento |
-| 09 | `mural/01_1_filtro_enviadas.yaml` | Smoke filtro Enviadas |
-| 10 | `mural/01_1_comunicado_completo_e2e.yaml` | E2E — texto + enquete + anexos → editar → excluir |
+- **testKey global:** `mural/crud-01`, `mural/anexo-02`, … (módulo/ctId)
+- Numeração **local por bloco**; legado `01…99` ainda aceito no runner
+- Futuro Atendimento: `atendimento/anexo-01` (mesmo domínio, outro módulo)
+
+| Suite | testKey | Legado | Notas |
+|-------|---------|--------|--------|
+| CRUD | `mural/crud-01` … `03` | 01–03 | Enviar / editar / excluir |
+| Enquete | `mural/enquete-01` | 04 | Enquete Nova Sim/Não |
+| Anexos | `mural/anexo-01` … `03` | 05–07 | Foto / PDF / vídeo |
+| Boleto | `mural/boleto-01` … `02` | 11, 14 | Mês corrente / competência |
+| Correspondência | `mural/corresp-01` | 12 | Declaração IR |
+| Eventos | `mural/evento-01` … `02` | 08, 13 | Padrão / dia inteiro |
+| Lista | `mural/lista-01` | 09 | Filtro — escopo a definir |
+| E2E | `mural/e2e-99` | 99 | Jornada completa (por último) — **não é smoke** |
 
 Manual (não automatizar nesta suíte): gravação de câmera; vídeo médio/grande (timeout). Ver `flows/docs/mural-manual.md`.
 

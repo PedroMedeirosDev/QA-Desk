@@ -1,0 +1,33 @@
+# Envio só com filtro extras (sem anexo). Conferência manual.
+# Env: FILTRO_EXTRAS, TEXTO_COMUNICADO
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: setup_coordenador_mural.yaml
+
+- runFlow: abrir_novo_comunicado.yaml
+- runFlow: selecionar_turmas_comunicado.yaml
+- runFlow: selecionar_alvo_todos.yaml
+
+- runFlow:
+    file: selecionar_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: "${FILTRO_EXTRAS}"
+
+- runFlow:
+    file: escrever_comunicado.yaml
+    env:
+      TEXTO_COMUNICADO: "${TEXTO_COMUNICADO}"
+
+
+- runFlow: enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 500
+
+- runFlow: filtrar_enviadas.yaml
+- runFlow: ../auth/teardown_estavel_sessao.yaml

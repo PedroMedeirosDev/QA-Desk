@@ -1,11 +1,40 @@
-# Liga o toggle "Dia inteiro" no composer de Evento.
-# Só chamar quando o CT for Evento Dia Inteiro.
+# Liga o toggle "Dia inteiro" no composer de Evento (screenshot Medium_Phone).
+#
+# Layout da linha:
+#   [ícone relógio] Dia inteiro ..................... (Switch)
+#
+# NÃO usar rightOf solto — pega o olho (pré-visualização) no app bar.
+# Switch ≈ 90% x na linha do rótulo; após ligar, some o horário (HH:mm).
 
 appId: br.com.polygonus.mobile.amostra
 ---
+- scrollUntilVisible:
+    element: "Dia inteiro|Dia Inteiro"
+    direction: DOWN
+    timeout: 8000
+    optional: true
+
 - extendedWaitUntil:
     visible: "Dia inteiro|Dia Inteiro"
     timeout: 8000
 
-- tapOn: "Dia inteiro|Dia Inteiro"
-- waitForAnimationToEnd
+# Thumb do Switch (direita da linha) — calibração Medium_Phone / screenshot
+- tapOn:
+    point: "90%, 31%"
+- waitForAnimationToEnd:
+    timeout: 500
+
+# Se ainda tem horário na data (Switch OFF), tenta de novo um pouco mais baixo
+- runFlow:
+    when:
+      visible: ".*\\d{1,2}:\\d{2}.*"
+    commands:
+      - tapOn:
+          point: "90%, 33%"
+      - waitForAnimationToEnd:
+          timeout: 500
+
+# Confirma: Dia inteiro ligado → horários somem das linhas Início/Fim
+- extendedWaitUntil:
+    notVisible: ".*\\d{1,2}:\\d{2}.*"
+    timeout: 5000

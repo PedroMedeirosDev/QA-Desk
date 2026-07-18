@@ -23,6 +23,23 @@ import { findByTestKey } from "./test-key.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_ROOT = path.join(__dirname, "../data/projects");
 
+const SUITE_FROM_PREFIX: Record<string, string> = {
+  crud: "CRUD",
+  enquete: "Enquete",
+  anexo: "Anexos",
+  boleto: "Boleto",
+  corresp: "Correspondencia",
+  evento: "Eventos",
+  lista: "Lista",
+  e2e: "E2E",
+};
+
+function suiteFromDomainTestKey(testKey: string): string | undefined {
+  const id = testKey.includes("/") ? testKey.split("/")[1] : testKey;
+  const prefix = id?.split("-")[0]?.toLowerCase();
+  return prefix ? SUITE_FROM_PREFIX[prefix] : undefined;
+}
+
 function homologationsPath(project: ProjectSlug) {
   return path.join(DATA_ROOT, project, "homologations.json");
 }
@@ -249,11 +266,15 @@ export function computeHomologationProgress(
         (h.meta?.homologationId === homologation.id ||
           h.meta?.homologationSlug === homologation.slug),
     ).length;
+    const suiteTag = test?.tags?.find((t) => t.startsWith("suite:"));
+    const suite =
+      suiteTag?.slice("suite:".length) || suiteFromDomainTestKey(testKey);
 
     return {
       testKey,
       testId: test?.id,
       title: test?.title ?? testKey,
+      suite,
       status,
       runsInHomologation,
       lastRunAt: test?.automation?.lastRunAt,
@@ -341,11 +362,8 @@ export async function syncMuralHomologation(project: ProjectSlug) {
   const mural = findHomologationBySlug(homCatalog, MURAL_HOMOLOGATION_SLUG);
   if (!mural) throw new Error("Homologação Mural não encontrada");
 
-  const keysFromTests = testCatalog.reports
-    .filter((t) => t.campaign === MURAL_HOMOLOGATION_SLUG && t.testKey)
-    .map((t) => t.testKey!);
-
-  mural.testKeys = [...new Set([...mural.testKeys, ...keysFromTests, ...muralTestKeys()])];
+  // Ordem canônica por suite (CRUD → … → E2E); descarta chaves legadas órfãs.
+  mural.testKeys = muralTestKeys();
   const linked = linkTestsToHomologation(testCatalog, mural);
 
   appendHomologationHistory(mural, {

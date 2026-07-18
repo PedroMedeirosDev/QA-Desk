@@ -1,8 +1,8 @@
 {
-  "name": "qa-app",
+  "name": "qa-desk",
   "private": true,
   "version": "0.1.0",
-  "description": "QA Automate — aplicação multi-projeto de registro de bugs",
+  "description": "QA Desk — homologação e registro de testes multi-projeto",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -r -n api,ui -c blue,green \"tsx watch server/index.ts\" \"vite\"",

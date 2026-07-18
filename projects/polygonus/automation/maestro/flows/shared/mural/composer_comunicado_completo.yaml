@@ -17,8 +17,9 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: anexar_arquivo_por_nome.yaml
     env:
-      ANEXO_NOME: "${FIXTURE_PDF}"
+      ANEXO_NOME: "PDF_TESTE.pdf|PDF TESTE.pdf|PDF_TESTE|PDF TESTE"
       ANEXO_PASTA: "Download"
+
 
 # Vídeo pequeno — mesmo fluxo de galeria (CT-07)
 - runFlow: adicionar_foto_galeria.yaml

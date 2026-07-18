@@ -5,11 +5,7 @@
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - runFlow: dismiss_coachmarks_pular.yaml
+- runFlow: dismiss_coachmarks_pular.yaml
 
 - repeat:
     times: 3
@@ -19,7 +15,8 @@ appId: br.com.polygonus.mobile.amostra
             visible: "Show menu|Responder comunicado"
           commands:
             - pressKey: Back
-            - waitForAnimationToEnd
+            - waitForAnimationToEnd:
+                timeout: 500
             - runFlow: ../mural/fechar_gravacao_pendente.yaml
 
 - runFlow:
@@ -27,14 +24,11 @@ appId: br.com.polygonus.mobile.amostra
       visible: "Show menu|Responder comunicado"
     commands:
       - pressKey: Back
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500
       - runFlow: ../mural/fechar_gravacao_pendente.yaml
 
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - runFlow: dismiss_coachmarks_pular.yaml
+- runFlow: dismiss_coachmarks_pular.yaml
 
 - extendedWaitUntil:
     visible: "${NOME_PHJESUS}|Pedro Jesus|Pedro|${NOME_ETMENEZES}|Bruno|Davi|${NOME_ACMENEZES}|.*MURAL.*"

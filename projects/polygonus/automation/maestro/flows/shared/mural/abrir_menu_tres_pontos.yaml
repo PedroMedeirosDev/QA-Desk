@@ -42,8 +42,8 @@ appId: br.com.polygonus.mobile.amostra
           id: "mural_card_menu"
           below: "${output.itemAncora}"
           optional: true
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 # 2) Fallback: Show menu relativo (content-desc do overflow)
 - runFlow:
     when:
@@ -53,8 +53,8 @@ appId: br.com.polygonus.mobile.amostra
           text: "Show menu"
           below: "${output.itemAncora}"
           optional: true
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 # 3) Se abriu detalhe: ⋮ no header do detalhe
 - runFlow:
     when:
@@ -67,8 +67,8 @@ appId: br.com.polygonus.mobile.amostra
       - tapOn:
           text: "Show menu"
           optional: true
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 # 4) Último recurso: sair do detalhe se ainda estiver lá + 1º ⋮ da lista
 - runFlow:
     when:
@@ -79,8 +79,8 @@ appId: br.com.polygonus.mobile.amostra
           id: "mural_card_menu"
           index: 0
           optional: true
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - extendedWaitUntil:
     visible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
     timeout: 8000

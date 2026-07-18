@@ -12,15 +12,17 @@ appId: br.com.polygonus.mobile.amostra
 - tapOn:
     id: mural_composer_enviar
 
+- runFlow: aguardar_compressao_video.yaml
+
+# Ainda no composer após compressão → reenvia uma vez
 - runFlow:
     when:
-      visible: "Compressão em andamento|aguardar o término da compressão|compressão dos vídeos"
+      visible: "Novo comunicado|Editar comunicado|Novo evento"
     commands:
-      - tapOn: "Fechar"
-      - waitForAnimationToEnd
-      - runFlow: aguardar_compressao_video.yaml
       - tapOn:
           id: mural_composer_enviar
+          optional: true
+      - runFlow: aguardar_compressao_video.yaml
 
 # Falha conhecida: fuso GMT → offset ".00000:00" no payload do evento
 - runFlow:
@@ -28,7 +30,8 @@ appId: br.com.polygonus.mobile.amostra
       visible: "BrasilTime|formato inválido|Atenção!"
     commands:
       - tapOn: "Fechar"
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500
       - assertVisible: "NEVER_MATCH_FUSO_EMULADOR_GMT"
 
 - extendedWaitUntil:
@@ -39,7 +42,6 @@ appId: br.com.polygonus.mobile.amostra
     when:
       visible: "Novo comunicado|Editar comunicado|Novo evento"
     commands:
-      - waitForAnimationToEnd
       - runFlow: aguardar_compressao_video.yaml
       - tapOn:
           id: mural_composer_enviar
@@ -50,5 +52,3 @@ appId: br.com.polygonus.mobile.amostra
 
 - assertVisible: "Recebidas|Enviadas|Enviados|Show menu"
 - assertNotVisible: "Novo comunicado|Editar comunicado|Novo evento"
-
-- waitForAnimationToEnd

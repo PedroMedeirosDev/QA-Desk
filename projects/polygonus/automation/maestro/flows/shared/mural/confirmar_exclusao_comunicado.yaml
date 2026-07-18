@@ -7,4 +7,5 @@ appId: br.com.polygonus.mobile.amostra
     timeout: 8000
 
 - tapOn: "Sim"
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500

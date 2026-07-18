@@ -1,0 +1,25 @@
+# Retomada CT-12: Declaração IR ja selecionada no dialog (OK/CANCELAR).
+# Confirma → enviar → Enviadas.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "OK|Ok|CANCELAR|Declaração IR|Declaracao IR"
+    timeout: 8000
+
+- tapOn: "OK|Ok"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Para:|Escreva seu texto aqui"
+    timeout: 12000
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

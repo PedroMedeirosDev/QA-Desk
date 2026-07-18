@@ -1,0 +1,22 @@
+# Composer → funil → filtro extras (env FILTRO_EXTRAS).
+# Se abrir dialog Período, confirma mês corrente.
+#
+# Env: FILTRO_EXTRAS — regex/texto do item (ex.: "Adimplentes|Adimplente")
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: abrir_filtro_extras_composer.yaml
+
+- tapOn: "${FILTRO_EXTRAS}"
+- waitForAnimationToEnd:
+    timeout: 500
+
+# Alguns filtros abrem Período (como Inadimplentes)
+- runFlow:
+    when:
+      visible: "Período|Periodo|Mes corrente|Mês corrente"
+    file: selecionar_periodo_mes_corrente.yaml
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui|Limpar filtro"
+    timeout: 10000

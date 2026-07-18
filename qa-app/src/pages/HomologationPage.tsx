@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -8,7 +8,10 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
+import { ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
+import { SuiteListControls } from "@/components/SuiteListControls";
 import { api } from "@/lib/api";
+import { useConfirm } from "@/lib/confirm";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { useRunProgress, RUN_CANCELLED_MESSAGE } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
@@ -16,6 +19,13 @@ import { projectDetailPath, projectHomologationsListPath } from "@/lib/project-p
 import { cn } from "@/lib/utils";
 import { CHANNEL_LABELS } from "@/config/channels";
 import { MURAL_HOMOLOGATION_SLUG } from "@/config/homologations";
+import {
+  groupByModuleThenSuite,
+  MODULE_LABELS,
+  suiteCollapseKey,
+  summarizeSuiteProgress,
+  SUITE_LABELS,
+} from "@/lib/suite";
 import {
   HOMOLOGATION_LABELS,
   inferChannel,
@@ -74,6 +84,7 @@ export function HomologationPage({
 }) {
   const navigate = useNavigate();
   const toast = useToast();
+  const confirm = useConfirm();
   const { runAutomation, running: liveRunning } = useRunProgress();
   const [homologation, setHomologation] = useState<Homologation | null>(null);
   const [progress, setProgress] = useState<HomologationProgress | null>(null);
@@ -83,6 +94,31 @@ export function HomologationPage({
   const [runningAll, setRunningAll] = useState(false);
   const [batchProgress, setBatchProgress] = useState<string>("");
   const [catalogTests, setCatalogTests] = useState<TestRecord[]>([]);
+  const [collapsed, setCollapsed] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    setCollapsed(null);
+  }, [homSlug]);
+
+  function persistCollapsed(next: Set<string>) {
+    setCollapsed(next);
+    try {
+      sessionStorage.setItem(
+        `qa-group-collapsed-hom-v2:${homSlug}`,
+        JSON.stringify([...next]),
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function toggleCollapsedKey(key: string) {
+    const prev = collapsed ?? new Set<string>();
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    persistCollapsed(next);
+  }
 
   const reload = useCallback((opts?: { soft?: boolean }) => {
     if (!opts?.soft) setLoading(true);
@@ -213,20 +249,19 @@ export function HomologationPage({
     }
   }
 
-  async function runAllAutomated() {
-    if (!progress || !homologation) return;
-    const queue = progress.items.filter((i) => i.testId && i.hasAutomation);
-    if (queue.length === 0) {
-      toast.info("Nenhum teste com Maestro vinculado nesta campanha.");
-      return;
-    }
-
-    const draftCount = queue.filter((i) => i.readiness !== "ready").length;
-    const confirmMsg =
-      draftCount > 0
-        ? `Rodar ${queue.length} teste(s) em sequência?\n\n${draftCount} ainda estão "em construção" e podem falhar.\nSe um falhar, a campanha continua nos próximos.`
-        : `Rodar ${queue.length} teste(s) Maestro em sequência?\n\nSe um falhar, a campanha continua nos próximos.\nDeixe o emulador ligado — pode demorar vários minutos.`;
-    if (!window.confirm(confirmMsg)) return;
+  async function runQueue(
+    queue: HomologationProgress["items"],
+    opts: { title: string; description: string; batchTitle: string },
+  ) {
+    if (!homologation || queue.length === 0) return;
+    const ok = await confirm({
+      title: opts.title,
+      description: opts.description,
+      confirmLabel: "Rodar",
+      cancelLabel: "Cancelar",
+      tone: "run",
+    });
+    if (!ok) return;
 
     setRunningAll(true);
     let passed = 0;
@@ -236,7 +271,7 @@ export function HomologationPage({
       for (let i = 0; i < queue.length; i++) {
         const item = queue[i];
         setBatchProgress(
-          `${i + 1}/${queue.length} — ${item.title}  ·  ✓ ${passed}  ✗ ${failed}`,
+          `${opts.batchTitle} ${i + 1}/${queue.length} — ${item.title}  ·  ✓ ${passed}  ✗ ${failed}`,
         );
         setRunningId(item.testId!);
         try {
@@ -245,10 +280,10 @@ export function HomologationPage({
             testId: item.testId!,
             title: item.title,
             homologationId: homologation.id,
-            batchLabel: `${i + 1}/${queue.length}`,
+            batchLabel: `${opts.batchTitle} ${i + 1}/${queue.length}`,
           });
           if (res.cancelled) {
-            toast.info("Campanha interrompida pelo usuário.", {
+            toast.info(`${opts.batchTitle} interrompida.`, {
               title: "Execução em lote",
             });
             break;
@@ -270,20 +305,19 @@ export function HomologationPage({
         } catch (e) {
           const msg = toastErrorMessage(e, "erro");
           if (msg === RUN_CANCELLED_MESSAGE) {
-            toast.info("Campanha interrompida pelo usuário.", {
+            toast.info(`${opts.batchTitle} interrompida.`, {
               title: "Execução em lote",
             });
             break;
           }
           failed += 1;
-          toast.error(
-            `${item.title} — ${msg} (seguindo…)`,
-            { title: "Maestro" },
-          );
+          toast.error(`${item.title} — ${msg} (seguindo…)`, {
+            title: "Maestro",
+          });
         }
       }
 
-      toast.info(`Campanha finalizada: ${passed} passou · ${failed} falhou`, {
+      toast.info(`${opts.batchTitle}: ${passed} passou · ${failed} falhou`, {
         title: "Execução em lote",
         duration: 10000,
       });
@@ -294,6 +328,89 @@ export function HomologationPage({
       setBatchProgress("");
     }
   }
+
+  async function runSuiteItems(
+    suite: string,
+    items: HomologationProgress["items"],
+  ) {
+    const queue = items.filter((i) => i.testId && i.hasAutomation);
+    const label = SUITE_LABELS[suite] ?? suite;
+    if (queue.length === 0) {
+      toast.info(`Nenhum flow Maestro na suite ${label}.`);
+      return;
+    }
+    await runQueue(queue, {
+      title: `Rodar suite ${label}`,
+      description: `${queue.length} teste(s) em sequência.\nSe um falhar, continua nos próximos.`,
+      batchTitle: `Suite ${label}`,
+    });
+  }
+
+  async function runAllAutomated() {
+    if (!progress || !homologation) return;
+    const queue = progress.items.filter((i) => i.testId && i.hasAutomation);
+    if (queue.length === 0) {
+      toast.info("Nenhum teste com Maestro vinculado nesta campanha.");
+      return;
+    }
+
+    const draftCount = queue.filter((i) => i.readiness !== "ready").length;
+    const description =
+      draftCount > 0
+        ? `${queue.length} teste(s) em sequência.\n${draftCount} ainda estão "em construção" e podem falhar.\nSe um falhar, a campanha continua nos próximos.`
+        : `${queue.length} teste(s) Maestro em sequência.\nSe um falhar, continua nos próximos.\nDeixe o emulador ligado — pode demorar vários minutos.`;
+
+    await runQueue(queue, {
+      title: "Rodar homologação inteira",
+      description,
+      batchTitle: "Campanha",
+    });
+  }
+
+  const moduleGroups = useMemo(() => {
+    const enriched = (progress?.items ?? []).map((item) => {
+      const fromCatalog = catalogTests.find((t) => t.testKey === item.testKey);
+      const tags = [
+        ...(item.suite ? [`suite:${item.suite}`] : []),
+        ...(fromCatalog?.module ? [`module:${fromCatalog.module}`] : []),
+        ...(fromCatalog?.tags ?? []).filter((t) => t.startsWith("module:")),
+      ];
+      return {
+        ...item,
+        module: fromCatalog?.module,
+        tags: tags.length ? tags : undefined,
+        title: item.title,
+        testKey: item.testKey,
+      };
+    });
+    return groupByModuleThenSuite(enriched);
+  }, [progress?.items, catalogTests]);
+
+  useEffect(() => {
+    if (collapsed !== null || moduleGroups.length === 0) return;
+    try {
+      const raw = sessionStorage.getItem(`qa-group-collapsed-hom-v2:${homSlug}`);
+      if (raw === null) {
+        const next = new Set<string>();
+        for (const mod of moduleGroups) {
+          if (summarizeSuiteProgress(mod.items).tone === "ok") {
+            next.add(`m:${mod.module}`);
+          }
+          for (const suite of mod.suites) {
+            if (summarizeSuiteProgress(suite.items).tone === "ok") {
+              next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+            }
+          }
+        }
+        persistCollapsed(next);
+      } else {
+        const arr = JSON.parse(raw) as string[];
+        persistCollapsed(new Set(Array.isArray(arr) ? arr : []));
+      }
+    } catch {
+      persistCollapsed(new Set());
+    }
+  }, [collapsed, moduleGroups, homSlug]);
 
   if (loading && !homologation) {
     return <p className="text-muted-foreground">Carregando homologação…</p>;
@@ -470,10 +587,43 @@ export function HomologationPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        <div className="border-b bg-muted/40 px-4 py-3">
-          <p className="text-sm font-medium">Escopo ({progress.total} teste(s))</p>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">Escopo ({progress.total} teste(s))</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Módulo → suite · chave <code className="text-[11px]">módulo/ct-id</code>
+            </p>
+          </div>
+          <SuiteListControls
+            onExpandAll={() => persistCollapsed(new Set())}
+            onCollapseAll={() => {
+              const next = new Set<string>();
+              for (const mod of moduleGroups) {
+                next.add(`m:${mod.module}`);
+                for (const suite of mod.suites) {
+                  next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+                }
+              }
+              persistCollapsed(next);
+            }}
+            onCollapseGreens={() => {
+              const next = new Set<string>();
+              for (const mod of moduleGroups) {
+                if (summarizeSuiteProgress(mod.items).tone === "ok") {
+                  next.add(`m:${mod.module}`);
+                }
+                for (const suite of mod.suites) {
+                  if (summarizeSuiteProgress(suite.items).tone === "ok") {
+                    next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+                  }
+                }
+              }
+              persistCollapsed(next);
+            }}
+          />
         </div>
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
@@ -484,81 +634,133 @@ export function HomologationPage({
             </tr>
           </thead>
           <tbody>
-            {progress.items.map((item) => (
-              <tr key={item.testKey} className="border-b last:border-0">
-                <td className="px-4 py-3">
-                  <p className="font-medium">{item.title}</p>
-                  <p className="font-mono text-xs text-muted-foreground">{item.testKey}</p>
-                  {item.hasAutomation && (
-                    <div className="mt-1">
-                      <AutomationReadinessBadge
-                        record={{
-                          automation: {
-                            type: "maestro",
-                            flowPath: item.testKey,
-                            readiness: item.readiness,
-                          },
-                        }}
-                      />
-                    </div>
-                  )}
-                  {!item.found && (
-                    <p className="mt-1 text-xs text-amber-400">Não cadastrado — sincronize o checklist</p>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={cn(
-                      "rounded-full border px-2 py-0.5 text-xs",
-                      statusTone(item.status),
-                    )}
-                  >
-                    {HOMOLOGATION_LABELS[item.status]}
-                  </span>
-                </td>
-                <td className="px-4 py-3 tabular-nums text-center">
-                  {item.runsInHomologation || "—"}
-                </td>
-                <td className="px-4 py-3">
-                  {item.testId && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        title="Abrir teste"
-                        onClick={() =>
-                          navigate(
-                            projectDetailPath(project, item.testId!, homologation.channel),
-                          )
-                        }
-                        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      >
-                        <ExternalLink className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        title={
-                          item.readiness === "ready"
-                            ? "Executar Maestro"
-                            : "Executar Maestro (flow ainda em construção)"
-                        }
-                        disabled={
-                          runningAll ||
-                          liveRunning ||
-                          runningId === item.testId ||
-                          !item.hasAutomation
-                        }
-                        onClick={() => void runTest(item.testId!, item.title)}
-                        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
-                      >
-                        <Play className="size-4" />
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {moduleGroups.map((mod) => {
+              const collapsedSet = collapsed ?? new Set<string>();
+              const modKey = `m:${mod.module}`;
+              const modExpanded = !collapsedSet.has(modKey);
+              const modStats = summarizeSuiteProgress(mod.items);
+              const modLabel = MODULE_LABELS[mod.module] ?? mod.module;
+              return (
+                <Fragment key={modKey}>
+                  <ModuleHeaderRow
+                    variant="homologation"
+                    module={mod.module}
+                    suiteCount={mod.suites.length}
+                    stats={modStats}
+                    expanded={modExpanded}
+                    onToggle={() => toggleCollapsedKey(modKey)}
+                    onRunModule={() => void runSuiteItems(modLabel, mod.items)}
+                    runDisabled={runningAll || liveRunning || Boolean(runningId)}
+                    running={runningAll}
+                  />
+                  {modExpanded &&
+                    mod.suites.map((group) => {
+                      const sk = `s:${suiteCollapseKey(mod.module, group.suite)}`;
+                      const stats = summarizeSuiteProgress(group.items);
+                      const expanded = !collapsedSet.has(sk);
+                      return (
+                <Fragment key={sk}>
+                  <SuiteHeaderRow
+                    variant="homologation"
+                    suite={group.suite}
+                    stats={stats}
+                    expanded={expanded}
+                    onToggle={() => toggleCollapsedKey(sk)}
+                    onRunSuite={() => void runSuiteItems(group.suite, group.items)}
+                    runDisabled={runningAll || liveRunning || Boolean(runningId)}
+                    running={runningAll}
+                  />
+                  {expanded &&
+                    group.items.map((item) => (
+                      <tr key={item.testKey} className="border-b last:border-0">
+                        <td className="px-4 py-3 pl-8">
+                          <p className="font-medium">{item.title}</p>
+                          <p className="font-mono text-xs text-muted-foreground">
+                            {item.testKey}
+                          </p>
+                          {item.hasAutomation && (
+                            <div className="mt-1">
+                              <AutomationReadinessBadge
+                                record={{
+                                  automation: {
+                                    type: "maestro",
+                                    flowPath: item.testKey,
+                                    readiness: item.readiness,
+                                  },
+                                }}
+                              />
+                            </div>
+                          )}
+                          {!item.found && (
+                            <p className="mt-1 text-xs text-amber-400">
+                              Não cadastrado — sincronize o checklist
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              "rounded-full border px-2 py-0.5 text-xs",
+                              statusTone(item.status),
+                            )}
+                          >
+                            {HOMOLOGATION_LABELS[item.status]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 tabular-nums text-center">
+                          {item.runsInHomologation || "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {item.testId && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                title="Abrir teste"
+                                onClick={() =>
+                                  navigate(
+                                    projectDetailPath(
+                                      project,
+                                      item.testId!,
+                                      homologation.channel,
+                                    ),
+                                  )
+                                }
+                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              >
+                                <ExternalLink className="size-4" />
+                              </button>
+                              <button
+                                type="button"
+                                title={
+                                  item.readiness === "ready"
+                                    ? "Executar Maestro"
+                                    : "Executar Maestro (flow ainda em construção)"
+                                }
+                                disabled={
+                                  runningAll ||
+                                  liveRunning ||
+                                  runningId === item.testId ||
+                                  !item.hasAutomation
+                                }
+                                onClick={() => void runTest(item.testId!, item.title)}
+                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
+                              >
+                                <Play className="size-4" />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </Fragment>
+                      );
+                    })}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
+      </div>
       </div>
 
       {homologation.status !== "concluida" && addableTests.length > 0 && (

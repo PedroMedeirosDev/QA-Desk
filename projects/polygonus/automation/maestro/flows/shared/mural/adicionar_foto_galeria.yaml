@@ -15,8 +15,8 @@ appId: br.com.polygonus.mobile.amostra
       visible: "Allow|ALLOW|Permitir|While using|Durante o uso"
     commands:
       - tapOn: "Allow|ALLOW|Permitir|While using the app|Durante o uso do app"
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - extendedWaitUntil:
     visible: "Images|Recent|Recentes|Fotos|Photos|Galeria|Select|Selecionar|Show roots|Foto_1|Documents"
     timeout: 12000

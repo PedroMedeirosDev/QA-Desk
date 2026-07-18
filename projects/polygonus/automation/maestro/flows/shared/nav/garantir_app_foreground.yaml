@@ -6,10 +6,6 @@
 appId: br.com.polygonus.mobile.amostra
 ---
 - launchApp
-- waitForAnimationToEnd
-
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - runFlow: dismiss_coachmarks_pular.yaml
+- waitForAnimationToEnd:
+    timeout: 500
+- runFlow: dismiss_coachmarks_pular.yaml

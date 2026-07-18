@@ -34,7 +34,8 @@ appId: br.com.polygonus.mobile.amostra
       visible: "Nova"
     commands:
       - pressKey: Back
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500
       - tapOn:
           point: "50%, 45%"
 

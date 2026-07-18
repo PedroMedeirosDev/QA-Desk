@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -84,10 +85,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const value = useMemo(
+    () => ({ toasts, push, dismiss }),
+    [toasts, push, dismiss],
+  );
+
   return (
-    <ToastContext.Provider value={{ toasts, push, dismiss }}>
-      {children}
-    </ToastContext.Provider>
+    <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
   );
 }
 
@@ -95,30 +99,37 @@ export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error("useToast must be used within ToastProvider");
 
-  return {
-    error: (message: string, opts?: { title?: string; duration?: number }) =>
-      ctx.push({
-        variant: "error",
-        message,
-        title: opts?.title ?? "Erro",
-        duration: opts?.duration,
-      }),
-    success: (message: string, opts?: { title?: string; duration?: number }) =>
-      ctx.push({
-        variant: "success",
-        message,
-        title: opts?.title ?? "Sucesso",
-        duration: opts?.duration,
-      }),
-    info: (message: string, opts?: { title?: string; duration?: number }) =>
-      ctx.push({
-        variant: "info",
-        message,
-        title: opts?.title,
-        duration: opts?.duration,
-      }),
-    dismiss: ctx.dismiss,
-  };
+  const { push, dismiss } = ctx;
+
+  // Estável enquanto push/dismiss forem estáveis — NÃO depender de `toasts`
+  // (senão useEffect([toast]) no Dashboard/Homologação re-fetcha e pisca).
+  return useMemo(
+    () => ({
+      error: (message: string, opts?: { title?: string; duration?: number }) =>
+        push({
+          variant: "error",
+          message,
+          title: opts?.title ?? "Erro",
+          duration: opts?.duration,
+        }),
+      success: (message: string, opts?: { title?: string; duration?: number }) =>
+        push({
+          variant: "success",
+          message,
+          title: opts?.title ?? "Sucesso",
+          duration: opts?.duration,
+        }),
+      info: (message: string, opts?: { title?: string; duration?: number }) =>
+        push({
+          variant: "info",
+          message,
+          title: opts?.title,
+          duration: opts?.duration,
+        }),
+      dismiss,
+    }),
+    [push, dismiss],
+  );
 }
 
 export function useToasts() {

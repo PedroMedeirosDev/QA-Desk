@@ -1,6 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Bug, ChevronLeft, ChevronRight, ClipboardList, ListChecks } from "lucide-react";
+import {
+  Bug,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  LayoutDashboard,
+  ListChecks,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   CHANNEL_LABELS,
@@ -10,7 +17,14 @@ import {
 } from "@/config/channels";
 import { getProject, PROJECTS } from "@/config/projects";
 import { ProjectLogo } from "@/components/ProjectLogo";
-import { projectBugsListPath, projectHomologationsListPath, projectListPath, isHomologationPath } from "@/lib/project-paths";
+import {
+  isDashboardPath,
+  isHomologationPath,
+  projectBugsListPath,
+  projectDashboardPath,
+  projectHomologationsListPath,
+  projectListPath,
+} from "@/lib/project-paths";
 import type { ProjectSlug } from "@/types/test-record";
 
 const STORAGE_KEY = "qa-sidebar-collapsed";
@@ -98,7 +112,7 @@ export function ProjectSidebar({
       >
         {!collapsed && (
           <div className="min-w-0">
-            <p className="sidebar-kicker text-muted-foreground">QA Automate</p>
+            <p className="sidebar-kicker text-muted-foreground">QA Desk</p>
             <p className="sidebar-heading mt-0.5 truncate">Projetos</p>
           </div>
         )}
@@ -132,7 +146,9 @@ export function ProjectSidebar({
           const showChannels = !collapsed && active && channels.length > 0;
           const themeSub = project.accent.subNav;
           const homPath = projectHomologationsListPath(project.slug);
+          const dashPath = projectDashboardPath(project.slug);
           const onHomologations = isHomologationPath(project.slug, location.pathname);
+          const onDashboard = isDashboardPath(project.slug, location.pathname);
 
           const projectLink = (
             <Link
@@ -187,6 +203,7 @@ export function ProjectSidebar({
                     const onTests =
                       activeChannel === ch.id &&
                       !onHomologations &&
+                      !onDashboard &&
                       !onBugs &&
                       !location.pathname.startsWith(bugsPath) &&
                       (location.pathname === testsPath ||
@@ -228,7 +245,18 @@ export function ProjectSidebar({
                       </div>
                     );
                   })}
-                  <div className={cn("border-t pt-2", sub.rail)}>
+                  <div className={cn("space-y-0.5 border-t pt-2", sub.rail)}>
+                    <Link
+                      to={dashPath}
+                      className={cn(
+                        "sidebar-subitem flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors",
+                        homologationsLinkClass(themeSub, onDashboard),
+                      )}
+                      aria-current={onDashboard ? "page" : undefined}
+                    >
+                      <LayoutDashboard className="size-3.5 shrink-0 opacity-90" />
+                      Dashboard
+                    </Link>
                     <Link
                       to={homPath}
                       className={cn(
@@ -245,23 +273,42 @@ export function ProjectSidebar({
               )}
 
               {collapsed && active && sub && (
-                <CollapsedTooltip label="Homologações">
-                  <Link
-                    to={homPath}
-                    className={cn(
-                      "flex justify-center rounded-lg border px-2 py-2 transition-colors",
-                      onHomologations
-                        ? cn(project.accent.subNav.homologationsActive)
-                        : cn(
-                            "border-transparent text-muted-foreground",
-                            project.accent.subNav.homologationsHover,
-                          ),
-                    )}
-                    aria-current={onHomologations ? "page" : undefined}
-                  >
-                    <ListChecks className="size-4" />
-                  </Link>
-                </CollapsedTooltip>
+                <>
+                  <CollapsedTooltip label="Dashboard">
+                    <Link
+                      to={dashPath}
+                      className={cn(
+                        "flex justify-center rounded-lg border px-2 py-2 transition-colors",
+                        onDashboard
+                          ? cn(project.accent.subNav.homologationsActive)
+                          : cn(
+                              "border-transparent text-muted-foreground",
+                              project.accent.subNav.homologationsHover,
+                            ),
+                      )}
+                      aria-current={onDashboard ? "page" : undefined}
+                    >
+                      <LayoutDashboard className="size-4" />
+                    </Link>
+                  </CollapsedTooltip>
+                  <CollapsedTooltip label="Homologações">
+                    <Link
+                      to={homPath}
+                      className={cn(
+                        "flex justify-center rounded-lg border px-2 py-2 transition-colors",
+                        onHomologations
+                          ? cn(project.accent.subNav.homologationsActive)
+                          : cn(
+                              "border-transparent text-muted-foreground",
+                              project.accent.subNav.homologationsHover,
+                            ),
+                      )}
+                      aria-current={onHomologations ? "page" : undefined}
+                    >
+                      <ListChecks className="size-4" />
+                    </Link>
+                  </CollapsedTooltip>
+                </>
               )}
             </div>
           );

@@ -5,11 +5,7 @@
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+- runFlow: ../nav/dismiss_coachmarks_pular.yaml
 
 # Home real — não confundir com tutorial "Mural em destaque" (também tem "MURAL")
 - runFlow:
@@ -30,10 +26,6 @@ appId: br.com.polygonus.mobile.amostra
       - extendedWaitUntil:
           visible: "${NOME_USUARIO}"
           timeout: 12000
-
-- assertNotVisible: "PULAR"
-
-- waitForAnimationToEnd
 
 - runFlow:
     when:

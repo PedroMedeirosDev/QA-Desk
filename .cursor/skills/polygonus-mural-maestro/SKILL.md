@@ -3,8 +3,9 @@ name: polygonus-mural-maestro
 description: >-
   Automação Maestro e homologação do Mural no app Polygonus (Android amostra).
   Use ao criar/editar flows YAML do Mural, depurar falhas de login/perfil/BoomMenu,
-  rodar CTs CT-MURAL-*, sincronizar checklist na qa-app, ou quando o usuário
-  mencionar Mural, comunicado, PHJESUS, ENTRAR, Maestro Studio ou emulador.
+  rodar CTs do Mural (CRUD-01, ANEXO-*, BOLETO-*, …), sincronizar checklist
+  na qa-app, ou quando o usuário mencionar Mural, comunicado, PHJESUS, ENTRAR,
+  Maestro Studio ou emulador.
 ---
 
 # Polygonus Mural — Maestro
@@ -25,6 +26,8 @@ Contrato canônico de auth: `projects/polygonus/automation/maestro/flows/docs/CO
 ## Contrato obrigatório (sessão estável)
 
 CT **termina** com `teardown_estavel_sessao.yaml` (home autenticada — **sem** logout). **Início:** `setup_coordenador_mural` → `resume_phjesus_coordenador` (reutiliza sessão, confirma `COORDENADOR` em Perfil).
+
+**1ª instalação / wipe do AVD:** slides “Acompanhe de perto…” → `dismiss_onboarding_primeira_instalacao.yaml` (seta / `auth_onboarding_avancar` → `FAZER LOGIN`). Sem isso o resume fica preso fora do login.
 
 ```yaml
 - runFlow: ../shared/mural/setup_coordenador_mural.yaml
@@ -74,9 +77,11 @@ Home **sem** card `MURAL` até o perfil correto (ex.: aluno / perfil errado). **
 ## Navegação Mural
 
 1. Tap `.*MURAL.*` (card pode ser `MURAL | 47`)
-2. Loop `PULAR` (até 6×) — coach marks
+2. `dismiss_coachmarks_pular.yaml` — `when: visible: PULAR` → tap + wait curto; sem PULAR pula na hora (não gastar wait em optional)
 3. Aba opcional: `Mural | Tab 1 of 2`
 4. Pronto quando `Recebidas` / lista / `Responder comunicado`
+
+Lote qa-app: sem stdout ~75s (`MAESTRO_IDLE_TIMEOUT_MS`) → aborta o CT com `cancelled:false` e segue o próximo.
 
 Filtros (dropdown **abaixo do nome** dentro do Mural): `TipoSentidoDropdown` — labels em `types.dart` (`Recebidas`, `Enviadas`, `Pendentes`, …). Subflow: `selecionar_filtro_sentido.yaml`. Detalhes: `flows/docs/SELECTORES_APP.md`.
 
@@ -91,7 +96,7 @@ Arquivo: `shared/mural/abrir_novo_comunicado.yaml`
 4. Assert `Novo comunicado`, `Para:`, `Turma`
 
 Evento: BoomMenu → `abrir_novo_evento` / `composer_novo_evento` (turmas + alvo Todos).  
-CT-08 sem Dia inteiro (`Evento Padrão`); CT-13 com toggle Dia inteiro (`Evento Dia Inteiro`).
+EVENTO-01 sem Dia inteiro (`Evento Padrao`); EVENTO-02 com toggle Dia inteiro (`Evento Dia Inteiro`).
 
 ## Composer (strings estáveis)
 
@@ -115,7 +120,9 @@ setup_coordenador_mural → publicar_comunicado_texto (TEXTO)
 
 **Anexos / enquete:** `composer_novo_comunicado` + `adicionar_*` / clipe + `enviar_comunicado`.  
 Clipe: **Arquivo** (PDF/vídeo) · **Boleto** · **Correspondência** (Declaração de IR → Ok). Foto = galeria (esquerda).  
-Boleto: funil (app bar) → **Inadimplentes** → Período (**Mes corrente** CT-11 ou competência **01** CT-14) + clipe → Boleto.
+Boleto: funil (app bar) → **Inadimplentes** → Período (**Mes corrente** BOLETO-01 ou competência **01** BOLETO-02) + clipe → Boleto.  
+Filtros especiais (só envio, conferência manual): `FILTRO-01…07` → `selecionar_filtro_extras.yaml` (Adimplentes, faltas, média, bolsistas, Pagantes).  
+Antes de cada CT (CLI/UI): timezone BR + `adb push` fixtures PDF/vídeo + dismiss DocumentsUI.
 
 **Editar / excluir:** dropdown → **Enviadas** → menu `Show menu` (⋮) → `editar_comunicado_lista` / `excluir_comunicado_lista`.
 
@@ -148,6 +155,12 @@ Cabeçalho do YAML: `STATUS: draft` até passar **2×** no emulador; só então 
 - Batch na qa-app: campanha continua se um CT falhar; ver histórico “Onde falhou”
 - **Artefatos:** Maestro grava PNG a cada run (não só em erro). Após PASS, `scripts/cleanup-test-artifacts.mjs` apaga a pasta do run e cópias de anexos no emulador (`Foto_1 (1).jpeg`, etc.). Em FAIL, prints ficam em `.maestro-output/`.
 
+### Esperas (performance)
+
+- Preferir **confirmação visual**: `extendedWaitUntil` / `assertVisible` (Enviadas, ENTRAR, ID, nome…).
+- `waitForAnimationToEnd` **sempre** com `timeout: 500` (sem timeout o default segura a tela ~10s+).
+- Pós-envio: lista Enviadas → adb ID → logout → ETMENEZES → Mural → mesmo ID (`verificar_responsavel_ve`).
+
 ## qa-app
 
 - Checklist Mural: `MURAL_HOMOLOGATION_ITEMS` em `qa-app/server/automation.ts`
@@ -160,4 +173,4 @@ Cabeçalho do YAML: `STATUS: draft` até passar **2×** no emulador; só então 
 2. Respeitar porto seguro ENTRAR
 3. Documentar no YAML o que ainda é STUDIO (coordenada / overflow / picker)
 4. Atualizar checklist em `automation.ts` se for CT de homologação
-5. Ler [reference.md](reference.md) para catálogo CT-MURAL-01…10 e anti-padrões
+5. Ler [reference.md](reference.md) para catálogo por suite (CRUD/ANEXO/…) e anti-padrões

@@ -760,8 +760,9 @@ function RunProgressPanel() {
 
   const outputIdleMs =
     state.lastLineAt != null ? now - state.lastLineAt : state.idleMs ?? 0;
-  const outputStale = running && outputIdleMs >= 45_000;
-  const outputVeryStale = running && outputIdleMs >= 120_000;
+  /** Aviso cedo; abort automático no servidor ~60s (MAESTRO_IDLE_TIMEOUT_MS). */
+  const outputStale = running && outputIdleMs >= 15_000;
+  const outputVeryStale = running && outputIdleMs >= 40_000;
 
   const statusIcon = state.stopping ? (
     <Loader2 className="size-4 animate-spin text-amber-400" />
@@ -859,7 +860,9 @@ function RunProgressPanel() {
                 )}
               >
                 Sem saída há {formatElapsed(outputIdleMs)}
-                {outputVeryStale ? " — use Parar teste ou Esc" : ""}
+                {outputVeryStale
+                  ? " — abort automático em breve; lote segue no próximo"
+                  : ""}
               </p>
             )}
             {state.error && (

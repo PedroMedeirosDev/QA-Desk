@@ -1,0 +1,28 @@
+# Retomada CT-12: dialog "Selecionar correspondencia" ja aberto.
+# Seleciona Aviso de Debito → Ok → enviar → Enviadas.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Selecionar correspondência|Selecionar correspondencia|Aviso de Débito|Aviso de Debito|OK|Ok"
+    timeout: 8000
+
+- tapOn: "Aviso de Débito|Aviso de Debito|.*Aviso de D.*"
+- waitForAnimationToEnd
+
+- tapOn: "Ok|OK"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Para:|Escreva seu texto aqui"
+    timeout: 10000
+
+- runFlow: ../shared/mural/enviar_comunicado.yaml
+
+- swipe:
+    start: "50%, 28%"
+    end: "50%, 72%"
+    duration: 400
+- waitForAnimationToEnd
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

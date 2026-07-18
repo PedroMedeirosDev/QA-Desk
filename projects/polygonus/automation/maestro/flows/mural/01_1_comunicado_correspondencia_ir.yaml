@@ -1,6 +1,7 @@
-# CT-MURAL-12: Comunicado com Correspondência — Declaração de IR
+# CT-MURAL-12: Comunicado com Correspondência (amostra: Aviso de Débito)
 #
-# Clipe → Correspondência → Declaração de IR → Ok.
+# Clipe → Correspondência → item da lista → Ok.
+# Na amostra nao ha "Declaracao de IR" — usa Aviso de Debito n 02.
 # Fase 1: envia → Enviadas. Fase 2 (qa-app): adb ID → assert + ETMENEZES.
 
 appId: br.com.polygonus.mobile.amostra
@@ -10,7 +11,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/composer_novo_comunicado.yaml
     env:
-      TEXTO_COMUNICADO: "Teste Comunicado declaracao IR"
+      TEXTO_COMUNICADO: "Teste Comunicado correspondencia"
 
 - runFlow: ../shared/mural/anexar_correspondencia_declaracao_ir.yaml
 - runFlow: ../shared/mural/enviar_comunicado.yaml

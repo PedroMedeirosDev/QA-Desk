@@ -1,21 +1,44 @@
-# Só age se o diálogo/progresso de compressão de vídeo estiver na tela.
-# Não falha em comunicado texto/evento sem vídeo.
+# Aguarda compressão de vídeo só se o progresso (ou o toast) estiver na tela.
+# Pronto quando aparecer: "Video comprimido com sucesso!"
+# Poll em fatias de 5s — cada COMPLETED renova o idle da qa-app.
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow:
     when:
-      visible: "Compressão em andamento|aguardar o término da compressão|compressão dos vídeos"
+      visible: "Compressão em andamento|aguardar o término da compressão|compressão dos vídeos|Video comprimido com sucesso!|Vídeo comprimido com sucesso!"
     commands:
-      - tapOn: "Fechar"
-      - waitForAnimationToEnd
-      # Thumbnail mostra progresso (content-desc "100" quando pronto)
-      - extendedWaitUntil:
-          visible: "100|Novo comunicado|Editar comunicado|Novo evento|Para:"
-          timeout: 120000
+      - evalScript: "${output.videoComprimidoOk = false}"
+
       - runFlow:
           when:
-            visible: "Compressão em andamento|aguardar o término da compressão"
+            visible: "Video comprimido com sucesso!|Vídeo comprimido com sucesso!|.*comprimido com sucesso.*"
           commands:
-            - tapOn: "Fechar"
-            - waitForAnimationToEnd
+            - evalScript: "${output.videoComprimidoOk = true}"
+
+      - repeat:
+          times: 36
+          commands:
+            - runFlow:
+                when:
+                  visible: "Video comprimido com sucesso!|Vídeo comprimido com sucesso!|.*comprimido com sucesso.*"
+                commands:
+                  - evalScript: "${output.videoComprimidoOk = true}"
+            - runFlow:
+                when:
+                  true: ${!output.videoComprimidoOk}
+                commands:
+                  - waitForAnimationToEnd:
+                      timeout: 5000
+
+      - extendedWaitUntil:
+          visible: "Video comprimido com sucesso!|Vídeo comprimido com sucesso!|.*comprimido com sucesso.*"
+          timeout: 15000
+
+      - waitForAnimationToEnd:
+          timeout: 500
+      - tapOn:
+          text: "Ok|OK|Fechar"
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 400

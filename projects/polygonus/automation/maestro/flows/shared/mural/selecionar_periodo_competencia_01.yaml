@@ -22,19 +22,19 @@ appId: br.com.polygonus.mobile.amostra
           optional: true
       - tapOn:
           point: "35%, 42%"
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - extendedWaitUntil:
     visible: "01|.*01.*|01/"
     timeout: 8000
 
 # Competência que contém "01" no texto
 - tapOn: ".*01.*|01/|01 "
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - tapOn: "Ok|OK"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - extendedWaitUntil:
     visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
     timeout: 10000

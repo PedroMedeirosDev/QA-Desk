@@ -1,5 +1,10 @@
 # Troca para ETMENEZES e confirma comunicado no Mural pelo ID (obrigatório).
 #
+# Contrato (pós-envio qa-app):
+#   1) PHJESUS já está em Enviadas → adb captura ID (fora deste YAML)
+#   2) ensure_logged_out (home → Sair) — sem waits cegos longos
+#   3) login ETMENEZES → Mural → assert mesmo ID
+#
 # Env: ID_COMUNICADO — "ID 9082697" ou dígitos / ${output.idComunicado}
 
 appId: br.com.polygonus.mobile.amostra

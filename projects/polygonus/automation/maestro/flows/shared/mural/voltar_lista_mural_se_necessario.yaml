@@ -11,12 +11,13 @@ appId: br.com.polygonus.mobile.amostra
       notVisible: "Show menu"
     commands:
       - tapOn: "Back"
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - runFlow:
     when:
       visible: "Responder comunicado"
       notVisible: "Show menu"
     commands:
       - tapOn: "Back"
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500

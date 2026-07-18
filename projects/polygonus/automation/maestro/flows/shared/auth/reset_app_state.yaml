@@ -18,31 +18,7 @@ appId: br.com.polygonus.mobile.amostra
     visible: ".*Acompanhe de perto tudo.*|Colégio Polygonus|FAZER LOGIN|ENTRAR"
     timeout: 30000
 
-- runFlow:
-    when:
-      visible: ".*Acompanhe de perto tudo.*|Colégio Polygonus"
-    commands:
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-      - tapOn:
-          point: "90%, 93%"
-      - waitForAnimationToEnd
-
-- runFlow:
-    when:
-      visible: "FAZER LOGIN"
-    commands:
-      - tapOn: "FAZER LOGIN"
+- runFlow: dismiss_onboarding_primeira_instalacao.yaml
 
 - extendedWaitUntil:
     visible: "ENTRAR"

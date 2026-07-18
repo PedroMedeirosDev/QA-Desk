@@ -16,22 +16,22 @@ appId: br.com.polygonus.mobile.amostra
 # Foco no corpo do comunicado
 - tapOn:
     below: "Para:"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - runFlow:
     when:
       visible: ${TEXTO_ANTIGO}
     commands:
       - tapOn: ${TEXTO_ANTIGO}
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - runFlow:
     when:
       visible: "Escreva seu texto aqui"
     commands:
       - tapOn: "Escreva seu texto aqui"
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 # --- Novo comunicado: limpa rascunho residual ---
 - runFlow:
     when:
@@ -50,26 +50,27 @@ appId: br.com.polygonus.mobile.amostra
             visible: ${TEXTO_ANTIGO}
           commands:
             - longPressOn: ${TEXTO_ANTIGO}
-            - waitForAnimationToEnd
-
+            - waitForAnimationToEnd:
+                timeout: 500
       - runFlow:
           when:
             notVisible: "Selecionar tudo|Select all|Select All|Recortar|Cut|Copiar|Copy"
           commands:
             - longPressOn:
                 below: "Para:"
-            - waitForAnimationToEnd
-
+            - waitForAnimationToEnd:
+                timeout: 500
       # Select all confirmado → 1 erase limpa a seleção inteira
       - runFlow:
           when:
             visible: "Selecionar tudo|Select all|Select All"
           commands:
             - tapOn: "Selecionar tudo|Select all|Select All"
-            - waitForAnimationToEnd
+            - waitForAnimationToEnd:
+                timeout: 500
             - eraseText: 1
-            - waitForAnimationToEnd
-
+            - waitForAnimationToEnd:
+                timeout: 500
       # Sem menu de seleção: NÃO usar eraseText:1 — apaga só 1 char e corrompe o texto.
       # Várias passadas de backspace com o campo focado.
       - runFlow:
@@ -78,22 +79,24 @@ appId: br.com.polygonus.mobile.amostra
           commands:
             - tapOn:
                 below: "Para:"
-            - waitForAnimationToEnd
+            - waitForAnimationToEnd:
+                timeout: 500
             - eraseText: 200
             - eraseText: 200
-            - waitForAnimationToEnd
-
+            - waitForAnimationToEnd:
+                timeout: 500
       # Fecha toolbar nativa se ainda aberta
       - runFlow:
           when:
             visible: "Recortar|Cut|Copiar|Copy|Colar|Paste|Selecionar tudo|Select all"
           commands:
             - pressKey: Back
-            - waitForAnimationToEnd
+            - waitForAnimationToEnd:
+                timeout: 500
             - tapOn:
                 below: "Para:"
-            - waitForAnimationToEnd
-
+            - waitForAnimationToEnd:
+                timeout: 500
 - runFlow:
     file: ../helpers/colar_texto.yaml
     env:

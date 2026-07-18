@@ -1,0 +1,10 @@
+# FILTRO-02: Envio com filtro Alunos com muitas faltas (conferência manual).
+# STATUS: draft
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: ".*muitas faltas.*|Alunos com muitas faltas|Muitas faltas"
+      TEXTO_COMUNICADO: "Teste filtro Alunos com muitas faltas"

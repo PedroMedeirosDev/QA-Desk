@@ -8,8 +8,8 @@ appId: br.com.polygonus.mobile.amostra
     id: "${SEM_ID}"
     optional: true
 
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - runFlow:
     when:
       notVisible: "${AFTER_VISIBLE}"

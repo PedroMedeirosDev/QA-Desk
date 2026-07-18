@@ -8,4 +8,5 @@ appId: br.com.polygonus.mobile.amostra
       visible: "Estou Ciente|Sim/N.o|Sim/No"
     commands:
       - pressKey: Back
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500

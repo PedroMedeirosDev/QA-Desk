@@ -1,0 +1,9 @@
+appId: br.com.polygonus.mobile.amostra
+---
+- launchApp
+- waitForAnimationToEnd
+- runFlow: ../shared/auth/dismiss_onboarding_primeira_instalacao.yaml
+- extendedWaitUntil:
+    visible: "ENTRAR|FAZER LOGIN|E-mail ou Login"
+    timeout: 20000
+- assertVisible: "ENTRAR|E-mail ou Login|FAZER LOGIN"

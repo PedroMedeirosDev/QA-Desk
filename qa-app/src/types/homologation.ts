@@ -33,6 +33,8 @@ export interface HomologationProgress {
     testKey: string;
     testId?: string;
     title: string;
+    /** Bloco/suite (ex.: CRUD, Anexos) — para agrupar na UI */
+    suite?: string;
     status: HomologationStatus;
     runsInHomologation: number;
     lastRunAt?: string;

@@ -5,8 +5,8 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow: abrir_filtro_extras_composer.yaml
 
 - tapOn: "Inadimplentes|Inadimplente"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - extendedWaitUntil:
     visible: "Período|Periodo|Mes corrente|Mês corrente|mês corrente|Ok|OK"
     timeout: 8000

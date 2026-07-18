@@ -12,8 +12,8 @@ appId: br.com.polygonus.mobile.amostra
       notVisible: "Novo comunicado|Editar comunicado|Para:"
     commands:
       - tapOn: "Back"
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - runFlow:
     file: abrir_tela_perfil.yaml
     env:

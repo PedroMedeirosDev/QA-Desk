@@ -16,8 +16,8 @@ appId: br.com.polygonus.mobile.amostra
       notVisible: "ENTRAR|FAZER LOGIN|${NOME_PHJESUS}|Pedro Jesus|Pedro|Show menu|Responder comunicado|.*MURAL.*|Versão:.*"
     commands:
       - launchApp
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 # --- Já no Mural ---
 - runFlow:
     when:

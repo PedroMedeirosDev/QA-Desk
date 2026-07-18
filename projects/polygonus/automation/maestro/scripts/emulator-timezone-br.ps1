@@ -30,7 +30,7 @@ try {
   Invoke-Adb @("shell", "setprop", "persist.sys.timezone", $Timezone)
 } catch {
   $setpropOk = $false
-  Write-Warning "setprop persist.sys.timezone falhou (normal em emulador user) — usando settings global."
+  Write-Warning "setprop persist.sys.timezone falhou (normal em emulador user) - usando settings global."
 }
 
 Invoke-Adb @("shell", "service", "call", "alarm", "3", "s16", $Timezone) 2>$null

@@ -1,44 +1,74 @@
 /**
  * Roda um ou mais CTs Mural via runMaestroFlow (sem HTTP).
- * Uso: npx tsx server/scripts/run-ct-mural.ts 04 05
+ *
+ * Aceita:
+ *   - IDs de domínio: CRUD-01, ANEXO-02, BOLETO-01, E2E-99…
+ *   - números legados: 01, 04, 11, 99…
+ *
+ * Uso:
+ *   npx tsx server/scripts/run-ct-mural.ts ANEXO-02 BOLETO-01
+ *   npx tsx server/scripts/run-ct-mural.ts 06 11
  */
 import { loadEnv } from "../load-env.js";
-import { needsMuralIdPipeline, runMaestroFlow, runMaestroFlowWithMuralCardId } from "../automation.js";
+import {
+  MURAL_HOMOLOGATION_ITEMS,
+  needsMuralIdPipeline,
+  runMaestroFlow,
+  runMaestroFlowWithMuralCardId,
+} from "../automation.js";
+import {
+  dismissAndroidSystemOverlays,
+  ensureEmulatorTimezoneBr,
+  ensureMaestroFixturesOnDevice,
+  ensureAndroidDeviceReady,
+} from "../android-device.js";
 
 loadEnv();
 
-const FLOWS: Record<string, string> = {
-  "01": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enviar.yaml",
-  "02": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_editar.yaml",
-  "03": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_excluir.yaml",
-  "04": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_enquete.yaml",
-  "05": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_foto_galeria.yaml",
-  "06": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_pdf.yaml",
-  "07": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_video_pequeno.yaml",
-  "08": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_evento.yaml",
-  "09": "projects/polygonus/automation/maestro/flows/mural/01_1_filtro_enviadas.yaml",
-  "11": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_boleto.yaml",
-  "12": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_correspondencia_ir.yaml",
-  "13": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_evento_dia_inteiro.yaml",
-  "14": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_boleto_competencia.yaml",
-  "99": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_completo_e2e.yaml",
-};
+async function prepDeviceForCt(label: string) {
+  const log = (m: string) => console.log(`[qa-app] ${m}`);
+  await ensureAndroidDeviceReady({ onProgress: log });
+  await ensureEmulatorTimezoneBr({ onProgress: log });
+  await ensureMaestroFixturesOnDevice({ onProgress: log });
+  await dismissAndroidSystemOverlays({ onProgress: log });
+  log(`Prep OK antes de ${label}`);
+}
 
-const ids = process.argv.slice(2).map((s) => s.replace(/^ct-?0?/i, "").padStart(2, "0"));
-if (!ids.length) {
-  console.error("Uso: npx tsx server/scripts/run-ct-mural.ts 04 05");
+function resolveFlow(raw: string): { key: string; flow: string } | null {
+  const token = raw.trim().replace(/^ct-?/i, "");
+  const upper = token.toUpperCase();
+
+  const byCtId = MURAL_HOMOLOGATION_ITEMS.find((i) => i.ctId === upper);
+  if (byCtId) return { key: byCtId.ctId, flow: byCtId.flowPath };
+
+  const legacy = token.replace(/^0+/, "").padStart(2, "0");
+  const byLegacy = MURAL_HOMOLOGATION_ITEMS.find((i) => i.legacyNum === legacy);
+  if (byLegacy) return { key: byLegacy.ctId, flow: byLegacy.flowPath };
+
+  return null;
+}
+
+const args = process.argv.slice(2);
+if (!args.length) {
+  console.error("Uso: npx tsx server/scripts/run-ct-mural.ts ANEXO-02 11 CRUD-01");
+  console.error("\nCTs disponíveis:");
+  for (const item of MURAL_HOMOLOGATION_ITEMS) {
+    console.error(`  ${item.ctId.padEnd(12)} (legado ${item.legacyNum})  ${item.title}`);
+  }
   process.exit(2);
 }
 
 let failed = 0;
-for (const id of ids) {
-  const flow = FLOWS[id];
-  if (!flow) {
-    console.error(`CT desconhecido: ${id}`);
+for (const raw of args) {
+  const resolved = resolveFlow(raw);
+  if (!resolved) {
+    console.error(`CT desconhecido: ${raw}`);
     failed++;
     continue;
   }
-  console.log(`\n========== CT-${id} → ${flow} ==========\n`);
+  const { key, flow } = resolved;
+  console.log(`\n========== ${key} → ${flow} ==========\n`);
+  await prepDeviceForCt(key);
   const run = needsMuralIdPipeline(flow)
     ? runMaestroFlowWithMuralCardId
     : runMaestroFlow;
@@ -46,7 +76,7 @@ for (const id of ids) {
     onOutput: (chunk) => process.stdout.write(chunk),
   });
   console.log(
-    `\n--- CT-${id}: ${result.ok ? "OK" : "FALHOU"} (exit ${result.exitCode})${result.cancelled ? " · cancelado" : ""} ---\n`,
+    `\n--- ${key}: ${result.ok ? "OK" : "FALHOU"} (exit ${result.exitCode})${result.cancelled ? " · cancelado" : ""} ---\n`,
   );
   if (!result.ok) {
     failed++;

@@ -11,8 +11,8 @@ appId: br.com.polygonus.mobile.amostra
 - tapOn:
     text: "Images|Imagens|Fotos|Photos"
     optional: true
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 # Preferência: fixture do addMedia (nome pode ganhar " (1)")
 - tapOn:
     text: "Foto_1.*|Foto_1"
@@ -38,11 +38,12 @@ appId: br.com.polygonus.mobile.amostra
           index: 0
           optional: true
 
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 # Confirmar seleção (alguns builds pedem barra superior)
 - tapOn:
     text: "Select|Selecionar|Open|Abrir|Done|Concluir|OK"
     optional: true
 
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500

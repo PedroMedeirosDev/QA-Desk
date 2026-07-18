@@ -1,5 +1,5 @@
 import type { ChildProcess } from "node:child_process";
-import { execFileSync, execSync } from "node:child_process";
+import { execFile, execFileSync, exec } from "node:child_process";
 import { persistCancelledRunSession } from "./maestro-run-session.js";
 
 export type MaestroRunMeta = {
@@ -28,52 +28,60 @@ export function clearMaestroRunCancelled(runId: string): void {
   cancelledRunIds.delete(runId);
 }
 
-/** Mata processos Maestro/Java órfãos no Windows (CLI costuma sobreviver ao cmd). */
+function runDetached(command: string, args: string[]): void {
+  try {
+    execFile(command, args, { windowsHide: true, timeout: 15_000 }, () => {
+      /* ignore */
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Mata processos Maestro/Java órfãos no Windows (CLI costuma sobreviver ao cmd). Não bloqueia o event loop. */
 export function forceKillMaestroProcesses(): void {
   if (process.platform !== "win32") return;
 
   try {
-    execSync(
+    exec(
       'powershell -NoProfile -ExecutionPolicy Bypass -Command "' +
         "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and ($_.CommandLine -match 'maestro' -or $_.CommandLine -match 'Maestro') } | " +
         'ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"',
-      { windowsHide: true, timeout: 12_000 },
+      { windowsHide: true, timeout: 15_000 },
+      () => {
+        /* ignore */
+      },
     );
   } catch {
     /* ignore */
   }
 
-  try {
-    execFileSync("taskkill", ["/F", "/IM", "maestro.exe", "/T"], {
-      windowsHide: true,
-      timeout: 8000,
-    });
-  } catch {
-    /* processo já encerrado */
-  }
+  runDetached("taskkill", ["/F", "/IM", "maestro.exe", "/T"]);
 }
 
-function killProcessTree(child: ChildProcess) {
+/** Encerra o processo Maestro e a árvore. Async — não usar execSync (trava o lote no Windows). */
+export function killProcessTree(child: ChildProcess): void {
   const pid = child.pid;
-  child.stdout?.destroy();
-  child.stderr?.destroy();
+  try {
+    child.stdout?.destroy();
+  } catch {
+    /* ignore */
+  }
+  try {
+    child.stderr?.destroy();
+  } catch {
+    /* ignore */
+  }
 
-  if (!pid) {
-    try {
-      child.kill("SIGKILL");
-    } catch {
-      /* ignore */
-    }
+  if (process.platform === "win32" && pid) {
+    runDetached("taskkill", ["/PID", String(pid), "/T", "/F"]);
     forceKillMaestroProcesses();
     return;
   }
 
-  if (process.platform === "win32") {
+  if (!pid) {
     try {
-      execFileSync("taskkill", ["/PID", String(pid), "/T", "/F"], {
-        windowsHide: true,
-        timeout: 8000,
-      });
+      child.kill("SIGKILL");
     } catch {
       /* ignore */
     }
@@ -90,6 +98,19 @@ function killProcessTree(child: ChildProcess) {
         /* ignore */
       }
     }, 2000);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Kill síncrono só para shutdown do processo Node (evitar órfãos). */
+export function forceKillMaestroProcessesSync(): void {
+  if (process.platform !== "win32") return;
+  try {
+    execFileSync("taskkill", ["/F", "/IM", "maestro.exe", "/T"], {
+      windowsHide: true,
+      timeout: 8000,
+    });
   } catch {
     /* ignore */
   }
@@ -138,7 +159,8 @@ export function cancelMaestroRun(runId?: string): boolean {
   }
 
   activeRun.cancelRequested = true;
-  killProcessTree(activeRun.child);
+  const child = activeRun.child;
+  killProcessTree(child);
   void persistCancelledRunSession(
     runId && activeRun.runId !== runId ? runId : activeRun.runId,
     "\n[qa-app] Execução cancelada pelo usuário.\n",

@@ -8,6 +8,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useConfirm } from "@/lib/confirm";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import {
@@ -71,6 +72,7 @@ function ProgressCell({ hom }: { hom: HomologationWithProgress }) {
 export function HomologationsListPage({ project }: { project: ProjectSlug }) {
   const navigate = useNavigate();
   const toast = useToast();
+  const confirm = useConfirm();
   const channels = getProjectChannels(project);
   const [homologations, setHomologations] = useState<HomologationWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,10 +137,16 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
   async function setStatus(slug: string, status: HomologationCycleStatus, hom: HomologationWithProgress) {
     if (status === "concluida") {
       const allPassed = hom.progress.total > 0 && hom.progress.passed === hom.progress.total;
-      const confirmMsg = allPassed
-        ? `Marcar "${hom.title}" como concluída?`
-        : `Marcar "${hom.title}" como concluída mesmo com ${hom.progress.passed}/${hom.progress.total} passando?`;
-      if (!window.confirm(confirmMsg)) return;
+      const ok = await confirm({
+        title: "Concluir homologação",
+        description: allPassed
+          ? `Marcar “${hom.title}” como concluída?`
+          : `Marcar “${hom.title}” como concluída mesmo com ${hom.progress.passed}/${hom.progress.total} passando?`,
+        confirmLabel: "Concluir",
+        cancelLabel: "Cancelar",
+        tone: allPassed ? "run" : "danger",
+      });
+      if (!ok) return;
     }
 
     setBusySlug(slug);

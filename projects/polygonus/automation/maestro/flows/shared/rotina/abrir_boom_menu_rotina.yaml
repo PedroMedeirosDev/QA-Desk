@@ -15,4 +15,5 @@ appId: br.com.polygonus.mobile.amostra
       - tapOn:
           point: "92%, 88%"
 
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500

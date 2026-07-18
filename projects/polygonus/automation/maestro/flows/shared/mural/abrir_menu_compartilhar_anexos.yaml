@@ -55,8 +55,8 @@ appId: br.com.polygonus.mobile.amostra
       - tapOn:
           id: "mural_card_menu"
           text: ${output.menuIdRegex}
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - runFlow:
     when:
       true: ${output.hasMenuId}
@@ -66,8 +66,8 @@ appId: br.com.polygonus.mobile.amostra
           text: "Show menu"
           below: ${output.menuIdRegex}
           optional: true
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 # ── Fallback texto (só sem ID) ──
 - runFlow:
     when:
@@ -84,18 +84,19 @@ appId: br.com.polygonus.mobile.amostra
           id: "mural_card_menu"
           below: ${output.itemAncora}
           optional: true
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - extendedWaitUntil:
     visible: "Compartilhar anexos|Salvar anexos"
     timeout: 8000
 
 - tapOn: "Compartilhar anexos"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - runFlow:
     when:
       visible: "Compartilhar|Share|Nearby|Bluetooth|Messages|Gmail|Drive"
     commands:
       - pressKey: Back
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500

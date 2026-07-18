@@ -64,13 +64,8 @@ appId: br.com.polygonus.mobile.amostra
                 commands:
                   - tapOn: "ENTRAR"
 
-- waitForAnimationToEnd
-
-- runFlow:
-    when:
-      visible: "PULAR"
-    commands:
-      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+# Confirmação visual (não waitForAnimation — idle da UI pode segurar 10s+)
+- runFlow: ../nav/dismiss_coachmarks_pular.yaml
 
 - extendedWaitUntil:
     visible: "${NOME_USUARIO}"

@@ -24,14 +24,14 @@ appId: br.com.polygonus.mobile.amostra
 
 - assertVisible: "Nova"
 - tapOn: "Nova"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 # Opção 1
 - tapOn: ".*Opcao 1.*|.*Opção 1.*"
 - inputText: "Sim"
 - hideKeyboard
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 # Opção 2 — pode estar abaixo do teclado; \( \) evita grupo regex
 - scrollUntilVisible:
     element:
@@ -43,4 +43,5 @@ appId: br.com.polygonus.mobile.amostra
 - tapOn: ".*Opcao 2.*|.*Opção 2.*|Opcao 2 \\(Opcional\\)|Opção 2 \\(Opcional\\)"
 - inputText: "Nao"
 - hideKeyboard
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500

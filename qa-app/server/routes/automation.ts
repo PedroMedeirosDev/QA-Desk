@@ -14,11 +14,16 @@ import type { EvidenceFile } from "../types.js";
 import {
   createMuralHomologationRecords,
   listMaestroFlows,
+  muralDomainTestKey,
   needsMuralIdPipeline,
   runMaestroFlowWithMuralCardId,
 } from "../automation.js";
 import { captureMuralCardId } from "../mural-card-id.js";
-import { MURAL_HOMOLOGATION_SLUG } from "../homologation-config.js";
+import {
+  MURAL_HOMOLOGATION_SLUG,
+  muralLegacyFlowTestKey,
+  muralTestKeys,
+} from "../homologation-config.js";
 import {
   computeHomologationProgress,
   findHomologationBySlug,
@@ -30,6 +35,7 @@ import {
 import {
   cancelMaestroRun,
   clearMaestroRunCancelled,
+  forceKillMaestroProcesses,
   getActiveMaestroRun,
 } from "../maestro-run-registry.js";
 import {
@@ -44,12 +50,14 @@ import {
   deriveTestKey,
   findByTestKey,
   nextRunNumber,
-  testKeyFromFlow,
   applyAutomationReadinessAfterRun,
 } from "../test-key.js";
 import { normalizeMaestroOutput } from "../maestro-output.js";
 import {
+  dismissAndroidSystemOverlays,
   ensureAndroidDeviceReady,
+  ensureEmulatorTimezoneBr,
+  ensureMaestroFixturesOnDevice,
   getAndroidDeviceStatus,
   isAutoEmulatorEnabled,
   startAndroidEmulator,
@@ -144,10 +152,24 @@ automationRouter.post("/mural-checklist", async (req, res) => {
 
   for (const draft of createMuralHomologationRecords(project)) {
     const { _sort, ...body } = draft as typeof draft & { _sort: number };
-    const testKey = testKeyFromFlow(body.automation!.flowPath);
-    const existing = findByTestKey(catalog, testKey);
+    const flowPath = body.automation!.flowPath;
+    const testKey =
+      body.testKey ??
+      (body.automation?.label
+        ? muralDomainTestKey(String(body.automation.label))
+        : muralLegacyFlowTestKey(flowPath));
+    const legacyKey = muralLegacyFlowTestKey(flowPath);
+    const existing =
+      findByTestKey(catalog, testKey) ??
+      findByTestKey(catalog, legacyKey) ??
+      catalog.reports.find(
+        (r) =>
+          r.automation?.flowPath?.replace(/\\/g, "/") === flowPath.replace(/\\/g, "/"),
+      );
 
     if (existing) {
+      const prevKey = existing.testKey;
+      existing.testKey = testKey;
       existing.homologationId = mural.id;
       existing.campaign = MURAL_HOMOLOGATION_SLUG;
       // Catálogo canônico → descrição / pré-condições / resultado esperado / passos
@@ -156,12 +178,29 @@ automationRouter.post("/mural-checklist", async (req, res) => {
       existing.preconditions = body.preconditions ?? existing.preconditions;
       existing.expectedResult = body.expectedResult ?? existing.expectedResult;
       if (body.steps?.length) existing.steps = body.steps;
+      if (body.tags?.length) existing.tags = body.tags;
+      if (body.automation?.label) {
+        existing.automation = {
+          ...existing.automation!,
+          label: body.automation.label,
+          flowPath: existing.automation?.flowPath ?? flowPath,
+          type: existing.automation?.type ?? "maestro",
+        };
+      }
       skipped.push(existing.id);
       appendHistory(existing, {
         actor: "system",
         action: "checklist_synced",
-        detail: `Checklist sincronizado — campos do CT atualizados (${mural.title})`,
-        meta: { homologationId: mural.id, homologationSlug: mural.slug },
+        detail:
+          prevKey && prevKey !== testKey
+            ? `Checklist sincronizado — testKey ${prevKey} → ${testKey}`
+            : `Checklist sincronizado — campos do CT atualizados (${mural.title})`,
+        meta: {
+          homologationId: mural.id,
+          homologationSlug: mural.slug,
+          testKey,
+          previousTestKey: prevKey,
+        },
       });
       continue;
     }
@@ -203,6 +242,7 @@ automationRouter.post("/mural-checklist", async (req, res) => {
     created.push(report);
   }
 
+  mural.testKeys = muralTestKeys();
   linkTestsToHomologation(catalog, mural);
   await writeCatalog(project, catalog);
   await writeHomologationCatalog(project, homCatalog);
@@ -337,6 +377,15 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
         }
       },
     });
+    const deviceLog = (message: string) => {
+      if (stream) {
+        appendRunSessionOutput(runId, `[qa-app] ${message}\n`);
+        send({ type: "log", line: `[qa-app] ${message}` });
+      }
+    };
+    await ensureEmulatorTimezoneBr({ onProgress: deviceLog });
+    await ensureMaestroFixturesOnDevice({ onProgress: deviceLog });
+    await dismissAndroidSystemOverlays({ onProgress: deviceLog });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Device Android indisponível";
     if (stream) {
@@ -357,20 +406,36 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
   }
 
   let lastOutputAt = Date.now();
+  /** Alinhado ao abort idle do runMaestroFlow (default 60s). */
+  const idleAbortMs = Math.max(
+    30_000,
+    Number(process.env.MAESTRO_IDLE_TIMEOUT_MS) || 60_000,
+  );
+  let idleForceArmed = false;
   const heartbeat = stream
     ? setInterval(() => {
         const idleMs = Date.now() - lastOutputAt;
-        if (idleMs >= 20_000) {
+        if (idleMs >= 10_000) {
+          const leftSec = Math.max(0, Math.ceil((idleAbortMs - idleMs) / 1000));
           send({
             type: "heartbeat",
             idleMs,
             phase:
-              idleMs >= 120_000
-                ? "Maestro sem saída há 2+ min — pode estar travado"
+              idleMs >= idleAbortMs - 10_000
+                ? `Sem saída — abort automático em ~${leftSec}s (lote segue)`
                 : "Maestro em execução (aguardando saída)…",
           });
         }
-      }, 15_000)
+        // Rede de segurança: se o watchdog interno falhar, mata o Maestro sem marcar cancel do usuário
+        if (idleMs >= idleAbortMs + 5_000 && !idleForceArmed) {
+          idleForceArmed = true;
+          send({
+            type: "log",
+            line: `[qa-app] Idle ${Math.round(idleMs / 1000)}s — force-kill Maestro (rede de segurança; lote segue).`,
+          });
+          forceKillMaestroProcesses();
+        }
+      }, 2_000)
     : null;
 
   const splitter = createLineSplitter((line) => {

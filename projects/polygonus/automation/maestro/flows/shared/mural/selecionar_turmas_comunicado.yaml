@@ -22,8 +22,8 @@ appId: br.com.polygonus.mobile.amostra
           visible: "Procurar..."
           timeout: 5000
 
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - assertVisible: "Procurar..."
 
 - tapOn:
@@ -39,8 +39,8 @@ appId: br.com.polygonus.mobile.amostra
 
 - tapOn: "OK"
 
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - runFlow: fechar_menu_enquete_acidental.yaml
 
 - assertVisible: "Escreva seu texto aqui"

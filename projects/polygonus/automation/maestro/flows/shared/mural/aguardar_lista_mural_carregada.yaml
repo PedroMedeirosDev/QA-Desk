@@ -4,8 +4,8 @@
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - runFlow: voltar_lista_mural_se_necessario.yaml
 
 - runFlow: fechar_dropdown_filtro_sentido.yaml

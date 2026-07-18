@@ -8,4 +8,5 @@ appId: br.com.polygonus.mobile.amostra
       visible: "Gravação Pendente|alterações serão perdidas|últimas alterações"
     commands:
       - tapOn: "Sim"
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 500

@@ -1,27 +1,23 @@
-# Renomear o repositório
+# Renomear pasta / remote
 
-O nome **Polygonus-QA** não reflete mais o escopo (multi-projeto: Polygonus, Anihype, …).  
-Nome recomendado: **`qa-automate`** (alinhado ao título do README).
+O repositório no GitHub é **[QA-Desk](https://github.com/PedroMedeirosDev/QA-Desk)** (público).
 
-## GitHub
-
-1. Repositório → **Settings** → **General** → **Repository name** → `qa-automate`
-2. Localmente:
+## Pasta local (opcional)
 
 ```powershell
 cd "C:\Users\pedro\Projetos Portfolio"
-Rename-Item "Polygonus-QA" "qa-automate"
-cd qa-automate
-git remote -v   # URL atualiza automaticamente no GitHub após rename no site
+Rename-Item "Polygonus-QA" "QA-Desk"
+cd QA-Desk
+git remote set-url origin https://github.com/PedroMedeirosDev/QA-Desk.git
+git remote -v
 ```
-
-3. Atualizar clone em outras máquinas: `git remote set-url origin https://github.com/<user>/qa-automate.git`
 
 ## Cursor / VS Code
 
-Reabrir a pasta com o novo nome. Workspace tasks em `.vscode/tasks.json` usam `${workspaceFolder}` — não precisam mudar.
+Reabrir a pasta com o novo nome. Tasks em `.vscode/tasks.json` usam `${workspaceFolder}`.
 
 ## O que não muda
 
-- Slug `polygonus` dentro de `projects/polygonus/`
-- Clones `polygonus-mobile/`, `polygonus-react/` na raiz (específicos da empresa)
+- Slug `polygonus` em `projects/polygonus/` (é um *projeto* dentro do QA Desk)
+- Pasta do app: `qa-app/` (código); marca do produto: **QA Desk**
+- Clones `polygonus-mobile/`, `polygonus-react/` na raiz (gitignored)

@@ -38,8 +38,8 @@ appId: br.com.polygonus.mobile.amostra
           })()}
       - inputText: ${output.tituloEvento}
       # Evitar hideKeyboard — pode abrir "Gravação Pendente" no composer.
-      - waitForAnimationToEnd
-
+      - waitForAnimationToEnd:
+          timeout: 500
 - scrollUntilVisible:
     element:
       text: "Escreva seu texto aqui"
@@ -49,4 +49,5 @@ appId: br.com.polygonus.mobile.amostra
 
 - tapOn: "Escreva seu texto aqui"
 - inputText: ${TEXTO_COMUNICADO}
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 500

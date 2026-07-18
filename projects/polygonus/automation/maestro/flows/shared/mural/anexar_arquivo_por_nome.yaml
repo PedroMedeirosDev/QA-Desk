@@ -14,13 +14,18 @@ appId: br.com.polygonus.mobile.amostra
 
 # Menu do clipe: "Selecionar arquivo" (não "Arquivo").
 - tapOn: "Selecionar arquivo"
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - extendedWaitUntil:
     visible: "Images|Recent|Downloads|Download|Documents|Show roots|${ANEXO_NOME}|Abrir|Open"
     timeout: 12000
 
-# Pasta no picker (optional — o tap no nome costuma bastar)
+# Navegar no drawer do DocumentsUI (Recent sozinho quase nunca lista o PDF)
+- tapOn:
+    text: "Show roots"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 400
 - tapOn:
     text: "${ANEXO_PASTA}"
     optional: true
@@ -45,6 +50,14 @@ appId: br.com.polygonus.mobile.amostra
 - tapOn:
     text: "Documents"
     optional: true
+- waitForAnimationToEnd:
+    timeout: 400
+
+- scrollUntilVisible:
+    element: "${ANEXO_NOME}"
+    direction: DOWN
+    timeout: 12000
+    optional: true
 
 - tapOn: "${ANEXO_NOME}"
 
@@ -57,8 +70,8 @@ appId: br.com.polygonus.mobile.amostra
 - tapOn:
     text: "Selecionar"
     optional: true
-- waitForAnimationToEnd
-
+- waitForAnimationToEnd:
+    timeout: 500
 - extendedWaitUntil:
     visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui"
     timeout: 10000
