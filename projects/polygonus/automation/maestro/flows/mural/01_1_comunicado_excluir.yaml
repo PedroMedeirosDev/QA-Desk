@@ -3,7 +3,7 @@
 # Pré-requisito: ao menos 1 comunicado em Enviadas (qualquer texto).
 # Exclui o mais recente; confirma que o ID capturado desapareceu.
 #
-# Via qa-app: prep → adb captura ID → flow gerado com ID literal (.generated/).
+# Via qa-desk: prep → adb captura ID → flow gerado com ID literal (.generated/).
 # Via CLI: maestro test -e ID_COMUNICADO=<digitos> mural/01_1_comunicado_excluir.yaml
 #
 # Contrato: resume → ação → teardown

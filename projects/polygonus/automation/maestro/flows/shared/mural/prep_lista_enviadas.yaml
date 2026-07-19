@@ -1,4 +1,4 @@
-# Deixa o app na lista Enviadas (para captura de ID via adb pela qa-app).
+# Deixa o app na lista Enviadas (para captura de ID via adb pela qa-desk).
 # Não faz teardown — Maestro encerra e libera o device.
 #
 # Sempre valida usuário PHJESUS + perfil COORDENADOR (mesmo se já estiver no Mural).

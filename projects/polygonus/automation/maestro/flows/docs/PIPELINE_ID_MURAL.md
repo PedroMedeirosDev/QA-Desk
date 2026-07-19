@@ -14,11 +14,11 @@ Badge `ID 1234567` vive no **content-desc** de `mural_card_menu` (não no texto 
 | `verificar_responsavel_ve.yaml` | ETMENEZES + assert pelo **mesmo** ID (obrigatório) |
 | `capturar_id_comunicado_lista.yaml` | Legacy/`copyTextFrom` — **não** usar como prova de envio |
 
-Código Node (qa-app):
+Código Node (qa-desk):
 
 | Módulo | Papel |
 |--------|--------|
-| `qa-app/server/mural-card-id.ts` | `captureMuralCardId`, `assertTopCardMatches`, `assertCardIdAbsent` |
+| `qa-desk/server/mural-card-id.ts` | `captureMuralCardId`, `assertTopCardMatches`, `assertCardIdAbsent` |
 | `runMaestroFlowWithMuralCardId` | Orquestra pré-ação (02/03) e pós-envio (01/04/05/06/07) |
 
 ## Pipeline A — pré-ação (CT-02 editar / CT-03 excluir)
@@ -77,7 +77,7 @@ Semantics desejado: `mural_composer_alvo` (hoje regex/texto).
 maestro test -e ID_COMUNICADO=9083330 mural/01_1_comunicado_editar.yaml
 
 # CTs de envio com pipeline completo:
-cd qa-app
+cd qa-desk
 npx tsx server/scripts/run-ct-mural.ts 01 04 05
 ```
 

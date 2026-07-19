@@ -27,5 +27,5 @@ Atualizar: `.\sync.bat` na raiz.
 
 ## Aplicação QA
 
-Bugs deste projeto são registrados na **QA App** com `project: polygonus`.  
-Ver [`../../qa-app/SPEC.md`](../../qa-app/SPEC.md).
+Bugs e CTs deste projeto na **QA Desk** com `project: polygonus`.  
+Ver [`../../qa-desk/ARCHITECTURE.md`](../../qa-desk/ARCHITECTURE.md) e [`../../qa-desk/README.md`](../../qa-desk/README.md).

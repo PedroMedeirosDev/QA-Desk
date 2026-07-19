@@ -1,7 +1,7 @@
 # CT-MURAL-04: Comunicado com enquete ("Nova")
 #
 # Fase 1: setup → composer + enquete → Enviadas.
-# Fase 2 (qa-app): adb ID → assert por ID → teardown.
+# Fase 2 (qa-desk): adb ID → assert por ID → teardown.
 
 appId: br.com.polygonus.mobile.amostra
 ---

@@ -1,5 +1,5 @@
 {
-  "name": "CT draft — normalize fields (qa-app)",
+  "name": "CT draft — normalize fields (qa-desk)",
   "nodes": [
     {
       "parameters": {
@@ -25,7 +25,7 @@
         "options": {}
       },
       "id": "http-normalize",
-      "name": "qa-app normalize-fields",
+      "name": "qa-desk normalize-fields",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [520, 300]
@@ -45,15 +45,15 @@
   ],
   "connections": {
     "Webhook CT draft": {
-      "main": [[{ "node": "qa-app normalize-fields", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "qa-desk normalize-fields", "type": "main", "index": 0 }]]
     },
-    "qa-app normalize-fields": {
+    "qa-desk normalize-fields": {
       "main": [[{ "node": "Respond", "type": "main", "index": 0 }]]
     }
   },
   "settings": { "executionOrder": "v1" },
   "meta": {
     "templateCredsSetupCompleted": true,
-    "description": "Recebe rascunho de CT (IA) e normaliza via qa-app: move Pré-requisito da description e valida campos vazios."
+    "description": "Recebe rascunho de CT (IA) e normaliza via qa-desk: move Pré-requisito da description e valida campos vazios."
   }
 }

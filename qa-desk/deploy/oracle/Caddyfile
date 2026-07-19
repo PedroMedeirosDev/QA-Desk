@@ -1,0 +1,7 @@
+# Substitua qa-desk.seudominio.com pelo seu domínio (DuckDNS, Cloudflare, etc.)
+# Caddy obtém certificado Let's Encrypt automaticamente.
+
+qa-desk.seudominio.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:3001
+}

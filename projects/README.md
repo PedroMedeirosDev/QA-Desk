@@ -27,7 +27,7 @@ projects/<slug>/
 | Pasta | Uso |
 |-------|-----|
 | [`../shared/templates/`](../shared/templates/) | Modelos de relatório, caso de teste, checklist |
-| [`../qa-app/`](../qa-app/) | Aplicação web de registro de bugs (multi-projeto) |
+| [`../qa-desk/`](../qa-desk/) | Aplicação web de registro de bugs (multi-projeto) |
 | [`../scripts/`](../scripts/) | Sync de clones, automações globais |
 
 ## Convenção de slug

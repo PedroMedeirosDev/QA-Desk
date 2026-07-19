@@ -1,6 +1,6 @@
 # CT-MURAL-06: Comunicado com anexo PDF
 #
-# Mesmo padrão do CT-05 (foto): fase 1 envia → fase 2 qa-app valida por ID + responsável.
+# Mesmo padrão do CT-05 (foto): fase 1 envia → fase 2 qa-desk valida por ID + responsável.
 # Pré-requisito: push fixtures + FIXTURE_PDF no .env
 
 appId: br.com.polygonus.mobile.amostra

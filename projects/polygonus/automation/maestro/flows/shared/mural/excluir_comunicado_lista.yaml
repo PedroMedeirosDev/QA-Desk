@@ -1,6 +1,6 @@
 # Exclui o comunicado mais recente em Enviadas (por ID, sem texto fixo).
 #
-# Env: ID_COMUNICADO / MURAL_ID; SKIP_FILTRAR_ENVIADAS (pipeline qa-app)
+# Env: ID_COMUNICADO / MURAL_ID; SKIP_FILTRAR_ENVIADAS (Pipeline qa-desk)
 # Grava output.idComunicadoAntes; após excluir confirma que o ID sumiu.
 
 appId: br.com.polygonus.mobile.amostra

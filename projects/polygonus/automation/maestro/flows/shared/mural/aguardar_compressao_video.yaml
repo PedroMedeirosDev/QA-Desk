@@ -1,6 +1,6 @@
 # Aguarda compressão de vídeo só se o progresso (ou o toast) estiver na tela.
 # Pronto quando aparecer: "Video comprimido com sucesso!"
-# Poll em fatias de 5s — cada COMPLETED renova o idle da qa-app.
+# Poll em fatias de 5s — cada COMPLETED renova o idle da qa-desk.
 
 appId: br.com.polygonus.mobile.amostra
 ---

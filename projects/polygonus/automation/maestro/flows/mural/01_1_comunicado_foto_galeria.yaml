@@ -1,7 +1,7 @@
 # CT-MURAL-05: Comunicado com foto da galeria + Compartilhar anexos
 #
 # Fase 1: addMedia → composer + foto → Enviadas.
-# Fase 2 (qa-app): adb ID → assert → ETMENEZES → Compartilhar anexos → teardown.
+# Fase 2 (qa-desk): adb ID → assert → ETMENEZES → Compartilhar anexos → teardown.
 # Critério compartilhar: só abrir o item (download); não concluir share sheet.
 
 appId: br.com.polygonus.mobile.amostra

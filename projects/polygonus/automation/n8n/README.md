@@ -21,13 +21,13 @@ Webhook padrão após importar e **ativar** `workflow-maestro-post-run.json`:
 http://localhost:5678/webhook/maestro-run
 ```
 
-Coloque em `qa-app/.env`:
+Coloque em `qa-desk/.env`:
 
 ```env
 N8N_WEBHOOK_URL=http://localhost:5678/webhook/maestro-run
 ```
 
-Reinicie a qa-app (`npm run dev`).
+Reinicie a qa-desk (`npm run dev`).
 
 ## Subir sem Docker (alternativa)
 
@@ -39,12 +39,12 @@ npx n8n
 
 | Variável | Onde | Descrição |
 |----------|------|-----------|
-| `N8N_WEBHOOK_URL` | `.env` na raiz do repo ou `qa-app/.env` | URL do webhook N8N (POST JSON) |
+| `N8N_WEBHOOK_URL` | `.env` na raiz do repo ou `qa-desk/.env` | URL do webhook N8N (POST JSON) |
 | `QA_N8N_WEBHOOK_URL` | alternativa | Mesmo efeito |
 
 ## Fluxo
 
-1. Maestro termina (CLI, qa-app ou `run-mural-suite.mjs`)
+1. Maestro termina (CLI, qa-desk ou `run-mural-suite.mjs`)
 2. `analyze-maestro-run.mjs` parseia o log → `projects/polygonus/automation/maestro/.maestro-analysis/latest.json`
 3. Se `N8N_WEBHOOK_URL` estiver definida, POST com payload `{ source, ok, counts, alerts, lastSteps, meta }`
 4. N8N pode: notificar Discord/Slack, abrir issue, agregar métricas
@@ -76,7 +76,7 @@ O workflow de exemplo:
 - Filtra `alerts` com level `error`
 - Responde 200 com resumo (adicione nó Discord/Email conforme ambiente)
 
-## Integração qa-app
+## Integração qa-desk
 
 Após `POST /api/projects/:slug/automation/tests/:id/run`, o servidor chama `analyzeMaestroOutput()` em background (não bloqueia resposta).
 
@@ -94,7 +94,7 @@ Ao gerar um fluxo/caso de teste, a IA (ou um nó AI no N8N) deve preencher campo
 Artefatos:
 
 - Schema JSON: [`ct-draft.schema.json`](./ct-draft.schema.json)
-- Workflow: [`workflow-ct-draft-normalize.json`](./workflow-ct-draft-normalize.json) → chama a qa-app
+- Workflow: [`workflow-ct-draft-normalize.json`](./workflow-ct-draft-normalize.json) → chama a qa-desk
 - API: `POST /api/projects/polygonus/tests/normalize-fields`  
   Body = rascunho CT → move pré-requisito da description e devolve `warnings` se faltar campo
 - Prompt de sistema (também na resposta da API em `meta.llmSystemPrompt`)
@@ -103,7 +103,7 @@ Fluxo sugerido no N8N:
 
 1. Nó AI gera JSON no schema `CtDraftFields`
 2. (Opcional) Validar com `ct-draft.schema.json`
-3. POST `normalize-fields` na qa-app
+3. POST `normalize-fields` na qa-desk
 4. Você revisa no editor (botão **Corrigir texto** também aplica o contrato)
 
 Exemplo rápido:
@@ -119,4 +119,4 @@ curl -s -X POST http://localhost:3001/api/projects/polygonus/tests/normalize-fie
 - Agregar histórico por CT (pass rate, flaky steps)
 - Correlacionar `failedStepIndex` com passos do `tests.json`
 - LLM no N8N usando o schema + `normalize-fields` (rascunho; humano revisa)
-- ~~Gravação de vídeo~~ — na qa-app: checkbox “Gravar vídeo” (adb screenrecord, evidência MP4)
+- ~~Gravação de vídeo~~ — na qa-desk: checkbox “Gravar vídeo” (adb screenrecord, evidência MP4)

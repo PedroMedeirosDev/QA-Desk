@@ -13,4 +13,4 @@ Projeto em setup. Use a mesma estrutura padrão de [`../README.md`](../README.md
 
 ## Aplicação QA
 
-Bugs com `project: anihype` na [`../../qa-app/`](../../qa-app/).
+Bugs com `project: anihype` na [`../../qa-desk/`](../../qa-desk/).

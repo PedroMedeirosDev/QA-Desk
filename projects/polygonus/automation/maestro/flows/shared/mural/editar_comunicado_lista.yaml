@@ -1,9 +1,9 @@
-# Edita o comunicado mais recente em Enviadas (por ID capturado na qa-app).
+# Edita o comunicado mais recente em Enviadas (por ID capturado na qa-desk).
 #
 # Env:
 #   NOVO_TEXTO — texto após edição (obrigatório)
-#   ID_COMUNICADO / MURAL_ID — seed do ID (qa-app)
-#   SKIP_FILTRAR_ENVIADAS — "1" se já em Enviadas (pipeline qa-app)
+#   ID_COMUNICADO / MURAL_ID — seed do ID (qa-desk)
+#   SKIP_FILTRAR_ENVIADAS — "1" se já em Enviadas (Pipeline qa-desk)
 #
 # Valida NOVO_TEXTO na lista. Mesmo ID no topo: adiado — app gera novo
 # comunicado ao editar (bug reportado ao time de desenvolvimento).
