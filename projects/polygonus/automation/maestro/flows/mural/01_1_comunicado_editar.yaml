@@ -3,7 +3,7 @@
 # Pré-requisito: ao menos 1 comunicado em Enviadas (qualquer texto).
 # Edita o mais recente; valida pelo ID capturado + texto novo.
 #
-# Via qa-app: prep → adb captura ID → executa flow gerado com ID literal
+# Via qa-desk: prep → adb captura ID → executa flow gerado com ID literal
 # (este YAML é o registro do CT; o runtime pode substituí-lo por .generated/).
 # Via CLI: maestro test -e ID_COMUNICADO=<digitos> mural/01_1_comunicado_editar.yaml
 #
@@ -13,7 +13,7 @@ appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
-# ID injetado pela qa-app em flows/.env + -e (evalScript inline no flow raiz).
+# ID injetado pela qa-desk em flows/.env + -e (evalScript inline no flow raiz).
 - evalScript: |
     ${(() => {
       if (output.idComunicado && String(output.idComunicado).length > 3) return;

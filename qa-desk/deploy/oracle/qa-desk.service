@@ -1,0 +1,18 @@
+[Unit]
+Description=QA Desk (Express + Vite dist)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/QA-Desk/qa-desk
+Environment=NODE_ENV=production
+EnvironmentFile=/home/ubuntu/QA-Desk/qa-desk/.env
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=5
+# Uploads / JSON locais
+ReadWritePaths=/home/ubuntu/QA-Desk/qa-desk/data
+
+[Install]
+WantedBy=multi-user.target

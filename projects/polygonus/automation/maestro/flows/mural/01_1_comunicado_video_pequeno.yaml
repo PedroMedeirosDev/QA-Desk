@@ -1,7 +1,7 @@
 # CT-MURAL-07: Comunicado com vídeo pequeno (anexo clip)
 #
 # Vídeo/PDF usam o ícone clipe (mural_composer_anexo), NÃO a galeria (extrema esquerda).
-# Fase 1: envia → Enviadas. Fase 2 (qa-app): adb ID → assert + ETMENEZES.
+# Fase 1: envia → Enviadas. Fase 2 (qa-desk): adb ID → assert + ETMENEZES.
 #
 # Pré-requisito: Video_teste.mp4 em fixtures/ + push para /sdcard/Download (ou Movies)
 

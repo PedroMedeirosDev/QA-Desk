@@ -78,7 +78,7 @@ Após `clearState`:
 | Assumir home já tem MURAL | Garantir perfil antes de `navegar_mural` |
 | Editar/excluir sem filtro Enviadas | Abrir Enviadas primeiro (CTs 02/03) |
 | Reimplementar captura de ID ad-hoc | Usar `PIPELINE_ID_MURAL.md` + helpers shared |
-| `uiautomator dump` no meio do Maestro | Dump só com Maestro parado (pipeline qa-app) |
+| `uiautomator dump` no meio do Maestro | Dump só com Maestro parado (Pipeline qa-desk) |
 
 ## Pontos que ainda precisam do Studio
 
@@ -91,7 +91,7 @@ Marcar no YAML e validar no device:
 5. Campos da tela Evento
 6. Menu de tipos de enquete
 
-## Diagnóstico de falha (qa-app)
+## Diagnóstico de falha (qa-desk)
 
 `parseMaestroFailure` extrai do stdout:
 

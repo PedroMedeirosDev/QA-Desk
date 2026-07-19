@@ -1,7 +1,7 @@
 # CT-MURAL-01: Enviar comunicado de texto
 #
 # Fase 1 (este YAML): setup → publicar → Enviadas (para adb capturar ID).
-# Fase 2 (qa-app): adb → assert por ID → ETMENEZES → teardown.
+# Fase 2 (qa-desk): adb → assert por ID → ETMENEZES → teardown.
 #
 # Via CLI puro: após este flow, rode com -e ID_COMUNICADO=<digitos> o verify gerado
 # ou use npx tsx server/scripts/run-ct-mural.ts 01

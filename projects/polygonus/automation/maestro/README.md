@@ -111,7 +111,7 @@ Os testes geram dois tipos de lixo:
 | **Salvar / Compartilhar anexos** | Downloads no emulador (`Download/`, cache do app) — o Compartilhar **baixa antes** do share sheet | Removidos após run **PASS** |
 | **Maestro** | PNG de cada passo em `.maestro-output/` | Pasta do run apagada em **PASS**; mantida em **FAIL** |
 
-A **qa-app** e o `run-mural-suite.mjs` já chamam `scripts/cleanup-test-artifacts.mjs` ao terminar cada flow.
+A **qa-desk** e o `run-mural-suite.mjs` já chamam `scripts/cleanup-test-artifacts.mjs` ao terminar cada flow.
 
 Limpeza manual ou agendada (Task Scheduler / cron):
 

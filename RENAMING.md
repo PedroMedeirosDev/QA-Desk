@@ -16,8 +16,13 @@ git remote -v
 
 Reabrir a pasta com o novo nome. Tasks em `.vscode/tasks.json` usam `${workspaceFolder}`.
 
-## O que não muda
+## Pasta do app
 
-- Slug `polygonus` em `projects/polygonus/` (é um *projeto* dentro do QA Desk)
-- Pasta do app: `qa-app/` (código); marca do produto: **QA Desk**
-- Clones `polygonus-mobile/`, `polygonus-react/` na raiz (gitignored)
+Código da aplicação: **`qa-desk/`** (antes `qa-app/`).
+
+Se ainda existir junction/pasta antiga:
+
+```powershell
+# Feche o Cursor (ou abas de arquivos em qa-app), depois:
+.\scripts\finalize-qa-desk-rename.ps1
+```

@@ -2,7 +2,7 @@
 #
 # Clipe → Correspondência → item da lista → Ok.
 # Na amostra nao ha "Declaracao de IR" — usa Aviso de Debito n 02.
-# Fase 1: envia → Enviadas. Fase 2 (qa-app): adb ID → assert + ETMENEZES.
+# Fase 1: envia → Enviadas. Fase 2 (qa-desk): adb ID → assert + ETMENEZES.
 
 appId: br.com.polygonus.mobile.amostra
 ---

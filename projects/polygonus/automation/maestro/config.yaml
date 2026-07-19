@@ -1,5 +1,5 @@
 # Workspace Maestro — Polygonus QA
-# Artefatos ficam em .maestro-output/ (gitignored). Em PASS, a qa-app apaga a pasta do run.
+# Artefatos ficam em .maestro-output/ (gitignored). Em PASS, a qa-desk apaga a pasta do run.
 
 flows:
   - "flows/mural/**"

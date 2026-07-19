@@ -3,7 +3,7 @@
 # Funil → Inadimplentes → Mes corrente → Ok
 # Clipe → Boleto
 # Texto de cobrança.
-# Fase 1 → Enviadas; fase 2 qa-app: ID + ETMENEZES.
+# Fase 1 → Enviadas; fase 2 qa-desk: ID + ETMENEZES.
 
 appId: br.com.polygonus.mobile.amostra
 ---

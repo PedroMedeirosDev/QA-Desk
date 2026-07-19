@@ -1,7 +1,7 @@
 # CT-MURAL-08: Evento padrão (sem "Dia inteiro")
 #
 # Turmas + alvo Todos → texto "Evento Padrao" (ASCII — Maestro inputText não aceita ã).
-# Fase 1: envia → Enviadas. Fase 2 (qa-app): adb ID → assert + ETMENEZES.
+# Fase 1: envia → Enviadas. Fase 2 (qa-desk): adb ID → assert + ETMENEZES.
 
 appId: br.com.polygonus.mobile.amostra
 ---

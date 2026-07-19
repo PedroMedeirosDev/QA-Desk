@@ -2,7 +2,7 @@
 #
 # Preferência: output.idComunicado → env → copyTextFrom (frágil no content-desc).
 # Env opcional: TEXTO_ANCORAGEM — confirma envio por texto se ID não capturar.
-# CT-02/03: ID vem da qa-app/adb.
+# CT-02/03: ID vem da qa-desk/adb.
 
 appId: br.com.polygonus.mobile.amostra
 ---
