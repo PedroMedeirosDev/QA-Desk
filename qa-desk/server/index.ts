@@ -9,6 +9,7 @@ import { isServerAuthConfigured } from "./middleware/auth.js";
 import { testsRouter } from "./routes/tests.js";
 import { homologationsRouter } from "./routes/homologations.js";
 import { automationRouter } from "./routes/automation.js";
+import { kbCurationRouter } from "./routes/kb-curation.js";
 import { PROJECTS } from "./types.js";
 
 loadEnv();
@@ -42,6 +43,7 @@ app.use("/api/projects/:slug/tests", testsRouter);
 app.use("/api/projects/:slug/bugs", testsRouter);
 
 app.use("/api/projects/:slug/homologations", homologationsRouter);
+app.use("/api/projects/:slug/kb-curation", kbCurationRouter);
 
 app.use("/api/projects/:slug/automation", automationRouter);
 

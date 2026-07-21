@@ -1,12 +1,27 @@
 import { authHeaders } from "@/lib/auth-token";
 import type { TestCatalog, TestRecord, ProjectSlug } from "@/types/test-record";
 import type { Homologation, HomologationProgress, HomologationWithProgress } from "@/types/homologation";
+import type {
+  KbCurationCatalog,
+  KbCurationMetrics,
+  KbCurationRecord,
+  KbCurationStatus,
+  KbCurationVerdict,
+} from "@/types/kb-curation";
 
 export interface AutomationFlow {
   id: string;
   label: string;
   type: "maestro" | "playwright";
   flowPath: string;
+  module?: string;
+}
+
+export interface AutomationSpec {
+  id: string;
+  label: string;
+  type: "playwright";
+  specPath: string;
   module?: string;
 }
 
@@ -72,6 +87,11 @@ export const api = {
     return request<AutomationFlow[]>(`/api/projects/${project}/automation/flows${q}`);
   },
 
+  listSpecs: (project: ProjectSlug, module?: string) => {
+    const q = module ? `?module=${module}` : "";
+    return request<AutomationSpec[]>(`/api/projects/${project}/automation/specs${q}`);
+  },
+
   getDeviceStatus: (project: ProjectSlug) =>
     request<AndroidDeviceStatus>(`/api/projects/${project}/automation/device`),
 
@@ -101,6 +121,7 @@ export const api = {
       homologationId?: string;
       recordVideo?: boolean;
       stage?: "all" | "prep" | "maestro";
+      runner?: "maestro" | "playwright";
     },
   ) =>
     request<{
@@ -110,6 +131,7 @@ export const api = {
       output?: string;
       appVersion?: string;
       stage?: "all" | "prep" | "maestro";
+      runner?: "maestro" | "playwright";
       stages?: string[];
       prepOk?: boolean;
       failedStage?: "playwright" | "maestro";
@@ -130,6 +152,7 @@ export const api = {
         ...(opts?.homologationId ? { homologationId: opts.homologationId } : {}),
         ...(opts?.recordVideo ? { recordVideo: true } : {}),
         ...(opts?.stage && opts.stage !== "all" ? { stage: opts.stage } : {}),
+        ...(opts?.runner && opts.runner !== "maestro" ? { runner: opts.runner } : {}),
       }),
     }),
 
@@ -191,4 +214,39 @@ export const api = {
         body: JSON.stringify(data),
       },
     ),
+
+  listKbCuration: (project: ProjectSlug) =>
+    request<KbCurationCatalog & { metrics: KbCurationMetrics }>(
+      `/api/projects/${project}/kb-curation`,
+    ),
+
+  updateKbCuration: (
+    project: ProjectSlug,
+    prNumber: number,
+    data: {
+      status?: KbCurationStatus;
+      verdict?: KbCurationVerdict;
+      summary?: string;
+      solutionReview?: string;
+      corrections?: string[];
+      reviewer?: string;
+    },
+  ) =>
+    request<{ pullRequest: KbCurationRecord; metrics: KbCurationMetrics }>(
+      `/api/projects/${project}/kb-curation/${prNumber}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      },
+    ),
+
+  syncKbCuration: (project: ProjectSlug) =>
+    request<{
+      pullRequests: KbCurationRecord[];
+      metrics: KbCurationMetrics;
+      synced: number;
+      authorResponses: number;
+      lastSyncedAt: string;
+    }>(`/api/projects/${project}/kb-curation/sync`, { method: "POST" }),
 };

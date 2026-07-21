@@ -42,9 +42,19 @@ import {
   isDeferredFromBatchRun,
   MODULE_LABELS,
   suiteCollapseKey,
+  suiteFromTestRecord,
   summarizeSuite,
   SUITE_LABELS,
 } from "@/lib/suite";
+import {
+  AUTOMATION_RUNNER_SHORT,
+  hasMaestroAutomation,
+  hasPlaywrightAutomation,
+  readSuiteRunner,
+  supportsRunner,
+  writeSuiteRunner,
+  type AutomationRunner,
+} from "@/lib/automation-runners";
 import type { HomologationWithProgress } from "@/types/homologation";
 
 /** v2: chaves `m:Mural` e `s:Mural::CRUD` */
@@ -111,9 +121,12 @@ export function TestListPage({
   const [homologations, setHomologations] = useState<HomologationWithProgress[]>([]);
   /** null até hidratar (auto-recolher verdes na 1ª visita). */
   const [collapsed, setCollapsed] = useState<Set<string> | null>(null);
+  /** Executor selecionado por chave `Módulo::Suite` */
+  const [suiteRunners, setSuiteRunners] = useState<Record<string, AutomationRunner>>({});
 
   useEffect(() => {
     setCollapsed(null);
+    setSuiteRunners({});
   }, [project, routeChannel]);
 
   const hasChannels = getProjectChannels(project).length > 0;
@@ -168,6 +181,47 @@ export function TestListPage({
   const moduleGroups = useMemo(() => groupByModuleThenSuite(filtered), [filtered]);
 
   useEffect(() => {
+    if (loading || moduleGroups.length === 0) return;
+    setSuiteRunners((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const mod of moduleGroups) {
+        for (const suite of mod.suites) {
+          const key = suiteCollapseKey(mod.module, suite.suite);
+          if (key in next) continue;
+          next[key] = readSuiteRunner(key);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [loading, moduleGroups]);
+
+  function suiteRunnerFor(module: string, suite: string): AutomationRunner {
+    return suiteRunners[suiteCollapseKey(module, suite)] ?? "maestro";
+  }
+
+  function setSuiteRunner(module: string, suite: string, runner: AutomationRunner) {
+    const key = suiteCollapseKey(module, suite);
+    writeSuiteRunner(key, runner);
+    setSuiteRunners((prev) => ({ ...prev, [key]: runner }));
+  }
+
+  function runnerForRecord(record: TestRecord): AutomationRunner {
+    const suite = suiteFromTestRecord(record);
+    const mod = record.module?.trim()
+      ? record.module
+      : "Outros";
+    // Prefer exact module from grouping helpers
+    for (const m of moduleGroups) {
+      if (m.items.some((i) => i.id === record.id)) {
+        return suiteRunnerFor(m.module, suite);
+      }
+    }
+    return suiteRunnerFor(mod, suite);
+  }
+
+  useEffect(() => {
     if (loading || collapsed !== null) return;
     const stored = readCollapsedRaw(project, routeChannel);
     if (stored === null) {
@@ -193,18 +247,28 @@ export function TestListPage({
   async function quickRun(e: React.MouseEvent, id: string) {
     e.stopPropagation();
     const report = reports.find((r) => r.id === id);
+    const runner = report ? runnerForRecord(report) : "maestro";
+    if (report && !supportsRunner(report.automation, runner)) {
+      toast.info(
+        `${AUTOMATION_RUNNER_SHORT[runner]} não configurado neste CT.`,
+        { title: AUTOMATION_RUNNER_SHORT[runner] },
+      );
+      return;
+    }
     setRunningId(id);
     try {
       const res = await runAutomation({
         project,
         testId: id,
         title: report?.title ?? formatRecordId(id, report),
+        runner,
       });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
+      const runnerTitle = AUTOMATION_RUNNER_SHORT[runner];
       if (res.cancelled) {
         clearBatchStop();
         toast.info(`Execução #${res.runNumber} cancelada${ver}`, {
-          title: "Maestro",
+          title: runnerTitle,
           duration: 8000,
         });
       } else if (res.ok) {
@@ -215,7 +279,7 @@ export function TestListPage({
           res.failure?.failedAction ??
           "veja histórico";
         toast.error(`Execução #${res.runNumber} falhou${ver} — ${where}`, {
-          title: "Maestro",
+          title: runnerTitle,
         });
       }
       reload({ soft: true });
@@ -223,7 +287,10 @@ export function TestListPage({
       const msg = toastErrorMessage(err, "Erro ao executar");
       if (msg === RUN_CANCELLED_MESSAGE) {
         clearBatchStop();
-        toast.info("Execução cancelada", { title: "Maestro", duration: 8000 });
+        toast.info("Execução cancelada", {
+          title: AUTOMATION_RUNNER_SHORT[runner],
+          duration: 8000,
+        });
         reload({ soft: true });
       } else {
         toast.error(msg);
@@ -238,19 +305,31 @@ export function TestListPage({
     name: string,
     groupId: string,
     items: TestRecord[],
+    runnerOverride?: AutomationRunner,
   ) {
-    const queue = items.filter(
-      (t) => t.automation?.flowPath && !isDeferredFromBatchRun(t),
-    );
+    const queue = items.filter((t) => {
+      if (isDeferredFromBatchRun(t)) return false;
+      const runner = runnerOverride ?? runnerForRecord(t);
+      return supportsRunner(t.automation, runner);
+    });
     const kindLabel = kind === "module" ? "módulo" : "suite";
     const deferred = items.filter(
-      (t) => t.automation?.flowPath && isDeferredFromBatchRun(t),
+      (t) =>
+        (hasMaestroAutomation(t.automation) || hasPlaywrightAutomation(t.automation)) &&
+        isDeferredFromBatchRun(t),
     ).length;
+    const missingRunner = items.filter((t) => {
+      if (isDeferredFromBatchRun(t)) return false;
+      const runner = runnerOverride ?? runnerForRecord(t);
+      return !supportsRunner(t.automation, runner);
+    }).length;
     if (queue.length === 0) {
       toast.info(
         deferred > 0
           ? `Nenhum CT elegível no ${kindLabel} ${name} (${deferred} adiado(s), ex.: E2E).`
-          : `Nenhum flow Maestro no ${kindLabel} ${name}.`,
+          : missingRunner > 0
+            ? `Nenhum CT com ${AUTOMATION_RUNNER_SHORT[runnerOverride ?? "maestro"]} no ${kindLabel} ${name}.`
+            : `Nenhuma automação no ${kindLabel} ${name}.`,
       );
       return;
     }
@@ -259,7 +338,7 @@ export function TestListPage({
       title: `Rodar ${kindLabel} ${name}`,
       description: `${queue.length} teste(s) em sequência${
         deferred ? ` · ${deferred} adiado(s) fora do lote` : ""
-      }.\nSe um falhar, continua nos próximos.`,
+      }${missingRunner ? ` · ${missingRunner} sem o executor selecionado` : ""}.\nSe um falhar, continua nos próximos.`,
       confirmLabel: "Rodar",
       cancelLabel: "Cancelar",
       tone: "run",
@@ -278,6 +357,7 @@ export function TestListPage({
           break;
         }
         const item = queue[i];
+        const runner = runnerOverride ?? runnerForRecord(item);
         setBatchProgress(
           `${name} ${i + 1}/${queue.length} — ${item.title}  ·  ✓ ${passed}  ✗ ${failed}`,
         );
@@ -288,6 +368,7 @@ export function TestListPage({
             testId: item.id,
             title: item.title,
             batchLabel: `${name} ${i + 1}/${queue.length}`,
+            runner,
           });
           if (res.cancelled || isBatchStopRequested()) {
             toast.info(`${kindLabel} ${name} interrompido.`, { title: "Execução em lote" });
@@ -304,7 +385,7 @@ export function TestListPage({
               res.failure?.failedAction ??
               "seguindo…";
             toast.error(`${item.title} — falhou${ver} — ${where}`, {
-              title: "Maestro",
+              title: AUTOMATION_RUNNER_SHORT[runner],
             });
           }
         } catch (e) {
@@ -314,7 +395,9 @@ export function TestListPage({
             break;
           }
           failed += 1;
-          toast.error(`${item.title} — ${msg} (seguindo…)`, { title: "Maestro" });
+          toast.error(`${item.title} — ${msg} (seguindo…)`, {
+            title: AUTOMATION_RUNNER_SHORT[runner],
+          });
         }
       }
 
@@ -484,7 +567,7 @@ export function TestListPage({
               moduleGroups.map((mod) => {
                 const collapsedSet = collapsed ?? new Set<string>();
                 const modExpanded = !collapsedSet.has(modKey(mod.module));
-                const modStats = summarizeSuite(mod.items);
+                const modStats = summarizeSuite(mod.items, "maestro");
                 const modLabel = MODULE_LABELS[mod.module] ?? mod.module;
                 return (
                   <Fragment key={`mod-${mod.module}`}>
@@ -504,7 +587,8 @@ export function TestListPage({
                     {modExpanded &&
                       mod.suites.map((group) => {
                         const sk = suiteKey(mod.module, group.suite);
-                        const stats = summarizeSuite(group.items);
+                        const runner = suiteRunnerFor(mod.module, group.suite);
+                        const stats = summarizeSuite(group.items, runner);
                         const expanded = !collapsedSet.has(sk);
                         const suiteLabel = SUITE_LABELS[group.suite] ?? group.suite;
                         return (
@@ -516,14 +600,28 @@ export function TestListPage({
                               expanded={expanded}
                               onToggle={() => toggleCollapsedKey(sk)}
                               onRunSuite={() =>
-                                void runGroup("suite", suiteLabel, sk, group.items)
+                                void runGroup(
+                                  "suite",
+                                  suiteLabel,
+                                  sk,
+                                  group.items,
+                                  runner,
+                                )
                               }
                               runDisabled={busy}
                               running={runningGroup === sk}
+                              runner={runner}
+                              onRunnerChange={(next) =>
+                                setSuiteRunner(mod.module, group.suite, next)
+                              }
                             />
                             {expanded &&
                               group.items.map((r, rowIdx) => {
                                 const { label, tone } = displayStatus(r);
+                                const canRun = supportsRunner(r.automation, runner);
+                                const hasAny =
+                                  hasMaestroAutomation(r.automation) ||
+                                  hasPlaywrightAutomation(r.automation);
                                 return (
                                   <tr
                                     key={r.id}
@@ -539,6 +637,11 @@ export function TestListPage({
                                       <p className="font-mono text-[0.6875rem] text-muted-foreground">
                                         {r.testKey ?? formatRecordId(r.id, r)}
                                       </p>
+                                      {hasAny && !canRun && (
+                                        <p className="mt-0.5 text-[0.65rem] text-amber-400/90">
+                                          {AUTOMATION_RUNNER_SHORT[runner]} não configurado
+                                        </p>
+                                      )}
                                     </td>
                                     <td className="px-4 py-2">
                                       <div className="flex flex-wrap items-center gap-1.5">
@@ -593,11 +696,15 @@ export function TestListPage({
                                         >
                                           <ExternalLink className="size-4" />
                                         </button>
-                                        {isAdmin && r.automation?.flowPath && (
+                                        {isAdmin && hasAny && (
                                           <button
                                             type="button"
-                                            title="Executar este item"
-                                            disabled={busy}
+                                            title={
+                                              canRun
+                                                ? `Executar (${AUTOMATION_RUNNER_SHORT[runner]})`
+                                                : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
+                                            }
+                                            disabled={busy || !canRun}
                                             onClick={(e) => void quickRun(e, r.id)}
                                             className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
                                           >

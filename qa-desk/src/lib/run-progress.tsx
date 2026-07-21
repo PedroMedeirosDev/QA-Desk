@@ -48,6 +48,7 @@ export type RunAutomationResult = {
   appVersion?: string;
   failure?: RunFailure;
   stage?: "all" | "prep" | "maestro";
+  runner?: "maestro" | "playwright";
   stages?: string[];
   prepOk?: boolean;
   failedStage?: "playwright" | "maestro";
@@ -129,6 +130,7 @@ type RunProgressContextValue = {
     batchLabel?: string;
     recordVideo?: boolean;
     stage?: "all" | "prep" | "maestro";
+    runner?: "maestro" | "playwright";
   }) => Promise<RunAutomationResult>;
   stopRun: () => Promise<void>;
   dismiss: () => void;
@@ -360,6 +362,7 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
       batchLabel?: string;
       recordVideo?: boolean;
       stage?: "all" | "prep" | "maestro";
+      runner?: "maestro" | "playwright";
     }) => {
       if (isBatchStopRequested()) {
         throw new Error(RUN_CANCELLED_MESSAGE);
@@ -371,16 +374,19 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
       activeAbort = new AbortController();
 
       const stage = opts.stage ?? "all";
+      const runner = opts.runner ?? "maestro";
       const startPhase =
-        stage === "prep"
-          ? "Iniciando Playwright (seed)…"
-          : stage === "maestro"
-            ? opts.recordVideo
-              ? "Iniciando Maestro + gravação…"
-              : "Iniciando Maestro…"
-            : opts.recordVideo
-              ? "Iniciando Playwright → Maestro + gravação…"
-              : "Iniciando Playwright → Maestro…";
+        runner === "playwright"
+          ? "Iniciando Playwright (Web)…"
+          : stage === "prep"
+            ? "Iniciando Playwright (seed)…"
+            : stage === "maestro"
+              ? opts.recordVideo
+                ? "Iniciando Maestro + gravação…"
+                : "Iniciando Maestro…"
+              : opts.recordVideo
+                ? "Iniciando Playwright → Maestro + gravação…"
+                : "Iniciando Playwright → Maestro…";
 
       const baseState: LiveRunState = {
         active: true,
@@ -412,6 +418,7 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
               : {}),
             ...(opts.recordVideo ? { recordVideo: true } : {}),
             ...(stage !== "all" ? { stage } : {}),
+            ...(runner !== "maestro" ? { runner } : {}),
           }),
           signal: activeAbort.signal,
         },

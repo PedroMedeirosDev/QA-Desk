@@ -27,6 +27,12 @@ import {
   SUITE_LABELS,
 } from "@/lib/suite";
 import {
+  AUTOMATION_RUNNER_SHORT,
+  readSuiteRunner,
+  writeSuiteRunner,
+  type AutomationRunner,
+} from "@/lib/automation-runners";
+import {
   HOMOLOGATION_LABELS,
   inferChannel,
   type HomologationStatus,
@@ -95,10 +101,30 @@ export function HomologationPage({
   const [batchProgress, setBatchProgress] = useState<string>("");
   const [catalogTests, setCatalogTests] = useState<TestRecord[]>([]);
   const [collapsed, setCollapsed] = useState<Set<string> | null>(null);
+  const [suiteRunners, setSuiteRunners] = useState<Record<string, AutomationRunner>>({});
 
   useEffect(() => {
     setCollapsed(null);
+    setSuiteRunners({});
   }, [homSlug]);
+
+  function suiteRunnerFor(module: string, suite: string): AutomationRunner {
+    return suiteRunners[suiteCollapseKey(module, suite)] ?? "maestro";
+  }
+
+  function setSuiteRunner(module: string, suite: string, runner: AutomationRunner) {
+    const key = suiteCollapseKey(module, suite);
+    writeSuiteRunner(key, runner);
+    setSuiteRunners((prev) => ({ ...prev, [key]: runner }));
+  }
+
+  function itemSupportsRunner(
+    item: HomologationProgress["items"][number],
+    runner: AutomationRunner,
+  ): boolean {
+    if (runner === "playwright") return Boolean(item.hasPlaywright);
+    return Boolean(item.hasMaestro ?? item.hasAutomation);
+  }
 
   function persistCollapsed(next: Set<string>) {
     setCollapsed(next);
@@ -221,7 +247,11 @@ export function HomologationPage({
     }
   }
 
-  async function runTest(testId: string, title?: string) {
+  async function runTest(
+    testId: string,
+    title?: string,
+    runner: AutomationRunner = "maestro",
+  ) {
     setRunningId(testId);
     try {
       const res = await runAutomation({
@@ -229,6 +259,7 @@ export function HomologationPage({
         testId,
         title: title ?? testId,
         homologationId: homologation?.id,
+        runner,
       });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
       if (res.ok) {
@@ -239,7 +270,7 @@ export function HomologationPage({
           res.failure?.failedAction ??
           "veja o teste";
         toast.error(`Execução #${res.runNumber} falhou${ver} — ${where}`, {
-          title: "Maestro",
+          title: AUTOMATION_RUNNER_SHORT[runner],
         });
       }
       reload({ soft: true });
@@ -253,7 +284,7 @@ export function HomologationPage({
   }
 
   async function runQueue(
-    queue: HomologationProgress["items"],
+    queue: Array<HomologationProgress["items"][number] & { runner?: AutomationRunner }>,
     opts: { title: string; description: string; batchTitle: string },
   ) {
     if (!homologation || queue.length === 0) return;
@@ -280,6 +311,7 @@ export function HomologationPage({
           break;
         }
         const item = queue[i];
+        const runner = item.runner ?? "maestro";
         setBatchProgress(
           `${opts.batchTitle} ${i + 1}/${queue.length} — ${item.title}  ·  ✓ ${passed}  ✗ ${failed}`,
         );
@@ -291,6 +323,7 @@ export function HomologationPage({
             title: item.title,
             homologationId: homologation.id,
             batchLabel: `${opts.batchTitle} ${i + 1}/${queue.length}`,
+            runner,
           });
           if (res.cancelled || isBatchStopRequested()) {
             toast.info(`${opts.batchTitle} interrompida.`, {
@@ -309,7 +342,7 @@ export function HomologationPage({
               res.failure?.failedAction ??
               "seguindo…";
             toast.error(`${item.title} — falhou${ver} — ${where}`, {
-              title: "Maestro",
+              title: AUTOMATION_RUNNER_SHORT[runner],
             });
           }
         } catch (e) {
@@ -322,7 +355,7 @@ export function HomologationPage({
           }
           failed += 1;
           toast.error(`${item.title} — ${msg} (seguindo…)`, {
-            title: "Maestro",
+            title: AUTOMATION_RUNNER_SHORT[runner],
           });
         }
       }
@@ -343,33 +376,53 @@ export function HomologationPage({
   async function runSuiteItems(
     suite: string,
     items: HomologationProgress["items"],
+    moduleName: string,
   ) {
-    const queue = items.filter((i) => i.testId && i.hasAutomation);
+    const runner = suiteRunnerFor(moduleName, suite);
+    const queue = items
+      .filter((i) => i.testId && itemSupportsRunner(i, runner))
+      .map((i) => ({ ...i, runner }));
     const label = SUITE_LABELS[suite] ?? suite;
     if (queue.length === 0) {
-      toast.info(`Nenhum flow Maestro na suite ${label}.`);
+      toast.info(
+        `Nenhum CT com ${AUTOMATION_RUNNER_SHORT[runner]} na suite ${label}.`,
+      );
       return;
     }
     await runQueue(queue, {
       title: `Rodar suite ${label}`,
-      description: `${queue.length} teste(s) em sequência.\nSe um falhar, continua nos próximos.`,
+      description: `${queue.length} teste(s) (${AUTOMATION_RUNNER_SHORT[runner]}) em sequência.\nSe um falhar, continua nos próximos.`,
       batchTitle: `Suite ${label}`,
     });
   }
 
   async function runAllAutomated() {
     if (!progress || !homologation) return;
-    const queue = progress.items.filter((i) => i.testId && i.hasAutomation);
+    const queue = progress.items
+      .filter((i) => i.testId && (i.hasMaestro || i.hasPlaywright || i.hasAutomation))
+      .map((i) => {
+        // Prefer Maestro for "run all" (campanha clássica); Playwright only if no Maestro
+        const runner: AutomationRunner =
+          i.hasMaestro || (i.hasAutomation && !i.hasPlaywright)
+            ? "maestro"
+            : "playwright";
+        return { ...i, runner };
+      })
+      .filter((i) => itemSupportsRunner(i, i.runner));
     if (queue.length === 0) {
-      toast.info("Nenhum teste com Maestro vinculado nesta campanha.");
+      toast.info("Nenhum teste com automação vinculada nesta campanha.");
       return;
     }
 
-    const draftCount = queue.filter((i) => i.readiness !== "ready").length;
+    const draftCount = queue.filter((i) =>
+      i.runner === "playwright"
+        ? i.playwrightReadiness !== "ready"
+        : i.readiness !== "ready",
+    ).length;
     const description =
       draftCount > 0
         ? `${queue.length} teste(s) em sequência.\n${draftCount} ainda estão em rascunho e podem falhar.\nSe um falhar, a campanha continua nos próximos.`
-        : `${queue.length} teste(s) Maestro em sequência.\nSe um falhar, continua nos próximos.\nDeixe o emulador ligado — pode demorar vários minutos.`;
+        : `${queue.length} teste(s) em sequência.\nSe um falhar, continua nos próximos.`;
 
     await runQueue(queue, {
       title: "Rodar homologação inteira",
@@ -396,6 +449,23 @@ export function HomologationPage({
     });
     return groupByModuleThenSuite(enriched);
   }, [progress?.items, catalogTests]);
+
+  useEffect(() => {
+    if (moduleGroups.length === 0) return;
+    setSuiteRunners((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const mod of moduleGroups) {
+        for (const suite of mod.suites) {
+          const key = suiteCollapseKey(mod.module, suite.suite);
+          if (key in next) continue;
+          next[key] = readSuiteRunner(key);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [moduleGroups]);
 
   useEffect(() => {
     if (collapsed !== null || moduleGroups.length === 0) return;
@@ -650,7 +720,7 @@ export function HomologationPage({
               const collapsedSet = collapsed ?? new Set<string>();
               const modKey = `m:${mod.module}`;
               const modExpanded = !collapsedSet.has(modKey);
-              const modStats = summarizeSuiteProgress(mod.items);
+              const modStats = summarizeSuiteProgress(mod.items, "maestro");
               const modLabel = MODULE_LABELS[mod.module] ?? mod.module;
               return (
                 <Fragment key={modKey}>
@@ -661,14 +731,35 @@ export function HomologationPage({
                     stats={modStats}
                     expanded={modExpanded}
                     onToggle={() => toggleCollapsedKey(modKey)}
-                    onRunModule={() => void runSuiteItems(modLabel, mod.items)}
+                    onRunModule={() => {
+                      const queue = mod.items
+                        .filter((i) => {
+                          const suite = i.suite ?? "Outros";
+                          const runner = suiteRunnerFor(mod.module, suite);
+                          return i.testId && itemSupportsRunner(i, runner);
+                        })
+                        .map((i) => ({
+                          ...i,
+                          runner: suiteRunnerFor(mod.module, i.suite ?? "Outros"),
+                        }));
+                      if (queue.length === 0) {
+                        toast.info(`Nenhuma automação elegível no módulo ${modLabel}.`);
+                        return;
+                      }
+                      void runQueue(queue, {
+                        title: `Rodar módulo ${modLabel}`,
+                        description: `${queue.length} teste(s) em sequência.\nSe um falhar, continua nos próximos.`,
+                        batchTitle: `Módulo ${modLabel}`,
+                      });
+                    }}
                     runDisabled={runningAll || liveRunning || Boolean(runningId)}
                     running={runningAll}
                   />
                   {modExpanded &&
                     mod.suites.map((group) => {
                       const sk = `s:${suiteCollapseKey(mod.module, group.suite)}`;
-                      const stats = summarizeSuiteProgress(group.items);
+                      const runner = suiteRunnerFor(mod.module, group.suite);
+                      const stats = summarizeSuiteProgress(group.items, runner);
                       const expanded = !collapsedSet.has(sk);
                       return (
                 <Fragment key={sk}>
@@ -678,30 +769,56 @@ export function HomologationPage({
                     stats={stats}
                     expanded={expanded}
                     onToggle={() => toggleCollapsedKey(sk)}
-                    onRunSuite={() => void runSuiteItems(group.suite, group.items)}
+                    onRunSuite={() =>
+                      void runSuiteItems(group.suite, group.items, mod.module)
+                    }
                     runDisabled={runningAll || liveRunning || Boolean(runningId)}
                     running={runningAll}
+                    runner={runner}
+                    onRunnerChange={(next) =>
+                      setSuiteRunner(mod.module, group.suite, next)
+                    }
                   />
                   {expanded &&
-                    group.items.map((item) => (
+                    group.items.map((item) => {
+                      const canRun = itemSupportsRunner(item, runner);
+                      const hasAny = Boolean(
+                        item.hasMaestro ||
+                          item.hasPlaywright ||
+                          item.hasAutomation,
+                      );
+                      return (
                       <tr key={item.testKey} className="border-b last:border-0">
                         <td className="px-4 py-3 pl-8">
                           <p className="font-medium">{item.title}</p>
                           <p className="font-mono text-xs text-muted-foreground">
                             {item.testKey}
                           </p>
-                          {item.hasAutomation && (
+                          {hasAny && (
                             <div className="mt-1">
                               <AutomationReadinessBadge
                                 record={{
                                   automation: {
-                                    type: "maestro",
-                                    flowPath: item.testKey,
+                                    type: runner === "playwright" ? "playwright" : "maestro",
+                                    flowPath:
+                                      runner === "maestro" ? item.testKey : undefined,
+                                    playwright:
+                                      runner === "playwright"
+                                        ? {
+                                            specPath: item.testKey,
+                                            readiness: item.playwrightReadiness,
+                                          }
+                                        : undefined,
                                     readiness: item.readiness,
                                   },
                                 }}
                               />
                             </div>
+                          )}
+                          {hasAny && !canRun && (
+                            <p className="mt-1 text-xs text-amber-400">
+                              {AUTOMATION_RUNNER_SHORT[runner]} não configurado
+                            </p>
                           )}
                           {!item.found && (
                             <p className="mt-1 text-xs text-amber-400">
@@ -744,17 +861,19 @@ export function HomologationPage({
                               <button
                                 type="button"
                                 title={
-                                  item.readiness === "ready"
-                                    ? "Executar Maestro"
-                                    : "Executar Maestro (flow ainda em rascunho)"
+                                  canRun
+                                    ? `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
+                                    : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
                                 }
                                 disabled={
                                   runningAll ||
                                   liveRunning ||
                                   runningId === item.testId ||
-                                  !item.hasAutomation
+                                  !canRun
                                 }
-                                onClick={() => void runTest(item.testId!, item.title)}
+                                onClick={() =>
+                                  void runTest(item.testId!, item.title, runner)
+                                }
                                 className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
                               >
                                 <Play className="size-4" />
@@ -763,7 +882,8 @@ export function HomologationPage({
                           )}
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                 </Fragment>
                       );
                     })}

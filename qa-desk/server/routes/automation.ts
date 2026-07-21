@@ -43,8 +43,15 @@ import {
 } from "../maestro-run-registry.js";
 import {
   cancelPlaywrightRun,
+  listPlaywrightSpecs,
   runPlaywrightSpec,
 } from "../playwright-run.js";
+import {
+  hasMaestroAutomation,
+  hasPlaywrightAutomation,
+  parseAutomationRunner,
+  type AutomationRunner,
+} from "../automation-runners.js";
 import {
   appendRunSessionOutput,
   clearRunSession,
@@ -87,6 +94,11 @@ automationRouter.use(requireAdmin);
 automationRouter.get("/flows", (req, res) => {
   const module = typeof req.query.module === "string" ? req.query.module : undefined;
   res.json(listMaestroFlows(module));
+});
+
+automationRouter.get("/specs", (req, res) => {
+  const module = typeof req.query.module === "string" ? req.query.module : undefined;
+  res.json(listPlaywrightSpecs(module));
 });
 
 automationRouter.get("/device", async (_req, res) => {
@@ -314,8 +326,10 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     homologationId?: string;
     recordVideo?: boolean;
     stage?: "all" | "prep" | "maestro";
+    runner?: AutomationRunner;
   };
   const recordVideo = Boolean(body.recordVideo);
+  const runner = parseAutomationRunner(body.runner, "maestro");
   const stage: "all" | "prep" | "maestro" =
     body.stage === "prep" || body.stage === "maestro" ? body.stage : "all";
   const catalog = await readCatalog(project);
@@ -323,20 +337,33 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
   if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
 
   const report = catalog.reports[idx];
-  if (!report.automation?.flowPath) {
-    return res.status(400).json({ error: "Nenhuma automação vinculada" });
+  const pwTarget = report.automation?.playwright;
+  const hasMaestro = hasMaestroAutomation(report.automation);
+  const hasPlaywright = hasPlaywrightAutomation(report.automation);
+
+  if (runner === "playwright") {
+    if (!hasPlaywright || !pwTarget?.specPath) {
+      return res.status(400).json({
+        error: "Nenhum spec Playwright vinculado (automation.playwright)",
+      });
+    }
+  } else if (!hasMaestro) {
+    return res.status(400).json({ error: "Nenhuma automação Maestro vinculada" });
   }
 
-  const prep = report.automation.prep;
-  if (stage === "prep" && (!prep || prep.type !== "playwright")) {
+  const prep = report.automation?.prep;
+  if (runner === "maestro" && stage === "prep" && (!prep || prep.type !== "playwright")) {
     return res.status(400).json({
       error: "Este teste não tem seed Playwright (automation.prep)",
     });
   }
 
   const wantPrep =
-    (stage === "all" || stage === "prep") && prep?.type === "playwright";
-  const wantMaestro = stage === "all" || stage === "maestro";
+    runner === "maestro" &&
+    (stage === "all" || stage === "prep") &&
+    prep?.type === "playwright";
+  const wantMaestro = runner === "maestro" && (stage === "all" || stage === "maestro");
+  const wantPlaywrightOnly = runner === "playwright";
 
   const stream =
     req.query.stream === "1" ||
@@ -347,6 +374,10 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
   const runId = randomUUID();
   const startedAt = new Date().toISOString();
   const outputTail = (text: string, max = 6000) => text.slice(-max);
+  const sessionPath =
+    wantPlaywrightOnly && pwTarget
+      ? pwTarget.specPath
+      : (report.automation?.flowPath ?? pwTarget?.specPath ?? "");
 
   registerRunSession({
     runId,
@@ -354,7 +385,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     testId: report.id,
     runNumber,
     startedAt,
-    flowPath: report.automation.flowPath,
+    flowPath: sessionPath,
     homologationId: homologation?.id,
     homologationSlug: homologation?.slug,
     homologationTitle: homologation?.title,
@@ -378,9 +409,11 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     res.setHeader("Cache-Control", "no-cache, no-transform");
     res.setHeader("X-Accel-Buffering", "no");
     res.flushHeaders?.();
-    const startPhase = wantPrep
-      ? "Playwright (seed)…"
-      : labelForFlowPath(report.automation.flowPath);
+    const startPhase = wantPlaywrightOnly
+      ? "Playwright (Web)…"
+      : wantPrep
+        ? "Playwright (seed)…"
+        : labelForFlowPath(report.automation!.flowPath!);
     send({
       type: "start",
       testId: report.id,
@@ -388,15 +421,18 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
       runNumber,
       runId,
       project,
-      flowPath: report.automation!.flowPath,
+      flowPath: sessionPath,
       stage,
+      runner,
       phase: startPhase,
     });
-    const startLog = wantPrep
-      ? stage === "prep"
-        ? "Iniciando Playwright (seed)…"
-        : "Iniciando Playwright → Maestro…"
-      : "Iniciando Maestro (CLI)…";
+    const startLog = wantPlaywrightOnly
+      ? "Iniciando Playwright (Web)…"
+      : wantPrep
+        ? stage === "prep"
+          ? "Iniciando Playwright (seed)…"
+          : "Iniciando Playwright → Maestro…"
+        : "Iniciando Maestro (CLI)…";
     send({ type: "log", line: startLog });
     appendRunSessionOutput(runId, `${startLog}\n`);
   }
@@ -426,7 +462,53 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
 
   let result: RunResult | undefined;
 
-  if (wantPrep && prep) {
+  if (wantPlaywrightOnly && pwTarget) {
+    send({
+      type: "progress",
+      phase: "Playwright (Web)",
+      action: path.basename(pwTarget.specPath),
+      status: "running",
+    });
+    send({
+      type: "log",
+      line: `[qa-desk] Playwright Web: ${pwTarget.specPath}${pwTarget.headed === false ? "" : " (headed)"}`,
+    });
+    appendRunSessionOutput(
+      runId,
+      `[qa-desk] Playwright Web: ${pwTarget.specPath}\n`,
+    );
+
+    const pw = await runPlaywrightSpec(pwTarget.specPath, {
+      headed: pwTarget.headed !== false,
+      runId,
+      onOutput: (chunk) => {
+        appendRunSessionOutput(runId, chunk);
+        send({ type: "log", line: chunk.replace(/\r?\n$/, "") });
+      },
+      shouldCancel: () => wasMaestroRunCancelled(runId),
+    });
+    stagesRun.push("playwright");
+    combinedOutput += pw.output;
+    result = {
+      ok: pw.ok && !pw.cancelled,
+      exitCode: pw.exitCode,
+      output: combinedOutput,
+      cancelled: pw.cancelled,
+      failure:
+        pw.ok && !pw.cancelled
+          ? undefined
+          : {
+              failedAction: "Playwright Web",
+              failedFlow: path.basename(pwTarget.specPath),
+              errorSummary: pw.cancelled
+                ? "Playwright cancelado"
+                : `Playwright falhou (exit ${pw.exitCode ?? "?"})`,
+            },
+    };
+    if (!result.ok) failedStage = "playwright";
+  }
+
+  if (wantPrep && prep && !result) {
     send({
       type: "progress",
       phase: "Playwright (seed DN)",
@@ -480,6 +562,15 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
   }
 
   if (wantMaestro && !result) {
+  const maestroFlowPath = report.automation?.flowPath;
+  if (!maestroFlowPath) {
+    result = {
+      ok: false,
+      exitCode: 1,
+      output: combinedOutput || "Flow Maestro ausente",
+      failure: { errorSummary: "Flow Maestro ausente" },
+    };
+  } else {
   try {
     await ensureAndroidDeviceReady({
       autoStart: isAutoEmulatorEnabled(),
@@ -521,9 +612,9 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
   if (stream) {
     send({
       type: "progress",
-      phase: labelForFlowPath(report.automation.flowPath),
-      action: report.automation.flowPath.split("/").pop(),
-      flowFile: report.automation.flowPath.split("/").pop(),
+      phase: labelForFlowPath(maestroFlowPath),
+      action: maestroFlowPath.split("/").pop(),
+      flowFile: maestroFlowPath.split("/").pop(),
       status: "running",
     });
     if (wantPrep) {
@@ -534,8 +625,8 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
 
   let lastOutputAt = Date.now();
   /** Mesmo limiar do watchdog interno (vídeo/compressão = 15 min). */
-  const idleAbortMs = maestroIdleTimeoutMs(report.automation.flowPath);
-  if (/video|compress/i.test(report.automation.flowPath)) {
+  const idleAbortMs = maestroIdleTimeoutMs(maestroFlowPath);
+  if (/video|compress/i.test(maestroFlowPath)) {
     const tip = `[qa-desk] CT de vídeo: idle permitido até ${Math.round(idleAbortMs / 1000)}s (compressão sem stdout).`;
     appendRunSessionOutput(runId, `${tip}\n`);
     send({ type: "log", line: tip });
@@ -584,7 +675,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     }
   });
 
-  if (needsMuralIdPipeline(report.automation.flowPath)) {
+  if (needsMuralIdPipeline(maestroFlowPath)) {
     const pipelineMsg =
       "[qa-desk] Pipeline ID ativo (pré-ação editar/excluir OU pós-envio assert/responsável)";
     appendRunSessionOutput(runId, `${pipelineMsg}\n`);
@@ -624,7 +715,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
 
   let maestroResult;
   try {
-    maestroResult = await runMaestroFlowWithMuralCardId(report.automation.flowPath, {
+    maestroResult = await runMaestroFlowWithMuralCardId(maestroFlowPath, {
       onOutput: (chunk) => splitter.push(chunk),
       runMeta: { runId, project, testId: report.id },
     });
@@ -656,6 +747,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     output: combinedOutput,
   };
   } // end !cancelled before maestro
+  } // end maestroFlowPath present
   } // end wantMaestro && !result
 
   if (!result) {
@@ -697,15 +789,45 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
   }
 
   report.automation = {
-    ...report.automation,
-    lastRunAt: new Date().toISOString(),
-    lastRunStatus: result.cancelled
+    ...report.automation!,
+    lastRunAt:
+      wantPlaywrightOnly
+        ? report.automation?.lastRunAt
+        : new Date().toISOString(),
+    lastRunStatus: wantPlaywrightOnly
+      ? report.automation?.lastRunStatus
+      : result.cancelled
+        ? "cancelled"
+        : result.ok
+          ? "success"
+          : "failed",
+    lastRunOutput: wantPlaywrightOnly
+      ? report.automation?.lastRunOutput
+      : output,
+    playwright: wantPlaywrightOnly && pwTarget
+      ? {
+          ...pwTarget,
+          lastRunAt: new Date().toISOString(),
+          lastRunStatus: result.cancelled
+            ? "cancelled"
+            : result.ok
+              ? "success"
+              : "failed",
+          lastRunOutput: output,
+        }
+      : report.automation?.playwright,
+  };
+
+  // Sempre atualiza lastRunAt no nível raiz para ordenação na lista
+  if (wantPlaywrightOnly) {
+    report.automation.lastRunAt = new Date().toISOString();
+    report.automation.lastRunStatus = result.cancelled
       ? "cancelled"
       : result.ok
         ? "success"
-        : "failed",
-    lastRunOutput: output,
-  };
+        : "failed";
+    report.automation.lastRunOutput = output;
+  }
 
   if (report.recordType !== "bug" && !result.cancelled && stage !== "prep") {
     report.homologationStatus = result.ok ? "passou" : "falhou";
@@ -783,16 +905,20 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
         runId,
         result: result.cancelled ? "cancelled" : result.ok ? "success" : "failed",
         exitCode: result.exitCode,
-        via: stagesRun.includes("playwright") && stagesRun.includes("maestro")
-          ? "playwright+maestro"
-          : stagesRun.includes("playwright")
-            ? "playwright"
-            : "maestro",
+        runner,
+        via: wantPlaywrightOnly
+          ? "playwright"
+          : stagesRun.includes("playwright") && stagesRun.includes("maestro")
+            ? "playwright+maestro"
+            : stagesRun.includes("playwright")
+              ? "playwright"
+              : "maestro",
         stage,
         stages: stagesRun,
         prepOk,
         failedStage,
-        flowPath: report.automation!.flowPath,
+        flowPath: sessionPath,
+        specPath: wantPlaywrightOnly ? pwTarget?.specPath : undefined,
         output,
         appVersion: result.appVersion,
         homologationId: homologation?.id,
@@ -814,7 +940,12 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     if (updated) Object.assign(report, updated);
   }
 
-  if (report.automation && !alreadyPersisted && stagesRun.includes("maestro")) {
+  if (
+    report.automation &&
+    !alreadyPersisted &&
+    stagesRun.includes("maestro") &&
+    !wantPlaywrightOnly
+  ) {
     const promoted = applyAutomationReadinessAfterRun(report.automation, report.history);
     if (promoted) {
       appendHistory(report, {
@@ -836,17 +967,20 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
       runNumber,
       status: result.cancelled ? "cancelled" : result.ok ? "success" : "failed",
       exitCode: result.exitCode,
-      flowPath: report.automation?.flowPath,
+      flowPath: sessionPath,
       output,
       appVersion: result.appVersion,
       homologationId: homologation?.id,
       startedAt,
       meta: {
-        via: stagesRun.includes("playwright") && stagesRun.includes("maestro")
-          ? "playwright+maestro"
-          : stagesRun.includes("playwright")
-            ? "playwright"
-            : "maestro",
+        runner,
+        via: wantPlaywrightOnly
+          ? "playwright"
+          : stagesRun.includes("playwright") && stagesRun.includes("maestro")
+            ? "playwright+maestro"
+            : stagesRun.includes("playwright")
+              ? "playwright"
+              : "maestro",
         stage,
         stages: stagesRun,
         prepOk,
@@ -858,6 +992,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
         failedStepSource: failure?.failedStepSource,
         errorSummary: failure?.errorSummary,
         recordVideo,
+        specPath: wantPlaywrightOnly ? pwTarget?.specPath : undefined,
       },
       evidencePaths: videoEvidence.map((e) => e.storageKey),
     });
@@ -865,7 +1000,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
 
   clearRunSession(runId);
 
-  if (stagesRun.includes("maestro")) {
+  if (stagesRun.includes("maestro") && report.automation?.flowPath) {
     const { analyzeMaestroOutputAsync } = await import("../maestro-run-analysis.js");
     analyzeMaestroOutputAsync(result.output, {
       testId: report.id,
@@ -885,6 +1020,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     appVersion: result.appVersion,
     failure,
     stage,
+    runner,
     stages: stagesRun,
     prepOk,
     failedStage,

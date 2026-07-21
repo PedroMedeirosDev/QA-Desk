@@ -8,6 +8,7 @@ export type ProjectRouteView =
   | "editor"
   | "homologation"
   | "homologations-list"
+  | "kb-curation"
   | "dashboard";
 
 export interface ParsedProjectRoute {
@@ -79,6 +80,10 @@ export function projectDashboardPath(project: ProjectSlug): string {
   return `${projectRootPath(project)}/dashboard`;
 }
 
+export function projectKbCurationPath(project: ProjectSlug): string {
+  return `${projectRootPath(project)}/curadoria-kb`;
+}
+
 export function isHomologationPath(project: ProjectSlug, pathname: string): boolean {
   const root = projectRootPath(project);
   return (
@@ -88,6 +93,10 @@ export function isHomologationPath(project: ProjectSlug, pathname: string): bool
 
 export function isDashboardPath(project: ProjectSlug, pathname: string): boolean {
   return pathname === projectDashboardPath(project);
+}
+
+export function isKbCurationPath(project: ProjectSlug, pathname: string): boolean {
+  return pathname === projectKbCurationPath(project);
 }
 
 export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedProjectRoute {
@@ -107,6 +116,9 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
     // Rotas de projeto (sem canal)
     if (first === "dashboard") {
       return { view: "dashboard" };
+    }
+    if (first === "curadoria-kb") {
+      return { view: "kb-curation" };
     }
     if (first === "homologacoes") {
       return { view: "homologations-list" };
@@ -146,6 +158,7 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
   }
 
   if (first === "dashboard") return { view: "dashboard" };
+  if (first === "curadoria-kb") return { view: "kb-curation" };
   if (first === "homologacoes") return { view: "homologations-list" };
   if (first === "homologacao") {
     if (!second) {

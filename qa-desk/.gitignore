@@ -1,3 +1,9 @@
 node_modules/
 dist/
 data/uploads/
+.env
+.env.e2e
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+e2e/playwright/.cache/

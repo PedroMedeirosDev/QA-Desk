@@ -16,7 +16,9 @@ function migrateTestId(id: string, recordType?: TestRecord["recordType"]): strin
 }
 
 function inferExecutionMode(report: TestRecord): ExecutionMode {
-  return report.automation?.flowPath ? "automated" : "manual";
+  const auto = report.automation;
+  if (auto?.flowPath?.trim() || auto?.playwright?.specPath?.trim()) return "automated";
+  return "manual";
 }
 
 function inferChannel(report: TestRecord): ProductChannel | undefined {
