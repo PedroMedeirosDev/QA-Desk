@@ -1,10 +1,7 @@
-# Liga o toggle "Dia inteiro" no composer de Evento (screenshot Medium_Phone).
+# Liga o toggle "Dia inteiro" no composer de Evento.
 #
-# Layout da linha:
-#   [ícone relógio] Dia inteiro ..................... (Switch)
-#
-# NÃO usar rightOf solto — pega o olho (pré-visualização) no app bar.
-# Switch ≈ 90% x na linha do rótulo; após ligar, some o horário (HH:mm).
+# Semantics: mural_evento_dia_inteiro (app ≥ 6.06.10).
+# Fallback: rightOf + below/above (NUNCA rightOf sozinho — pega o olho do app bar).
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -18,23 +15,107 @@ appId: br.com.polygonus.mobile.amostra
     visible: "Dia inteiro|Dia Inteiro"
     timeout: 8000
 
-# Thumb do Switch (direita da linha) — calibração Medium_Phone / screenshot
-- tapOn:
-    point: "90%, 31%"
-- waitForAnimationToEnd:
-    timeout: 500
-
-# Se ainda tem horário na data (Switch OFF), tenta de novo um pouco mais baixo
+# Preferência: semantics no Switch
 - runFlow:
     when:
-      visible: ".*\\d{1,2}:\\d{2}.*"
+      visible:
+        id: "mural_evento_dia_inteiro"
     commands:
       - tapOn:
-          point: "90%, 33%"
+          id: "mural_evento_dia_inteiro"
       - waitForAnimationToEnd:
           timeout: 500
 
-# Confirma: Dia inteiro ligado → horários somem das linhas Início/Fim
-- extendedWaitUntil:
-    notVisible: ".*\\d{1,2}:\\d{2}.*"
+# Fallback: à direita do rótulo, entre Título e corpo (fora do app bar / olho)
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_evento_dia_inteiro"
+      visible: "Título do evento|Titulo do evento"
+    commands:
+      - tapOn:
+          rightOf: "Dia inteiro"
+          below: "Título do evento|Titulo do evento"
+          above: "Escreva seu texto aqui"
+      - waitForAnimationToEnd:
+          timeout: 600
+
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_evento_dia_inteiro"
+      visible: "Escreva seu texto aqui"
+      notVisible: "Título do evento|Titulo do evento"
+    commands:
+      - tapOn:
+          rightOf: "Dia inteiro"
+          below: "Para:"
+          above: "Escreva seu texto aqui"
+      - waitForAnimationToEnd:
+          timeout: 600
+
+# Se abriu pré-visualização (olho) → Back e retenta
+- runFlow:
+    when:
+      notVisible: "Para:|Dia inteiro|Escreva seu texto aqui"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+      - extendedWaitUntil:
+          visible: "Dia inteiro|Dia Inteiro|Para:"
+          timeout: 8000
+      - runFlow:
+          when:
+            visible:
+              id: "mural_evento_dia_inteiro"
+          commands:
+            - tapOn:
+                id: "mural_evento_dia_inteiro"
+            - waitForAnimationToEnd:
+                timeout: 500
+      - runFlow:
+          when:
+            notVisible:
+              id: "mural_evento_dia_inteiro"
+          commands:
+            - tapOn:
+                point: "92%, 38%"
+            - waitForAnimationToEnd:
+                timeout: 600
+
+- assertVisible: "Novo evento|Para:"
+
+# Horários ainda nas datas → Switch OFF → segundo toque
+- runFlow:
+    when:
+      visible: "2026 \\d{1,2}:\\d{2}"
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "mural_evento_dia_inteiro"
+          commands:
+            - tapOn:
+                id: "mural_evento_dia_inteiro"
+            - waitForAnimationToEnd:
+                timeout: 600
+      - runFlow:
+          when:
+            notVisible:
+              id: "mural_evento_dia_inteiro"
+          commands:
+            - tapOn:
+                rightOf: "Dia inteiro"
+                below: "Título do evento|Titulo do evento|Para:"
+                above: "Escreva seu texto aqui"
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 600
+
+- assertVisible: "Novo evento|Para:"
+- scrollUntilVisible:
+    element: "Escreva seu texto aqui|Título do evento|Titulo do evento"
+    direction: UP
     timeout: 5000
+    optional: true

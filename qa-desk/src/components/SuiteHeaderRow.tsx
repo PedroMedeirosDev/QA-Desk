@@ -119,11 +119,14 @@ function GroupHeaderRow({
 }) {
   const Chevron = expanded ? ChevronDown : ChevronRight;
   const actionLabel = level === "module" ? "Módulo" : "Suite";
-  const rowBg = level === "module" ? "bg-primary/10" : "bg-muted/30";
+  const rowBg =
+    level === "module"
+      ? "bg-zinc-100/90 dark:bg-zinc-900/60"
+      : "bg-zinc-50 dark:bg-zinc-900/35";
   const titleClass =
     level === "module"
-      ? "text-sm font-bold tracking-wide text-foreground"
-      : "text-sm font-semibold tracking-wide text-foreground";
+      ? "text-sm font-bold tracking-wide text-zinc-800 dark:text-zinc-100"
+      : "text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-200";
   const indent = level === "suite" ? "pl-2" : "";
 
   const titleCell = (
@@ -179,8 +182,11 @@ function GroupHeaderRow({
       <td className="px-4 py-2.5">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {stats.runnable > 0 ? (
-            <span className="rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-0.5 text-sky-300">
-              {stats.runnable} automatizado{stats.runnable === 1 ? "" : "s"}
+            <span
+              className="rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-0.5 text-sky-300"
+              title="CTs com flow Maestro (executáveis). Inclui rascunho e estáveis."
+            >
+              {stats.runnable} com flow
             </span>
           ) : (
             <span className="text-muted-foreground">Manual</span>
@@ -188,10 +194,18 @@ function GroupHeaderRow({
           {stats.draftCount > 0 && (
             <span
               className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 text-amber-300"
-              title={`${stats.draftCount} flow(s) ainda em construção`}
+              title={`${stats.draftCount} flow(s) ainda em rascunho — existem, mas não validados`}
             >
               <Hammer className="size-3" />
-              {stats.draftCount} em construção
+              {stats.draftCount} rascunho{stats.draftCount === 1 ? "" : "s"}
+            </span>
+          )}
+          {stats.readyCount > 0 && stats.draftCount > 0 && (
+            <span
+              className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-emerald-300"
+              title={`${stats.readyCount} flow(s) validados (readiness ready)`}
+            >
+              {stats.readyCount} estáve{stats.readyCount === 1 ? "l" : "is"}
             </span>
           )}
         </div>

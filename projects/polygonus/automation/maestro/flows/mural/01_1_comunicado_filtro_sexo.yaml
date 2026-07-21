@@ -1,0 +1,10 @@
+# FILTRO-08: Envio com filtro Sexo (submenu Masculino/Feminino).
+# STATUS: draft
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: "Sexo"
+      TEXTO_COMUNICADO: "Teste filtro Sexo"

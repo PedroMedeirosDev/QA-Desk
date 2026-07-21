@@ -1,0 +1,9 @@
+# FILTRO-07: Envio com filtro Situação → Transferido (por enquanto só esta opção).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: "Situação|Situacao"
+      TEXTO_COMUNICADO: "Teste filtro Situação Transferido"

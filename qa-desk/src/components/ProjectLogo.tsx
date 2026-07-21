@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { getBundledLogoUrl } from "@/config/logos";
 
@@ -9,6 +9,7 @@ interface ProjectLogoProps {
   label: string;
   className?: string;
   size?: "sm" | "md" | "lg";
+  style?: CSSProperties;
 }
 
 const sizeClass = {
@@ -22,7 +23,7 @@ function logoNameCandidates(logoFile: string): string[] {
   return [...new Set([logoFile, slug, `${slug}_logo`])];
 }
 
-export function ProjectLogo({ logoFile, label, className, size = "md" }: ProjectLogoProps) {
+export function ProjectLogo({ logoFile, label, className, size = "md", style }: ProjectLogoProps) {
   const bundled = getBundledLogoUrl(logoFile);
   const candidates = useMemo(() => logoNameCandidates(logoFile), [logoFile]);
   const [attempt, setAttempt] = useState(0);
@@ -33,6 +34,7 @@ export function ProjectLogo({ logoFile, label, className, size = "md" }: Project
         src={bundled}
         alt={`Logo ${label}`}
         className={cn("shrink-0 rounded-lg object-contain", sizeClass[size], className)}
+        style={style}
       />
     );
   }
@@ -65,6 +67,7 @@ export function ProjectLogo({ logoFile, label, className, size = "md" }: Project
       src={src}
       alt={`Logo ${label}`}
       className={cn("shrink-0 rounded-lg object-contain", sizeClass[size], className)}
+      style={style}
       onError={() => setAttempt((i) => i + 1)}
     />
   );

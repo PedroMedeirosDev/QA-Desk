@@ -10,6 +10,7 @@ export type CtDraftFields = {
   description?: string;
   preconditions?: string;
   expectedResult?: string;
+  /** Resumo enxuto */
   steps?: string[];
   flowPath?: string;
   module?: string;
@@ -178,7 +179,8 @@ Campos OBRIGATÓRIOS e disjuntos:
 - description: só o OBJETIVO do teste (o que valida). NUNCA inclua "Pré-requisito".
 - preconditions: estado necessário ANTES de rodar (dados, perfil, fixtures, sessão)
 - expectedResult: o que deve ser verdade AO FINAL (UI, lista, tela)
-- steps: array de ações humanas, uma por item, sem numeração
+- steps: array de ações humanas RESUMIDAS (atalho QA), uma por item, sem numeração
+- stepsDetailed (opcional, fora deste JSON mínimo): mesmo fluxo em detalhe + âncoras Maestro
 
 Responda APENAS JSON válido no schema CtDraftFields.
 Não misture pré-condição na description. Se expectedResult for incerto, escreva a melhor hipótese observável na UI.`;

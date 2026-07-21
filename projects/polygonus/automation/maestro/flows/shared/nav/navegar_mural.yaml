@@ -1,5 +1,8 @@
 # Subflow: navega da home até a aba "Mural" dentro da seção Mural.
 # Pré-requisito: usuário já logado e na home (função com MURAL no menu).
+#
+# Após tap no home_card_mural o card some — NÃO usar "notVisible: home_card"
+# como fallback (dispara 2º tap em .*MURAL.* / aba e reabre PULAR).
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -15,13 +18,17 @@ appId: br.com.polygonus.mobile.amostra
           commands:
             - tapOn:
                 id: "home_card_mural"
+            - waitForAnimationToEnd:
+                timeout: 800
 
+      # Fallback só se AINDA não entrou no feed (card ausente / home sem semantics)
       - runFlow:
           when:
-            notVisible:
-              id: "home_card_mural"
+            notVisible: "Show menu|Recebidas|Enviadas|Pendentes|Responder comunicado"
           commands:
             - tapOn: ".*MURAL.*"
+            - waitForAnimationToEnd:
+                timeout: 800
 
       - runFlow: dismiss_coachmarks_pular.yaml
 

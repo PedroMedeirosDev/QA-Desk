@@ -1,149 +1,105 @@
-# Semantics — app Polygonus (Maestro)
+# Semantics — app Polygonus (Maestro / QA)
 
-
-
-> **Sync 2026-07-15:** `polygonus-mobile` `cq` → `af5de606` — **implementados**.  
-
-> **Auditoria 2026-07-15:** flows revisados — `id:` primeiro, fallback legado só onde necessário.
-
-
+> **Sync 2026-07-20:** `polygonus-mobile` `cq` → `4a414067` (v6.06.10) — **P0 implementados**.  
+> Flows QA já preferem `id:` nos subflows de funil, alvo, dia inteiro, data evento, PULAR e Sair.
 
 ```dart
-
-Semantics(identifier: 'nome_aqui', button: true, child: /* widget */)
-
+Semantics(
+  identifier: 'modulo_contexto_acao',
+  button: true,
+  child: /* widget */,
+)
 ```
 
+Maestro: `tapOn: id: "modulo_contexto_acao"`
 
+**Convenção:** `{modulo}_{tela_ou_contexto}_{acao}` · snake_case · ASCII.
 
-Maestro: `tapOn: id: "nome_aqui"`
+**Padrão nos subflows QA:** `id:` primeiro → fallback texto/coordenada só se o id não existir.
 
-
-
-**Padrão nos subflows:**
-
-1. `extendedWaitUntil` / `tapOn` com `id`
-
-2. Fallback texto/coordenada **só** se o id não resolver
-
-3. Sem duplo tap (id + fallback no mesmo passo sem condição)
-
-
-
-**ID do comunicado:** badge `ID 123456` no card (sideload) — validação primária por ID (`copyTextFrom` → `output.idComunicado`); texto só como âncora opcional. Ver `capturar_id_comunicado_lista.yaml`, `confirmar_comunicado_enviado.yaml`.
-
-
-
-**Exceção:** `mural_composer_texto` — usar hint `Escreva seu texto aqui` (`escrever_comunicado.yaml`).
-
-
+**Não Semantics:** pickers nativos Android (galeria / DocumentsUI).
 
 ---
 
+## Implementados no app (45)
 
+### Auth / home / perfil
+| `identifier` | Arquivo |
+|--------------|---------|
+| `auth_login_usuario` / `senha` / `entrar` | `login_page.dart` |
+| `auth_onboarding_avancar` | `presentation_buttons_mixin.dart` |
+| `home_menu_usuario` | `aluno_com_avatar_widget.dart` |
+| `home_menu_sair` | `aluno_com_avatar_widget.dart` |
+| `home_coach_pular` | `home_page.dart` |
+| `home_card_mural` | `card_widget.dart` (`00.02`) |
+| `perfil_dropdown_funcao` | `perfil_page.dart` |
 
-## Mural
+### Mural / composer / evento
+| `identifier` | Arquivo |
+|--------------|---------|
+| `mural_boom_fab` / `comunicado` / `evento` | `mural_widget.dart` |
+| `mural_filtro_sentido` | `aluno_com_avatar_widget.dart` |
+| `mural_card_menu` | `mensagem_widget.dart` |
+| `mural_composer_galeria` / `camera` / `enquete` / `anexo` / `enviar` | `bottom_bar_widget.dart` |
+| `mural_composer_texto` / `turma` / `alvo` | `nova_mensagem_page.dart` |
+| `mural_composer_filtro` / `preview` | `nova_mensagem_page.dart` AppBar |
+| `mural_evento_dia_inteiro` / `data_inicio` | `nova_mensagem_page.dart` |
+| ⚠️ `mural_composer_texto` | Maestro usa **hint** (id colide com enquete no emulador) |
 
+### Rotina boom
+`rotina_boom_fab`, `ocorrencia`, `momentos`, `bilhete`, `alimentacao`, `soneca`, `banheiro`, `saude`, `humor`, `vestuario` — `rotina_widget.dart`
 
+### Chat / Diário / Portal / Chegando
+| `identifier` | Arquivo |
+|--------------|---------|
+| `chat_lista_fab_nova` | `conversas_page.dart` |
+| `chat_input_anexo` / `camera` / `enviar_ou_mic` | `message_input_bar.dart` |
+| `diario_tarefa_fab_novo` | `lista_tarefa_page.dart` |
+| `portal_conteudo_upload` | `ver_conteudo.dart` |
+| `chegando_beep_toggle` / `chegando_filtro` | `chegada_page.dart` |
 
-| `identifier` | Onde | Flow(s) |
-
-|--------------|------|---------|
-
-| `mural_boom_fab` | FAB `+` | `tap_boom_fab.yaml` |
-
-| `mural_boom_comunicado` | Item Comunicado | `tap_boom_comunicado.yaml` |
-
-| `mural_boom_evento` | Item Evento | `tap_boom_evento.yaml` |
-
-| `mural_filtro_sentido` | Dropdown filtros | `selecionar_filtro_sentido.yaml`, `filtrar_*.yaml`, `verificar_perfil_professor.yaml` |
-
-| `mural_card_menu` | ⋮ do card | `abrir_menu_tres_pontos.yaml`, `abrir_menu_primeiro_comunicado.yaml` |
-
-| `mural_composer_galeria` | Ícone galeria | `adicionar_foto_galeria.yaml` |
-
-| `mural_composer_enquete` | Ícone enquete | `adicionar_enquete_nova.yaml` |
-
-| `mural_composer_anexo` | Clip PDF | `anexar_arquivo_por_nome.yaml` |
-
-| `mural_composer_enviar` | Enviar | `enviar_comunicado.yaml` |
-
-| `mural_composer_texto` | Campo texto | ⚠️ hint em `escrever_comunicado.yaml` |
-
-| `mural_composer_turma` | Seletor Turma | `selecionar_turmas_comunicado.yaml` |
-
-| `mural_composer_alvo` | Chip alvo ao lado de `Para:` (Alunos/Todos/…) | **Sugerido** — hoje `selecionar_alvo_todos.yaml` usa regex `Alunos` |
-
-| *(texto)* `ID [0-9]+` | Badge idMensagem | `assert_comunicado_por_id.yaml` (prova canônica); não confiar em `copyTextFrom` |
-
-
-
----
-
-
-
-## Login, home, perfil
-
-
-
-| `identifier` | Onde | Flow(s) |
-
-|--------------|------|---------|
-
-| `auth_login_entrar` | ENTRAR | `login_as.yaml` |
-
-| `auth_login_usuario` | E-mail ou Login | `login_as.yaml` |
-
-| `auth_login_senha` | Senha | `login_as.yaml` |
-
-| `home_menu_usuario` | Nome/foto (header) | `abrir_tela_perfil.yaml` |
-
-| `home_card_mural` | Card MURAL na home | `navegar_mural.yaml`, `navegar_home_card.yaml` |
-
-| `perfil_dropdown_funcao` | Dropdown perfil | `selecionar_funcao.yaml` |
-
-| `auth_onboarding_avancar` | Slides onboarding | `ensure_login_screen.yaml`, `smoke/launch.yaml` |
-
-
+### Flows QA já atualizados (id primeiro)
+| Flow | IDs |
+|------|-----|
+| `abrir_filtro_extras_composer.yaml` | `mural_composer_filtro` |
+| `selecionar_alvo_todos.yaml` | `mural_composer_alvo` |
+| `marcar_dia_inteiro.yaml` | `mural_evento_dia_inteiro` |
+| `selecionar_data_evento_dia_seguinte.yaml` | `mural_evento_data_inicio` |
+| `dismiss_coachmarks_pular.yaml` | `home_coach_pular` |
+| `logout.yaml` | `home_menu_usuario`, `home_menu_sair` |
 
 ---
 
+## Ainda sugeridos (P1 / P2 — não no app)
 
+### P1 — próximo lote
+| `identifier` | Onde |
+|--------------|------|
+| `home_card_*` (demais `codMenuItem`) | Estender padrão `home_card_mural` |
+| `home_menu_perfil` / `tutorial` | Popup header |
+| `home_dialog_sair_confirmar` | Diálogo confirmar sair |
+| `home_selecionar_aluno` / `home_filtro_aplicar` / `limpar` | Header filtros |
+| `mural_tab_*` / `mural_bilhete_fab` | Abas + bilhete |
+| `mural_card_editar` / `excluir` / anexos | Itens do ⋮ |
+| `mural_composer_marcador` / `opcoes` / `filtro_limpar` | Composer |
+| `mural_evento_titulo` / `hora_inicio` / `data_fim` | Evento |
+| `shared_dialog_sim` / `nao` | polyConfirmDialog |
+| `rotina_composer_*` | `agenda_bottom_bar_widget.dart` |
+| `diario_*` anexos / enviar / card menu | Diário |
+| `chat_conversa_*` / `chat_selecao_*` | Chat AppBar |
+| `atendimento_*` | Fale conosco |
+| `portal_boleto_*` | Boleto |
+| `ocorrencia_enviar` / `data` | Ocorrência |
+| `calendario_menu` | Calendário |
+| Auth: `toggle_senha` / `esqueci` / `FAZER LOGIN` | Login |
 
-## Rotina
-
-
-
-| `identifier` | Onde | Flow(s) |
-
-|--------------|------|---------|
-
-| `rotina_boom_fab` | FAB `+` aba Rotina | `rotina/abrir_boom_menu_rotina.yaml` |
-
-
+### P2
+Dashboard info icons, aula online tiles, chat emoji/tema, portal pix cancelar, onboarding voltar, change pass, gallery/PDF shared helpers.
 
 ---
 
+## Notas
 
-
-## Ainda só texto (sem semantics no app)
-
-
-
-| UI | Flow |
-
-|----|------|
-
-| Menu popup Editar/Excluir | `editar_comunicado_lista.yaml`, `excluir_comunicado_lista.yaml` |
-
-| Picker galeria/DocumentsUI | `pick_galeria_android.yaml`, `anexar_arquivo_por_nome.yaml` |
-
-| Diálogo exclusão Sim/Não | `confirmar_exclusao_comunicado.yaml` |
-
-| Coach marks PULAR | vários `navegar_*.yaml`, `resume_*.yaml` |
-
-| Logout Sair | `logout.yaml` |
-
-| Toggle Dia inteiro (evento) | `marcar_dia_inteiro.yaml` — preferir `Semantics(identifier: mural_evento_dia_inteiro)` no Switch |
-
-
+1. Build amostra precisa ser **≥ 6.06.10** (`4a414067`) para os novos ids.  
+2. Após instalar APK novo no emulador, CTs de filtro/evento/logout devem usar `id:` sem coordenada na maioria dos casos.  
+3. Pickers Android continuam por texto/DocumentsUI.

@@ -29,8 +29,8 @@ export function AutomationReadinessBadge({
       )}
       title={
         isReady
-          ? "Flow validado no Maestro Studio / emulador"
-          : "Flow ainda em mapeamento — pode falhar em seletores"
+          ? "Flow estável — validado no Maestro / emulador"
+          : "Flow em rascunho — existe, mas ainda pode falhar em seletores"
       }
     >
       {isReady ? (

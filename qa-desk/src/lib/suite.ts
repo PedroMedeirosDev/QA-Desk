@@ -136,6 +136,19 @@ export function suiteFromTestRecord(r: Pick<TestRecord, "tags" | "testKey" | "ti
   return "Outros";
 }
 
+/**
+ * CTs adiados do lote (módulo/suite). Ex.: E2E-99 só depois que o restante do Mural estiver estável.
+ * Ainda podem ser rodados individualmente pelo botão do CT.
+ */
+export function isDeferredFromBatchRun(
+  r: Pick<TestRecord, "tags" | "testKey" | "title">,
+): boolean {
+  if (r.tags?.includes("deferred:batch") || r.tags?.includes("ct:E2E-99")) return true;
+  if (r.testKey?.toLowerCase().includes("e2e")) return true;
+  if (/^E2E[-_]?\d*/i.test(r.title ?? "")) return true;
+  return suiteFromTestRecord(r) === "E2E";
+}
+
 export function suiteOrderIndex(suite: string): number {
   const i = SUITE_ORDER.indexOf(suite as KnownSuite);
   return i >= 0 ? i : SUITE_ORDER.length;

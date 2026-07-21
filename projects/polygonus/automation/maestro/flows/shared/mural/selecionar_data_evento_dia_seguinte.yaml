@@ -1,0 +1,73 @@
+# Abre o seletor de data do evento e avança 1 dia (scroll).
+#
+# Workaround BrasilTime / offset inválido ao enviar com a data "hoje"
+# no emulador — preferir amanhã no formulário.
+#
+# Semantics: mural_evento_data_inicio (app ≥ 6.06.10).
+# Fallback: texto da data (index 0).
+#
+# Picker: rodas/scroll → Ok|OK|Confirmar.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- extendedWaitUntil:
+    visible: "Novo evento|Para:|Dia inteiro"
+    timeout: 8000
+
+- scrollUntilVisible:
+    element: "\\d{1,2} de .*\\. de \\d{4}|\\d{1,2}/\\d{1,2}/\\d{4}"
+    direction: DOWN
+    timeout: 8000
+    optional: true
+
+# Preferência: semantics da data de início
+- runFlow:
+    when:
+      visible:
+        id: "mural_evento_data_inicio"
+    commands:
+      - tapOn:
+          id: "mural_evento_data_inicio"
+      - waitForAnimationToEnd:
+          timeout: 600
+
+# Fallback: primeira data do formulário (texto)
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_evento_data_inicio"
+    commands:
+      - tapOn:
+          text: ".*\\d{1,2} de .*\\. de \\d{4}.*|.*\\d{1,2}/\\d{1,2}/\\d{4}.*"
+          index: 0
+      - waitForAnimationToEnd:
+          timeout: 600
+
+- extendedWaitUntil:
+    visible: "Ok|OK|Confirmar|Selecionar|CANCELAR|Cancelar|jan\\.|fev\\.|mar\\.|abr\\.|mai\\.|jun\\.|jul\\.|ago\\.|set\\.|out\\.|nov\\.|dez\\."
+    timeout: 10000
+
+# Roda do dia (centro-esquerda do dialog): swipe para cima → próximo dia
+- swipe:
+    start: "35%, 58%"
+    end: "35%, 42%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 400
+
+- swipe:
+    start: "35%, 55%"
+    end: "35%, 45%"
+    duration: 250
+- waitForAnimationToEnd:
+    timeout: 400
+
+- tapOn: "Ok|OK|Confirmar|Selecionar"
+- waitForAnimationToEnd:
+    timeout: 500
+
+- extendedWaitUntil:
+    visible: "Novo evento|Para:|Escreva seu texto aqui|Dia inteiro"
+    timeout: 10000
+
+- assertVisible: "Novo evento|Para:"

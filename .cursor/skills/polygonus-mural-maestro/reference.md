@@ -16,7 +16,8 @@ Complemento de `.cursor/skills/polygonus-mural-maestro/SKILL.md`.
 | Boleto | `mural/boleto-01` … `02` | 11, 14 | Mês corrente / competência |
 | Correspondência | `mural/corresp-01` | 12 | Declaração IR |
 | Eventos | `mural/evento-01` … `02` | 08, 13 | Padrão / dia inteiro |
-| Lista | `mural/lista-01` | 09 | Filtro — escopo a definir |
+| Lista | `mural/lista-01` | 09 | Filtro Enviadas — escopo a definir |
+| Filtros | `mural/filtro-01` … `10` | 21–30 | Funil do composer (menu reformulado) |
 | E2E | `mural/e2e-99` | 99 | Jornada completa (por último) — **não é smoke** |
 
 Manual (não automatizar nesta suíte): gravação de câmera; vídeo médio/grande (timeout). Ver `flows/docs/mural-manual.md`.
@@ -43,6 +44,9 @@ shared/mural/    setup_coordenador_mural, composer_novo_comunicado, publicar_com
 LOGIN_PHJESUS=PHJESUS
 LOGIN_ETMENEZES=ETMENEZES
 LOGIN_ACMENEZES=ACMENEZES
+LOGIN_RBBARBOSA=RBBARBOSA   # bolsista 100% + pai de menino (NÃO é Pagantes no funil)
+LOGIN_PLLIMA=PLLIMA         # bolsista 50% + pai de menina (= Pagantes; FILTRO-04/06)
+LOGIN_ANIVERSARI=ANIVERSARI # aniversariante — Playwright ajusta DN; assert ID no app
 SENHA=poly1000
 NOME_PHJESUS=Pedro Jesus
 FIXTURE_PDF=...
@@ -50,6 +54,8 @@ FIXTURE_FOTO=...
 FIXTURE_VIDEO=...
 ```
 
+**Filtros — seeds:** Sexo valida nos dois pais; bolsistas 100%/50%/todos reutilizam os mesmos logins.  
+**Pagantes** = sem gratuidade 100% → assert em `PLLIMA` (50%); `RBBARBOSA` (100%) **não** deve ver.
 Push de fixtures: scripts sob `projects/polygonus/automation/maestro` (ver README / `push-maestro-fixtures`).
 
 ## Onboarding (ensure_login)

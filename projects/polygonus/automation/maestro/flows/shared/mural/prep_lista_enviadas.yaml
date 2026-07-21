@@ -13,7 +13,7 @@ appId: br.com.polygonus.mobile.amostra
 # App frio / background — um único bring-to-front antes de decidir o caminho
 - runFlow:
     when:
-      notVisible: "ENTRAR|FAZER LOGIN|${NOME_PHJESUS}|Pedro Jesus|Pedro|Show menu|Responder comunicado|.*MURAL.*|Versão:.*"
+      notVisible: "ENTRAR|FAZER LOGIN|Pedro Jesus|Pedro|Show menu|Responder comunicado|.*MURAL.*|Versão:.*"
     commands:
       - launchApp
       - waitForAnimationToEnd:
@@ -27,7 +27,7 @@ appId: br.com.polygonus.mobile.amostra
       # Usuário errado → setup (resume faz launchApp se precisar)
       - runFlow:
           when:
-            notVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+            notVisible: "Pedro Jesus|Pedro"
           commands:
             - runFlow: setup_coordenador_mural.yaml
             - runFlow: filtrar_enviadas.yaml
@@ -37,7 +37,7 @@ appId: br.com.polygonus.mobile.amostra
       # PHJESUS — confirma COORDENADOR em Perfil (sai do Mural → home → Perfil → home → Mural)
       - runFlow:
           when:
-            visible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+            visible: "Pedro Jesus|Pedro"
             true: ${!output.prepFeito}
           commands:
             - runFlow: ../perfil/garantir_perfil_coordenador.yaml
@@ -61,5 +61,5 @@ appId: br.com.polygonus.mobile.amostra
       id: "mural_card_menu"
     timeout: 10000
 
-- assertVisible: "${NOME_PHJESUS}|Pedro Jesus|Pedro"
+- assertVisible: "Pedro Jesus|Pedro"
 - assertVisible: "Enviadas|Enviados"

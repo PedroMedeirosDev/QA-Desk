@@ -14,6 +14,16 @@ for (const r of catalog.reports) {
   if (!item) continue;
   r.description = item.description;
   r.steps = item.steps;
+  if (item.prep) {
+    r.automation = {
+      type: "maestro",
+      flowPath: item.flowPath,
+      label: item.ctId,
+      readiness: r.automation?.readiness ?? "draft",
+      ...r.automation,
+      prep: item.prep,
+    };
+  }
   n += 1;
 }
 

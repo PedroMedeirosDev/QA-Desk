@@ -1,0 +1,67 @@
+# Debug/retomada ANEXO-03: composer ja aberto com video.
+# Gate: sumir "Comprimindo..." (sem acentos no regex — encoding Windows).
+#
+# cwd = projects/polygonus/automation/maestro
+# maestro test flows/debug/resume_anexo03_compressao_enviar.yaml
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible: "Compressao em andamento|necessario aguardar|Compressão em andamento|É necessário aguardar"
+    commands:
+      - tapOn: "Fechar"
+      - waitForAnimationToEnd:
+          timeout: 600
+
+- extendedWaitUntil:
+    visible: "Novo comunicado|Editar comunicado|Para:"
+    timeout: 15000
+
+# Espera Comprimindo sumir (ate 12 min)
+- runFlow:
+    when:
+      visible: ".*Comprimindo.*"
+    commands:
+      - extendedWaitUntil:
+          notVisible: ".*Comprimindo.*"
+          timeout: 720000
+
+- runFlow:
+    when:
+      visible: ".*comprimido com sucesso.*"
+    commands:
+      - tapOn:
+          text: "Ok|OK|Fechar"
+          optional: true
+
+- tapOn:
+    id: mural_composer_enviar
+
+# Ainda comprimindo → fecha alerta, espera sumir, reenvia
+- runFlow:
+    when:
+      visible: "Compressao em andamento|necessario aguardar|Compressão em andamento|É necessário aguardar"
+    commands:
+      - tapOn: "Fechar"
+      - waitForAnimationToEnd:
+          timeout: 500
+      - extendedWaitUntil:
+          notVisible: ".*Comprimindo.*"
+          timeout: 720000
+      - tapOn:
+          text: "Ok|OK|Fechar"
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 400
+      - tapOn:
+          id: mural_composer_enviar
+
+- extendedWaitUntil:
+    visible: "Recebidas|Enviadas|Enviados"
+    timeout: 90000
+
+- assertVisible: "Recebidas|Enviadas|Enviados"
+- assertNotVisible: "Novo comunicado|Editar comunicado"
+
+- runFlow: ../shared/mural/filtrar_enviadas.yaml

@@ -1,0 +1,12 @@
+# FILTRO-01: Envio com filtro Inadimplentes (+ Período mês corrente).
+# Fase 1: até Enviadas (SKIP_TEARDOWN). Fase 2 qa-desk: adb ID → ETMENEZES.
+# Nota: BOLETO-01/02 cobrem o funil com anexo; este CT valida filtro + texto.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: "Inadimplentes|Inadimplente"
+      TEXTO_COMUNICADO: "Teste filtro Inadimplentes"
+      SKIP_TEARDOWN: "1"

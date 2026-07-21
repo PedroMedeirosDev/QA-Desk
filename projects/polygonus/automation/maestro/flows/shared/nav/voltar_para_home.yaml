@@ -1,31 +1,53 @@
 # Volta à home autenticada a partir de telas internas.
 #
 # CARDÁPIO NÃO é home genérica — só indica PHJESUS em SUPORTE.
-# Após CTs Mural (coordenador/professor), a home tem card MURAL.
+# Home com Mural = card home_card_mural (não a aba "Mural" do feed).
 
 appId: br.com.polygonus.mobile.amostra
 ---
+# Já na home → não pressionar Back (evita diálogo falso / idle)
 - runFlow:
     when:
-      notVisible: ".*MURAL.*"
+      visible:
+        id: "home_card_mural"
+    commands:
+      - assertVisible:
+          id: "home_card_mural"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "home_card_mural"
+      visible: "Show menu|Recebidas|Enviadas|Pendentes|Responder comunicado"
+    commands:
+      - runFlow: voltar_home_apos_mural.yaml
+
+- runFlow:
+    when:
+      notVisible:
+        id: "home_card_mural"
     commands:
       - repeat:
           times: 5
           commands:
             - runFlow:
                 when:
-                  notVisible: ".*MURAL.*"
+                  notVisible:
+                    id: "home_card_mural"
                 commands:
                   - pressKey: Back
                   - waitForAnimationToEnd:
                       timeout: 500
       - runFlow:
           when:
-            notVisible: ".*MURAL.*"
+            notVisible:
+              id: "home_card_mural"
           commands:
             - launchApp
             - waitForAnimationToEnd:
                 timeout: 500
+
 - extendedWaitUntil:
-    visible: ".*MURAL.*"
+    visible:
+      id: "home_card_mural"
     timeout: 15000

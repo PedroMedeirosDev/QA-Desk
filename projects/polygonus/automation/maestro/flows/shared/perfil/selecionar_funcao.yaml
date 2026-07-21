@@ -1,6 +1,8 @@
 # Seleciona função no dropdown Perfil (só se ainda não estiver ativa).
 #
 # Env: FUNCAO — COORDENADOR | PROFESSORES | SUPORTE | …
+# Se o chip já mostra FUNCAO → só Back (NÃO abrir a lista).
+# Só para PHJESUS. ETMENEZES/Eliza nunca usa este flow.
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -8,22 +10,34 @@ appId: br.com.polygonus.mobile.amostra
     visible: ".*Unidade.*|Versão.*"
     timeout: 12000
 
-# Já correto — volta à home
+# Sessão errada (responsável) — sair sem mexer no dropdown
+- runFlow:
+    when:
+      visible: "RESPONSAVEIS|Eliza|Teixeira"
+      notVisible: "COORDENADOR|PROFESSORES|SUPORTE|SECRETARIA|Pedro Jesus|Pedro"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+
+# Já no perfil certo — só voltar à home (não abrir lista / não retap)
 - runFlow:
     when:
       visible: "${FUNCAO}"
     commands:
       - pressKey: Back
       - extendedWaitUntil:
-          visible: ".*MURAL.*"
-          timeout: 12000
+          visible: ".*MURAL.*|Pedro Jesus|Pedro|home_card_mural"
+          timeout: 15000
 
-# Precisa trocar — só na tela Perfil (Unidade). Home com SUPORTE/CARDÁPIO não entra aqui.
+# Precisa trocar: ainda na tela Perfil E o alvo ainda não está selecionado
 - runFlow:
     when:
-      notVisible: "${FUNCAO}"
       visible: ".*Unidade.*"
-      notVisible: ".*MURAL.*"
+      notVisible: "${FUNCAO}|.*MURAL.*|RESPONSAVEIS|Eliza|Teixeira|Show menu|Recebidas"
     commands:
       - runFlow:
           when:
@@ -32,23 +46,31 @@ appId: br.com.polygonus.mobile.amostra
           commands:
             - tapOn:
                 id: "perfil_dropdown_funcao"
-            - tapOn: "${FUNCAO}"
+            - waitForAnimationToEnd:
+                timeout: 800
+      # Chip de OUTRO perfil (nunca tap no próprio FUNCAO — isso abre a lista à toa)
       - runFlow:
           when:
             notVisible:
               id: "perfil_dropdown_funcao"
+            visible: "PROFESSORES|SUPORTE|SECRETARIA"
+            notVisible: "${FUNCAO}"
           commands:
-            - tapOn: "SUPORTE|PROFESSORES|SECRETARIA|RESPONSAVEIS|COORDENADOR"
-            - tapOn: "${FUNCAO}"
+            - tapOn: "PROFESSORES|SUPORTE|SECRETARIA"
+            - waitForAnimationToEnd:
+                timeout: 800
       - extendedWaitUntil:
           visible: "${FUNCAO}"
           timeout: 12000
+      - tapOn: "${FUNCAO}"
+      - waitForAnimationToEnd:
+          timeout: 500
       - pressKey: Back
       - extendedWaitUntil:
-          visible: ".*MURAL.*"
+          visible: ".*MURAL.*|Pedro Jesus|Pedro|home_card_mural"
           timeout: 15000
 
-# Safety: se ainda no Perfil (ambos os when acima skiparam), volta à home
+# Safety: ainda em Perfil após os passos acima
 - runFlow:
     when:
       visible: ".*Unidade.*|Versão.*"

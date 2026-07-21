@@ -1,17 +1,36 @@
 # Fecha coach marks (PULAR) só se estiver na tela.
-# when:visible = checagem única (não espera); sem PULAR o flow pula na hora.
-# Antes: 2× tap optional + wait sempre (~800ms+) mesmo sem coachmark.
+# Semantics: home_coach_pular (app ≥ 6.06.10). Fallback: texto PULAR.
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow:
     when:
+      visible:
+        id: "home_coach_pular"
+    commands:
+      - tapOn:
+          id: "home_coach_pular"
+      - waitForAnimationToEnd:
+          timeout: 400
+      - runFlow:
+          when:
+            visible:
+              id: "home_coach_pular"
+          commands:
+            - tapOn:
+                id: "home_coach_pular"
+            - waitForAnimationToEnd:
+                timeout: 400
+
+- runFlow:
+    when:
       visible: "PULAR"
+      notVisible:
+        id: "home_coach_pular"
     commands:
       - tapOn: "PULAR"
       - waitForAnimationToEnd:
           timeout: 400
-      # Segundo coachmark residual (raro)
       - runFlow:
           when:
             visible: "PULAR"

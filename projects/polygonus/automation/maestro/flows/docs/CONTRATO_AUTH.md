@@ -111,8 +111,23 @@ Outros logins:
 
 | Login | Papel |
 |-------|-------|
-| `ETMENEZES` | **Responsável** — home: nomes dos filhos (`Ana, Bruno, Davi`) |
+| `ETMENEZES` | **Responsável (Eliza)** — sempre `RESPONSAVEIS`; **nunca** `garantir_perfil_*`. Home: Eliza e/ou filhos |
 | `ACMENEZES` | **Aluno** (Ana) — home: só o nome da aluna; não confundir com ETMENEZES |
+| `RBBARBOSA` | Seed filtros: bolsista **100%** + responsável de **menino** (FILTRO-03 / 05 / Sexo M). **Fora** de Pagantes |
+| `PLLIMA` | Seed filtros: bolsista **50%** + responsável de **menina** (FILTRO-04 / 05 / 06 Pagantes / Sexo F). Pagantes = não-100% |
+| `ANIVERSARI` | Seed aniversariante (FILTRO-02 / 09). DN ajustada via Playwright no gestão; login app para assert ID |
+
+### Playwright — DN (FILTRO-02 / 09)
+
+Só web. Spec: `automation/playwright/mural/ajustar-dn-aniversariante.spec.ts`.
+
+1. URL `https://amostra.polygonus.com.br/web/react/gestao`
+2. Geral → Pessoas → Colaboradores
+3. Busca `Aniversariante` → duplo clique no nome
+4. Data Nascimento: dia/mês do teste → Gravar  
+   Usuário dedicado — **não** reverter DN.
+
+Depois no app: PHJESUS envia com filtro → `ANIVERSARI` confirma pelo ID.
 
 ## Credenciais
 

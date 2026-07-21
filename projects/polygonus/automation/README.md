@@ -1,34 +1,48 @@
 # Automação
 
-Pasta reservada para scripts (Android em emulador) e, no futuro, web conforme a stack escolhida.
+Scripts Android (Maestro + emulador) e web (Playwright) para o Polygonus amostra.
 
 ## Diretriz
 
 - **Emulador**: execução principal da suíte automatizada.
-- **Aparelho físico**: smoke manual rápido (ver [`../../shared/templates/checklist-smoke-dispositivo.md`](../../shared/templates/checklist-smoke-dispositivo.md)).
+- **Aparelho físico**: smoke manual rápido (vídeo/compressão) — no AVD o encode é lento (sem MediaCodec HW).
+- Checklist device: [`../../shared/templates/checklist-smoke-dispositivo.md`](../../shared/templates/checklist-smoke-dispositivo.md).
 
-## Android — opções comuns
+## Android — Maestro
 
-| Abordagem                   | Quando favorece                                       |
-| --------------------------- | ----------------------------------------------------- |
-| **Maestro**                 | YAML, início rápido, bom para fluxos E2E              |
-| **Appium**                  | Linguagem à escolha, reaproveitamento em times mistos |
-| **Espresso / UI Automator** | App nativo, integração forte com Android Studio       |
+Detalhes: [`maestro/README.md`](maestro/README.md).  
+Skill operacional: [`.cursor/skills/polygonus-mural-maestro/`](../../../.cursor/skills/polygonus-mural-maestro/).
 
-**Maestro (escolhido):** detalhes de device, ADB e exemplos em [`maestro/README.md`](maestro/README.md).
+| Item | Notas |
+|------|--------|
+| Flows | `maestro/flows/mural/`, shared em `maestro/flows/shared/` |
+| Fixtures | `maestro/fixtures/` → `adb push` / qa-desk empurra antes do Play (`Video_teste.mp4`, PDFs) |
+| ANEXO-03 | Gate = sumir **Comprimindo** (não só toast). Idle qa-desk vídeo = 15 min |
+| Filtros | `FILTRO-01…10` — Pagantes = sem gratuidade 100% (seed `PLLIMA`) |
+| Pipeline ID | Pós-envio + assert responsável — ver `maestro/flows/docs/PIPELINE_ID_MURAL.md` |
 
-Fluxo de exemplo: [`maestro/flows/smoke/example_launch_app.yaml`](maestro/flows/smoke/example_launch_app.yaml) — altere `appId` e o `assertVisible` para o app real.
+```bash
+cd projects/polygonus/automation/maestro
+# credenciais via -e a partir de flows/.env (qa-desk faz isso no Play)
+maestro test flows/mural/01_1_comunicado_video_pequeno.yaml
+```
 
-Checklist rápido:
+## Web — Playwright
 
-- Versão do Maestro: `maestro --version`
-- Device listado: `adb devices`
-- Instalar APK: `adb install caminho\app.apk`
-- Rodar suíte: `maestro test projects\polygonus\automation\maestro\flows\smoke\example_launch_app.yaml` _(a partir da raiz do projeto QA Automate)_
+Seed **Aniversariante** (FILTRO-02 / 09): [`playwright/mural/`](playwright/mural/).
 
-## Web
+| Campo | Valor |
+|-------|--------|
+| URL | `https://amostra.polygonus.com.br/web/react/gestao` |
+| Fluxo | Ajusta DN → Maestro envia (PHJESUS) → confirma login `ANIVERSARI` |
+| Doc | [`playwright/mural/README.md`](playwright/mural/README.md) |
 
-Registrar framework (ex.: Playwright, Cypress), URL base e variáveis em arquivo de exemplo (sem segredos reais).
+Na qa-desk: Play com `automation.prep` (Playwright → Maestro) nos CTs FILTRO-02/09.
+
+```bash
+cd projects/polygonus/automation/playwright
+npm run test:mural-dn
+```
 
 ## iOS
 

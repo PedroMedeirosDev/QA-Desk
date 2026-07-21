@@ -9,7 +9,14 @@ import { SuiteListControls } from "@/components/SuiteListControls";
 import { api } from "@/lib/api";
 import { useConfirm } from "@/lib/confirm";
 import { toastErrorMessage, useToast } from "@/lib/toast";
-import { useRunProgress, RUN_CANCELLED_MESSAGE } from "@/lib/run-progress";
+import {
+  useRunProgress,
+  RUN_CANCELLED_MESSAGE,
+  QA_RUN_FINISHED_EVENT,
+  clearBatchStop,
+  isBatchStopRequested,
+  type LiveRunState,
+} from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { countTestRuns } from "@/lib/history";
 import {
@@ -32,6 +39,7 @@ import {
   allGreenModuleKeys,
   allGreenSuiteKeys,
   groupByModuleThenSuite,
+  isDeferredFromBatchRun,
   MODULE_LABELS,
   suiteCollapseKey,
   summarizeSuite,
@@ -134,6 +142,17 @@ export function TestListPage({
     reload();
   }, [project]);
 
+  /** Após cancel/fim, atualiza badges sem depender só do await do Play (e sem F5). */
+  useEffect(() => {
+    const onFinished = (event: Event) => {
+      const detail = (event as CustomEvent<LiveRunState>).detail;
+      if (!detail?.result || detail.project !== project) return;
+      reload({ soft: true });
+    };
+    window.addEventListener(QA_RUN_FINISHED_EVENT, onFinished);
+    return () => window.removeEventListener(QA_RUN_FINISHED_EVENT, onFinished);
+  }, [project]);
+
   const filtered = useMemo(() => {
     let list = reports.filter(isTestCase);
     if (routeChannel) {
@@ -183,6 +202,7 @@ export function TestListPage({
       });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
       if (res.cancelled) {
+        clearBatchStop();
         toast.info(`Execução #${res.runNumber} cancelada${ver}`, {
           title: "Maestro",
           duration: 8000,
@@ -202,6 +222,7 @@ export function TestListPage({
     } catch (err) {
       const msg = toastErrorMessage(err, "Erro ao executar");
       if (msg === RUN_CANCELLED_MESSAGE) {
+        clearBatchStop();
         toast.info("Execução cancelada", { title: "Maestro", duration: 8000 });
         reload({ soft: true });
       } else {
@@ -218,16 +239,27 @@ export function TestListPage({
     groupId: string,
     items: TestRecord[],
   ) {
-    const queue = items.filter((t) => t.automation?.flowPath);
+    const queue = items.filter(
+      (t) => t.automation?.flowPath && !isDeferredFromBatchRun(t),
+    );
     const kindLabel = kind === "module" ? "módulo" : "suite";
+    const deferred = items.filter(
+      (t) => t.automation?.flowPath && isDeferredFromBatchRun(t),
+    ).length;
     if (queue.length === 0) {
-      toast.info(`Nenhum flow Maestro no ${kindLabel} ${name}.`);
+      toast.info(
+        deferred > 0
+          ? `Nenhum CT elegível no ${kindLabel} ${name} (${deferred} adiado(s), ex.: E2E).`
+          : `Nenhum flow Maestro no ${kindLabel} ${name}.`,
+      );
       return;
     }
 
     const ok = await confirm({
       title: `Rodar ${kindLabel} ${name}`,
-      description: `${queue.length} teste(s) em sequência.\nSe um falhar, continua nos próximos.`,
+      description: `${queue.length} teste(s) em sequência${
+        deferred ? ` · ${deferred} adiado(s) fora do lote` : ""
+      }.\nSe um falhar, continua nos próximos.`,
       confirmLabel: "Rodar",
       cancelLabel: "Cancelar",
       tone: "run",
@@ -237,9 +269,14 @@ export function TestListPage({
     setRunningGroup(groupId);
     let passed = 0;
     let failed = 0;
+    clearBatchStop();
 
     try {
       for (let i = 0; i < queue.length; i++) {
+        if (isBatchStopRequested()) {
+          toast.info(`${kindLabel} ${name} interrompido.`, { title: "Execução em lote" });
+          break;
+        }
         const item = queue[i];
         setBatchProgress(
           `${name} ${i + 1}/${queue.length} — ${item.title}  ·  ✓ ${passed}  ✗ ${failed}`,
@@ -252,7 +289,7 @@ export function TestListPage({
             title: item.title,
             batchLabel: `${name} ${i + 1}/${queue.length}`,
           });
-          if (res.cancelled) {
+          if (res.cancelled || isBatchStopRequested()) {
             toast.info(`${kindLabel} ${name} interrompido.`, { title: "Execução em lote" });
             break;
           }
@@ -272,7 +309,7 @@ export function TestListPage({
           }
         } catch (e) {
           const msg = toastErrorMessage(e, "erro");
-          if (msg === RUN_CANCELLED_MESSAGE) {
+          if (msg === RUN_CANCELLED_MESSAGE || isBatchStopRequested()) {
             toast.info(`${kindLabel} ${name} interrompido.`, { title: "Execução em lote" });
             break;
           }
@@ -287,6 +324,7 @@ export function TestListPage({
       });
       reload({ soft: true });
     } finally {
+      clearBatchStop();
       setRunningGroup(null);
       setRunningId(null);
       setBatchProgress("");
@@ -412,16 +450,16 @@ export function TestListPage({
         />
       )}
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        <table className="w-full text-sm">
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card/80 shadow-sm">
+        <table className="data-table w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/40 text-left text-muted-foreground">
-              <th className="px-4 py-3 font-medium">Título</th>
-              <th className="px-4 py-3 font-medium">Modo</th>
-              <th className="px-4 py-3 font-medium">Resultado</th>
-              <th className="px-4 py-3 font-medium">Rodadas</th>
-              <th className="px-4 py-3 font-medium">Última</th>
-              <th className="px-4 py-3 font-medium w-28">Ações</th>
+            <tr className="border-b border-border/80 bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <th className="px-4 py-2.5 font-medium">Título</th>
+              <th className="px-4 py-2.5 font-medium">Modo</th>
+              <th className="px-4 py-2.5 font-medium">Resultado</th>
+              <th className="px-4 py-2.5 font-medium">Rodadas</th>
+              <th className="px-4 py-2.5 font-medium">Última</th>
+              <th className="px-4 py-2.5 font-medium w-28">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -484,28 +522,31 @@ export function TestListPage({
                               running={runningGroup === sk}
                             />
                             {expanded &&
-                              group.items.map((r) => {
+                              group.items.map((r, rowIdx) => {
                                 const { label, tone } = displayStatus(r);
                                 return (
                                   <tr
                                     key={r.id}
-                                    className="cursor-pointer border-b last:border-0 hover:bg-muted/40 select-none"
+                                    className={cn(
+                                      "test-row cursor-pointer select-none transition-colors hover:bg-muted/50",
+                                      rowIdx % 2 === 1 && "bg-muted/25",
+                                    )}
                                     onClick={() => openDetail(r.id)}
                                     title="Clique para abrir"
                                   >
-                                    <td className="px-4 py-3 pl-8">
-                                      <p className="font-medium">{r.title}</p>
-                                      <p className="font-mono text-xs text-muted-foreground">
+                                    <td className="px-4 py-2 pl-8">
+                                      <p className="font-medium leading-snug">{r.title}</p>
+                                      <p className="font-mono text-[0.6875rem] text-muted-foreground">
                                         {r.testKey ?? formatRecordId(r.id, r)}
                                       </p>
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-4 py-2">
                                       <div className="flex flex-wrap items-center gap-1.5">
                                         <ExecutionModeBadge record={r} />
                                         <AutomationReadinessBadge record={r} />
                                       </div>
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-4 py-2">
                                       <span
                                         className={cn(
                                           "rounded-full border px-2 py-0.5 text-xs",
@@ -522,10 +563,10 @@ export function TestListPage({
                                         {label}
                                       </span>
                                     </td>
-                                    <td className="px-4 py-3 text-center tabular-nums">
+                                    <td className="px-4 py-2 text-center tabular-nums">
                                       {countTestRuns(r.history)}
                                     </td>
-                                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                                    <td className="px-4 py-2 text-xs text-muted-foreground">
                                       {r.automation?.lastRunAt
                                         ? new Date(r.automation.lastRunAt).toLocaleString(
                                             "pt-BR",
@@ -540,7 +581,7 @@ export function TestListPage({
                                         : "—"}
                                     </td>
                                     <td
-                                      className="px-4 py-3"
+                                      className="px-4 py-2"
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       <div className="flex items-center gap-1">

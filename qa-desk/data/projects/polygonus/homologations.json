@@ -8,7 +8,7 @@
     {
       "id": "HOM-2026-001",
       "slug": "mural-backend-homologacao",
-      "build": "6.06.03 (60603)",
+      "build": "6.06.07 (60607)",
       "title": "Homologação Mural (backend)",
       "status": "em_andamento",
       "channel": "app",
@@ -24,6 +24,18 @@
           "actor": "system",
           "action": "homologation_synced",
           "detail": "Checklist aplicado: 21 no escopo · 11 novo(s) · 10 atualizado(s)"
+        },
+        {
+          "at": "2026-07-19T16:46:07.451Z",
+          "actor": "system",
+          "action": "homologation_synced",
+          "detail": "Checklist aplicado: 24 no escopo · 3 novo(s) · 21 atualizado(s)"
+        },
+        {
+          "at": "2026-07-19T16:47:43.827Z",
+          "actor": "system",
+          "action": "homologation_synced",
+          "detail": "Checklist aplicado: 24 no escopo · 0 novo(s) · 24 atualizado(s)"
         }
       ],
       "project": "polygonus",
@@ -49,6 +61,9 @@
         "mural/filtro-05",
         "mural/filtro-06",
         "mural/filtro-07",
+        "mural/filtro-08",
+        "mural/filtro-09",
+        "mural/filtro-10",
         "mural/e2e-99"
       ],
       "startedAt": "2026-07-13T20:35:02.142Z",

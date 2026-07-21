@@ -1,0 +1,11 @@
+# FILTRO-09: Envio com filtro Aniversariantes do mês.
+# Pré: Playwright ajusta DN (mês do teste). Pós: assert ID com LOGIN_ANIVERSARI.
+# STATUS: draft
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: "Aniversariantes do mês|Aniversariantes do mes|Aniversariante do mês"
+      TEXTO_COMUNICADO: "Teste filtro Aniversariantes do mês"

@@ -158,12 +158,12 @@ export function DashboardPage({ project }: { project: ProjectSlug }) {
           hint={`${metrics.automated} com Maestro`}
         />
         <MetricCard
-          label="Flows prontos"
+          label="Flows estáveis"
           value={`${metrics.readyFlows}/${metrics.automated || 0}`}
           hint={
             metrics.draftFlows > 0
-              ? `${metrics.draftFlows} em construção`
-              : "todos prontos ou sem automation"
+              ? `${metrics.draftFlows} rascunho${metrics.draftFlows === 1 ? "" : "s"}`
+              : "todos estáveis ou sem flow"
           }
         />
         <MetricCard
@@ -283,9 +283,9 @@ export function DashboardPage({ project }: { project: ProjectSlug }) {
                 </td>
                 <td className="px-4 py-2.5 tabular-nums">{s.stats.totalRuns}</td>
                 <td className="px-4 py-2.5 text-xs text-muted-foreground">
-                  {s.stats.readyCount} prontos
+                  {s.stats.readyCount} estáveis
                   {s.stats.draftCount > 0
-                    ? ` · ${s.stats.draftCount} construção`
+                    ? ` · ${s.stats.draftCount} rascunhos`
                     : ""}
                 </td>
               </tr>

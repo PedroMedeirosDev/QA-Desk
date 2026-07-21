@@ -20,6 +20,13 @@ appId: br.com.polygonus.mobile.amostra
       ANEXO_NOME: "Video_teste.mp4"
       ANEXO_PASTA: "Download"
 
+# Espera "Comprimindo..." sumir (até 12 min) ANTES do Enviar.
+# Toast de sucesso some rápido — não use como único gate no emulador.
+- runFlow:
+    file: ../shared/mural/aguardar_compressao_video.yaml
+    env:
+      ESPERAR_TOAST_VIDEO: "true"
+
 - runFlow: ../shared/mural/enviar_comunicado.yaml
 
 - swipe:

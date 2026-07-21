@@ -1,12 +1,12 @@
 /** Classes reutilizáveis para orientar ações por cor */
 export const actionBtn = {
   /** Salvar, confirmar dados */
-  save: "bg-primary text-primary-foreground hover:brightness-110 disabled:opacity-50",
-  /** Criar / adicionar algo novo */
+  save: "bg-red-600 text-white hover:bg-red-700 disabled:opacity-50",
+  /** Criar / adicionar algo novo (marca QA Desk) */
   create:
-    "border border-emerald-500/40 bg-emerald-600 text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50",
+    "border border-red-500/40 bg-red-600 text-white shadow-sm hover:bg-red-700 disabled:opacity-50",
   /** Executar automação Maestro */
-  run: "bg-primary text-primary-foreground hover:brightness-110 disabled:opacity-50",
+  run: "bg-red-600 text-white hover:bg-red-700 disabled:opacity-50",
   /** Homologação aprovada */
   homologate:
     "border border-emerald-500/40 bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/30",

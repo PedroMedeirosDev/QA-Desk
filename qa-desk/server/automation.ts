@@ -9,6 +9,7 @@ import {
   registerMaestroRun,
   wasMaestroRunCancelled,
 } from "./maestro-run-registry.js";
+import { clipMaestroOutput } from "./maestro-output.js";
 import {
   assertCardIdAbsent,
   assertTopCardMatches,
@@ -119,6 +120,20 @@ export function resolveFlowPath(flowPath: string) {
   return abs;
 }
 
+/**
+ * Sem stdout completo do Maestro por este tempo → abort (lote segue).
+ * ANEXO vídeo: "Comprimindo..." no emulador pode passar de 5–12 min sem stdout.
+ * Override: MAESTRO_IDLE_TIMEOUT_MS
+ */
+export function maestroIdleTimeoutMs(flowPath: string): number {
+  const isVideoHeavy = /video|compress/i.test(flowPath);
+  return Math.max(
+    30_000,
+    Number(process.env.MAESTRO_IDLE_TIMEOUT_MS) ||
+      (isVideoHeavy ? 900_000 : 120_000),
+  );
+}
+
 export async function runMaestroFlow(
   flowPath: string,
   options?: {
@@ -144,7 +159,9 @@ export async function runMaestroFlow(
     resolveAppVersionForRun,
     parseMaestroFailure,
   } = await import("./maestro-diagnostics.js");
-  const { normalizeMaestroOutput } = await import("./maestro-output.js");
+  const { clipMaestroOutput, normalizeMaestroOutput } = await import(
+    "./maestro-output.js"
+  );
 
   const appVersion = resolveAppVersionForRun();
 
@@ -228,11 +245,8 @@ export async function runMaestroFlow(
 
   const runStartedAt = Date.now();
   const runId = options?.runMeta?.runId;
-  /** Sem linha completa → aborta (lote segue). Default 120s — vídeo/compressão pode ficar ~1 min sem log. */
-  const idleTimeoutMs = Math.max(
-    30_000,
-    Number(process.env.MAESTRO_IDLE_TIMEOUT_MS) || 120_000,
-  );
+  /** Sem linha completa → aborta (lote segue). Vídeo/compressão: idle mais folgado. */
+  const idleTimeoutMs = maestroIdleTimeoutMs(flowPath);
 
   return new Promise((resolve) => {
     const chunks: string[] = [];
@@ -303,7 +317,7 @@ export async function runMaestroFlow(
         settle({
           ok: false,
           exitCode: null,
-          output: normalizeMaestroOutput(chunks.join("").slice(-8000)),
+          output: clipMaestroOutput(normalizeMaestroOutput(chunks.join(""))),
           appVersion: resolveAppVersionForRun() ?? appVersion,
           cancelled: true,
           failure: {
@@ -330,7 +344,7 @@ export async function runMaestroFlow(
       settle({
         ok: false,
         exitCode: null,
-        output: normalizeMaestroOutput(chunks.join("").slice(-8000)),
+        output: clipMaestroOutput(normalizeMaestroOutput(chunks.join(""))),
         appVersion: resolveAppVersionForRun() ?? appVersion,
         // cancelled:false → lote (módulo/suite) continua no próximo CT
         cancelled: false,
@@ -365,7 +379,9 @@ export async function runMaestroFlow(
       settle({
         ok: false,
         exitCode: null,
-        output: normalizeMaestroOutput(chunks.join("").slice(-8000) || err.message),
+        output: clipMaestroOutput(
+          normalizeMaestroOutput(chunks.join("") || err.message),
+        ),
         appVersion,
         failure: parseMaestroFailure(err.message),
       });
@@ -397,7 +413,7 @@ export async function runMaestroFlow(
       const cancelled = runId ? wasMaestroRunCancelled(runId) : false;
       if (runId) clearMaestroRun(runId);
 
-      const output = normalizeMaestroOutput(chunks.join("").slice(-8000));
+      const output = clipMaestroOutput(normalizeMaestroOutput(chunks.join("")));
       if (cancelled) {
         push("\n[qa-desk] Execução cancelada pelo usuário.\n");
       }
@@ -407,7 +423,7 @@ export async function runMaestroFlow(
       settle({
         ok,
         exitCode: code,
-        output: normalizeMaestroOutput(chunks.join("").slice(-8000)),
+        output: clipMaestroOutput(normalizeMaestroOutput(chunks.join(""))),
         appVersion: versionAfter,
         cancelled,
         failure: ok
@@ -548,6 +564,8 @@ const POST_SEND_ID_CONFIG: Record<string, PostSendIdConfig> = {
     skipIdCapture: false,
     assertText: "Evento Dia Inteiro",
   },
+  // FILTRO-01: Inadimplentes — receptor provisório ETMENEZES (até seed inadimplente próprio).
+  "01_1_comunicado_filtro_inadimplentes.yaml": { verifyResponsavel: true },
 };
 
 export function needsPostSendIdCapture(flowPath: string): boolean {
@@ -720,7 +738,9 @@ function muralRunCancelled(
   return {
     ok: false,
     exitCode: null,
-    output: `${output}\n[qa-desk] Execução cancelada pelo usuário.\n`.slice(-8000),
+    output: clipMaestroOutput(
+      `${output}\n[qa-desk] Execução cancelada pelo usuário.\n`,
+    ),
     appVersion,
     cancelled: true,
     failure: {
@@ -1057,6 +1077,12 @@ export type MuralHomologationItem = {
   preconditions: string;
   expectedResult: string;
   steps: string[];
+  /** Seed Playwright antes do Maestro (ex.: DN Aniversariante) */
+  prep?: {
+    type: "playwright";
+    specPath: string;
+    headed?: boolean;
+  };
 };
 
 /** Chave única global: `{módulo}/{ctId}` em minúsculas. */
@@ -1259,14 +1285,15 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
     title: "EVENTO-01 · Padrão (com horário)",
     flowPath: "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_evento.yaml",
     description:
-      "Novo evento sem Dia inteiro; turmas + alvo Todos; texto Evento Padrao.",
-    preconditions: "Sessão PHJESUS Coordenador; BoomMenu Evento; emulador America/Sao_Paulo.",
+      "Novo evento sem Dia inteiro; data amanhã (scroll no seletor); texto Evento Padrao.",
+    preconditions:
+      "PHJESUS Coordenador; emulador America/Sao_Paulo + relógio 24h.",
     expectedResult:
-      "Evento Padrao em Enviadas. ID no content-desc adiado (BUG-2026-004).",
+      "Evento Padrao em Enviadas. Sem dialog BrasilTime.",
     steps: [
-      "BoomMenu → Evento → turmas + alvo Todos (sem Dia inteiro)",
+      "BoomMenu → Evento → turmas + Todos (sem Dia inteiro)",
+      "Seletor de data → scroll dia seguinte → Ok",
       "Título/texto: Evento Padrao → enviar → Enviadas",
-      "qa-desk: assert (ID ou texto) → teardown",
     ],
   },
   {
@@ -1277,14 +1304,15 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
     flowPath:
       "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_evento_dia_inteiro.yaml",
     description:
-      "Novo evento com toggle Dia inteiro; turmas + alvo Todos; texto Evento Dia Inteiro.",
-    preconditions: "Sessão PHJESUS Coordenador; BoomMenu Evento; emulador America/Sao_Paulo.",
+      "Novo evento com Dia inteiro; data amanhã (scroll no seletor); texto Evento Dia Inteiro.",
+    preconditions:
+      "PHJESUS Coordenador; emulador America/Sao_Paulo + relógio 24h.",
     expectedResult:
-      "Evento Dia Inteiro em Enviadas. ID no content-desc adiado (BUG-2026-004).",
+      "Evento Dia Inteiro em Enviadas. Sem dialog BrasilTime.",
     steps: [
-      "BoomMenu → Evento → turmas + alvo Todos → ligar Dia inteiro",
+      "BoomMenu → Evento → turmas + Todos → ligar Dia inteiro",
+      "Seletor de data → scroll dia seguinte → Ok",
       "Título/texto: Evento Dia Inteiro → enviar → Enviadas",
-      "qa-desk: assert por texto (fallback ID) → teardown",
     ],
   },
   // —— Lista (definir escopo depois) ——
@@ -1305,121 +1333,204 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
       "Tocar em Enviadas e confirmar o filtro ativo",
     ],
   },
-  // —— Filtros extras (envio; conferência manual por enquanto) ——
+  // —— Filtros especiais (menu funil do composer; conferência manual) ——
+  // UI: Inadimplentes, Aniversariantes do dia, Bolsistas 100%/50%/todos,
+  //     Pagantes, Situação, Sexo, Aniversariantes do mês, Limpar filtro
   {
     ctId: "FILTRO-01",
     suite: "Filtros",
     legacyNum: "21",
-    title: "FILTRO-01 · Adimplentes (envio)",
+    title: "FILTRO-01 · Inadimplentes (envio)",
     flowPath:
-      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_adimplentes.yaml",
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_inadimplentes.yaml",
     description:
-      "Composer → funil → Adimplentes → envia texto. Conferência do público: manual.",
-    preconditions: "Sessão PHJESUS Coordenador.",
+      "Composer → funil → Inadimplentes → Período (mês corrente) → envia texto. Receptor provisório: ETMENEZES.",
+    preconditions: "Sessão PHJESUS Coordenador; LOGIN_ETMENEZES no .env.",
     expectedResult:
-      "Comunicado “Teste filtro Adimplentes” enviado (lista Enviadas). Validação do filtro: manual.",
+      "Comunicado em Enviadas; ETMENEZES vê o mesmo ID em Recebidas (provisório até seed inadimplente).",
     steps: [
-      "Composer → turmas + alvo Todos → funil → Adimplentes",
-      "Texto: Teste filtro Adimplentes → enviar → Enviadas → teardown",
+      "Composer → turmas + alvo Todos → funil → Inadimplentes → mês corrente",
+      "Texto → enviar → Enviadas → adb ID → ETMENEZES → assert ID",
     ],
   },
   {
     ctId: "FILTRO-02",
     suite: "Filtros",
     legacyNum: "22",
-    title: "FILTRO-02 · Alunos com muitas faltas (envio)",
+    title: "FILTRO-02 · Aniversariantes do dia (envio)",
     flowPath:
-      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_muitas_faltas.yaml",
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_aniversariantes_dia.yaml",
     description:
-      "Composer → funil → Alunos com muitas faltas → envia. Conferência: manual.",
-    preconditions: "Sessão PHJESUS Coordenador.",
+      "Playwright ajusta DN do colaborador Aniversariante (dia/mês) → Composer → funil → Aniversariantes do dia → envia. Receptor: ANIVERSARI.",
+    preconditions:
+      "DN seed ok (Playwright); PHJESUS Coordenador; LOGIN_ANIVERSARI no .env.",
     expectedResult:
-      "Comunicado “Teste filtro Alunos com muitas faltas” em Enviadas. Validação do filtro: manual.",
+      "Comunicado em Enviadas; ANIVERSARI vê o mesmo ID em Recebidas.",
     steps: [
-      "Funil → Alunos com muitas faltas → enviar texto contextual → Enviadas",
+      "Playwright: gestão → Colaboradores → Aniversariante → DN dia/mês → Gravar",
+      "Funil → Aniversariantes do dia → enviar → Enviadas",
+      "Logout → ANIVERSARI → assert ID",
     ],
+    prep: {
+      type: "playwright",
+      specPath:
+        "projects/polygonus/automation/playwright/mural/ajustar-dn-aniversariante.spec.ts",
+      headed: true,
+    },
   },
   {
     ctId: "FILTRO-03",
     suite: "Filtros",
     legacyNum: "23",
-    title: "FILTRO-03 · Alunos abaixo da média (envio)",
+    title: "FILTRO-03 · Bolsistas 100% (envio)",
     flowPath:
-      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_abaixo_media.yaml",
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_100.yaml",
     description:
-      "Composer → funil → Alunos abaixo da média → envia. Conferência: manual.",
-    preconditions: "Sessão PHJESUS Coordenador.",
+      "Composer → funil → Bolsistas 100% → envia. Receptor: RBBARBOSA (bolsista 100% + pai de menino).",
+    preconditions: "Sessão PHJESUS Coordenador; LOGIN_RBBARBOSA no .env.",
     expectedResult:
-      "Comunicado “Teste filtro Alunos abaixo da media” em Enviadas. Validação do filtro: manual.",
+      "Comunicado em Enviadas; RBBARBOSA vê o card (ID). Pai de menina / não-bolsista 100% não vê.",
     steps: [
-      "Funil → Alunos abaixo da média → enviar texto contextual → Enviadas",
+      "Funil → Bolsistas 100% → enviar → Enviadas",
+      "Logout → RBBARBOSA → assert ID",
     ],
   },
   {
     ctId: "FILTRO-04",
     suite: "Filtros",
     legacyNum: "24",
-    title: "FILTRO-04 · Bolsista 100% (envio)",
+    title: "FILTRO-04 · Bolsistas 50% (envio)",
     flowPath:
-      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_100.yaml",
-    description: "Composer → funil → Bolsista 100% → envia. Conferência: manual.",
-    preconditions: "Sessão PHJESUS Coordenador.",
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_50.yaml",
+    description:
+      "Composer → funil → Bolsistas 50% → envia. Receptor: PLLIMA (bolsista 50% + pai de menina).",
+    preconditions: "Sessão PHJESUS Coordenador; LOGIN_PLLIMA no .env.",
     expectedResult:
-      "Comunicado “Teste filtro Bolsista 100%” em Enviadas. Validação do filtro: manual.",
-    steps: ["Funil → Bolsista 100% → enviar texto contextual → Enviadas"],
+      "Comunicado em Enviadas; PLLIMA vê o card. RBBARBOSA (100%) não vê.",
+    steps: [
+      "Funil → Bolsistas 50% → enviar → Enviadas",
+      "Logout → PLLIMA → assert ID",
+    ],
   },
   {
     ctId: "FILTRO-05",
     suite: "Filtros",
     legacyNum: "25",
-    title: "FILTRO-05 · Bolsista 50% (envio)",
+    title: "FILTRO-05 · Bolsistas todos (envio)",
     flowPath:
-      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_50.yaml",
-    description: "Composer → funil → Bolsista 50% → envia. Conferência: manual.",
-    preconditions: "Sessão PHJESUS Coordenador.",
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_todos_bolsistas.yaml",
+    description:
+      "Composer → funil → Bolsistas todos → envia. Ambos seeds (RBBARBOSA 100% e PLLIMA 50%) devem ver.",
+    preconditions: "PHJESUS Coordenador; LOGIN_RBBARBOSA + LOGIN_PLLIMA no .env.",
     expectedResult:
-      "Comunicado “Teste filtro Bolsista 50%” em Enviadas. Validação do filtro: manual.",
-    steps: ["Funil → Bolsista 50% → enviar texto contextual → Enviadas"],
+      "Comunicado em Enviadas; RBBARBOSA e PLLIMA veem o mesmo ID.",
+    steps: [
+      "Funil → Bolsistas todos → enviar → Enviadas",
+      "Assert ID em RBBARBOSA e PLLIMA",
+    ],
   },
   {
     ctId: "FILTRO-06",
     suite: "Filtros",
     legacyNum: "26",
-    title: "FILTRO-06 · Todos os bolsistas (envio)",
+    title: "FILTRO-06 · Pagantes (envio)",
     flowPath:
-      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_todos_bolsistas.yaml",
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_pagantes.yaml",
     description:
-      "Composer → funil → Todos os bolsistas → envia. Conferência: manual.",
-    preconditions: "Sessão PHJESUS Coordenador.",
+      "Composer → funil → Pagantes → envia. Pagantes = sem gratuidade 100%. Receptor: PLLIMA (50%). RBBARBOSA (100%) não vê.",
+    preconditions: "PHJESUS Coordenador; LOGIN_PLLIMA no .env.",
     expectedResult:
-      "Comunicado “Teste filtro Todos os bolsistas” em Enviadas. Validação do filtro: manual.",
-    steps: ["Funil → Todos os bolsistas → enviar texto contextual → Enviadas"],
+      "Comunicado em Enviadas; PLLIMA vê o card. RBBARBOSA (bolsista 100%) não vê.",
+    steps: [
+      "Funil → Pagantes → enviar → Enviadas",
+      "Logout → PLLIMA → assert ID (RBBARBOSA não deve ver)",
+    ],
   },
   {
     ctId: "FILTRO-07",
     suite: "Filtros",
     legacyNum: "27",
-    title: "FILTRO-07 · Pagantes (envio)",
+    title: "FILTRO-07 · Situação Transferido (envio)",
     flowPath:
-      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_pagantes.yaml",
-    description: "Composer → funil → Pagantes → envia. Conferência: manual.",
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_situacao.yaml",
+    description:
+      "Composer → funil → Situação → Transferido → envia. (Por enquanto só Transferido.)",
     preconditions: "Sessão PHJESUS Coordenador.",
     expectedResult:
-      "Comunicado “Teste filtro Pagantes” em Enviadas. Validação do filtro: manual.",
-    steps: ["Funil → Pagantes → enviar texto contextual → Enviadas"],
+      "Comunicado “Teste filtro Situação Transferido” em Enviadas.",
+    steps: ["Funil → Situação → Transferido → enviar → Enviadas"],
   },
-  // —— E2E (sempre por último na suite) ——
+  {
+    ctId: "FILTRO-08",
+    suite: "Filtros",
+    legacyNum: "28",
+    title: "FILTRO-08 · Sexo (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_sexo.yaml",
+    description:
+      "Composer → funil → Sexo → Masculino/Feminino → envia. Validar nos dois pais: RBBARBOSA (menino) e PLLIMA (menina).",
+    preconditions:
+      "PHJESUS Coordenador; LOGIN_RBBARBOSA + LOGIN_PLLIMA no .env.",
+    expectedResult:
+      "Filtro Masculino: RBBARBOSA vê, PLLIMA não. Filtro Feminino: o inverso.",
+    steps: [
+      "Funil → Sexo → Masculino → enviar → assert RBBARBOSA (+ / − PLLIMA)",
+      "Repetir Feminino com os mesmos logins invertidos",
+    ],
+  },
+  {
+    ctId: "FILTRO-09",
+    suite: "Filtros",
+    legacyNum: "29",
+    title: "FILTRO-09 · Aniversariantes do mês (envio)",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_aniversariantes_mes.yaml",
+    description:
+      "Playwright ajusta DN (mês do teste) → funil → Aniversariantes do mês → envia. Receptor: ANIVERSARI.",
+    preconditions:
+      "DN seed ok (Playwright); PHJESUS Coordenador; LOGIN_ANIVERSARI no .env.",
+    expectedResult:
+      "Comunicado em Enviadas; ANIVERSARI vê o mesmo ID em Recebidas.",
+    steps: [
+      "Playwright: DN com mês do teste → Gravar",
+      "Funil → Aniversariantes do mês → enviar → Enviadas",
+      "Logout → ANIVERSARI → assert ID",
+    ],
+    prep: {
+      type: "playwright",
+      specPath:
+        "projects/polygonus/automation/playwright/mural/ajustar-dn-aniversariante.spec.ts",
+      headed: true,
+    },
+  },
+  {
+    ctId: "FILTRO-10",
+    suite: "Filtros",
+    legacyNum: "30",
+    title: "FILTRO-10 · Limpar filtro",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_limpar.yaml",
+    description:
+      "Aplica Pagantes → Limpar filtro → envia texto (sem filtro especial).",
+    preconditions: "Sessão PHJESUS Coordenador.",
+    expectedResult:
+      "Comunicado “Teste filtro Limpar filtro” em Enviadas após limpar o funil.",
+    steps: [
+      "Funil → Pagantes → funil → Limpar filtro → enviar → Enviadas",
+    ],
+  },
+  // —— E2E (adiado: só depois que CRUD/Anexos/Filtros/… estiverem estáveis) ——
   {
     ctId: "E2E-99",
     suite: "E2E",
     legacyNum: "99",
-    title: "E2E-99 · Mural completo (por último)",
+    title: "E2E-99 · Mural completo (adiado)",
     flowPath:
       "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_completo_e2e.yaml",
     description:
-      "Fluxo ponta a ponta: um comunicado com texto, enquete e anexos; depois edita e exclui o card.",
+      "ADIANO — não entra no lote do módulo. Fluxo ponta a ponta: comunicado com texto, enquete e anexos; depois edita e exclui. Rodar só após os demais CTs do Mural.",
     preconditions:
-      "Fixtures no device (FIXTURE_FOTO, FIXTURE_VIDEO, FIXTURE_PDF); PHJESUS coordenador.",
+      "Fixtures no device (FIXTURE_FOTO, FIXTURE_VIDEO, FIXTURE_PDF); PHJESUS coordenador. Demais CTs do Mural já estáveis.",
     expectedResult:
       "Comunicado completo enviado; texto editado confirmado; card excluído da lista.",
     steps: [
@@ -1461,6 +1572,7 @@ export function createMuralHomologationRecords(project: ProjectSlug) {
       flowPath: item.flowPath,
       label: item.ctId,
       readiness: "draft" as const,
+      ...(item.prep ? { prep: item.prep } : {}),
     },
     tags: [
       "homologacao",
@@ -1469,6 +1581,7 @@ export function createMuralHomologationRecords(project: ProjectSlug) {
       "module:Mural",
       `suite:${item.suite}`,
       `ct:${item.ctId}`,
+      ...(item.suite === "E2E" ? (["deferred:batch"] as const) : []),
     ],
     showInPortfolio: false,
     _sort: i,

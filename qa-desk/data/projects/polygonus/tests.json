@@ -6,15 +6,52 @@
   },
   "reports": [
     {
-      "id": "TEST-2026-021",
-      "testKey": "mural/filtro-07",
+      "id": "TEST-2026-024",
+      "testKey": "mural/filtro-10",
       "recordType": "teste",
-      "title": "FILTRO-07 · Pagantes (envio)",
-      "description": "Composer → funil → Pagantes → envia. Conferência: manual.",
+      "title": "FILTRO-10 · Limpar filtro",
+      "description": "Aplica Pagantes → Limpar filtro → envia texto (sem filtro especial).",
       "preconditions": "Sessão PHJESUS Coordenador.",
-      "expectedResult": "Comunicado “Teste filtro Pagantes” em Enviadas. Validação do filtro: manual.",
+      "expectedResult": "Comunicado “Teste filtro Limpar filtro” em Enviadas após limpar o funil.",
       "steps": [
-        "Funil → Pagantes → enviar texto contextual → Enviadas"
+        "Funil → Pagantes → funil → Limpar filtro → enviar → Enviadas"
+      ],
+      "stepsDetailed": [
+        {
+          "text": "Na home, toque no card MURAL",
+          "flows": ["navegar_mural.yaml"],
+          "actions": ["home_card_mural", "MURAL"]
+        },
+        {
+          "text": "Toque no + (BoomMenu) e escolha Comunicado / Aviso",
+          "flows": ["abrir_novo_comunicado.yaml", "tap_boom_fab.yaml", "tap_boom_comunicado.yaml"],
+          "actions": ["mural_boom_fab", "mural_boom_comunicado", "Aviso"]
+        },
+        {
+          "text": "Toque no ícone de funil na barra do composer",
+          "flows": ["abrir_filtro_extras_composer.yaml"],
+          "actions": ["mural_composer_filtro"]
+        },
+        {
+          "text": "Toque em Pagantes",
+          "flows": ["selecionar_filtro_extras.yaml"],
+          "actions": ["Pagantes", "Pagante"]
+        },
+        {
+          "text": "Abra o funil de novo e toque em Limpar filtro",
+          "flows": ["abrir_filtro_extras_composer.yaml", "selecionar_filtro_extras.yaml"],
+          "actions": ["Limpar filtro"]
+        },
+        {
+          "text": "Digite o texto do teste e toque em Enviar",
+          "flows": ["escrever_comunicado.yaml", "enviar_comunicado.yaml"],
+          "actions": ["Enviar"]
+        },
+        {
+          "text": "Em Enviadas, confira o card do comunicado",
+          "flows": ["filtrar_enviadas.yaml", "selecionar_filtro_sentido.yaml"],
+          "actions": ["Enviadas"]
+        }
       ],
       "reportedAt": "2026-07-19",
       "project": "polygonus",
@@ -29,7 +66,170 @@
       "campaign": "mural-backend-homologacao",
       "automation": {
         "type": "maestro",
-        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_pagantes.yaml",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_limpar.yaml",
+        "label": "FILTRO-10",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao",
+        "module:Mural",
+        "suite:Filtros",
+        "ct:FILTRO-10"
+      ],
+      "history": [
+        {
+          "at": "2026-07-19T16:46:07.451Z",
+          "actor": "system",
+          "action": "test_created",
+          "detail": "Caso de teste criado (Homologação Mural (backend))",
+          "meta": {
+            "testKey": "mural/filtro-10",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false
+    },
+    {
+      "id": "TEST-2026-023",
+      "testKey": "mural/filtro-09",
+      "recordType": "teste",
+      "title": "FILTRO-09 · Aniversariantes do mês (envio)",
+      "description": "Playwright ajusta DN (mês do teste) → funil → Aniversariantes do mês → envia. Receptor: ANIVERSARI.",
+      "preconditions": "DN seed ok (Playwright); PHJESUS Coordenador; LOGIN_ANIVERSARI no .env.",
+      "expectedResult": "Comunicado em Enviadas; ANIVERSARI vê o mesmo ID em Recebidas.",
+      "steps": [
+        "Playwright: DN com mês do teste → Gravar",
+        "Funil → Aniversariantes do mês → enviar → Enviadas",
+        "Logout → ANIVERSARI → assert ID"
+      ],
+      "reportedAt": "2026-07-19",
+      "project": "polygonus",
+      "channel": "app",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "homologationStatus": "pendente",
+      "homologationId": "HOM-2026-001",
+      "executionMode": "automated",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_aniversariantes_mes.yaml",
+        "label": "FILTRO-09",
+        "readiness": "draft",
+        "prep": {
+          "type": "playwright",
+          "specPath": "projects/polygonus/automation/playwright/mural/ajustar-dn-aniversariante.spec.ts",
+          "headed": true
+        }
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao",
+        "module:Mural",
+        "suite:Filtros",
+        "ct:FILTRO-09"
+      ],
+      "history": [
+        {
+          "at": "2026-07-19T16:46:07.451Z",
+          "actor": "system",
+          "action": "test_created",
+          "detail": "Caso de teste criado (Homologação Mural (backend))",
+          "meta": {
+            "testKey": "mural/filtro-09",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false
+    },
+    {
+      "id": "TEST-2026-022",
+      "testKey": "mural/filtro-08",
+      "recordType": "teste",
+      "title": "FILTRO-08 · Sexo (envio)",
+      "description": "Composer → funil → Sexo → Masculino/Feminino → envia.",
+      "preconditions": "Sessão PHJESUS Coordenador.",
+      "expectedResult": "Comunicado “Teste filtro Sexo” em Enviadas. Validação do filtro: manual.",
+      "steps": [
+        "Funil → Sexo → opção → enviar → Enviadas"
+      ],
+      "reportedAt": "2026-07-19",
+      "project": "polygonus",
+      "channel": "app",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "homologationStatus": "pendente",
+      "homologationId": "HOM-2026-001",
+      "executionMode": "automated",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_sexo.yaml",
+        "label": "FILTRO-08",
+        "readiness": "draft"
+      },
+      "tags": [
+        "homologacao",
+        "mural",
+        "mural-backend-homologacao",
+        "module:Mural",
+        "suite:Filtros",
+        "ct:FILTRO-08"
+      ],
+      "history": [
+        {
+          "at": "2026-07-19T16:46:07.450Z",
+          "actor": "system",
+          "action": "test_created",
+          "detail": "Caso de teste criado (Homologação Mural (backend))",
+          "meta": {
+            "testKey": "mural/filtro-08",
+            "homologationId": "HOM-2026-001",
+            "homologationSlug": "mural-backend-homologacao"
+          }
+        }
+      ],
+      "evidence": [],
+      "showInPortfolio": false
+    },
+    {
+      "id": "TEST-2026-021",
+      "testKey": "mural/filtro-07",
+      "recordType": "teste",
+      "title": "FILTRO-07 · Situação (envio)",
+      "description": "Composer → funil → Situação → opção do submenu (se houver) → envia.",
+      "preconditions": "Sessão PHJESUS Coordenador.",
+      "expectedResult": "Comunicado “Teste filtro Situação” em Enviadas. Validação do filtro: manual.",
+      "steps": [
+        "Funil → Situação → submenu → enviar → Enviadas"
+      ],
+      "reportedAt": "2026-07-19",
+      "project": "polygonus",
+      "channel": "app",
+      "platform": "android",
+      "module": "Mural",
+      "status": "rascunho",
+      "homologationStatus": "pendente",
+      "homologationId": "HOM-2026-001",
+      "executionMode": "automated",
+      "priority": "media",
+      "campaign": "mural-backend-homologacao",
+      "automation": {
+        "type": "maestro",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_situacao.yaml",
         "label": "FILTRO-07",
         "readiness": "draft"
       },
@@ -61,12 +261,13 @@
       "id": "TEST-2026-020",
       "testKey": "mural/filtro-06",
       "recordType": "teste",
-      "title": "FILTRO-06 · Todos os bolsistas (envio)",
-      "description": "Composer → funil → Todos os bolsistas → envia. Conferência: manual.",
-      "preconditions": "Sessão PHJESUS Coordenador.",
-      "expectedResult": "Comunicado “Teste filtro Todos os bolsistas” em Enviadas. Validação do filtro: manual.",
+      "title": "FILTRO-06 · Pagantes (envio)",
+      "description": "Composer → funil → Pagantes → envia. Pagantes = sem gratuidade 100% (PLLIMA 50% vê; RBBARBOSA 100% não).",
+      "preconditions": "PHJESUS Coordenador; LOGIN_PLLIMA no .env.",
+      "expectedResult": "Comunicado “Teste filtro Pagantes” em Enviadas; PLLIMA vê o ID. RBBARBOSA (100%) não vê.",
       "steps": [
-        "Funil → Todos os bolsistas → enviar texto contextual → Enviadas"
+        "Funil → Pagantes → enviar → Enviadas",
+        "Logout → PLLIMA → assert ID"
       ],
       "reportedAt": "2026-07-19",
       "project": "polygonus",
@@ -81,7 +282,7 @@
       "campaign": "mural-backend-homologacao",
       "automation": {
         "type": "maestro",
-        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_todos_bolsistas.yaml",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_pagantes.yaml",
         "label": "FILTRO-06",
         "readiness": "draft"
       },
@@ -113,12 +314,12 @@
       "id": "TEST-2026-019",
       "testKey": "mural/filtro-05",
       "recordType": "teste",
-      "title": "FILTRO-05 · Bolsista 50% (envio)",
-      "description": "Composer → funil → Bolsista 50% → envia. Conferência: manual.",
+      "title": "FILTRO-05 · Bolsistas todos (envio)",
+      "description": "Composer → funil → Bolsistas todos → envia.",
       "preconditions": "Sessão PHJESUS Coordenador.",
-      "expectedResult": "Comunicado “Teste filtro Bolsista 50%” em Enviadas. Validação do filtro: manual.",
+      "expectedResult": "Comunicado “Teste filtro Bolsistas todos” em Enviadas. Validação do filtro: manual.",
       "steps": [
-        "Funil → Bolsista 50% → enviar texto contextual → Enviadas"
+        "Funil → Bolsistas todos → enviar → Enviadas"
       ],
       "reportedAt": "2026-07-19",
       "project": "polygonus",
@@ -133,7 +334,7 @@
       "campaign": "mural-backend-homologacao",
       "automation": {
         "type": "maestro",
-        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_50.yaml",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_todos_bolsistas.yaml",
         "label": "FILTRO-05",
         "readiness": "draft"
       },
@@ -165,12 +366,12 @@
       "id": "TEST-2026-018",
       "testKey": "mural/filtro-04",
       "recordType": "teste",
-      "title": "FILTRO-04 · Bolsista 100% (envio)",
-      "description": "Composer → funil → Bolsista 100% → envia. Conferência: manual.",
+      "title": "FILTRO-04 · Bolsistas 50% (envio)",
+      "description": "Composer → funil → Bolsistas 50% → envia.",
       "preconditions": "Sessão PHJESUS Coordenador.",
-      "expectedResult": "Comunicado “Teste filtro Bolsista 100%” em Enviadas. Validação do filtro: manual.",
+      "expectedResult": "Comunicado “Teste filtro Bolsistas 50%” em Enviadas. Validação do filtro: manual.",
       "steps": [
-        "Funil → Bolsista 100% → enviar texto contextual → Enviadas"
+        "Funil → Bolsistas 50% → enviar → Enviadas"
       ],
       "reportedAt": "2026-07-19",
       "project": "polygonus",
@@ -185,7 +386,7 @@
       "campaign": "mural-backend-homologacao",
       "automation": {
         "type": "maestro",
-        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_100.yaml",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_50.yaml",
         "label": "FILTRO-04",
         "readiness": "draft"
       },
@@ -217,12 +418,12 @@
       "id": "TEST-2026-017",
       "testKey": "mural/filtro-03",
       "recordType": "teste",
-      "title": "FILTRO-03 · Alunos abaixo da média (envio)",
-      "description": "Composer → funil → Alunos abaixo da média → envia. Conferência: manual.",
+      "title": "FILTRO-03 · Bolsistas 100% (envio)",
+      "description": "Composer → funil → Bolsistas 100% → envia.",
       "preconditions": "Sessão PHJESUS Coordenador.",
-      "expectedResult": "Comunicado “Teste filtro Alunos abaixo da media” em Enviadas. Validação do filtro: manual.",
+      "expectedResult": "Comunicado “Teste filtro Bolsistas 100%” em Enviadas. Validação do filtro: manual.",
       "steps": [
-        "Funil → Alunos abaixo da média → enviar texto contextual → Enviadas"
+        "Funil → Bolsistas 100% → enviar → Enviadas"
       ],
       "reportedAt": "2026-07-19",
       "project": "polygonus",
@@ -237,7 +438,7 @@
       "campaign": "mural-backend-homologacao",
       "automation": {
         "type": "maestro",
-        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_abaixo_media.yaml",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_bolsista_100.yaml",
         "label": "FILTRO-03",
         "readiness": "draft"
       },
@@ -269,12 +470,14 @@
       "id": "TEST-2026-016",
       "testKey": "mural/filtro-02",
       "recordType": "teste",
-      "title": "FILTRO-02 · Alunos com muitas faltas (envio)",
-      "description": "Composer → funil → Alunos com muitas faltas → envia. Conferência: manual.",
-      "preconditions": "Sessão PHJESUS Coordenador.",
-      "expectedResult": "Comunicado “Teste filtro Alunos com muitas faltas” em Enviadas. Validação do filtro: manual.",
+      "title": "FILTRO-02 · Aniversariantes do dia (envio)",
+      "description": "Playwright ajusta DN do colaborador Aniversariante (dia/mês) → Composer → funil → Aniversariantes do dia → envia. Receptor: ANIVERSARI.",
+      "preconditions": "DN seed ok (Playwright); PHJESUS Coordenador; LOGIN_ANIVERSARI no .env.",
+      "expectedResult": "Comunicado em Enviadas; ANIVERSARI vê o mesmo ID em Recebidas.",
       "steps": [
-        "Funil → Alunos com muitas faltas → enviar texto contextual → Enviadas"
+        "Playwright: gestão → Colaboradores → Aniversariante → DN dia/mês → Gravar",
+        "Funil → Aniversariantes do dia → enviar → Enviadas",
+        "Logout → ANIVERSARI → assert ID"
       ],
       "reportedAt": "2026-07-19",
       "project": "polygonus",
@@ -289,9 +492,14 @@
       "campaign": "mural-backend-homologacao",
       "automation": {
         "type": "maestro",
-        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_muitas_faltas.yaml",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_aniversariantes_dia.yaml",
         "label": "FILTRO-02",
-        "readiness": "draft"
+        "readiness": "draft",
+        "prep": {
+          "type": "playwright",
+          "specPath": "projects/polygonus/automation/playwright/mural/ajustar-dn-aniversariante.spec.ts",
+          "headed": true
+        }
       },
       "tags": [
         "homologacao",
@@ -321,13 +529,13 @@
       "id": "TEST-2026-015",
       "testKey": "mural/filtro-01",
       "recordType": "teste",
-      "title": "FILTRO-01 · Adimplentes (envio)",
-      "description": "Composer → funil → Adimplentes → envia texto. Conferência do público: manual.",
+      "title": "FILTRO-01 · Inadimplentes (envio)",
+      "description": "Composer → funil → Inadimplentes → Período (mês corrente) → envia texto.",
       "preconditions": "Sessão PHJESUS Coordenador.",
-      "expectedResult": "Comunicado “Teste filtro Adimplentes” enviado (lista Enviadas). Validação do filtro: manual.",
+      "expectedResult": "Comunicado “Teste filtro Inadimplentes” em Enviadas. Validação do filtro: manual.",
       "steps": [
-        "Composer → turmas + alvo Todos → funil → Adimplentes",
-        "Texto: Teste filtro Adimplentes → enviar → Enviadas → teardown"
+        "Composer → turmas + alvo Todos → funil → Inadimplentes → mês corrente",
+        "Texto contextual → enviar → Enviadas → teardown"
       ],
       "reportedAt": "2026-07-19",
       "project": "polygonus",
@@ -342,7 +550,7 @@
       "campaign": "mural-backend-homologacao",
       "automation": {
         "type": "maestro",
-        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_adimplentes.yaml",
+        "flowPath": "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_inadimplentes.yaml",
         "label": "FILTRO-01",
         "readiness": "draft"
       },
@@ -724,8 +932,8 @@
       "id": "TEST-2026-010",
       "testKey": "mural/e2e-99",
       "recordType": "teste",
-      "title": "E2E-99 · Mural completo (por último)",
-      "description": "Fluxo ponta a ponta: um comunicado com texto, enquete e anexos; depois edita e exclui o card.",
+      "title": "E2E-99 · Mural completo (adiado)",
+      "description": "ADIANO — não entra no lote do módulo. Fluxo ponta a ponta: comunicado com texto, enquete e anexos; depois edita e exclui. Rodar só após os demais CTs do Mural.",
       "steps": [
         "Preparar fixtures no device",
         "PHJESUS coordenador → Mural → comunicado completo + anexos",
@@ -754,7 +962,8 @@
         "mural-backend-homologacao",
         "module:Mural",
         "suite:E2E",
-        "ct:E2E-99"
+        "ct:E2E-99",
+        "deferred:batch"
       ],
       "history": [
         {

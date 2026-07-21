@@ -1,9 +1,10 @@
-# Novo evento: turmas → alvo Todos → (opcional Dia inteiro) → título/texto.
+# Novo evento: turmas → alvo Todos → (opcional Dia inteiro) → data amanhã → título/texto.
 #
 # Env obrigatório: TEXTO_COMUNICADO
 # Env opcional:
 #   DIA_INTEIRO=1 — liga o toggle "Dia inteiro"
 #   TITULO_EVENTO — senão usa o mesmo texto do corpo
+#   PULAR_DATA_DIA_SEGUINTE=1 — não altera a data (debug)
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -17,6 +18,12 @@ appId: br.com.polygonus.mobile.amostra
     when:
       true: ${DIA_INTEIRO == "1"}
     file: marcar_dia_inteiro.yaml
+
+# Evita BrasilTime ao enviar com data = hoje no emulador
+- runFlow:
+    when:
+      true: ${PULAR_DATA_DIA_SEGUINTE != "1"}
+    file: selecionar_data_evento_dia_seguinte.yaml
 
 - runFlow:
     file: escrever_evento.yaml

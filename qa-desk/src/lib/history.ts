@@ -71,6 +71,8 @@ export function historyRunFailure(entry: HistoryEntry): {
   flow?: string;
   stepLabel?: string;
   stepIndex?: number;
+  /** Lista usada no match: resumo ou manual */
+  stepSource?: "steps" | "stepsDetailed";
   errorSummary?: string;
 } | undefined {
   if (entry.action !== "test_run") return undefined;
@@ -90,13 +92,20 @@ export function historyRunFailure(entry: HistoryEntry): {
     typeof entry.meta?.failedStepIndex === "number"
       ? entry.meta.failedStepIndex
       : undefined;
+  const rawSource = entry.meta?.failedStepSource;
+  const stepSource =
+    rawSource === "stepsDetailed" || rawSource === "steps"
+      ? rawSource
+      : rawSource === "stepsManual"
+        ? "stepsDetailed"
+        : undefined;
   const errorSummary =
     typeof entry.meta?.errorSummary === "string"
       ? entry.meta.errorSummary
       : undefined;
 
   if (!action && !flow && !stepLabel && !errorSummary) return undefined;
-  return { action, flow, stepLabel, stepIndex, errorSummary };
+  return { action, flow, stepLabel, stepIndex, stepSource, errorSummary };
 }
 
 export function historyRunOutput(entry: HistoryEntry): string | undefined {

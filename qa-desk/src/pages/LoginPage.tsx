@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Footer } from "@/components/Footer";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function LoginPage() {
   const { ready, authEnabled, session, signIn } = useAuth();
@@ -17,11 +17,11 @@ export function LoginPage() {
 
   if (!ready) {
     return (
-      <div className="flex min-h-dvh flex-col bg-background">
-        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+      <div className="login-surface flex min-h-dvh flex-col">
+        <div className="flex flex-1 items-center justify-center text-sm text-zinc-400">
           Carregando…
         </div>
-        <Footer />
+        <Footer className="login-footer border-zinc-800/80 bg-transparent" />
       </div>
     );
   }
@@ -45,44 +45,43 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-background">
-      <div className="absolute right-4 top-4 z-10">
-        <ThemeToggle />
-      </div>
-      <div className="flex flex-1 items-center justify-center px-4 py-8">
-        <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">QA Desk</p>
-          <h1 className="mt-1 text-xl font-semibold text-foreground">Entrar</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Admin ou visitante (portfólio curado).
-          </p>
+    <div className="login-surface relative flex min-h-dvh flex-col">
+      <div className="flex flex-1 items-center justify-center px-4 py-10">
+        <div className="login-card w-full max-w-md rounded-2xl border border-red-600/35 bg-zinc-950/90 p-8 backdrop-blur-sm">
+          <div className="flex flex-col items-center text-center">
+            <BrandLogo size="xl" className="mb-5 drop-shadow-[0_0_28px_rgba(220,38,38,0.25)]" />
+            <h1 className="text-2xl font-semibold tracking-tight text-white">Entrar</h1>
+            <p className="mt-1.5 max-w-xs text-sm text-zinc-500">
+              Acesso admin ou visitante (portfólio).
+            </p>
+          </div>
 
-          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+          <form className="mt-8 space-y-4" onSubmit={onSubmit}>
             <label className="block space-y-1.5">
-              <span className="text-sm font-medium">E-mail</span>
+              <span className="text-sm font-medium text-zinc-400">E-mail</span>
               <input
                 type="email"
                 autoComplete="username"
                 required
-                className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none ring-ring focus:ring-2"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-red-600 focus:outline-none focus:ring-1 focus:ring-red-600"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
             <label className="block space-y-1.5">
-              <span className="text-sm font-medium">Senha</span>
+              <span className="text-sm font-medium text-zinc-400">Senha</span>
               <input
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none ring-ring focus:ring-2"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-red-600 focus:outline-none focus:ring-1 focus:ring-red-600"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </label>
 
             {error && (
-              <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+              <p className="rounded-md border border-red-500/40 bg-red-950/50 px-3 py-2 text-sm text-red-400">
                 {error}
               </p>
             )}
@@ -90,14 +89,14 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-md bg-primary px-3 py-2.5 text-sm font-medium text-primary-foreground transition-opacity disabled:opacity-60"
+              className="w-full rounded-md border-2 border-red-600 bg-transparent px-3 py-3 text-sm font-semibold text-red-500 transition-all duration-300 hover:bg-red-600 hover:text-white hover:shadow-[0_0_20px_rgba(220,38,38,0.35)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? "Entrando…" : "Entrar"}
             </button>
           </form>
         </div>
       </div>
-      <Footer />
+      <Footer className="login-footer border-zinc-800/80 bg-transparent" />
     </div>
   );
 }

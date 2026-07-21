@@ -31,6 +31,11 @@ import {
 } from "@/types/test-record";
 import { copyDiscordReport, formatDiscordReport } from "@/lib/discord-report";
 import { polishTestForm } from "@/lib/text-corrector";
+import {
+  detailedStepsForSave,
+  detailedStepsFromRecord,
+  type DetailedStep,
+} from "@/lib/detailed-steps";
 
 const emptyDraft = (
   project: ProjectSlug,
@@ -46,6 +51,7 @@ const emptyDraft = (
   description: "",
   preconditions: "",
   steps: [""],
+  stepsDetailed: [],
   expectedResult: "",
   actualResult: "",
   platform: channel === "app" ? "android" : "web",
@@ -78,6 +84,7 @@ export function TestEditorPage({
   const { isAdmin } = useAuth();
   const { runAutomation, running: liveRunning } = useRunProgress();
   const [tab, setTab] = useState<"detalhes" | "historico">("detalhes");
+  const [stepsMode, setStepsMode] = useState<"resumo" | "detalhado">("resumo");
   const [form, setForm] = useState<Partial<TestRecord>>(emptyDraft(project, channel, editorKind));
   const [saving, setSaving] = useState(false);
   const [flows, setFlows] = useState<AutomationFlow[]>([]);
@@ -200,12 +207,21 @@ export function TestEditorPage({
   async function save() {
     setSaving(true);
     try {
+      const payload: Partial<TestRecord> = {
+        ...form,
+        recordType: editorKind,
+        stepsDetailed: detailedStepsForSave(
+          detailedStepsFromRecord(form).length
+            ? detailedStepsFromRecord(form)
+            : form.stepsDetailed ?? [],
+        ),
+        stepsManual: undefined,
+      };
       if (isNew) {
-        const payload = { ...form, recordType: editorKind };
         const created = await api.createTest(project, payload);
         navigate(detailPathFor(created.id, created), { replace: true });
       } else if (id) {
-        const updated = await api.updateTest(project, id, form);
+        const updated = await api.updateTest(project, id, payload);
         setForm(updated);
       }
     } catch (e) {
@@ -229,7 +245,7 @@ export function TestEditorPage({
     }
   }
 
-  async function runMaestro() {
+  async function runAutomationStage(stage: "all" | "prep" | "maestro" = "all") {
     if (!id || isNew) return;
     setRunning(true);
     try {
@@ -237,22 +253,33 @@ export function TestEditorPage({
         project,
         testId: id,
         title: form.title || formatRecordId(id, form as TestRecord),
-        recordVideo,
+        recordVideo: stage === "prep" ? false : recordVideo,
+        stage,
       });
       setForm(res.report);
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
       const vids = (res.report.evidence ?? []).filter((e) => e.type === "video");
+      const stageHint =
+        stage === "prep"
+          ? " (seed)"
+          : stage === "maestro"
+            ? " (só app)"
+            : res.stages?.includes("playwright")
+              ? " (PW→Maestro)"
+              : "";
       if (res.ok) {
         toast.success(
-          `Execução #${res.runNumber} passou${ver}${vids.length ? ` · ${vids.length} vídeo(s)` : ""}`,
+          `Execução #${res.runNumber} passou${stageHint}${ver}${vids.length ? ` · ${vids.length} vídeo(s)` : ""}`,
         );
       } else {
         const where =
-          res.failure?.failedStepLabel ??
-          res.failure?.failedAction ??
-          "veja o painel / histórico";
-        toast.error(`Execução #${res.runNumber} falhou${ver} — ${where}`, {
-          title: "Maestro",
+          res.failedStage === "playwright"
+            ? "Playwright seed"
+            : (res.failure?.failedStepLabel ??
+              res.failure?.failedAction ??
+              "veja o painel / histórico");
+        toast.error(`Execução #${res.runNumber} falhou${stageHint}${ver} — ${where}`, {
+          title: stage === "prep" ? "Playwright" : "Automação",
         });
       }
     } catch (e) {
@@ -268,6 +295,7 @@ export function TestEditorPage({
       flowPath,
       label,
       readiness: "draft",
+      prep: form.automation?.prep,
     });
     update("executionMode", "automated");
   }
@@ -285,6 +313,8 @@ export function TestEditorPage({
     const polished = polishTestForm({
       title: form.title,
       steps: form.steps,
+      stepsDetailed: form.stepsDetailed,
+      stepsManual: form.stepsManual,
       expectedResult: form.expectedResult,
       actualResult: form.actualResult,
       description: form.description,
@@ -293,6 +323,9 @@ export function TestEditorPage({
     setForm((f) => ({
       ...f,
       steps: polished.steps.length ? polished.steps : f.steps,
+      stepsDetailed: polished.stepsDetailed.length
+        ? polished.stepsDetailed
+        : f.stepsDetailed,
       expectedResult: polished.expectedResult || f.expectedResult,
       actualResult: polished.actualResult || f.actualResult,
       description: polished.description || f.description,
@@ -335,6 +368,9 @@ export function TestEditorPage({
             "Defeito observado durante execução do caso de teste.",
           preconditions: form.preconditions,
           steps: form.steps?.filter(Boolean).length ? form.steps : [""],
+          stepsDetailed: form.stepsDetailed?.length
+            ? detailedStepsForSave(form.stepsDetailed)
+            : undefined,
           expectedResult: form.expectedResult,
           actualResult: form.actualResult ?? failed?.detail,
           module: form.module,
@@ -431,7 +467,37 @@ export function TestEditorPage({
             </Field>
             <div>
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-medium">Passos do teste</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">Passos do teste</span>
+                  <div className="inline-flex rounded-md border p-0.5 text-xs">
+                    <button
+                      type="button"
+                      className={cn(
+                        "rounded px-2 py-0.5",
+                        stepsMode === "resumo"
+                          ? "bg-muted font-medium text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                      onClick={() => setStepsMode("resumo")}
+                      title="Atalho QA / Discord"
+                    >
+                      Resumo
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(
+                        "rounded px-2 py-0.5",
+                        stepsMode === "detalhado"
+                          ? "bg-muted font-medium text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                      onClick={() => setStepsMode("detalhado")}
+                      title="Roteiro detalhado + âncoras Maestro"
+                    >
+                      Detalhado
+                    </button>
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -444,79 +510,208 @@ export function TestEditorPage({
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                    onClick={() => update("steps", [...(form.steps ?? []), ""])}
+                    onClick={() => {
+                      if (stepsMode === "detalhado") {
+                        const cur = detailedStepsFromRecord(form);
+                        update("stepsDetailed", [
+                          ...cur,
+                          { text: "", flows: [], actions: [] },
+                        ]);
+                      } else {
+                        update("steps", [...(form.steps ?? []), ""]);
+                      }
+                    }}
                   >
                     <Plus className="size-3" /> Adicionar passo
                   </button>
                 </div>
               </div>
-              {(() => {
-                const failed = activeFailedRun(form.history ?? []);
-                const failInfo = failed ? historyRunFailure(failed) : undefined;
-                const failedIdx = failInfo?.stepIndex;
-                return (
-                  <div className="space-y-2">
-                    {(form.steps ?? []).map((step, i) => {
-                      const isFailedStep = failedIdx === i;
-                      return (
-                        <div
-                          key={i}
-                          className={cn(
-                            "flex gap-2 rounded-md",
-                            isFailedStep &&
-                              "border border-red-500/40 bg-red-500/10 p-1.5",
-                          )}
-                        >
-                          <span
+              <p className="mb-2 text-[0.7rem] text-muted-foreground">
+                {stepsMode === "resumo"
+                  ? "Enxuto — atalho para você e reports curtos."
+                  : "1 toque por linha. Âncoras Maestro (flow/ação) ligam a falha da automação a este passo."}
+              </p>
+              {stepsMode === "resumo" ? (
+                (() => {
+                  const failed = activeFailedRun(form.history ?? []);
+                  const failInfo = failed ? historyRunFailure(failed) : undefined;
+                  const list = form.steps?.length ? form.steps : [""];
+                  const highlight =
+                    failInfo?.stepIndex != null && failInfo.stepSource === "steps";
+                  const failedIdx = highlight ? failInfo?.stepIndex : undefined;
+                  return (
+                    <div className="space-y-2">
+                      {list.map((step, i) => {
+                        const isFailedStep = failedIdx === i;
+                        return (
+                          <div
+                            key={`steps-${i}`}
                             className={cn(
-                              "mt-2 w-6 text-xs",
-                              isFailedStep
-                                ? "font-semibold text-red-400"
-                                : "text-muted-foreground",
+                              "flex gap-2 rounded-md",
+                              isFailedStep &&
+                                "border border-red-500/40 bg-red-500/10 p-1.5",
                             )}
                           >
-                            {i + 1}.
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <input
+                            <span
                               className={cn(
-                                "w-full rounded-md border px-3 py-2 text-sm",
-                                isFailedStep && "border-red-500/50",
+                                "mt-2 w-6 text-xs",
+                                isFailedStep
+                                  ? "font-semibold text-red-400"
+                                  : "text-muted-foreground",
                               )}
-                              value={step}
-                              onChange={(e) => {
-                                const steps = [...(form.steps ?? [])];
-                                steps[i] = e.target.value;
-                                update("steps", steps);
-                              }}
-                            />
-                            {isFailedStep && failInfo && (
-                              <p className="mt-1 text-[0.7rem] text-red-300">
-                                Falhou aqui
-                                {failInfo.action ? ` · ${failInfo.action}` : ""}
-                                {failInfo.flow ? ` · ${failInfo.flow}` : ""}
-                              </p>
-                            )}
+                            >
+                              {i + 1}.
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <input
+                                className={cn(
+                                  "w-full rounded-md border px-3 py-2 text-sm",
+                                  isFailedStep && "border-red-500/50",
+                                )}
+                                value={step}
+                                onChange={(e) => {
+                                  const next = [...list];
+                                  next[i] = e.target.value;
+                                  update("steps", next);
+                                }}
+                              />
+                              {isFailedStep && failInfo && (
+                                <p className="mt-1 text-[0.7rem] text-red-300">
+                                  Falhou aqui
+                                  {failInfo.action ? ` · ${failInfo.action}` : ""}
+                                  {failInfo.flow ? ` · ${failInfo.flow}` : ""}
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
+                              title="Remover passo"
+                              onClick={() =>
+                                update(
+                                  "steps",
+                                  list.filter((_, j) => j !== i),
+                                )
+                              }
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
-                            title="Remover passo"
-                            onClick={() =>
-                              update(
-                                "steps",
-                                (form.steps ?? []).filter((_, j) => j !== i),
-                              )
-                            }
+                        );
+                      })}
+                    </div>
+                  );
+                })()
+              ) : (
+                (() => {
+                  const failed = activeFailedRun(form.history ?? []);
+                  const failInfo = failed ? historyRunFailure(failed) : undefined;
+                  const list: DetailedStep[] = (() => {
+                    const cur = detailedStepsFromRecord(form);
+                    return cur.length ? cur : [{ text: "" }];
+                  })();
+                  const highlight =
+                    failInfo?.stepIndex != null &&
+                    failInfo.stepSource === "stepsDetailed";
+                  const failedIdx = highlight ? failInfo?.stepIndex : undefined;
+                  const setDetailed = (next: DetailedStep[]) =>
+                    update("stepsDetailed", next);
+                  return (
+                    <div className="space-y-3">
+                      {list.map((step, i) => {
+                        const isFailedStep = failedIdx === i;
+                        return (
+                          <div
+                            key={`detailed-${i}`}
+                            className={cn(
+                              "rounded-md",
+                              isFailedStep &&
+                                "border border-red-500/40 bg-red-500/10 p-1.5",
+                            )}
                           >
-                            <Trash2 className="size-4" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+                            <div className="flex gap-2">
+                              <span
+                                className={cn(
+                                  "mt-2 w-6 text-xs",
+                                  isFailedStep
+                                    ? "font-semibold text-red-400"
+                                    : "text-muted-foreground",
+                                )}
+                              >
+                                {i + 1}.
+                              </span>
+                              <div className="min-w-0 flex-1 space-y-1.5">
+                                <input
+                                  className={cn(
+                                    "w-full rounded-md border px-3 py-2 text-sm",
+                                    isFailedStep && "border-red-500/50",
+                                  )}
+                                  value={step.text}
+                                  placeholder="Ex.: Toque no ícone de funil na barra do composer"
+                                  onChange={(e) => {
+                                    const next = [...list];
+                                    next[i] = { ...step, text: e.target.value };
+                                    setDetailed(next);
+                                  }}
+                                />
+                                <div className="grid gap-1.5 sm:grid-cols-2">
+                                  <input
+                                    className="w-full rounded-md border border-dashed px-2 py-1 text-[0.7rem] text-muted-foreground"
+                                    value={(step.flows ?? []).join(", ")}
+                                    placeholder="Flows YAML (vírgula) — ex. abrir_filtro_extras_composer.yaml"
+                                    title="Basename do flow Maestro que corresponde a este passo"
+                                    onChange={(e) => {
+                                      const flows = e.target.value
+                                        .split(",")
+                                        .map((s) => s.trim())
+                                        .filter(Boolean);
+                                      const next = [...list];
+                                      next[i] = { ...step, flows };
+                                      setDetailed(next);
+                                    }}
+                                  />
+                                  <input
+                                    className="w-full rounded-md border border-dashed px-2 py-1 text-[0.7rem] text-muted-foreground"
+                                    value={(step.actions ?? []).join(", ")}
+                                    placeholder="Ações (vírgula) — ex. mural_composer_filtro"
+                                    title="Trecho da ação Maestro (Tap on …) que casa com este passo"
+                                    onChange={(e) => {
+                                      const actions = e.target.value
+                                        .split(",")
+                                        .map((s) => s.trim())
+                                        .filter(Boolean);
+                                      const next = [...list];
+                                      next[i] = { ...step, actions };
+                                      setDetailed(next);
+                                    }}
+                                  />
+                                </div>
+                                {isFailedStep && failInfo && (
+                                  <p className="text-[0.7rem] text-red-300">
+                                    Falhou aqui
+                                    {failInfo.action ? ` · ${failInfo.action}` : ""}
+                                    {failInfo.flow ? ` · ${failInfo.flow}` : ""}
+                                  </p>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
+                                title="Remover passo"
+                                onClick={() =>
+                                  setDetailed(list.filter((_, j) => j !== i))
+                                }
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()
+              )}
             </div>
             <Field label="Resultado esperado">
               <textarea
@@ -713,12 +908,40 @@ export function TestEditorPage({
 
             {isHomologation && isAdmin && (
             <div className="space-y-2 border-t pt-3">
-              <span className="text-sm font-medium">Maestro</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium">Automação</span>
+                {form.automation?.prep?.type === "playwright" && (
+                  <span className="rounded border px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
+                    Playwright → Maestro
+                  </span>
+                )}
+              </div>
               {form.automation?.flowPath ? (
                 <>
                   <p className="rounded-md border bg-muted/30 p-2 font-mono text-xs break-all">
                     {form.automation.label ?? form.automation.flowPath}
                   </p>
+                  <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                    Seed Playwright (opcional)
+                    <input
+                      className="h-9 rounded-md border bg-background px-2 font-mono text-[0.7rem] text-foreground"
+                      value={form.automation.prep?.specPath ?? ""}
+                      placeholder="projects/.../playwright/mural/ajustar-dn-aniversariante.spec.ts"
+                      onChange={(e) => {
+                        const specPath = e.target.value.trim();
+                        update("automation", {
+                          ...form.automation!,
+                          prep: specPath
+                            ? {
+                                type: "playwright",
+                                specPath,
+                                headed: form.automation?.prep?.headed !== false,
+                              }
+                            : undefined,
+                        });
+                      }}
+                    />
+                  </label>
                   <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                     Status do flow
                     <select
@@ -731,8 +954,8 @@ export function TestEditorPage({
                         })
                       }
                     >
-                      <option value="draft">Em construção (Studio)</option>
-                      <option value="ready">Pronto (validado 2×)</option>
+                      <option value="draft">Rascunho (ainda mapeando)</option>
+                      <option value="ready">Estável (validado)</option>
                     </select>
                   </label>
                 </>
@@ -813,17 +1036,48 @@ export function TestEditorPage({
                   </label>
                   <button
                     type="button"
-                    onClick={() => void runMaestro()}
+                    onClick={() => void runAutomationStage("all")}
                     disabled={busyRun || saving || startingEmulator}
                     className={cn(actionBtnBase, actionBtn.run, "w-full")}
+                    title={
+                      form.automation?.prep
+                        ? "Playwright (seed) e depois Maestro"
+                        : "Rodar flow Maestro"
+                    }
                   >
                     {recordVideo ? <Video className="size-4" /> : <Play className="size-4" />}
                     {busyRun
                       ? "Executando…"
-                      : recordVideo
-                        ? "Executar com vídeo"
-                        : "Executar teste"}
+                      : form.automation?.prep
+                        ? recordVideo
+                          ? "Play PW→Maestro + vídeo"
+                          : "Play (PW → Maestro)"
+                        : recordVideo
+                          ? "Executar com vídeo"
+                          : "Executar teste"}
                   </button>
+                  {form.automation?.prep?.type === "playwright" && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void runAutomationStage("prep")}
+                        disabled={busyRun || saving}
+                        className={cn(actionBtnBase, actionBtn.back, "w-full text-xs")}
+                        title="Só ajusta DN no web (Chrome headed)"
+                      >
+                        Seed DN
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void runAutomationStage("maestro")}
+                        disabled={busyRun || saving || startingEmulator}
+                        className={cn(actionBtnBase, actionBtn.back, "w-full text-xs")}
+                        title="Só Maestro (DN já ok)"
+                      >
+                        Só app
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

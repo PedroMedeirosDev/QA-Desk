@@ -1,6 +1,7 @@
-# Login ETMENEZES (responsável) — credenciais em flows/.env
+# Login ETMENEZES (responsável / Eliza) — credenciais em flows/.env
 #
-# NOME_USUARIO: fallbacks literais se NOME_ETMENEZES não vier no env.
+# Papel fixo RESPONSAVEIS — NÃO chamar garantir_perfil_* / selecionar_funcao.
+# NOME_USUARIO: Eliza e/ou filhos na home.
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -11,4 +12,4 @@ appId: br.com.polygonus.mobile.amostra
     env:
       LOGIN: ${LOGIN_ETMENEZES}
       SENHA: ${SENHA}
-      NOME_USUARIO: "Bruno|Davi|Ana|.*MURAL.*"
+      NOME_USUARIO: "Eliza|Teixeira|Bruno|Davi|Ana|.*MURAL.*"

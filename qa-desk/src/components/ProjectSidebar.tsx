@@ -1,12 +1,15 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Bug,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  Globe,
   LayoutDashboard,
   ListChecks,
+  Smartphone,
+  PanelTop,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -15,8 +18,11 @@ import {
   getProjectChannels,
   type ProductChannel,
 } from "@/config/channels";
+import { resolveProjectTheme } from "@/config/project-themes";
 import { getProject, PROJECTS } from "@/config/projects";
+import { BrandLogo } from "@/components/BrandLogo";
 import { ProjectLogo } from "@/components/ProjectLogo";
+import { useActiveProject } from "@/lib/active-project";
 import {
   isDashboardPath,
   isHomologationPath,
@@ -25,9 +31,14 @@ import {
   projectHomologationsListPath,
   projectListPath,
 } from "@/lib/project-paths";
-import type { ProjectSlug } from "@/types/test-record";
 
 const STORAGE_KEY = "qa-sidebar-collapsed";
+
+const CHANNEL_ICON: Record<ProductChannel, typeof Smartphone> = {
+  app: Smartphone,
+  web: Globe,
+  portal: PanelTop,
+};
 
 function readCollapsed(): boolean {
   try {
@@ -72,14 +83,13 @@ function homologationsLinkClass(
 }
 
 export function ProjectSidebar({
-  activeSlug,
   activeChannel,
 }: {
-  activeSlug: ProjectSlug;
   activeChannel?: ProductChannel;
 }) {
-  const channels = getProjectChannels(activeSlug);
-  const activeProject = getProject(activeSlug);
+  const { activeProject: activeSlug, brandTheme } = useActiveProject();
+  const channels = getProjectChannels(activeSlug!);
+  const activeProjectCfg = getProject(activeSlug!);
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
@@ -91,29 +101,33 @@ export function ProjectSidebar({
     }
   }, [collapsed]);
 
-  const sub = activeProject?.accent.subNav;
+  const sub = activeProjectCfg?.accent.subNav;
 
   return (
     <aside
       className={cn(
-        "sidebar-nav relative flex shrink-0 border-b border-border bg-card transition-[width,height] duration-200 ease-in-out md:h-full md:flex-col md:border-b-0 md:border-r",
+        "sidebar-nav relative flex shrink-0 border-b border-border bg-zinc-950/80 transition-[width,height] duration-200 ease-in-out md:h-full md:flex-col md:border-b-0 md:border-r md:border-zinc-800",
         collapsed
-          ? "h-14 w-full flex-row overflow-visible md:h-full md:w-[4.25rem] md:flex-col"
-          : "w-full flex-col overflow-hidden md:w-60",
+          ? "h-14 w-full flex-row overflow-visible md:h-full md:w-[4.5rem] md:flex-col"
+          : "w-full flex-col overflow-hidden md:w-64",
       )}
     >
-      <div
+      {/* Cabeçalho — logo horizontal (arte já inclui “QA DESK”) */}
+      <header
         className={cn(
-          "flex shrink-0 items-center border-border",
+          "relative flex shrink-0 items-center border-b border-zinc-800/90",
           collapsed
-            ? "h-14 justify-center border-b-0 px-2 md:h-auto md:border-b md:py-3"
-            : "justify-between border-b px-4 py-4",
+            ? "h-14 justify-center gap-1 px-2 md:h-auto md:flex-col md:gap-2 md:px-2 md:py-3"
+            : "gap-2 px-3 py-4",
         )}
       >
-        {!collapsed && (
-          <div className="min-w-0">
-            <p className="sidebar-kicker text-muted-foreground">QA Desk</p>
-            <p className="sidebar-heading mt-0.5 truncate">Projetos</p>
+        {collapsed ? (
+          <CollapsedTooltip label="QA Desk">
+            <BrandLogo size="icon" className="object-left" />
+          </CollapsedTooltip>
+        ) : (
+          <div className="flex min-h-14 min-w-0 flex-1 items-center">
+            <BrandLogo size="sidebar" />
           </div>
         )}
         <button
@@ -122,15 +136,15 @@ export function ProjectSidebar({
           title={collapsed ? "Expandir menu" : "Recolher menu"}
           aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
           aria-expanded={!collapsed}
-          className="rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          className="shrink-0 self-start rounded-md border border-zinc-700 p-1.5 text-zinc-400 transition-colors hover:border-red-600/40 hover:bg-red-950/40 hover:text-red-400"
         >
           {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </button>
-      </div>
+      </header>
 
       <nav
         className={cn(
-          "flex flex-1 gap-1 p-2",
+          "flex flex-1 gap-2 p-2.5",
           collapsed
             ? "flex-row items-center overflow-visible md:flex-col md:overflow-y-auto"
             : "flex-col overflow-y-auto overflow-x-hidden",
@@ -138,44 +152,73 @@ export function ProjectSidebar({
         aria-label="Selecionar projeto"
       >
         {PROJECTS.map((project) => {
-          const active = project.slug === activeSlug;
+          const isSelected = project.slug === activeSlug;
+          const itemTheme = isSelected
+            ? resolveProjectTheme(project.slug)
+            : brandTheme;
           const projectHref =
             project.slug === "polygonus"
               ? projectListPath(project.slug, defaultChannel(project.slug))
               : projectListPath(project.slug);
-          const showChannels = !collapsed && active && channels.length > 0;
+          const showChannels = !collapsed && isSelected && channels.length > 0;
           const themeSub = project.accent.subNav;
           const homPath = projectHomologationsListPath(project.slug);
           const dashPath = projectDashboardPath(project.slug);
           const onHomologations = isHomologationPath(project.slug, location.pathname);
           const onDashboard = isDashboardPath(project.slug, location.pathname);
 
-          const projectLink = (
+          const projectCard = (
             <Link
               to={projectHref}
               className={cn(
-                "flex items-center rounded-lg border transition-colors",
-                collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
-                active
-                  ? cn(
-                      project.accent.bgActive,
-                      project.accent.border,
-                      "shadow-sm hover:brightness-110",
-                    )
-                  : "border-transparent text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
-                active && project.themeId !== "default" && "text-white",
+                "flex items-center rounded-xl border transition-all duration-300",
+                collapsed ? "justify-center p-2" : "gap-3 px-3 py-3",
+                itemTheme.sidebarCardBg,
+                isSelected
+                  ? cn(itemTheme.sidebarBorder, "border-2")
+                  : "border-zinc-800/80 hover:border-zinc-600 hover:bg-zinc-900/80",
               )}
-              aria-current={active && !activeChannel ? "page" : undefined}
+              style={
+                isSelected
+                  ? {
+                      boxShadow: itemTheme.cardShadow,
+                      borderColor: itemTheme.highlight,
+                    }
+                  : undefined
+              }
+              aria-current={isSelected && !activeChannel ? "page" : undefined}
             >
-              <ProjectLogo logoFile={project.logoFile} label={project.label} size="sm" />
+              <ProjectLogo
+                logoFile={project.logoFile}
+                label={project.label}
+                size="sm"
+                className={cn(
+                  isSelected && "ring-1 ring-offset-1 ring-offset-zinc-950",
+                )}
+                style={
+                  isSelected
+                    ? ({
+                        ["--tw-ring-color" as string]: itemTheme.highlight,
+                        filter: `drop-shadow(0 0 6px ${itemTheme.highlight}88)`,
+                      } as CSSProperties)
+                    : undefined
+                }
+              />
               {!collapsed && (
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate sidebar-project-name">{project.label}</span>
+                  <span
+                    className={cn(
+                      "block truncate sidebar-project-name",
+                      isSelected ? itemTheme.sidebarText : "text-zinc-400",
+                    )}
+                  >
+                    {project.label}
+                  </span>
                   {project.description && (
                     <span
                       className={cn(
-                        "sidebar-project-desc block truncate opacity-80",
-                        active && project.themeId !== "default" && "text-white/80",
+                        "sidebar-project-desc mt-0.5 block truncate",
+                        isSelected ? "text-zinc-400" : "text-zinc-600",
                       )}
                     >
                       {project.description}
@@ -187,16 +230,17 @@ export function ProjectSidebar({
           );
 
           return (
-            <div key={project.slug} className={cn("space-y-1", collapsed && "shrink-0")}>
+            <div key={project.slug} className={cn("space-y-2", collapsed && "shrink-0")}>
               {collapsed ? (
-                <CollapsedTooltip label={project.label}>{projectLink}</CollapsedTooltip>
+                <CollapsedTooltip label={project.label}>{projectCard}</CollapsedTooltip>
               ) : (
-                projectLink
+                projectCard
               )}
 
               {showChannels && sub && (
-                <div className={cn("ml-3 space-y-3 border-l pl-2", sub.rail)}>
+                <div className="ml-1 space-y-4 border-l border-zinc-800 pl-3 pt-1">
                   {channels.map((ch) => {
+                    const ChannelIcon = CHANNEL_ICON[ch.id];
                     const testsPath = projectListPath(project.slug, ch.id);
                     const bugsPath = projectBugsListPath(project.slug, ch.id);
                     const onBugs = location.pathname.startsWith(bugsPath);
@@ -210,16 +254,17 @@ export function ProjectSidebar({
                         location.pathname.startsWith(`${testsPath}/`));
 
                     return (
-                      <div key={ch.id} className="space-y-1">
-                        <p className="sidebar-subitem px-2.5 text-[0.65rem] font-semibold uppercase tracking-wider opacity-60">
+                      <div key={ch.id} className="space-y-1.5">
+                        <p className="flex items-center gap-1.5 px-2 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+                          <ChannelIcon className="size-3.5 shrink-0 text-zinc-500" />
                           {CHANNEL_LABELS[ch.id]}
                         </p>
-                        <ul className="space-y-0.5">
+                        <ul className="space-y-1">
                           <li>
                             <Link
                               to={testsPath}
                               className={cn(
-                                "sidebar-subitem flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors",
+                                "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
                                 subLinkClass(themeSub, onTests ? "active" : "idle"),
                               )}
                               aria-current={onTests ? "page" : undefined}
@@ -232,7 +277,7 @@ export function ProjectSidebar({
                             <Link
                               to={bugsPath}
                               className={cn(
-                                "sidebar-subitem flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors",
+                                "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
                                 subLinkClass(themeSub, onBugs ? "active" : "idle"),
                               )}
                               aria-current={onBugs ? "page" : undefined}
@@ -245,11 +290,11 @@ export function ProjectSidebar({
                       </div>
                     );
                   })}
-                  <div className={cn("space-y-0.5 border-t pt-2", sub.rail)}>
+                  <div className="space-y-1 border-t border-zinc-800 pt-3">
                     <Link
                       to={dashPath}
                       className={cn(
-                        "sidebar-subitem flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors",
+                        "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
                         homologationsLinkClass(themeSub, onDashboard),
                       )}
                       aria-current={onDashboard ? "page" : undefined}
@@ -260,7 +305,7 @@ export function ProjectSidebar({
                     <Link
                       to={homPath}
                       className={cn(
-                        "sidebar-subitem flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors",
+                        "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
                         homologationsLinkClass(themeSub, onHomologations),
                       )}
                       aria-current={onHomologations ? "page" : undefined}
@@ -272,13 +317,13 @@ export function ProjectSidebar({
                 </div>
               )}
 
-              {collapsed && active && sub && (
+              {collapsed && isSelected && sub && (
                 <>
                   <CollapsedTooltip label="Dashboard">
                     <Link
                       to={dashPath}
                       className={cn(
-                        "flex justify-center rounded-lg border px-2 py-2 transition-colors",
+                        "flex justify-center rounded-xl border px-2 py-2 transition-colors",
                         onDashboard
                           ? cn(project.accent.subNav.homologationsActive)
                           : cn(
@@ -295,7 +340,7 @@ export function ProjectSidebar({
                     <Link
                       to={homPath}
                       className={cn(
-                        "flex justify-center rounded-lg border px-2 py-2 transition-colors",
+                        "flex justify-center rounded-xl border px-2 py-2 transition-colors",
                         onHomologations
                           ? cn(project.accent.subNav.homologationsActive)
                           : cn(
@@ -316,7 +361,7 @@ export function ProjectSidebar({
       </nav>
 
       {!collapsed && (
-        <p className="sidebar-footer shrink-0 border-t border-border px-4 py-3 text-muted-foreground">
+        <p className="sidebar-footer shrink-0 border-t border-zinc-800 px-4 py-3 text-zinc-500">
           {PROJECTS.length} projeto(s)
         </p>
       )}

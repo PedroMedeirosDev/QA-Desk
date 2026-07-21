@@ -73,12 +73,12 @@ for (const draft of createMuralHomologationRecords(project)) {
     existing.expectedResult = body.expectedResult ?? existing.expectedResult;
     if (body.steps?.length) existing.steps = body.steps;
     if (body.tags?.length) existing.tags = body.tags;
-    if (body.automation?.label) {
+    if (body.automation?.label || flowPath) {
       existing.automation = {
         ...existing.automation!,
-        label: body.automation.label,
-        flowPath: existing.automation?.flowPath ?? flowPath,
-        type: existing.automation?.type ?? "maestro",
+        label: body.automation?.label ?? existing.automation?.label,
+        flowPath,
+        type: existing.automation?.type ?? body.automation?.type ?? "maestro",
       };
     }
     updated += 1;

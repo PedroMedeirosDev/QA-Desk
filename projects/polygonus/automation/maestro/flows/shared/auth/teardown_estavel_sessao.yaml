@@ -1,40 +1,49 @@
-# Teardown leve — fecha overlays e volta à home autenticada (card MURAL).
-
-# NÃO faz logout: próximo CT usa resume_phjesus_coordenador.
-
+# Teardown leve — volta à home autenticada (card da home), SEM logout.
+# Próximo CT: resume_phjesus_coordenador (troca ETMENEZES → PHJESUS se precisar).
 #
-
-# Não pressiona Back se já estiver na home com MURAL.
-
-
+# NÃO use só ".*MURAL.*" — dentro do feed a aba inferior "Mural" casa e o
+# teardown acha que já está na home (fica em Recebidas/Enviadas).
+#
+# Atenção Maestro/YAML: NÃO repetir a chave `notVisible` no mesmo `when`
+# (a 2ª sobrescreve a 1ª). Dois critérios = dois `runFlow` aninhados.
 
 appId: br.com.polygonus.mobile.amostra
-
 ---
-
+# Já na home (card da grade) → só valida e sai
 - runFlow:
-
     when:
-
-      notVisible: ".*MURAL.*"
-
+      visible:
+        id: "home_card_mural"
     commands:
+      - assertNotVisible: "Show menu|Responder comunicado"
 
-      - pressKey: Back
+# Ainda na lista do Mural → sair com Back
+- runFlow:
+    when:
+      notVisible:
+        id: "home_card_mural"
+    commands:
+      - runFlow:
+          when:
+            visible: "Show menu|Recebidas|Enviadas|Pendentes|Responder comunicado"
+          commands:
+            - runFlow: ../nav/voltar_home_apos_mural.yaml
 
-      - waitForAnimationToEnd:
-          timeout: 500
-      - pressKey: Back
+      # Overlay / tela interna sem lista e sem card da home
+      - runFlow:
+          when:
+            notVisible:
+              id: "home_card_mural"
+          commands:
+            - runFlow: ../nav/voltar_para_home.yaml
 
-      - waitForAnimationToEnd:
-          timeout: 500
-      - runFlow: ../nav/voltar_para_home.yaml
-
-
-
+# Home = card MURAL da grade (não a aba do feed)
 - extendedWaitUntil:
-
-    visible: ".*MURAL.*"
-
+    visible:
+      id: "home_card_mural"
     timeout: 15000
 
+- assertVisible:
+    id: "home_card_mural"
+
+- assertNotVisible: "Show menu|Responder comunicado"

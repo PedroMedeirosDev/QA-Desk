@@ -46,12 +46,17 @@ Na tela de login há `Versão:.*` (qa-desk grava no registro via `adb dumpsys`).
 | Login | Papel | Uso nos CTs |
 |-------|--------|-------------|
 | `PHJESUS` | Professor **e** Coordenador | Envio (troca de função na UI) |
-| `ETMENEZES` | Responsável | Só visualiza / confirma recebimento |
+| `ETMENEZES` | Responsável | Só visualiza / confirma recebimento — **sempre** `RESPONSAVEIS`; **nunca** trocar perfil |
 | `ACMENEZES` | **Aluno** (Ana) | **Nunca** para enviar comunicado |
 
 Nome no header do PHJESUS: **Pedro Jesus** (`NOME_PHJESUS` no `.env`).
+Nome do responsável: **Eliza Teixeira de Menezes** — home pode mostrar Eliza e/ou filhos; detectar `Eliza|Teixeira|Bruno|Davi`.
 
 ## Troca de perfil (crítico)
+
+**Só PHJESUS** troca função (Coordenador / Professor / …).
+
+**ETMENEZES / Eliza:** papel fixo `RESPONSAVEIS`. Flows `garantir_perfil_*` / `selecionar_funcao` **não** se aplicam. Se o resume achar Eliza → **logout + login PHJESUS**, sem abrir dropdown de função.
 
 **Errado:** assumir perfil pelo Instagram/hover, drawer genérico, ou rótulos em title case.
 
@@ -60,8 +65,8 @@ Nome no header do PHJESUS: **Pedro Jesus** (`NOME_PHJESUS` no `.env`).
 1. Home → tocar **foto** ou texto **Pedro Jesus**
 2. Menu → **Perfil**
 3. Dropdown mostra o valor **atual** (`COORDENADOR`, `PROFESSORES`, …)
-4. Tocar o valor atual → lista → escolher o alvo
-5. Back até home (`Pedro Jesus` / `MURAL`)
+4. Se **já** for o alvo → **só Back** (não abrir a lista de novo)
+5. Se outro perfil → tocar o valor atual → lista → escolher o alvo → Back
 
 Textos **exatos** na lista (build amostra): `COORDENADOR` | `PROFESSORES` | `SUPORTE` | `SECRETARIA` | `RESPONSAVEIS`
 
@@ -81,7 +86,9 @@ Home **sem** card `MURAL` até o perfil correto (ex.: aluno / perfil errado). **
 3. Aba opcional: `Mural | Tab 1 of 2`
 4. Pronto quando `Recebidas` / lista / `Responder comunicado`
 
-Lote qa-desk: sem stdout ~75s (`MAESTRO_IDLE_TIMEOUT_MS`) → aborta o CT com `cancelled:false` e segue o próximo.
+Lote qa-desk: sem stdout → aborta o CT com `cancelled:false` e segue o próximo.
+Default ~120s; **CT de vídeo** (`video|compress` no path) → **15 min** (encode no emulador sem stdout). Override: `MAESTRO_IDLE_TIMEOUT_MS`.
+Cancelar CT avulso **não** deixa `batchStop` preso (só lote com `batchLabel` marca parada de suite).
 
 Filtros (dropdown **abaixo do nome** dentro do Mural): `TipoSentidoDropdown` — labels em `types.dart` (`Recebidas`, `Enviadas`, `Pendentes`, …). Subflow: `selecionar_filtro_sentido.yaml`. Detalhes: `flows/docs/SELECTORES_APP.md`.
 
@@ -95,8 +102,10 @@ Arquivo: `shared/mural/abrir_novo_comunicado.yaml`
 3. Tap `.*Aviso.*` (**não** tap só em `Comunicado` — colide com “Responder comunicado”)
 4. Assert `Novo comunicado`, `Para:`, `Turma`
 
-Evento: BoomMenu → `abrir_novo_evento` / `composer_novo_evento` (turmas + alvo Todos).  
+Evento: BoomMenu → `abrir_novo_evento` / `composer_novo_evento` (turmas + alvo Todos).
 EVENTO-01 sem Dia inteiro (`Evento Padrao`); EVENTO-02 com toggle Dia inteiro (`Evento Dia Inteiro`).
+**Data:** após montar o formulário, `selecionar_data_evento_dia_seguinte` abre o seletor e faz **scroll no dia** → amanhã (workaround `BrasilTime` / offset inválido com data = hoje). Emulador ainda em `America/Sao_Paulo` + relógio **24h**. `PULAR_DATA_DIA_SEGUINTE=1` pula o passo.
+**Dia inteiro:** nunca `rightOf: "Dia inteiro"` sozinho — pega o **olho** (pré-visualização) no app bar. Usar `rightOf` + `below` título + `above` corpo (`marcar_dia_inteiro.yaml`).
 
 ## Composer (strings estáveis)
 
@@ -120,8 +129,34 @@ setup_coordenador_mural → publicar_comunicado_texto (TEXTO)
 
 **Anexos / enquete:** `composer_novo_comunicado` + `adicionar_*` / clipe + `enviar_comunicado`.  
 Clipe: **Arquivo** (PDF/vídeo) · **Boleto** · **Correspondência** (Declaração de IR → Ok). Foto = galeria (esquerda).  
+**Vídeo (ANEXO-03):** no emulador a demora é **transcode** (`video_compress` / MediaCodec software), não upload/rede. Fixture: `fixtures/Video_teste.mp4` → push `/sdcard/Download/`. Gate: esperar **`Comprimindo` sumir** (`aguardar_compressao_video` + `ESPERAR_TOAST_VIDEO=1`); toast `Vídeo comprimido com sucesso!` some rápido — não use como único gate. Evitar acentos nos regex Maestro (Windows). Pós-envio: assert **`Recebidas|Enviadas`** (sem `Show menu` sozinho — existe no composer). Enviar cedo → alerta “Compressão em andamento” → Fechar → reenviar.  
 Boleto: funil (app bar) → **Inadimplentes** → Período (**Mes corrente** BOLETO-01 ou competência **01** BOLETO-02) + clipe → Boleto.  
-Filtros especiais (só envio, conferência manual): `FILTRO-01…07` → `selecionar_filtro_extras.yaml` (Adimplentes, faltas, média, bolsistas, Pagantes).  
+Filtros especiais (só envio, conferência manual): `FILTRO-01…10` → `selecionar_filtro_extras.yaml`  
+(Inadimplentes, Aniversariantes do dia/mês, Bolsistas 100%/50%/todos, Pagantes, Situação, Sexo, Limpar filtro).  
+
+**Seeds de validação (receptor após envio):**
+
+| Papel no teste | Login | Serve para |
+|----------------|-------|------------|
+| Bolsista **100%** + pai de **menino** | `RBBARBOSA` | FILTRO-03 (100%), FILTRO-05 (todos), FILTRO-08 Sexo=Masculino — **não** Pagantes |
+| Bolsista **50%** (= pagante) + pai de **menina** | `PLLIMA` | FILTRO-04 (50%), FILTRO-06 (Pagantes), FILTRO-05, FILTRO-08 Sexo=Feminino |
+| Aniversariante | `ANIVERSARI` | FILTRO-02 (dia) / FILTRO-09 (mês) |
+
+**Pagantes:** no funil, **Pagantes = quem não tem gratuidade 100%** (50%, parcial, mensalidade cheia…). Bolsista 100% **fica de fora**.  
+**PLLIMA:** 50% → entra em Pagantes e em Bolsistas 50%/todos.  
+**RBBARBOSA:** 100% → Bolsistas 100%/todos; **não** recebe filtro Pagantes.  
+**ANIVERSARI:** seed dedicado. Playwright ajusta DN (dia/mês do teste) no web gestão — **não** reverter. Depois: PHJESUS envia → login `ANIVERSARI` → assert ID.
+
+### Playwright — DN Aniversariante (só web)
+
+Doc + spec: `projects/polygonus/automation/playwright/mural/`.
+
+1. `https://amostra.polygonus.com.br/web/react/gestao`
+2. **Geral** → **Pessoas** → **Colaboradores**
+3. Busca centro → `Aniversariante` → **duplo clique** no nome
+4. **Data Nascimento** → dia/mês do teste → **Gravar**
+
+Validação Sexo: enviar com filtro → conferir nos **dois** pais (menino vê / menina não, e o inverso).  
 Antes de cada CT (CLI/UI): timezone BR + `adb push` fixtures PDF/vídeo + dismiss DocumentsUI.
 
 **Editar / excluir:** dropdown → **Enviadas** → menu `Show menu` (⋮) → `editar_comunicado_lista` / `excluir_comunicado_lista`.
@@ -164,6 +199,7 @@ Cabeçalho do YAML: `STATUS: draft` até passar **2×** no emulador; só então 
 ## qa-desk
 
 - Checklist Mural: `MURAL_HOMOLOGATION_ITEMS` em `qa-desk/server/automation.ts`
+- **E2E-99 adiado** — fora do lote módulo/suite até os demais CTs estarem estáveis (ainda roda CT a CT se precisar)
 - Diagnósticos: `qa-desk/server/maestro-diagnostics.ts` (versão + passo/ação falha)
 - Homologação: ▶ Rodar homologação inteira na campanha Mural
 
@@ -174,3 +210,4 @@ Cabeçalho do YAML: `STATUS: draft` até passar **2×** no emulador; só então 
 3. Documentar no YAML o que ainda é STUDIO (coordenada / overflow / picker)
 4. Atualizar checklist em `automation.ts` se for CT de homologação
 5. Ler [reference.md](reference.md) para catálogo por suite (CRUD/ANEXO/…) e anti-padrões
+**Não priorizar E2E-99** enquanto CRUD/Anexos/Filtros/Eventos/etc. não estiverem ok.

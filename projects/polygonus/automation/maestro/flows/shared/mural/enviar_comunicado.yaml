@@ -1,9 +1,12 @@
 # Envia comunicado ou evento em composição.
 # Semantics: mural_composer_enviar
 #
+# Com vídeo: aguardar_compressao_video ANTES do 1º tap em Enviar
+# (enviar com "Comprimindo..." abre alerta e esconde o toast de sucesso).
 # Com anexo o composer pode demorar a fechar — timeout alto.
 # Retry se ainda em Novo/Editar comunicado ou Novo evento.
-# Pré-requisito eventos: emulador em America/Sao_Paulo (senão BrasilTime.UnmarshalJSON).
+# Pré-requisito eventos: America/Sao_Paulo + relógio 24h; composer avança data p/ amanhã
+# (selecionar_data_evento_dia_seguinte) — senão BrasilTime.UnmarshalJSON / formato inválido.
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -12,13 +15,14 @@ appId: br.com.polygonus.mobile.amostra
 - tapOn:
     id: mural_composer_enviar
 
+# Se ainda assim abriu o alerta de compressão → Fechar, esperar toast, reenviar
 - runFlow: aguardar_compressao_video.yaml
 
-# Ainda no composer após compressão → reenvia uma vez
 - runFlow:
     when:
       visible: "Novo comunicado|Editar comunicado|Novo evento"
     commands:
+      - runFlow: aguardar_compressao_video.yaml
       - tapOn:
           id: mural_composer_enviar
           optional: true
@@ -34,8 +38,9 @@ appId: br.com.polygonus.mobile.amostra
           timeout: 500
       - assertVisible: "NEVER_MATCH_FUSO_EMULADOR_GMT"
 
+# NÃO incluir "Show menu" sozinho — existe no composer e dá falso positivo
 - extendedWaitUntil:
-    visible: "Recebidas|Enviadas|Enviados|Show menu"
+    visible: "Recebidas|Enviadas|Enviados"
     timeout: 90000
 
 - runFlow:
@@ -47,8 +52,8 @@ appId: br.com.polygonus.mobile.amostra
           id: mural_composer_enviar
           optional: true
       - extendedWaitUntil:
-          visible: "Recebidas|Enviadas|Enviados|Show menu"
+          visible: "Recebidas|Enviadas|Enviados"
           timeout: 60000
 
-- assertVisible: "Recebidas|Enviadas|Enviados|Show menu"
+- assertVisible: "Recebidas|Enviadas|Enviados"
 - assertNotVisible: "Novo comunicado|Editar comunicado|Novo evento"
