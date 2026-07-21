@@ -7,7 +7,7 @@
 #      .\scripts\sync-company-repos.ps1 -Hard
 
 param(
-    [ValidateSet("all", "mobile", "react", "go", "acropoly", "server", "frontend", "backend")]
+    [ValidateSet("all", "mobile", "react", "go", "acropoly", "server", "suporte-kb", "frontend", "backend")]
     [string]$Only = "all",
     [switch]$Hard
 )
@@ -29,7 +29,7 @@ function Test-RepoSelected {
     switch ($Only) {
         "all" { return $true }
         "frontend" { return $Id -in @("mobile", "react") }
-        "backend" { return $Id -in @("go", "acropoly", "server") }
+        "backend" { return $Id -in @("go", "acropoly", "server", "suporte-kb") }
         default { return $Id -eq $Only }
     }
 }

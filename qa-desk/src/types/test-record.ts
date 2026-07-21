@@ -43,12 +43,28 @@ export interface AutomationPrep {
   headed?: boolean;
 }
 
+/** Alvo Playwright completo (alternativa ao Maestro no mesmo CT). */
+export interface AutomationPlaywrightTarget {
+  /** Relativo à raiz do repo */
+  specPath: string;
+  /** Default true */
+  headed?: boolean;
+  /** draft = ainda mapeando · ready = validado */
+  readiness?: "draft" | "ready";
+  lastRunAt?: string;
+  lastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
+  lastRunOutput?: string;
+}
+
 export interface AutomationLink {
   type: "maestro" | "playwright";
-  flowPath: string;
+  /** Flow Maestro (emulador). Opcional se só houver alvo Playwright. */
+  flowPath?: string;
   label?: string;
-  /** Seed web antes do Maestro (ex.: DN Aniversariante) */
+  /** Seed web antes do Maestro (ex.: DN Aniversariante) — não é o teste Web completo */
   prep?: AutomationPrep;
+  /** Spec Playwright como executor alternativo (Web / Flutter Web) */
+  playwright?: AutomationPlaywrightTarget;
   /** draft = ainda mapeando no Studio · ready = validado 2× no emulador */
   readiness?: "draft" | "ready";
   lastRunAt?: string;
@@ -147,13 +163,20 @@ export const AUTOMATION_READINESS_LABELS: Record<AutomationReadiness, string> = 
 export function getAutomationReadiness(
   record: Pick<TestRecord, "automation">,
 ): AutomationReadiness | null {
-  if (!record.automation?.flowPath) return null;
-  return record.automation.readiness === "ready" ? "ready" : "draft";
+  if (record.automation?.flowPath?.trim()) {
+    return record.automation.readiness === "ready" ? "ready" : "draft";
+  }
+  if (record.automation?.playwright?.specPath?.trim()) {
+    return record.automation.playwright.readiness === "ready" ? "ready" : "draft";
+  }
+  return null;
 }
 
 export function getExecutionMode(record: Pick<TestRecord, "executionMode" | "automation">): ExecutionMode {
   if (record.executionMode) return record.executionMode;
-  return record.automation?.flowPath ? "automated" : "manual";
+  const auto = record.automation;
+  if (auto?.flowPath?.trim() || auto?.playwright?.specPath?.trim()) return "automated";
+  return "manual";
 }
 
 /** Ex.: BUG-2026-001 → TEST-2026-001 */

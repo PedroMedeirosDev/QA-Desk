@@ -12,6 +12,7 @@ import { BugListPage } from "@/pages/BugListPage";
 import { HomologationPage } from "@/pages/HomologationPage";
 import { HomologationsListPage } from "@/pages/HomologationsListPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { KbCurationPage } from "@/pages/KbCurationPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { ActiveProjectProvider, useActiveProject } from "@/lib/active-project";
 import { parseProjectRoute } from "@/lib/project-paths";
@@ -51,6 +52,8 @@ function ProjectShell() {
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {route.view === "dashboard"
                     ? "Dashboard"
+                    : route.view === "kb-curation"
+                      ? "Curadoria KB"
                     : route.view === "homologations-list" ||
                         route.view === "homologation"
                       ? "Homologações"
@@ -61,6 +64,8 @@ function ProjectShell() {
                 <h1 className="truncate text-lg font-semibold">
                   {route.view === "dashboard"
                     ? "Visão geral QA"
+                    : route.view === "kb-curation"
+                      ? "Rastreabilidade da base de conhecimento"
                     : route.view === "homologations-list"
                       ? "Todas as seções"
                       : route.view === "homologation"
@@ -93,6 +98,8 @@ function ProjectShell() {
           >
             {route.view === "dashboard" ? (
               <DashboardPage project={slug} />
+            ) : route.view === "kb-curation" ? (
+              <KbCurationPage project={slug} />
             ) : route.view === "list" ? (
               <TestListPage project={slug} channel={route.channel} />
             ) : route.view === "bugs-list" ? (

@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  GitPullRequest,
   Globe,
   LayoutDashboard,
   ListChecks,
@@ -23,12 +24,15 @@ import { getProject, PROJECTS } from "@/config/projects";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ProjectLogo } from "@/components/ProjectLogo";
 import { useActiveProject } from "@/lib/active-project";
+import { api } from "@/lib/api";
 import {
   isDashboardPath,
   isHomologationPath,
+  isKbCurationPath,
   projectBugsListPath,
   projectDashboardPath,
   projectHomologationsListPath,
+  projectKbCurationPath,
   projectListPath,
 } from "@/lib/project-paths";
 
@@ -92,6 +96,7 @@ export function ProjectSidebar({
   const activeProjectCfg = getProject(activeSlug!);
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [kbRereviewCount, setKbRereviewCount] = useState(0);
 
   useEffect(() => {
     try {
@@ -100,6 +105,25 @@ export function ProjectSidebar({
       /* ignore */
     }
   }, [collapsed]);
+
+  useEffect(() => {
+    if (activeSlug !== "polygonus") {
+      setKbRereviewCount(0);
+      return;
+    }
+    let cancelled = false;
+    api
+      .listKbCuration("polygonus")
+      .then((response) => {
+        if (!cancelled) setKbRereviewCount(response.metrics.awaitingRereview ?? 0);
+      })
+      .catch(() => {
+        if (!cancelled) setKbRereviewCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSlug, location.pathname]);
 
   const sub = activeProjectCfg?.accent.subNav;
 
@@ -164,8 +188,10 @@ export function ProjectSidebar({
           const themeSub = project.accent.subNav;
           const homPath = projectHomologationsListPath(project.slug);
           const dashPath = projectDashboardPath(project.slug);
+          const kbCurationPath = projectKbCurationPath(project.slug);
           const onHomologations = isHomologationPath(project.slug, location.pathname);
           const onDashboard = isDashboardPath(project.slug, location.pathname);
+          const onKbCuration = isKbCurationPath(project.slug, location.pathname);
 
           const projectCard = (
             <Link
@@ -248,6 +274,7 @@ export function ProjectSidebar({
                       activeChannel === ch.id &&
                       !onHomologations &&
                       !onDashboard &&
+                      !onKbCuration &&
                       !onBugs &&
                       !location.pathname.startsWith(bugsPath) &&
                       (location.pathname === testsPath ||
@@ -313,6 +340,27 @@ export function ProjectSidebar({
                       <ListChecks className="size-3.5 shrink-0 opacity-90" />
                       Homologações
                     </Link>
+                    {project.slug === "polygonus" && (
+                      <Link
+                        to={kbCurationPath}
+                        className={cn(
+                          "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
+                          homologationsLinkClass(themeSub, onKbCuration),
+                        )}
+                        aria-current={onKbCuration ? "page" : undefined}
+                      >
+                        <GitPullRequest className="size-3.5 shrink-0 opacity-90" />
+                        <span className="min-w-0 flex-1">Curadoria KB</span>
+                        {kbRereviewCount > 0 && (
+                          <span
+                            className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-semibold text-zinc-950"
+                            title={`${kbRereviewCount} PR(s) para re-revisar`}
+                          >
+                            {kbRereviewCount}
+                          </span>
+                        )}
+                      </Link>
+                    )}
                   </div>
                 </div>
               )}
@@ -353,6 +401,34 @@ export function ProjectSidebar({
                       <ListChecks className="size-4" />
                     </Link>
                   </CollapsedTooltip>
+                  {project.slug === "polygonus" && (
+                    <CollapsedTooltip
+                      label={
+                        kbRereviewCount > 0
+                          ? `Curadoria KB · ${kbRereviewCount} para re-revisar`
+                          : "Curadoria KB"
+                      }
+                    >
+                      <Link
+                        to={kbCurationPath}
+                        className={cn(
+                          "relative flex justify-center rounded-xl border px-2 py-2 transition-colors",
+                          onKbCuration
+                            ? cn(project.accent.subNav.homologationsActive)
+                            : cn(
+                                "border-transparent text-muted-foreground",
+                                project.accent.subNav.homologationsHover,
+                              ),
+                        )}
+                        aria-current={onKbCuration ? "page" : undefined}
+                      >
+                        <GitPullRequest className="size-4" />
+                        {kbRereviewCount > 0 && (
+                          <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-orange-500" />
+                        )}
+                      </Link>
+                    </CollapsedTooltip>
+                  )}
                 </>
               )}
             </div>

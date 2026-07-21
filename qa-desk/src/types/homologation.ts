@@ -40,7 +40,10 @@ export interface HomologationProgress {
     lastRunAt?: string;
     found: boolean;
     hasAutomation?: boolean;
+    hasMaestro?: boolean;
+    hasPlaywright?: boolean;
     readiness?: "draft" | "ready";
+    playwrightReadiness?: "draft" | "ready";
   }>;
 }
 

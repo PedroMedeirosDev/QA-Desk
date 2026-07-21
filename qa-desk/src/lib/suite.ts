@@ -1,5 +1,10 @@
 import type { HomologationStatus, TestRecord } from "@/types/test-record";
 import { countTestRuns } from "@/lib/history";
+import {
+  hasMaestroAutomation,
+  hasPlaywrightAutomation,
+  type AutomationRunner,
+} from "@/lib/automation-runners";
 
 /**
  * Hierarquia na UI:
@@ -239,7 +244,10 @@ function bucketStatus(status?: HomologationStatus | string): "passed" | "failed"
 }
 
 /** Estatísticas agregadas da suite (cabeçalho expandido ou recolhido). */
-export function summarizeSuite(items: TestRecord[]): SuiteStats {
+export function summarizeSuite(
+  items: TestRecord[],
+  runner: AutomationRunner = "maestro",
+): SuiteStats {
   let passed = 0;
   let failed = 0;
   let pending = 0;
@@ -255,14 +263,21 @@ export function summarizeSuite(items: TestRecord[]): SuiteStats {
     else if (bucket === "failed") failed += 1;
     else pending += 1;
 
-    if (item.automation?.flowPath) {
+    if (runner === "maestro" && hasMaestroAutomation(item.automation)) {
       runnable += 1;
-      if (item.automation.readiness === "ready") readyCount += 1;
+      if (item.automation?.readiness === "ready") readyCount += 1;
+      else draftCount += 1;
+    } else if (runner === "playwright" && hasPlaywrightAutomation(item.automation)) {
+      runnable += 1;
+      if (item.automation?.playwright?.readiness === "ready") readyCount += 1;
       else draftCount += 1;
     }
     totalRuns += countTestRuns(item.history);
 
-    const at = item.automation?.lastRunAt;
+    const at =
+      runner === "playwright"
+        ? item.automation?.playwright?.lastRunAt ?? item.automation?.lastRunAt
+        : item.automation?.lastRunAt ?? item.automation?.playwright?.lastRunAt;
     if (at && (!lastRunAt || at > lastRunAt)) lastRunAt = at;
   }
 
@@ -287,10 +302,14 @@ export function summarizeSuiteProgress(
   items: Array<{
     status: HomologationStatus;
     hasAutomation?: boolean;
+    hasMaestro?: boolean;
+    hasPlaywright?: boolean;
     readiness?: "draft" | "ready";
+    playwrightReadiness?: "draft" | "ready";
     runsInHomologation?: number;
     lastRunAt?: string;
   }>,
+  runner: AutomationRunner = "maestro",
 ): SuiteStats {
   let passed = 0;
   let failed = 0;
@@ -307,9 +326,15 @@ export function summarizeSuiteProgress(
     else if (bucket === "failed") failed += 1;
     else pending += 1;
 
-    if (item.hasAutomation) {
+    const canRun =
+      runner === "maestro"
+        ? Boolean(item.hasMaestro ?? item.hasAutomation)
+        : Boolean(item.hasPlaywright);
+    if (canRun) {
       runnable += 1;
-      if (item.readiness === "ready") readyCount += 1;
+      const readiness =
+        runner === "playwright" ? item.playwrightReadiness : item.readiness;
+      if (readiness === "ready") readyCount += 1;
       else draftCount += 1;
     }
     totalRuns += item.runsInHomologation ?? 0;

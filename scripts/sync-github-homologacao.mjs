@@ -119,6 +119,7 @@ function tierFromPapel(papel) {
     case "NOVO LAYOUT":
       return "full";
     case "BACKEND PRINCIPAL":
+    case "SUPORTE KB":
       return "sanity";
     default:
       return "legacy";

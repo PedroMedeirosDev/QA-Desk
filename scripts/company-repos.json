@@ -1,5 +1,5 @@
 {
-  "descricao": "Mapa de clones locais — branch cq para homologação",
+  "descricao": "Mapa de clones locais — branch cq para homologação (exceto suporte-kb = master)",
   "repos": [
     {
       "id": "mobile",
@@ -35,6 +35,15 @@
       "url": "https://github.com/polygonus-br/polygonus-server.git",
       "branch": "cq",
       "papel": "BACKEND LEGADO APP"
+    },
+    {
+      "id": "suporte-kb",
+      "name": "polygonus-suporte-kb",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb.git",
+      "branch": "master",
+      "papel": "SUPORTE KB",
+      "tier": "sanity",
+      "homologHint": "Base de conhecimento + IA 1ª camada (Discord/staff). Homologar artigos em kb/ e fluxo de atendimento conforme pedido do gestor."
     }
   ]
 }

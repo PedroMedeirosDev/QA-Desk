@@ -80,6 +80,7 @@ Repositórios configurados:
 | `polygonus-mobile/` | https://github.com/polygonus-br/polygonus-mobile.git | **APP** |
 | `polygonus-react/` | https://github.com/polygonus-br/polygonus-react.git | **NOVO LAYOUT** |
 | `polygonus-go/` | https://github.com/polygonus-br/polygonus-go.git | **BACKEND PRINCIPAL** |
+| `polygonus-suporte-kb/` | https://github.com/polygonus-br/polygonus-suporte-kb.git | **SUPORTE KB** (`master`) |
 | `acropoly-server/` | https://github.com/polygonus-br/acropoly-server.git | **LEGADO** |
 | `polygonus-server/` | https://github.com/polygonus-br/polygonus-server.git | **BACKEND LEGADO APP** |
 

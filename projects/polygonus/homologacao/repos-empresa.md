@@ -7,6 +7,7 @@ Fonte: orientação do gestor sobre a org `polygonus-br`.
 | **APP** | `polygonus-mobile` | Completa — Maestro + checklist mobile |
 | **NOVO LAYOUT** | `polygonus-react` | Completa — checklist portal (versão nova) |
 | **BACKEND PRINCIPAL** | `polygonus-go` | Indireta — validar **portal + app** após deploy (checklist go) |
+| **SUPORTE KB** | `polygonus-suporte-kb` | KB + IA 1ª camada (Discord/staff) — artigos `kb/` e atendimento |
 | **LEGADO** (versão clássica) | `acropoly-server` | Só se entidade ainda usa layout clássico ou Moacir pedir |
 | **BACKEND LEGADO DO APP** | `polygonus-server` | Só se fluxo do app ainda depende desse backend |
 
@@ -18,6 +19,7 @@ Pastas na **raiz** do QA Desk, **gitignored** — para diff de código e foco de
 polygonus-mobile/
 polygonus-react/
 polygonus-go/
+polygonus-suporte-kb/
 acropoly-server/
 polygonus-server/
 ```
@@ -31,6 +33,7 @@ Atualizar tudo:
 Só um repo:
 
 ```powershell
+.\scripts\sync-company-repos.ps1 -Only suporte-kb
 .\scripts\sync-company-repos.ps1 -Only go
 ```
 
@@ -45,6 +48,7 @@ Cada e-mail `[nome-do-repo] hash: mensagem` indica **qual camada** mudou:
 | `polygonus-react` | Portal (novo layout) |
 | `polygonus-mobile` | App |
 | `polygonus-go` | Portal/app (API por trás) |
+| `polygonus-suporte-kb` | KB suporte / curadoria / IA 1ª camada |
 | `acropoly-server` | Legado clássico (se aplicável) |
 | `polygonus-server` | App em rotas legadas (se aplicável) |
 

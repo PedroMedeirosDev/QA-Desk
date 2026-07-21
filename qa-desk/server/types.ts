@@ -53,12 +53,27 @@ export interface AutomationPrep {
   headed?: boolean;
 }
 
+/** Alvo Playwright completo (alternativa ao Maestro no mesmo CT). */
+export interface AutomationPlaywrightTarget {
+  /** Relativo à raiz do repo */
+  specPath: string;
+  /** Default true */
+  headed?: boolean;
+  readiness?: "draft" | "ready";
+  lastRunAt?: string;
+  lastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
+  lastRunOutput?: string;
+}
+
 export interface AutomationLink {
   type: "maestro" | "playwright";
-  flowPath: string;
+  /** Flow Maestro (emulador). Opcional se só houver alvo Playwright. */
+  flowPath?: string;
   label?: string;
-  /** Seed web antes do Maestro (ex.: DN Aniversariante) */
+  /** Seed web antes do Maestro (ex.: DN Aniversariante) — não é o teste Web completo */
   prep?: AutomationPrep;
+  /** Spec Playwright como executor alternativo (Web / Flutter Web) */
+  playwright?: AutomationPlaywrightTarget;
   /** draft = ainda mapeando no Studio · ready = validado 2× no emulador */
   readiness?: "draft" | "ready";
   lastRunAt?: string;
@@ -161,6 +176,9 @@ export interface HomologationProgress {
     lastRunAt?: string;
     found: boolean;
     hasAutomation?: boolean;
+    hasMaestro?: boolean;
+    hasPlaywright?: boolean;
     readiness?: "draft" | "ready";
+    playwrightReadiness?: "draft" | "ready";
   }>;
 }

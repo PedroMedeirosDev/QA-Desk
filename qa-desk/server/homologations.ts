@@ -274,6 +274,9 @@ export function computeHomologationProgress(
     const suite =
       suiteTag?.slice("suite:".length) || suiteFromDomainTestKey(testKey);
 
+    const hasMaestro = Boolean(test?.automation?.flowPath?.trim());
+    const hasPlaywright = Boolean(test?.automation?.playwright?.specPath?.trim());
+
     return {
       testKey,
       testId: test?.id,
@@ -281,11 +284,21 @@ export function computeHomologationProgress(
       suite,
       status,
       runsInHomologation,
-      lastRunAt: test?.automation?.lastRunAt,
+      lastRunAt:
+        test?.automation?.lastRunAt ?? test?.automation?.playwright?.lastRunAt,
       found: Boolean(test),
-      hasAutomation: Boolean(test?.automation?.flowPath),
-      readiness: test?.automation?.flowPath
-        ? ((test.automation.readiness === "ready" ? "ready" : "draft") as "draft" | "ready")
+      hasAutomation: hasMaestro || hasPlaywright,
+      hasMaestro,
+      hasPlaywright,
+      readiness: hasMaestro
+        ? ((test!.automation!.readiness === "ready" ? "ready" : "draft") as
+            | "draft"
+            | "ready")
+        : undefined,
+      playwrightReadiness: hasPlaywright
+        ? ((test!.automation!.playwright!.readiness === "ready"
+            ? "ready"
+            : "draft") as "draft" | "ready")
         : undefined,
     };
   });

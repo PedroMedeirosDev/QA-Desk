@@ -1,6 +1,8 @@
 import { ChevronDown, ChevronRight, Hammer, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MODULE_LABELS, SUITE_LABELS, type SuiteStats } from "@/lib/suite";
+import { SuiteRunnerToggle } from "@/components/SuiteRunnerToggle";
+import type { AutomationRunner } from "@/lib/automation-runners";
 
 function formatLastRun(iso?: string): string {
   if (!iso) return "—";
@@ -62,6 +64,7 @@ function RunGroupButton({
   onRun,
   runDisabled,
   running,
+  runner,
 }: {
   label: string;
   actionLabel: string;
@@ -69,12 +72,15 @@ function RunGroupButton({
   onRun?: () => void;
   runDisabled?: boolean;
   running?: boolean;
+  runner?: AutomationRunner;
 }) {
   if (!onRun || stats.runnable <= 0) return null;
+  const tool =
+    runner === "playwright" ? "Playwright" : runner === "maestro" ? "Maestro" : "automação";
   return (
     <button
       type="button"
-      title={`Rodar ${actionLabel.toLowerCase()} ${label} (${stats.runnable} flow${stats.runnable === 1 ? "" : "s"})`}
+      title={`Rodar ${actionLabel.toLowerCase()} ${label} (${stats.runnable} ${tool})`}
       disabled={runDisabled}
       onClick={onRun}
       className={cn(
@@ -104,6 +110,8 @@ function GroupHeaderRow({
   running,
   variant = "tests",
   meta,
+  runner,
+  onRunnerChange,
 }: {
   name: string;
   level: HeaderLevel;
@@ -116,6 +124,8 @@ function GroupHeaderRow({
   variant?: HeaderVariant;
   /** Ex.: "8 suites" no cabeçalho do módulo */
   meta?: string;
+  runner?: AutomationRunner;
+  onRunnerChange?: (runner: AutomationRunner) => void;
 }) {
   const Chevron = expanded ? ChevronDown : ChevronRight;
   const actionLabel = level === "module" ? "Módulo" : "Suite";
@@ -128,23 +138,30 @@ function GroupHeaderRow({
       ? "text-sm font-bold tracking-wide text-zinc-800 dark:text-zinc-100"
       : "text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-200";
   const indent = level === "suite" ? "pl-2" : "";
+  const flowLabel =
+    runner === "playwright" ? "com Playwright" : "com flow";
 
   const titleCell = (
     <td className={cn("px-4 py-2.5", indent)}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex min-w-0 items-center gap-2 text-left"
-        aria-expanded={expanded}
-        title={expanded ? `Recolher ${name}` : `Expandir ${name}`}
-      >
-        <Chevron className="size-4 shrink-0 text-muted-foreground" />
-        <span className={titleClass}>{name}</span>
-        <PassRateBadge stats={stats} />
-        {meta && (
-          <span className="text-xs font-normal text-muted-foreground">{meta}</span>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex min-w-0 items-center gap-2 text-left"
+          aria-expanded={expanded}
+          title={expanded ? `Recolher ${name}` : `Expandir ${name}`}
+        >
+          <Chevron className="size-4 shrink-0 text-muted-foreground" />
+          <span className={titleClass}>{name}</span>
+          <PassRateBadge stats={stats} />
+          {meta && (
+            <span className="text-xs font-normal text-muted-foreground">{meta}</span>
+          )}
+        </button>
+        {level === "suite" && runner && onRunnerChange && (
+          <SuiteRunnerToggle value={runner} onChange={onRunnerChange} size="xs" />
         )}
-      </button>
+      </div>
     </td>
   );
 
@@ -157,6 +174,7 @@ function GroupHeaderRow({
         onRun={onRun}
         runDisabled={runDisabled}
         running={running}
+        runner={runner}
       />
     </td>
   );
@@ -183,18 +201,29 @@ function GroupHeaderRow({
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {stats.runnable > 0 ? (
             <span
-              className="rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-0.5 text-sky-300"
-              title="CTs com flow Maestro (executáveis). Inclui rascunho e estáveis."
+              className={cn(
+                "rounded-full border px-2 py-0.5",
+                runner === "playwright"
+                  ? "border-sky-500/35 bg-sky-500/10 text-sky-300"
+                  : "border-sky-500/35 bg-sky-500/10 text-sky-300",
+              )}
+              title={
+                runner === "playwright"
+                  ? "CTs com spec Playwright"
+                  : "CTs com flow Maestro (executáveis). Inclui rascunho e estáveis."
+              }
             >
-              {stats.runnable} com flow
+              {stats.runnable} {flowLabel}
             </span>
           ) : (
-            <span className="text-muted-foreground">Manual</span>
+            <span className="text-muted-foreground">
+              {runner === "playwright" ? "Sem Playwright" : "Manual"}
+            </span>
           )}
           {stats.draftCount > 0 && (
             <span
               className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 text-amber-300"
-              title={`${stats.draftCount} flow(s) ainda em rascunho — existem, mas não validados`}
+              title={`${stats.draftCount} ainda em rascunho`}
             >
               <Hammer className="size-3" />
               {stats.draftCount} rascunho{stats.draftCount === 1 ? "" : "s"}
@@ -203,7 +232,7 @@ function GroupHeaderRow({
           {stats.readyCount > 0 && stats.draftCount > 0 && (
             <span
               className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-emerald-300"
-              title={`${stats.readyCount} flow(s) validados (readiness ready)`}
+              title={`${stats.readyCount} validados`}
             >
               {stats.readyCount} estáve{stats.readyCount === 1 ? "l" : "is"}
             </span>
@@ -233,6 +262,8 @@ export function SuiteHeaderRow({
   runDisabled,
   running,
   variant = "tests",
+  runner,
+  onRunnerChange,
 }: {
   suite: string;
   stats: SuiteStats;
@@ -242,6 +273,8 @@ export function SuiteHeaderRow({
   runDisabled?: boolean;
   running?: boolean;
   variant?: HeaderVariant;
+  runner?: AutomationRunner;
+  onRunnerChange?: (runner: AutomationRunner) => void;
 }) {
   return (
     <GroupHeaderRow
@@ -254,6 +287,8 @@ export function SuiteHeaderRow({
       runDisabled={runDisabled}
       running={running}
       variant={variant}
+      runner={runner}
+      onRunnerChange={onRunnerChange}
     />
   );
 }

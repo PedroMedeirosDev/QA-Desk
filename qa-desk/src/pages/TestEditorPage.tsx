@@ -4,7 +4,7 @@ import { ArrowLeft, Bug, Copy, Play, Plus, Smartphone, Sparkles, Trash2, Upload,
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
-import { api, type AutomationFlow, type AndroidDeviceStatus } from "@/lib/api";
+import { api, type AutomationFlow, type AutomationSpec, type AndroidDeviceStatus } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { useRunProgress, QA_RUN_FINISHED_EVENT, type LiveRunState } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
@@ -88,6 +88,7 @@ export function TestEditorPage({
   const [form, setForm] = useState<Partial<TestRecord>>(emptyDraft(project, channel, editorKind));
   const [saving, setSaving] = useState(false);
   const [flows, setFlows] = useState<AutomationFlow[]>([]);
+  const [specs, setSpecs] = useState<AutomationSpec[]>([]);
   const [running, setRunning] = useState(false);
   const [deviceStatus, setDeviceStatus] = useState<AndroidDeviceStatus | null>(null);
   const [startingEmulator, setStartingEmulator] = useState(false);
@@ -105,6 +106,7 @@ export function TestEditorPage({
   useEffect(() => {
     if (project === "polygonus") {
       api.listFlows(project, "mural").then(setFlows).catch(() => setFlows([]));
+      api.listSpecs(project).then(setSpecs).catch(() => setSpecs([]));
     }
   }, [project]);
 
@@ -245,7 +247,10 @@ export function TestEditorPage({
     }
   }
 
-  async function runAutomationStage(stage: "all" | "prep" | "maestro" = "all") {
+  async function runAutomationStage(
+    stage: "all" | "prep" | "maestro" = "all",
+    runner: "maestro" | "playwright" = "maestro",
+  ) {
     if (!id || isNew) return;
     setRunning(true);
     try {
@@ -253,20 +258,23 @@ export function TestEditorPage({
         project,
         testId: id,
         title: form.title || formatRecordId(id, form as TestRecord),
-        recordVideo: stage === "prep" ? false : recordVideo,
-        stage,
+        recordVideo: runner === "playwright" || stage === "prep" ? false : recordVideo,
+        stage: runner === "playwright" ? "all" : stage,
+        runner,
       });
       setForm(res.report);
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
       const vids = (res.report.evidence ?? []).filter((e) => e.type === "video");
       const stageHint =
-        stage === "prep"
-          ? " (seed)"
-          : stage === "maestro"
-            ? " (só app)"
-            : res.stages?.includes("playwright")
-              ? " (PW→Maestro)"
-              : "";
+        runner === "playwright"
+          ? " (Playwright Web)"
+          : stage === "prep"
+            ? " (seed)"
+            : stage === "maestro"
+              ? " (só app)"
+              : res.stages?.includes("playwright")
+                ? " (PW→Maestro)"
+                : "";
       if (res.ok) {
         toast.success(
           `Execução #${res.runNumber} passou${stageHint}${ver}${vids.length ? ` · ${vids.length} vídeo(s)` : ""}`,
@@ -274,12 +282,14 @@ export function TestEditorPage({
       } else {
         const where =
           res.failedStage === "playwright"
-            ? "Playwright seed"
+            ? runner === "playwright"
+              ? "Playwright Web"
+              : "Playwright seed"
             : (res.failure?.failedStepLabel ??
               res.failure?.failedAction ??
               "veja o painel / histórico");
         toast.error(`Execução #${res.runNumber} falhou${stageHint}${ver} — ${where}`, {
-          title: stage === "prep" ? "Playwright" : "Automação",
+          title: runner === "playwright" || stage === "prep" ? "Playwright" : "Automação",
         });
       }
     } catch (e) {
@@ -294,8 +304,35 @@ export function TestEditorPage({
       type: "maestro",
       flowPath,
       label,
-      readiness: "draft",
+      readiness: form.automation?.readiness ?? "draft",
       prep: form.automation?.prep,
+      playwright: form.automation?.playwright,
+      lastRunAt: form.automation?.lastRunAt,
+      lastRunStatus: form.automation?.lastRunStatus,
+      lastRunOutput: form.automation?.lastRunOutput,
+    });
+    update("executionMode", "automated");
+  }
+
+  function attachPlaywrightSpec(specPath: string) {
+    const prev = form.automation;
+    update("automation", {
+      type: prev?.flowPath ? (prev.type ?? "maestro") : "playwright",
+      flowPath: prev?.flowPath,
+      label: prev?.label,
+      readiness: prev?.readiness,
+      prep: prev?.prep,
+      playwright: {
+        specPath,
+        headed: prev?.playwright?.headed !== false,
+        readiness: prev?.playwright?.readiness ?? "draft",
+        lastRunAt: prev?.playwright?.lastRunAt,
+        lastRunStatus: prev?.playwright?.lastRunStatus,
+        lastRunOutput: prev?.playwright?.lastRunOutput,
+      },
+      lastRunAt: prev?.lastRunAt,
+      lastRunStatus: prev?.lastRunStatus,
+      lastRunOutput: prev?.lastRunOutput,
     });
     update("executionMode", "automated");
   }
@@ -907,78 +944,191 @@ export function TestEditorPage({
             )}
 
             {isHomologation && isAdmin && (
-            <div className="space-y-2 border-t pt-3">
+            <div className="space-y-4 border-t pt-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">Automação</span>
                 {form.automation?.prep?.type === "playwright" && (
                   <span className="rounded border px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
-                    Playwright → Maestro
+                    Seed PW → Maestro
+                  </span>
+                )}
+                {form.automation?.playwright?.specPath && (
+                  <span className="rounded border border-sky-500/40 px-1.5 py-0.5 text-[0.65rem] text-sky-300">
+                    Web / Playwright
                   </span>
                 )}
               </div>
-              {form.automation?.flowPath ? (
-                <>
-                  <p className="rounded-md border bg-muted/30 p-2 font-mono text-xs break-all">
-                    {form.automation.label ?? form.automation.flowPath}
-                  </p>
+
+              <div className="space-y-2 rounded-lg border border-border/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Emulador / Maestro
+                </p>
+                {form.automation?.flowPath ? (
+                  <>
+                    <p className="rounded-md border bg-muted/30 p-2 font-mono text-xs break-all">
+                      {form.automation.label ?? form.automation.flowPath}
+                    </p>
+                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      Seed Playwright (opcional, antes do Maestro)
+                      <input
+                        className="h-9 rounded-md border bg-background px-2 font-mono text-[0.7rem] text-foreground"
+                        value={form.automation.prep?.specPath ?? ""}
+                        placeholder="projects/.../playwright/mural/ajustar-dn-aniversariante.spec.ts"
+                        onChange={(e) => {
+                          const specPath = e.target.value.trim();
+                          update("automation", {
+                            ...form.automation!,
+                            prep: specPath
+                              ? {
+                                  type: "playwright",
+                                  specPath,
+                                  headed: form.automation?.prep?.headed !== false,
+                                }
+                              : undefined,
+                          });
+                        }}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      Status do flow
+                      <select
+                        className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
+                        value={form.automation.readiness === "ready" ? "ready" : "draft"}
+                        onChange={(e) =>
+                          update("automation", {
+                            ...form.automation!,
+                            readiness: e.target.value as "draft" | "ready",
+                          })
+                        }
+                      >
+                        <option value="draft">Rascunho (ainda mapeando)</option>
+                        <option value="ready">Estável (validado)</option>
+                      </select>
+                    </label>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Nenhum flow Maestro vinculado</p>
+                )}
+                {flows.length > 0 && (
+                  <select
+                    className="w-full rounded-md border px-2 py-1.5 text-xs"
+                    value={form.automation?.flowPath ?? ""}
+                    onChange={(e) => {
+                      const f = flows.find((x) => x.flowPath === e.target.value);
+                      if (f) attachFlow(f.flowPath, f.label);
+                    }}
+                  >
+                    <option value="">Vincular flow Maestro…</option>
+                    {flows.map((f) => (
+                      <option key={f.flowPath} value={f.flowPath}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="space-y-2 rounded-lg border border-sky-500/25 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-sky-300/90">
+                  Web / Playwright
+                </p>
+                <p className="text-[0.7rem] text-muted-foreground">
+                  Mesmo CT, executor alternativo (App no navegador). Separado do seed acima.
+                </p>
+                {form.automation?.playwright?.specPath ? (
+                  <>
+                    <p className="rounded-md border bg-muted/30 p-2 font-mono text-xs break-all">
+                      {form.automation.playwright.specPath}
+                    </p>
+                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      Status do spec
+                      <select
+                        className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
+                        value={
+                          form.automation.playwright.readiness === "ready"
+                            ? "ready"
+                            : "draft"
+                        }
+                        onChange={(e) =>
+                          update("automation", {
+                            ...form.automation!,
+                            playwright: {
+                              ...form.automation!.playwright!,
+                              readiness: e.target.value as "draft" | "ready",
+                            },
+                          })
+                        }
+                      >
+                        <option value="draft">Rascunho</option>
+                        <option value="ready">Estável</option>
+                      </select>
+                    </label>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Nenhum spec Playwright vinculado</p>
+                )}
+                {specs.length > 0 ? (
+                  <select
+                    className="w-full rounded-md border px-2 py-1.5 text-xs"
+                    value={form.automation?.playwright?.specPath ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (!value) {
+                        if (!form.automation) return;
+                        const { playwright: _pw, ...rest } = form.automation;
+                        update("automation", {
+                          ...rest,
+                          playwright: undefined,
+                          type: rest.flowPath ? "maestro" : "playwright",
+                        });
+                        return;
+                      }
+                      attachPlaywrightSpec(value);
+                    }}
+                  >
+                    <option value="">Vincular spec Playwright…</option>
+                    {specs.map((s) => (
+                      <option key={s.specPath} value={s.specPath}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
                   <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    Seed Playwright (opcional)
+                    Spec (caminho relativo ao repo)
                     <input
                       className="h-9 rounded-md border bg-background px-2 font-mono text-[0.7rem] text-foreground"
-                      value={form.automation.prep?.specPath ?? ""}
-                      placeholder="projects/.../playwright/mural/ajustar-dn-aniversariante.spec.ts"
+                      value={form.automation?.playwright?.specPath ?? ""}
+                      placeholder="projects/polygonus/automation/playwright/mural/exemplo.spec.ts"
                       onChange={(e) => {
                         const specPath = e.target.value.trim();
-                        update("automation", {
-                          ...form.automation!,
-                          prep: specPath
-                            ? {
-                                type: "playwright",
-                                specPath,
-                                headed: form.automation?.prep?.headed !== false,
-                              }
-                            : undefined,
-                        });
+                        if (!specPath) {
+                          if (!form.automation) return;
+                          update("automation", {
+                            ...form.automation,
+                            playwright: undefined,
+                          });
+                          return;
+                        }
+                        attachPlaywrightSpec(specPath);
                       }}
                     />
                   </label>
-                  <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    Status do flow
-                    <select
-                      className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
-                      value={form.automation.readiness === "ready" ? "ready" : "draft"}
-                      onChange={(e) =>
-                        update("automation", {
-                          ...form.automation!,
-                          readiness: e.target.value as "draft" | "ready",
-                        })
-                      }
-                    >
-                      <option value="draft">Rascunho (ainda mapeando)</option>
-                      <option value="ready">Estável (validado)</option>
-                    </select>
-                  </label>
-                </>
-              ) : (
-                <p className="text-xs text-muted-foreground">Nenhum flow vinculado</p>
-              )}
-              {flows.length > 0 && (
-                <select
-                  className="w-full rounded-md border px-2 py-1.5 text-xs"
-                  value={form.automation?.flowPath ?? ""}
-                  onChange={(e) => {
-                    const f = flows.find((x) => x.flowPath === e.target.value);
-                    if (f) attachFlow(f.flowPath, f.label);
-                  }}
-                >
-                  <option value="">Vincular flow…</option>
-                  {flows.map((f) => (
-                    <option key={f.flowPath} value={f.flowPath}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-              )}
+                )}
+                {!isNew && form.automation?.playwright?.specPath && (
+                  <button
+                    type="button"
+                    onClick={() => void runAutomationStage("all", "playwright")}
+                    disabled={busyRun || saving}
+                    className={cn(actionBtnBase, actionBtn.run, "w-full")}
+                    title="Rodar só o spec Playwright (Web)"
+                  >
+                    <Play className="size-4" />
+                    {busyRun ? "Executando…" : "Executar Playwright (Web)"}
+                  </button>
+                )}
+              </div>
+
               {!isNew && form.automation?.flowPath && (
                 <div className="space-y-2">
                   <div className="flex items-start gap-2 rounded-md border bg-muted/20 px-2.5 py-2 text-xs text-muted-foreground">
@@ -1036,7 +1186,7 @@ export function TestEditorPage({
                   </label>
                   <button
                     type="button"
-                    onClick={() => void runAutomationStage("all")}
+                    onClick={() => void runAutomationStage("all", "maestro")}
                     disabled={busyRun || saving || startingEmulator}
                     className={cn(actionBtnBase, actionBtn.run, "w-full")}
                     title={
@@ -1054,13 +1204,13 @@ export function TestEditorPage({
                           : "Play (PW → Maestro)"
                         : recordVideo
                           ? "Executar com vídeo"
-                          : "Executar teste"}
+                          : "Executar Maestro"}
                   </button>
                   {form.automation?.prep?.type === "playwright" && (
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
-                        onClick={() => void runAutomationStage("prep")}
+                        onClick={() => void runAutomationStage("prep", "maestro")}
                         disabled={busyRun || saving}
                         className={cn(actionBtnBase, actionBtn.back, "w-full text-xs")}
                         title="Só ajusta DN no web (Chrome headed)"
@@ -1069,7 +1219,7 @@ export function TestEditorPage({
                       </button>
                       <button
                         type="button"
-                        onClick={() => void runAutomationStage("maestro")}
+                        onClick={() => void runAutomationStage("maestro", "maestro")}
                         disabled={busyRun || saving || startingEmulator}
                         className={cn(actionBtnBase, actionBtn.back, "w-full text-xs")}
                         title="Só Maestro (DN já ok)"

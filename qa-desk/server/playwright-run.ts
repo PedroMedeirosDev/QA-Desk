@@ -25,6 +25,15 @@ export type PlaywrightRunResult = {
   durationMs: number;
 };
 
+export type PlaywrightSpecInfo = {
+  id: string;
+  label: string;
+  type: "playwright";
+  /** Relativo à raiz do monorepo */
+  specPath: string;
+  module?: string;
+};
+
 let activePw: { runId?: string; child: ChildProcess } | null = null;
 
 export function getActivePlaywrightRun(): { runId?: string; pid?: number } | null {
@@ -53,7 +62,6 @@ export function cancelPlaywrightRun(runId?: string): boolean {
 }
 
 function resolveSpecRelativeToPlaywright(specPath: string): string {
-  const normalized = specPath.replace(/\\/g, "/");
   const abs = path.isAbsolute(specPath)
     ? specPath
     : path.resolve(REPO_ROOT, specPath);
@@ -69,6 +77,39 @@ function resolveSpecRelativeToPlaywright(specPath: string): string {
     );
   }
   return rel.replace(/\\/g, "/");
+}
+
+/** Lista specs `.spec.ts` sob projects/polygonus/automation/playwright. */
+export function listPlaywrightSpecs(module?: string): PlaywrightSpecInfo[] {
+  if (!fs.existsSync(PLAYWRIGHT_ROOT)) return [];
+
+  const specs: PlaywrightSpecInfo[] = [];
+
+  const walk = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === "node_modules" || entry.name === "test-results") continue;
+        walk(abs);
+        continue;
+      }
+      if (!entry.isFile() || !/\.spec\.ts$/i.test(entry.name)) continue;
+      const relToPw = path.relative(PLAYWRIGHT_ROOT, abs).replace(/\\/g, "/");
+      const mod = relToPw.includes("/") ? relToPw.split("/")[0] : undefined;
+      if (module && mod && mod.toLowerCase() !== module.toLowerCase()) continue;
+      const repoRel = path.relative(REPO_ROOT, abs).replace(/\\/g, "/");
+      specs.push({
+        id: repoRel,
+        label: relToPw.replace(/\.spec\.ts$/i, ""),
+        type: "playwright",
+        specPath: repoRel,
+        module: mod,
+      });
+    }
+  };
+
+  walk(PLAYWRIGHT_ROOT);
+  return specs.sort((a, b) => a.specPath.localeCompare(b.specPath));
 }
 
 export async function runPlaywrightSpec(
