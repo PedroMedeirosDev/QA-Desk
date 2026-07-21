@@ -130,6 +130,7 @@ testsRouter.post("/", requireAdmin, async (req, res) => {
     description: body.description?.trim() ?? "",
     preconditions: body.preconditions?.trim(),
     steps: body.steps?.filter(Boolean) ?? [],
+    stepsDetailed: body.stepsDetailed,
     expectedResult: body.expectedResult?.trim(),
     actualResult: body.actualResult?.trim(),
     reportedAt: now.slice(0, 10),

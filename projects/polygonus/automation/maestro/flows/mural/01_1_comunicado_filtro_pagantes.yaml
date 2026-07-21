@@ -1,4 +1,5 @@
-# FILTRO-07: Envio com filtro Pagantes (conferência manual).
+# FILTRO-06: Envio com filtro Pagantes.
+# Pagantes = alunos/famílias SEM gratuidade 100% (ex.: 50% PLLIMA). Bolsista 100% (RBBARBOSA) fica de fora.
 # STATUS: draft
 
 appId: br.com.polygonus.mobile.amostra

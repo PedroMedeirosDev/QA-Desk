@@ -1,4 +1,4 @@
-/** Interpreta linhas do stdout do Maestro para o painel de progresso. */
+/** Interpreta linhas do stdout do Maestro para o painel de progresso (fase/ação). */
 
 const FLOW_LABELS: Array<{ match: RegExp; label: string }> = [
   { match: /ensure_login_screen/i, label: "Porto seguro (tela ENTRAR)" },

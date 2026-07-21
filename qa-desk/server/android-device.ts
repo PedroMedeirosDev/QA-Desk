@@ -313,7 +313,7 @@ export async function ensureMaestroFixturesOnDevice(options?: {
   }
 }
 
-/** Fixa America/Sao_Paulo — evita dialog BrasilTime em EVENTO-*. */
+/** Fixa America/Sao_Paulo + relógio 24h — evita dialog BrasilTime em EVENTO-*. */
 export async function ensureEmulatorTimezoneBr(options?: {
   timezone?: string;
   onProgress?: (message: string) => void;
@@ -330,6 +330,21 @@ export async function ensureEmulatorTimezoneBr(options?: {
       ["shell", "settings", "put", "global", "time_zone", tz],
       { timeout: 8_000, windowsHide: true },
     );
+    // Formato 12h no device pode gerar payload de horário inválido no composer de evento
+    try {
+      await execFileAsync(
+        "adb",
+        ["shell", "settings", "put", "system", "time_12_24", "24"],
+        { timeout: 8_000, windowsHide: true },
+      );
+      await execFileAsync(
+        "adb",
+        ["shell", "settings", "put", "secure", "time_12_24", "24"],
+        { timeout: 8_000, windowsHide: true },
+      );
+    } catch {
+      /* ignore */
+    }
     try {
       await execFileAsync(
         "adb",
@@ -364,12 +379,23 @@ export async function ensureEmulatorTimezoneBr(options?: {
     } catch {
       /* ignore */
     }
+    let clockFmt = "";
+    try {
+      const c = await execFileAsync(
+        "adb",
+        ["shell", "settings", "get", "system", "time_12_24"],
+        { timeout: 8_000, windowsHide: true },
+      );
+      clockFmt = String(c.stdout ?? "").trim();
+    } catch {
+      /* ignore */
+    }
     const current = String(stdout ?? "").trim();
     const gmtOk = /-[0-9]{2}\b|BRT|America/.test(dateLine) && !/\bGMT\b/.test(dateLine);
     options?.onProgress?.(
       current === tz && gmtOk
-        ? `Timezone OK: ${tz} (${dateLine})`
-        : `Timezone settings=${current || "?"} date=${dateLine || "?"} — se EVENTO falhar, cold boot com -timezone ${tz}`,
+        ? `Timezone OK: ${tz} · clock=${clockFmt || "?"}h (${dateLine})`
+        : `Timezone settings=${current || "?"} clock=${clockFmt || "?"} date=${dateLine || "?"} — se EVENTO falhar, cold boot com -timezone ${tz}`,
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

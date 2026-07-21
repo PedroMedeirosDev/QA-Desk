@@ -13,7 +13,7 @@ import { SuiteListControls } from "@/components/SuiteListControls";
 import { api } from "@/lib/api";
 import { useConfirm } from "@/lib/confirm";
 import { toastErrorMessage, useToast } from "@/lib/toast";
-import { useRunProgress, RUN_CANCELLED_MESSAGE } from "@/lib/run-progress";
+import { useRunProgress, RUN_CANCELLED_MESSAGE, clearBatchStop, isBatchStopRequested } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { projectDetailPath, projectHomologationsListPath } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
@@ -269,9 +269,16 @@ export function HomologationPage({
     setRunningAll(true);
     let passed = 0;
     let failed = 0;
+    clearBatchStop();
 
     try {
       for (let i = 0; i < queue.length; i++) {
+        if (isBatchStopRequested()) {
+          toast.info(`${opts.batchTitle} interrompida.`, {
+            title: "Execução em lote",
+          });
+          break;
+        }
         const item = queue[i];
         setBatchProgress(
           `${opts.batchTitle} ${i + 1}/${queue.length} — ${item.title}  ·  ✓ ${passed}  ✗ ${failed}`,
@@ -285,7 +292,7 @@ export function HomologationPage({
             homologationId: homologation.id,
             batchLabel: `${opts.batchTitle} ${i + 1}/${queue.length}`,
           });
-          if (res.cancelled) {
+          if (res.cancelled || isBatchStopRequested()) {
             toast.info(`${opts.batchTitle} interrompida.`, {
               title: "Execução em lote",
             });
@@ -307,7 +314,7 @@ export function HomologationPage({
           }
         } catch (e) {
           const msg = toastErrorMessage(e, "erro");
-          if (msg === RUN_CANCELLED_MESSAGE) {
+          if (msg === RUN_CANCELLED_MESSAGE || isBatchStopRequested()) {
             toast.info(`${opts.batchTitle} interrompida.`, {
               title: "Execução em lote",
             });
@@ -326,6 +333,7 @@ export function HomologationPage({
       });
       reload({ soft: true });
     } finally {
+      clearBatchStop();
       setRunningAll(false);
       setRunningId(null);
       setBatchProgress("");
@@ -360,7 +368,7 @@ export function HomologationPage({
     const draftCount = queue.filter((i) => i.readiness !== "ready").length;
     const description =
       draftCount > 0
-        ? `${queue.length} teste(s) em sequência.\n${draftCount} ainda estão "em construção" e podem falhar.\nSe um falhar, a campanha continua nos próximos.`
+        ? `${queue.length} teste(s) em sequência.\n${draftCount} ainda estão em rascunho e podem falhar.\nSe um falhar, a campanha continua nos próximos.`
         : `${queue.length} teste(s) Maestro em sequência.\nSe um falhar, continua nos próximos.\nDeixe o emulador ligado — pode demorar vários minutos.`;
 
     await runQueue(queue, {
@@ -738,7 +746,7 @@ export function HomologationPage({
                                 title={
                                   item.readiness === "ready"
                                     ? "Executar Maestro"
-                                    : "Executar Maestro (flow ainda em construção)"
+                                    : "Executar Maestro (flow ainda em rascunho)"
                                 }
                                 disabled={
                                   runningAll ||

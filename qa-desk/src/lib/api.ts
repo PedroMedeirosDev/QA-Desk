@@ -97,7 +97,11 @@ export const api = {
   runAutomation: (
     project: ProjectSlug,
     id: string,
-    opts?: { homologationId?: string; recordVideo?: boolean },
+    opts?: {
+      homologationId?: string;
+      recordVideo?: boolean;
+      stage?: "all" | "prep" | "maestro";
+    },
   ) =>
     request<{
       ok: boolean;
@@ -105,12 +109,17 @@ export const api = {
       runNumber: number;
       output?: string;
       appVersion?: string;
+      stage?: "all" | "prep" | "maestro";
+      stages?: string[];
+      prepOk?: boolean;
+      failedStage?: "playwright" | "maestro";
       failure?: {
         failedAction?: string;
         failedFlow?: string;
         errorSummary?: string;
         failedStepIndex?: number;
         failedStepLabel?: string;
+        failedStepSource?: "steps" | "stepsDetailed";
       };
       homologationId?: string;
       report: TestRecord;
@@ -120,6 +129,7 @@ export const api = {
       body: JSON.stringify({
         ...(opts?.homologationId ? { homologationId: opts.homologationId } : {}),
         ...(opts?.recordVideo ? { recordVideo: true } : {}),
+        ...(opts?.stage && opts.stage !== "all" ? { stage: opts.stage } : {}),
       }),
     }),
 

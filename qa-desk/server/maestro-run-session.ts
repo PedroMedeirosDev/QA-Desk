@@ -5,6 +5,7 @@ import {
 } from "./storage.js";
 import { CURRENT_USER } from "./config/user.js";
 import { recordTestRun } from "./db/test-runs.js";
+import { clipMaestroOutput } from "./maestro-output.js";
 import type { ProjectSlug } from "./types.js";
 
 export type MaestroRunSession = {
@@ -30,7 +31,7 @@ export function registerRunSession(session: Omit<MaestroRunSession, "output" | "
 export function appendRunSessionOutput(runId: string, chunk: string): void {
   const s = sessions.get(runId);
   if (!s) return;
-  s.output = (s.output + chunk).slice(-8000);
+  s.output = clipMaestroOutput(s.output + chunk);
 }
 
 export function getRunSession(runId: string): MaestroRunSession | undefined {
@@ -61,7 +62,9 @@ export async function persistCancelledRunSession(
   if (idx < 0) return { persisted: false };
 
   const report = catalog.reports[idx];
-  const output = (session.output + (extraOutput ?? "")).slice(-8000).trim();
+  const output = clipMaestroOutput(
+    (session.output + (extraOutput ?? "")).trim(),
+  );
   const outputBlock =
     output.length > 0
       ? output

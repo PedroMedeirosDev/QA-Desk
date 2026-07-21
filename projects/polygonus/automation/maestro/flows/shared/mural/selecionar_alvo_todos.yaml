@@ -2,13 +2,13 @@
 #
 # Dialog: "Selecionar Destinatário" (checkboxes Alunos/Responsáveis/…/Todos).
 # Rodar logo após selecionar_turmas_comunicado.
-# Semantics desejado: mural_composer_alvo (ainda não no app → regex/texto).
+# Semantics: mural_composer_alvo (app ≥ 6.06.10).
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - assertVisible: "Para:"
 
-# Preferência: semantics (quando o app publicar)
+# Preferência: semantics
 - runFlow:
     when:
       visible:

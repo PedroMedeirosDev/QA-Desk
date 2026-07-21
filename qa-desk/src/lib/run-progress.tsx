@@ -21,7 +21,11 @@ import {
   X,
 } from "lucide-react";
 import { authHeaders } from "@/lib/auth-token";
-import { normalizeMaestroOutput } from "@/lib/maestro-output";
+import {
+  curateMaestroLogLines,
+  MAX_LIVE_MAESTRO_LINES,
+  normalizeMaestroOutput,
+} from "@/lib/maestro-output";
 import { interpretMaestroLine } from "@/lib/maestro-progress";
 import { cn } from "@/lib/utils";
 import type { TestRecord } from "@/types/test-record";
@@ -43,11 +47,33 @@ export type RunAutomationResult = {
   output?: string;
   appVersion?: string;
   failure?: RunFailure;
+  stage?: "all" | "prep" | "maestro";
+  stages?: string[];
+  prepOk?: boolean;
+  failedStage?: "playwright" | "maestro";
   homologationId?: string;
   report: TestRecord;
 };
 
 export const RUN_CANCELLED_MESSAGE = "Cancelado pelo usuário";
+
+/**
+ * Parar no lote: o cancel da API só mata o CT atual.
+ * Este flag impede o loop (módulo/suite/campanha) de iniciar o próximo.
+ */
+let batchStopRequested = false;
+
+export function requestBatchStop(): void {
+  batchStopRequested = true;
+}
+
+export function clearBatchStop(): void {
+  batchStopRequested = false;
+}
+
+export function isBatchStopRequested(): boolean {
+  return batchStopRequested;
+}
 
 type ProgressEvent =
   | {
@@ -102,6 +128,7 @@ type RunProgressContextValue = {
     homologationId?: string;
     batchLabel?: string;
     recordVideo?: boolean;
+    stage?: "all" | "prep" | "maestro";
   }) => Promise<RunAutomationResult>;
   stopRun: () => Promise<void>;
   dismiss: () => void;
@@ -121,6 +148,8 @@ type PanelPrefs = {
   y: number;
   logOpen: boolean;
   minimized: boolean;
+  /** limpo = narrativa; completo = stdout bruto */
+  logMode: "limpo" | "completo";
 };
 
 type RunListener = (state: LiveRunState) => void;
@@ -182,6 +211,7 @@ function loadPanelPrefs(): PanelPrefs | null {
       y: parsed.y,
       logOpen: parsed.logOpen ?? false,
       minimized: parsed.minimized ?? false,
+      logMode: parsed.logMode === "completo" ? "completo" : "limpo",
     };
   } catch {
     return null;
@@ -202,6 +232,7 @@ function defaultPanelPrefs(): PanelPrefs {
     y: Math.max(12, window.innerHeight - 120),
     logOpen: false,
     minimized: false,
+    logMode: "limpo",
   };
 }
 
@@ -283,12 +314,19 @@ function signalRunComplete(state: LiveRunState) {
   );
 }
 
+function appendLiveLines(prev: string[], ...extra: string[]): string[] {
+  const next = [...prev, ...extra.map((l) => l.trim()).filter(Boolean)];
+  return next.length > MAX_LIVE_MAESTRO_LINES
+    ? next.slice(-MAX_LIVE_MAESTRO_LINES)
+    : next;
+}
+
 function applyMaestroLine(state: LiveRunState, rawLine: string): LiveRunState {
   const line = normalizeMaestroOutput(rawLine);
   const info = interpretMaestroLine(rawLine);
   return {
     ...state,
-    lines: [...state.lines.slice(-120), line].filter(Boolean),
+    lines: appendLiveLines(state.lines, line),
     lastLineAt: Date.now(),
     idleMs: 0,
     ...(info
@@ -321,11 +359,28 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
       homologationId?: string;
       batchLabel?: string;
       recordVideo?: boolean;
+      stage?: "all" | "prep" | "maestro";
     }) => {
+      if (isBatchStopRequested()) {
+        throw new Error(RUN_CANCELLED_MESSAGE);
+      }
+
       await ensureNotificationPermission();
 
       activeAbort?.abort();
       activeAbort = new AbortController();
+
+      const stage = opts.stage ?? "all";
+      const startPhase =
+        stage === "prep"
+          ? "Iniciando Playwright (seed)…"
+          : stage === "maestro"
+            ? opts.recordVideo
+              ? "Iniciando Maestro + gravação…"
+              : "Iniciando Maestro…"
+            : opts.recordVideo
+              ? "Iniciando Playwright → Maestro + gravação…"
+              : "Iniciando Playwright → Maestro…";
 
       const baseState: LiveRunState = {
         active: true,
@@ -333,9 +388,7 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
         testId: opts.testId,
         title: opts.title ?? opts.testId,
         batchLabel: opts.batchLabel,
-        phase: opts.recordVideo
-          ? "Iniciando Maestro + gravação…"
-          : "Iniciando Maestro…",
+        phase: startPhase,
         action: undefined,
         lines: [],
         startedAt: Date.now(),
@@ -358,6 +411,7 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
               ? { homologationId: opts.homologationId }
               : {}),
             ...(opts.recordVideo ? { recordVideo: true } : {}),
+            ...(stage !== "all" ? { stage } : {}),
           }),
           signal: activeAbort.signal,
         },
@@ -471,7 +525,7 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
         }
 
         if (!final) {
-          if (latest.stopping || activeAbort?.signal.aborted) {
+          if (latest.stopping || activeAbort?.signal.aborted || isBatchStopRequested()) {
             const cancelled: LiveRunState = {
               ...latest,
               stopping: false,
@@ -491,6 +545,10 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
           commit(orphan);
           signalRunComplete(orphan);
           throw new Error("Execução encerrada sem resultado");
+        }
+
+        if (isBatchStopRequested() || final.cancelled) {
+          return { ...final, cancelled: true, ok: false };
         }
 
         return final;
@@ -520,7 +578,16 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
     const s = runState;
     if (!s.active || s.result || s.stopping) return;
 
+    // Só marca parada de lote quando há suite/módulo/campanha em andamento.
+    // Em CT avulso, requestBatchStop() ficava true para sempre e o próximo Play
+    // falhava na hora com "Cancelado pelo usuário" até dar F5.
+    const inBatch = Boolean(s.batchLabel);
+    if (inBatch) {
+      requestBatchStop();
+    }
+
     const finishCancel = (extraLine?: string) => {
+      if (!inBatch) clearBatchStop();
       const doneState: LiveRunState = {
         ...runState,
         stopping: false,
@@ -528,7 +595,7 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
         phase: "Cancelado",
         error: RUN_CANCELLED_MESSAGE,
         lines: extraLine
-          ? [...runState.lines.slice(-119), extraLine].filter(Boolean)
+          ? appendLiveLines(runState.lines, extraLine)
           : runState.lines,
       };
       publishRunState(doneState);
@@ -540,7 +607,12 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
       ...s,
       stopping: true,
       phase: "Parando Maestro…",
-      lines: [...s.lines.slice(-119), "[qa-desk] Solicitando parada…"].filter(Boolean),
+      lines: appendLiveLines(
+        s.lines,
+        inBatch
+          ? "[qa-desk] Solicitando parada (lote será interrompido)…"
+          : "[qa-desk] Solicitando parada…",
+      ),
     });
 
     try {
@@ -560,7 +632,9 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
         }
 
         finishCancel(
-          "[qa-desk] Nenhum processo Maestro ativo (prep/adb) — cancelamento registrado.",
+          inBatch
+            ? "[qa-desk] Nenhum processo Maestro ativo (prep/adb) — cancelamento registrado; lote parado."
+            : "[qa-desk] Nenhum processo Maestro ativo (prep/adb) — cancelamento registrado.",
         );
         return;
       }
@@ -575,24 +649,20 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
     if (!state.stopping || state.result) return;
     const timeout = window.setTimeout(() => {
       if (!runState.stopping || runState.result) return;
-      publishRunState({
+      if (!runState.batchLabel) clearBatchStop();
+      const forced: LiveRunState = {
         ...runState,
         stopping: false,
         result: "cancelled",
         phase: "Cancelado",
         error: RUN_CANCELLED_MESSAGE,
-        lines: [
-          ...runState.lines.slice(-119),
+        lines: appendLiveLines(
+          runState.lines,
           "[qa-desk] Parada forçada no painel (servidor não respondeu a tempo).",
-        ].filter(Boolean),
-      });
-      signalRunComplete({
-        ...runState,
-        stopping: false,
-        result: "cancelled",
-        phase: "Cancelado",
-        error: RUN_CANCELLED_MESSAGE,
-      });
+        ),
+      };
+      publishRunState(forced);
+      signalRunComplete(forced);
       activeAbort?.abort();
     }, 15_000);
     return () => window.clearTimeout(timeout);
@@ -754,14 +824,16 @@ function RunProgressPanel() {
   const canStop = running || state.stopping;
   const position = dragPos ?? prefs;
 
-  const tailLines = state.lines
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .slice(-12);
+  const displayLines =
+    prefs.logMode === "limpo"
+      ? curateMaestroLogLines(state.lines)
+      : state.lines.map((l) => l.trim()).filter(Boolean);
+  /** Painel: últimas linhas da vista atual (scroll sobe para o restante). */
+  const tailLines = displayLines.slice(-40);
 
   const outputIdleMs =
     state.lastLineAt != null ? now - state.lastLineAt : state.idleMs ?? 0;
-  /** Aviso cedo; abort automático no servidor ~60s (MAESTRO_IDLE_TIMEOUT_MS). */
+  /** Aviso cedo; abort automático no servidor (idle; vídeo ~5 min). */
   const outputStale = running && outputIdleMs >= 15_000;
   const outputVeryStale = running && outputIdleMs >= 40_000;
 
@@ -862,7 +934,7 @@ function RunProgressPanel() {
               >
                 Sem saída há {formatElapsed(outputIdleMs)}
                 {outputVeryStale
-                  ? " — abort automático em breve; lote segue no próximo"
+                  ? " — abort automático em breve (falha do CT; lote só para se você clicar Parar)"
                   : ""}
               </p>
             )}
@@ -913,31 +985,67 @@ function RunProgressPanel() {
           <div className="border-t border-border/60 bg-muted/20 px-3 py-2">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-[0.65rem] text-muted-foreground">
-                {running ? "Ao vivo · Esc para parar" : state.result === "cancelled" ? "Interrompido" : state.result ? "Resultado" : "Últimas linhas"}
-                {state.lines.length > tailLines.length
-                  ? ` · ${state.lines.length} no total`
+                {running ? "Ao vivo · Esc para parar" : state.result === "cancelled" ? "Interrompido" : state.result ? "Resultado" : "Log"}
+                {` · ${displayLines.length} linhas`}
+                {prefs.logMode === "limpo" && state.lines.length > displayLines.length
+                  ? ` (de ${state.lines.length} brutas)`
                   : ""}
               </p>
               <div className="flex shrink-0 items-center gap-1">
+                <div className="mr-1 inline-flex rounded-md border border-border/80 p-0.5 text-[0.6rem]">
+                  <button
+                    type="button"
+                    onClick={() => updatePrefs({ logMode: "limpo" })}
+                    className={cn(
+                      "rounded px-1.5 py-0.5",
+                      prefs.logMode === "limpo"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    title="Fases, flows e falhas — sem Tap/Assert COMPLETED nem SKIPPED em série"
+                  >
+                    Limpo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updatePrefs({ logMode: "completo" })}
+                    className={cn(
+                      "rounded px-1.5 py-0.5",
+                      prefs.logMode === "completo"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    title="Stdout bruto do Maestro (tudo o que chegou ao painel)"
+                  >
+                    Completo
+                  </button>
+                </div>
                 {state.lines.length > 0 && (
                   <button
                     type="button"
                     onClick={() => {
-                      const text = state.lines.join("\n");
+                      const text =
+                        prefs.logMode === "limpo"
+                          ? displayLines.join("\n")
+                          : state.lines.join("\n");
                       void navigator.clipboard.writeText(text).then(() => {
                         setLogCopied(true);
                         window.setTimeout(() => setLogCopied(false), 2000);
                       });
                     }}
                     className="inline-flex items-center gap-1 rounded-md border border-border/80 px-2 py-1 text-[0.65rem] text-muted-foreground hover:bg-muted hover:text-foreground"
-                    title="Copiar log do painel"
+                    title={
+                      prefs.logMode === "limpo"
+                        ? "Copiar log limpo"
+                        : "Copiar log completo"
+                    }
                   >
                     {logCopied ? (
                       <Check className="size-3 text-emerald-400" />
                     ) : (
                       <Copy className="size-3" />
                     )}
-                    {logCopied ? "Copiado" : "Copiar log"}
+                    {logCopied ? "Copiado" : "Copiar"}
                   </button>
                 )}
                 {canStop && (
@@ -954,7 +1062,7 @@ function RunProgressPanel() {
                 )}
               </div>
             </div>
-            <div className="max-h-44 space-y-0.5 overflow-y-auto font-mono text-[0.6rem] leading-snug text-muted-foreground">
+            <div className="max-h-64 space-y-0.5 overflow-y-auto font-mono text-[0.6rem] leading-snug text-muted-foreground">
               {tailLines.length > 0 ? (
                 tailLines.map((line, i) => (
                   <p
@@ -963,6 +1071,10 @@ function RunProgressPanel() {
                       "wrap-break-word",
                       /cancelad|solicitando parada|parada forçada/i.test(line) &&
                         "text-amber-300",
+                      /^✗|FAILED|Element not found|Assertion/i.test(line) &&
+                        "text-red-300",
+                      /^✓|^\[qa-desk\]/i.test(line) && "text-foreground/90",
+                      /^▶/i.test(line) && "text-sky-300/90",
                     )}
                   >
                     {line}

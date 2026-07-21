@@ -1,0 +1,12 @@
+# FILTRO-02: Envio com filtro Aniversariantes do dia.
+# Pré: Playwright ajusta DN do colaborador Aniversariante (dia/mês).
+# Pós (qa-desk): assert ID com LOGIN_ANIVERSARI.
+# STATUS: draft
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
+    env:
+      FILTRO_EXTRAS: "Aniversariantes do dia|Aniversariante do dia"
+      TEXTO_COMUNICADO: "Teste filtro Aniversariantes do dia"

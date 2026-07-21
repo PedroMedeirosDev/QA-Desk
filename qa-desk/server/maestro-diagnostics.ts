@@ -1,5 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { normalizeMaestroOutput } from "./maestro-output.js";
+import {
+  detailedStepsFromRecord,
+  matchDetailedStepTrace,
+  type DetailedStep,
+} from "./detailed-steps.js";
 
 const DEFAULT_APP_ID = "br.com.polygonus.mobile.amostra";
 
@@ -10,10 +15,12 @@ export interface MaestroFailureInfo {
   failedFlow?: string;
   /** Ex.: Element not found: ... */
   errorSummary?: string;
-  /** Índice no array steps[] do CT (heurística) */
+  /** Índice em stepsDetailed (ou steps se não houver detalhado/âncora) */
   failedStepIndex?: number;
   /** Texto do passo humano correspondente */
   failedStepLabel?: string;
+  /** Qual lista foi usada no match */
+  failedStepSource?: "steps" | "stepsDetailed";
 }
 
 export interface MaestroRunDiagnostics {
@@ -124,101 +131,36 @@ export function parseMaestroFailure(output: string): MaestroFailureInfo | undefi
   return { failedAction, failedFlow, errorSummary };
 }
 
-const FLOW_HINTS: Array<{ match: RegExp; keywords: string[] }> = [
-  {
-    match: /ensure_login|login_as|login_phjesus|login_etmenezes|ENTRAR/i,
-    keywords: ["login", "entrar", "senha", "e-mail"],
-  },
-  {
-    match: /garantir_perfil|selecionar_funcao|abrir_tela_perfil|verificar_perfil/i,
-    keywords: ["perfil", "coordenador", "professor", "função", "funcao", "foto/nome"],
-  },
-  {
-    match: /navegar_mural|voltar_para_home|teardown_estavel/i,
-    keywords: ["mural", "card", "teardown", "home"],
-  },
-  {
-    match: /filtrar_enviadas|selecionar_filtro_sentido/i,
-    keywords: ["enviadas", "filtro", "confirmar"],
-  },
-  {
-    match: /abrir_novo_comunicado/i,
-    keywords: ["novo comunicado", "boom", "fab", "aviso"],
-  },
-  {
-    match: /selecionar_turmas/i,
-    keywords: ["turma", "turmas", "selecionar"],
-  },
-  {
-    match: /escrever_comunicado/i,
-    keywords: ["escrever", "texto", "teste comunicado"],
-  },
-  {
-    match: /enviar_comunicado/i,
-    keywords: ["enviar"],
-  },
-  {
-    match: /verificar_responsavel_ve|login_etmenezes|ensure_logged_out/i,
-    keywords: ["etmenezes", "responsável", "responsavel", "logout", "confirmar"],
-  },
-];
-
-const ACTION_HINTS: Array<{ match: RegExp; keywords: string[] }> = [
-  { match: /Comunicado|Aviso/i, keywords: ["comunicado", "aviso", "novo"] },
-  { match: /Turma/i, keywords: ["turma"] },
-  { match: /Perfil|COORDENADOR|PROFESSORES/i, keywords: ["perfil", "coordenador", "professor"] },
-  { match: /MURAL|Mural/i, keywords: ["mural"] },
-  { match: /ENTRAR|Senha|E-mail/i, keywords: ["login", "entrar", "senha"] },
-  { match: /PULAR/i, keywords: ["tutorial", "pular", "login"] },
-];
-
-export function guessFailedStep(
-  steps: string[],
-  failure: MaestroFailureInfo,
-): { index: number; label: string } | undefined {
-  if (!steps.length) return undefined;
-
-  const hay = `${failure.failedFlow ?? ""} ${failure.failedAction ?? ""} ${failure.errorSummary ?? ""}`;
-
-  const keywords: string[] = [];
-  for (const h of FLOW_HINTS) {
-    if (failure.failedFlow && h.match.test(failure.failedFlow)) {
-      keywords.push(...h.keywords);
-    }
-  }
-  for (const h of ACTION_HINTS) {
-    if (h.match.test(hay)) keywords.push(...h.keywords);
-  }
-
-  if (keywords.length === 0) return undefined;
-
-  let bestIdx = -1;
-  let bestScore = 0;
-  steps.forEach((step, i) => {
-    const s = step.toLowerCase();
-    let score = 0;
-    for (const kw of keywords) {
-      if (s.includes(kw.toLowerCase())) score += 1;
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      bestIdx = i;
-    }
-  });
-
-  if (bestIdx < 0 || bestScore === 0) return undefined;
-  return { index: bestIdx, label: steps[bestIdx] };
-}
-
+/**
+ * Casa falha com âncoras em `stepsDetailed` (flows/actions).
+ * Sem âncora → não inventa índice (só mantém ação/flow do Maestro).
+ */
 export function enrichFailureWithStep(
   failure: MaestroFailureInfo,
   steps: string[],
+  stepsDetailed?: DetailedStep[] | unknown,
+  /** Legado: stepsManual string[] */
+  stepsManualLegacy?: unknown,
 ): MaestroFailureInfo {
-  const guess = guessFailedStep(steps, failure);
-  if (!guess) return failure;
-  return {
-    ...failure,
-    failedStepIndex: guess.index,
-    failedStepLabel: guess.label,
-  };
+  const detailed = detailedStepsFromRecord({
+    stepsDetailed,
+    stepsManual: stepsManualLegacy,
+  });
+
+  if (detailed.length) {
+    const hit = matchDetailedStepTrace(detailed, failure);
+    if (hit) {
+      return {
+        ...failure,
+        failedStepIndex: hit.index,
+        failedStepLabel: hit.label,
+        failedStepSource: "stepsDetailed",
+      };
+    }
+    return failure;
+  }
+
+  // Sem detalhado: não usa keyword-match no resumo (pouco confiável).
+  void steps;
+  return failure;
 }

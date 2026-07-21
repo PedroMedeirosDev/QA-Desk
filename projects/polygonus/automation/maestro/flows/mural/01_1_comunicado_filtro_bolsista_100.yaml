@@ -1,4 +1,4 @@
-# FILTRO-04: Envio com filtro Bolsista 100% (conferência manual).
+# FILTRO-03: Envio com filtro Bolsistas 100%.
 # STATUS: draft
 
 appId: br.com.polygonus.mobile.amostra
@@ -6,5 +6,5 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
     env:
-      FILTRO_EXTRAS: "Bolsista 100%|Bolsista 100|.*[Bb]olsista.*100.*"
-      TEXTO_COMUNICADO: "Teste filtro Bolsista 100%"
+      FILTRO_EXTRAS: "Bolsistas 100%|Bolsista 100%|Bolsistas 100|.*[Bb]olsistas? 100.*"
+      TEXTO_COMUNICADO: "Teste filtro Bolsistas 100%"

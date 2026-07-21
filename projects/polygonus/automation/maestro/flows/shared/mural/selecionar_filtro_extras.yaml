@@ -1,7 +1,6 @@
 # Composer → funil → filtro extras (env FILTRO_EXTRAS).
-# Se abrir dialog Período, confirma mês corrente.
-#
-# Env: FILTRO_EXTRAS — regex/texto do item (ex.: "Adimplentes|Adimplente")
+# Situação: toca Transferido quando o submenu aparecer (FILTRO-07).
+# Período (Inadimplentes): confirma mês corrente.
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -11,11 +10,38 @@ appId: br.com.polygonus.mobile.amostra
 - waitForAnimationToEnd:
     timeout: 500
 
-# Alguns filtros abrem Período (como Inadimplentes)
 - runFlow:
     when:
       visible: "Período|Periodo|Mes corrente|Mês corrente"
     file: selecionar_periodo_mes_corrente.yaml
+
+# Sexo — submenu
+- runFlow:
+    when:
+      visible: "Masculino|Feminino"
+    commands:
+      - tapOn: "Masculino|Feminino"
+      - waitForAnimationToEnd:
+          timeout: 500
+
+# Situação — por enquanto só Transferido (FILTRO-07)
+- runFlow:
+    when:
+      visible: "Transferido|Transferidos"
+      notVisible: "Novo comunicado|Para:|Escreva seu texto aqui"
+    commands:
+      - tapOn: "Transferido|Transferidos"
+      - waitForAnimationToEnd:
+          timeout: 500
+
+- runFlow:
+    when:
+      visible: "Ok|OK|Confirmar|Aplicar"
+      notVisible: "Novo comunicado|Para:|Escreva seu texto aqui"
+    commands:
+      - tapOn: "Ok|OK|Confirmar|Aplicar"
+      - waitForAnimationToEnd:
+          timeout: 500
 
 - extendedWaitUntil:
     visible: "Novo comunicado|Editar comunicado|Para:|Escreva seu texto aqui|Limpar filtro"

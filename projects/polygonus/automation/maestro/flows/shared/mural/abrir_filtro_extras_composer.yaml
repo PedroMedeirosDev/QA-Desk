@@ -1,24 +1,65 @@
-# Ícone de filtro (funil) no app bar do composer — superior direita.
-# Abre o menu de filtros extras (Inadimplentes, Adimplentes, Bolsistas, …).
+# Ícone de filtros especiais (funil) no app bar do composer.
+# App ≥ 6.06.10: Semantics `mural_composer_filtro` (ao lado do olho `mural_composer_preview`).
+# Fallback legado: extrema direita ~97% — NUNCA 88–92% (olho / pré-visualização).
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - assertVisible: "Novo comunicado|Novo evento|Para:"
 
-- tapOn:
-    text: "Filtrar|Filter|Show filter|Filtros"
-    optional: true
-
+# Preferência: semantics
 - runFlow:
     when:
-      notVisible: "Inadimplentes|Inadimplente|Adimplentes|Adimplente|Pagantes|Pagante|Bolsista|bolsista|faltas|média|media|Limpar filtro|Período|Periodo"
+      visible:
+        id: "mural_composer_filtro"
     commands:
-      # Funil no canto superior direito (app bar)
       - tapOn:
-          point: "92%, 7%"
+          id: "mural_composer_filtro"
+      - waitForAnimationToEnd:
+          timeout: 600
+
+# Fallback build sem id — funil = ícone mais à direita
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_composer_filtro"
+      notVisible: "Inadimplentes|Inadimplente|Pagantes|Pagante|Bolsistas|Bolsista|Aniversariantes|Situação|Situacao|Sexo|Limpar filtro|Período|Periodo"
+    commands:
+      - tapOn:
+          point: "97%, 7%"
+      - waitForAnimationToEnd:
+          timeout: 600
+
+# Se abriu pré-visualização (olho) → fecha e retenta o funil por id
+- runFlow:
+    when:
+      notVisible: "Para:|Escreva seu texto aqui|Inadimplentes|Inadimplente|Pagantes|Limpar filtro"
+      visible: "Novo comunicado|Novo evento|Back"
+    commands:
+      - pressKey: Back
       - waitForAnimationToEnd:
           timeout: 500
+      - extendedWaitUntil:
+          visible: "Para:|Escreva seu texto aqui"
+          timeout: 8000
+      - runFlow:
+          when:
+            visible:
+              id: "mural_composer_filtro"
+          commands:
+            - tapOn:
+                id: "mural_composer_filtro"
+            - waitForAnimationToEnd:
+                timeout: 600
+      - runFlow:
+          when:
+            notVisible:
+              id: "mural_composer_filtro"
+          commands:
+            - tapOn:
+                point: "97%, 7%"
+            - waitForAnimationToEnd:
+                timeout: 600
 
 - extendedWaitUntil:
-    visible: "Inadimplentes|Inadimplente|Adimplentes|Adimplente|Pagantes|Pagante|Bolsista|bolsista|faltas|média|media|Limpar|Filtro|Período|Periodo"
-    timeout: 6000
+    visible: "Inadimplentes|Inadimplente|Pagantes|Pagante|Bolsistas|Bolsista|Aniversariantes|Situação|Situacao|Sexo|Limpar filtro|Filtros|Período|Periodo"
+    timeout: 8000

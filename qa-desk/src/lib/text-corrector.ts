@@ -5,13 +5,17 @@
  */
 
 import { normalizeCtFields } from "@/lib/ct-field-contract";
+import {
+  detailedStepsFromRecord,
+  type DetailedStep,
+} from "@/lib/detailed-steps";
 
 const UNICODE_FIXES: Array<[RegExp, string]> = [
-[/\u00A0/g, " "], // nbsp
-[/\u201C|\u201D/g, '"'],
-[/\u2018|\u2019/g, "'"],
-[/N\u00E3o|N\u00e3o/gi, "Não"],
-[/nao\b/gi, "não"],
+  [/\u00A0/g, " "], // nbsp
+  [/\u201C|\u201D/g, '"'],
+  [/\u2018|\u2019/g, "'"],
+  [/N\u00E3o|N\u00e3o/gi, "Não"],
+  [/nao\b/gi, "não"],
 ];
 
 function fixUnicode(text: string): string {
@@ -49,6 +53,19 @@ export function polishSteps(steps: string[]): string[] {
   return nonEmpty.map((s, i) => normalizeStepLine(s, i));
 }
 
+export function polishDetailedSteps(steps: DetailedStep[]): DetailedStep[] {
+  return steps
+    .map((s) => ({
+      ...s,
+      text: fixUnicode(s.text.trim()),
+    }))
+    .filter((s) => s.text)
+    .map((s, i) => ({
+      ...s,
+      text: normalizeStepLine(s.text, i),
+    }));
+}
+
 export function polishParagraph(text: string): string {
   if (!text.trim()) return text;
   let out = fixUnicode(text);
@@ -59,6 +76,8 @@ export function polishParagraph(text: string): string {
 
 export interface PolishFormInput {
   steps?: string[];
+  stepsDetailed?: DetailedStep[];
+  stepsManual?: unknown;
   expectedResult?: string;
   actualResult?: string;
   description?: string;
@@ -68,6 +87,7 @@ export interface PolishFormInput {
 
 export interface PolishFormOutput {
   steps: string[];
+  stepsDetailed: DetailedStep[];
   expectedResult: string;
   actualResult: string;
   description: string;
@@ -78,6 +98,11 @@ export interface PolishFormOutput {
 
 export function polishTestForm(input: PolishFormInput): PolishFormOutput {
   const changes: string[] = [];
+
+  const detailedIn = detailedStepsFromRecord({
+    stepsDetailed: input.stepsDetailed,
+    stepsManual: input.stepsManual,
+  });
 
   const normalized = normalizeCtFields({
     title: input.title,
@@ -90,7 +115,18 @@ export function polishTestForm(input: PolishFormInput): PolishFormOutput {
 
   const stepsBefore = (input.steps ?? []).join("|");
   const steps = polishSteps(normalized.fields.steps);
-  if (steps.join("|") !== stepsBefore) changes.push("Passos renumerados e normalizados");
+  if (steps.join("|") !== stepsBefore) {
+    changes.push("Passos (resumo) renumerados e normalizados");
+  }
+
+  const detailedBefore = detailedIn.map((s) => s.text).join("|");
+  const stepsDetailed = polishDetailedSteps(detailedIn);
+  if (
+    stepsDetailed.map((s) => s.text).join("|") !== detailedBefore &&
+    (detailedBefore || stepsDetailed.length)
+  ) {
+    changes.push("Passos detalhados renumerados e normalizados");
+  }
 
   const expectedResult = polishParagraph(normalized.fields.expectedResult);
   if (expectedResult !== (input.expectedResult ?? "").trim()) {
@@ -103,7 +139,9 @@ export function polishTestForm(input: PolishFormInput): PolishFormOutput {
   }
 
   const description = polishParagraph(normalized.fields.description);
-  if (description !== (input.description ?? "").trim()) changes.push("Descrição ajustada");
+  if (description !== (input.description ?? "").trim()) {
+    changes.push("Descrição ajustada");
+  }
 
   const preconditions = polishParagraph(normalized.fields.preconditions);
   if (preconditions !== (input.preconditions ?? "").trim()) {
@@ -112,6 +150,7 @@ export function polishTestForm(input: PolishFormInput): PolishFormOutput {
 
   return {
     steps,
+    stepsDetailed,
     expectedResult,
     actualResult,
     description,

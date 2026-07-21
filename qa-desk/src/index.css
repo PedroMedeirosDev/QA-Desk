@@ -2,13 +2,13 @@
 @config "../tailwind.config.js";
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Tokens em variáveis CSS — permitem troca em runtime via html.dark */
+/* Marca QA Desk = vermelho. Acentos de projeto vivem em --brand / data-theme. */
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
   --card: #f8fafc;
-  --primary: #0f172a;
-  --primary-foreground: #f8fafc;
+  --primary: #dc2626;
+  --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
   --secondary-foreground: #0f172a;
   --muted: #f1f5f9;
@@ -16,30 +16,37 @@
   --accent: #f1f5f9;
   --border: #e2e8f0;
   --input: #ffffff;
-  --ring: #94a3b8;
-  --brand: #2b73eb;
-  --brand-muted: #e8f0fe;
+  --ring: #dc2626;
+  --brand: #dc2626;
+  --brand-muted: #fef2f2;
   --success: #16a34a;
   --success-muted: #dcfce7;
+  --project-accent: #dc2626;
+  --project-glow: #dc2626;
+  --project-highlight: #dc2626;
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --card: #0f172a;
-  --primary: #f8fafc;
-  --primary-foreground: #0f172a;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #1e293b;
-  --border: #1e293b;
-  --input: #0f172a;
-  --ring: #64748b;
-  --brand-muted: #1e293b;
+  --background: #000000;
+  --foreground: #f4f4f5;
+  --card: #09090b;
+  --primary: #ef4444;
+  --primary-foreground: #ffffff;
+  --secondary: #18181b;
+  --secondary-foreground: #f4f4f5;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #18181b;
+  --border: #27272a;
+  --input: #09090b;
+  --ring: #ef4444;
+  --brand: #ef4444;
+  --brand-muted: #450a0a;
   --success: #22c55e;
   --success-muted: #14532d;
+  --project-accent: #ef4444;
+  --project-glow: #ef4444;
+  --project-highlight: #ef4444;
 }
 
 @theme inline {
@@ -60,42 +67,37 @@
   --color-brand-muted: var(--brand-muted);
   --color-success: var(--success);
   --color-success-muted: var(--success-muted);
+  --color-project: var(--project-accent);
 }
 
-/* Acentos por projeto — não altera background/card da shell */
+/*
+ * Tema por projeto: NÃO sobrescreve --primary (marca vermelha).
+ * Ajusta --brand para banners/surfaces do projeto e --project-accent.
+ */
 [data-theme="polygonus"] {
-  --primary: #2b73eb;
-  --primary-foreground: #ffffff;
   --brand: #2b73eb;
-  --accent: #e8e67a;
+  --brand-muted: #1a2d52;
+  --project-accent: #2b73eb;
   --ring: #2b73eb;
 }
 
 :root:not(.dark) [data-theme="polygonus"] {
   --brand-muted: #e8f0fe;
-  --success: #16a34a;
-  --success-muted: #dcfce7;
 }
 
 .dark [data-theme="polygonus"] {
   --brand-muted: #1a2d52;
-  --accent: #e8e67a;
-  --success: #22c55e;
-  --success-muted: #14532d;
 }
 
 [data-theme="anihype"] {
-  --primary: #ff0080;
-  --primary-foreground: #ffffff;
   --brand: #ff0080;
-  --accent: #7a00ff;
+  --brand-muted: #1a0010;
+  --project-accent: #ff0080;
   --ring: #ff0080;
 }
 
 :root:not(.dark) [data-theme="anihype"] {
   --brand-muted: #fff0f7;
-  --success: #16a34a;
-  --success-muted: #dcfce7;
 }
 
 .dark [data-theme="anihype"] {
@@ -119,7 +121,7 @@
   }
 
   table tbody tr:hover {
-    background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    background-color: color-mix(in srgb, var(--muted) 55%, transparent);
   }
 }
 
@@ -189,13 +191,59 @@
     letter-spacing: 0.04em;
   }
 
+  /* Login — textura técnica + gradiente radial */
+  .login-surface {
+    background-color: #050505;
+    background-image:
+      radial-gradient(ellipse 80% 55% at 50% 18%, rgba(220, 38, 38, 0.14), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(220, 38, 38, 0.06), transparent 50%),
+      linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size:
+      auto,
+      auto,
+      28px 28px,
+      28px 28px;
+  }
+
+  .login-card {
+    box-shadow:
+      0 0 0 1px rgba(220, 38, 38, 0.22),
+      0 24px 48px -12px rgba(0, 0, 0, 0.75),
+      0 0 40px rgba(220, 38, 38, 0.1);
+  }
+
+  /* Contêiner principal — brilho contextual do projeto */
+  .main-content-glow {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--project-glow) 22%, transparent),
+      0 0 28px color-mix(in srgb, var(--project-glow) 12%, transparent);
+  }
+
+  /* Tabela de testes — linhas finas + zebra */
+  .data-table thead tr {
+    border-bottom-width: 1px;
+  }
+
+  .data-table tbody tr.test-row {
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  .data-table tbody tr.test-row:nth-child(even of .test-row) {
+    background-color: color-mix(in srgb, var(--muted) 35%, transparent);
+  }
+
+  .dark .data-table tbody tr.test-row:nth-child(even of .test-row) {
+    background-color: rgba(24, 24, 27, 0.45);
+  }
+
   /* Redes sociais — hover com cor da marca */
   .social-link {
     @apply rounded-md p-1.5 text-muted-foreground transition-all duration-300;
   }
 
   .social-link:hover {
-    @apply scale-110;
+    transform: scale(1.1);
   }
 
   .social-link-linkedin:hover {
@@ -214,8 +262,20 @@
     color: #ff0000;
   }
 
-  /* Instagram: cor de marca no ícone (sem caixa de gradiente — ficava desalinhada) */
   .social-link-instagram:hover {
     color: #e1306c;
+  }
+
+  /* Login — tipografia do rodapé; hover social mantém cor da marca */
+  .login-footer .social-link {
+    @apply text-zinc-400;
+  }
+
+  .login-footer p {
+    @apply text-zinc-400;
+  }
+
+  .login-footer span {
+    @apply text-zinc-200;
   }
 }

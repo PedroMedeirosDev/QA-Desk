@@ -1,10 +1,32 @@
 # Garante perfil Coordenador (PHJESUS) — sempre via tela Perfil.
 #
+# Pré-condição: sessão PHJESUS (Pedro Jesus). Nunca chamar com ETMENEZES/Eliza —
+# responsável é sempre RESPONSAVEIS e não troca função.
 # MURAL na home NÃO basta: Professor também vê o card MURAL.
-# Abre Perfil → confirma COORDENADOR (troca só se necessário).
 
 appId: br.com.polygonus.mobile.amostra
 ---
+# Se ainda for responsável, aborta troca de função (resume deve ter trocado usuário)
+- runFlow:
+    when:
+      visible: "Eliza|Teixeira|RESPONSAVEIS"
+      notVisible: "Pedro Jesus|Pedro"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 400
+      - runFlow: ../auth/logout.yaml
+      - runFlow:
+          file: ../auth/login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- extendedWaitUntil:
+    visible: "Pedro Jesus|Pedro"
+    timeout: 20000
+
 # Volta à home se estiver na lista/composer do Mural
 - runFlow:
     when:
@@ -14,6 +36,7 @@ appId: br.com.polygonus.mobile.amostra
       - tapOn: "Back"
       - waitForAnimationToEnd:
           timeout: 500
+
 - runFlow:
     file: abrir_tela_perfil.yaml
     env:

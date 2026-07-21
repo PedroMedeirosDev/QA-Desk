@@ -1,3 +1,5 @@
+import type { DetailedStep } from "./detailed-steps.js";
+
 export type ProjectSlug = "polygonus" | "anihype";
 
 export type ProductChannel = "app" | "web" | "portal";
@@ -43,10 +45,20 @@ export interface EvidenceFile {
   storageKey: string;
 }
 
+export interface AutomationPrep {
+  type: "playwright";
+  /** Relativo à raiz do repo */
+  specPath: string;
+  /** Default true (Turnstile / amostra) */
+  headed?: boolean;
+}
+
 export interface AutomationLink {
   type: "maestro" | "playwright";
   flowPath: string;
   label?: string;
+  /** Seed web antes do Maestro (ex.: DN Aniversariante) */
+  prep?: AutomationPrep;
   /** draft = ainda mapeando no Studio · ready = validado 2× no emulador */
   readiness?: "draft" | "ready";
   lastRunAt?: string;
@@ -61,7 +73,12 @@ export interface TestRecord {
   title: string;
   description: string;
   preconditions?: string;
+  /** Resumo enxuto (QA / Discord / automação) */
   steps: string[];
+  /** Passo a passo detalhado (1 ação = 1 linha) + âncoras Maestro opcionais */
+  stepsDetailed?: DetailedStep[];
+  /** @deprecated use stepsDetailed */
+  stepsManual?: string[];
   expectedResult?: string;
   actualResult?: string;
   reportedAt: string;

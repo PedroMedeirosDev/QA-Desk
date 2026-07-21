@@ -31,7 +31,11 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow: dismiss_coachmarks_pular.yaml
 
 - extendedWaitUntil:
-    visible: "${NOME_PHJESUS}|Pedro Jesus|Pedro|${NOME_ETMENEZES}|Bruno|Davi|${NOME_ACMENEZES}|.*MURAL.*"
+    visible:
+      id: "home_card_mural"
     timeout: 10000
 
-- assertNotVisible: "Show menu"
+- assertVisible:
+    id: "home_card_mural"
+
+- assertNotVisible: "Show menu|Responder comunicado"

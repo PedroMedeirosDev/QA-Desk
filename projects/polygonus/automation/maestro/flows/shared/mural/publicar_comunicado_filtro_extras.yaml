@@ -1,5 +1,6 @@
-# Envio só com filtro extras (sem anexo). Conferência manual.
+# Envio só com filtro extras (sem anexo).
 # Env: FILTRO_EXTRAS, TEXTO_COMUNICADO
+# Opcional: SKIP_TEARDOWN=1 (pós-envio qa-desk / ETMENEZES)
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -19,7 +20,6 @@ appId: br.com.polygonus.mobile.amostra
     env:
       TEXTO_COMUNICADO: "${TEXTO_COMUNICADO}"
 
-
 - runFlow: enviar_comunicado.yaml
 
 - swipe:
@@ -30,4 +30,9 @@ appId: br.com.polygonus.mobile.amostra
     timeout: 500
 
 - runFlow: filtrar_enviadas.yaml
-- runFlow: ../auth/teardown_estavel_sessao.yaml
+
+# Pós-envio (FILTRO-01): fica em Enviadas para adb capturar ID + ETMENEZES
+- runFlow:
+    when:
+      true: ${SKIP_TEARDOWN != "1"}
+    file: ../auth/teardown_estavel_sessao.yaml

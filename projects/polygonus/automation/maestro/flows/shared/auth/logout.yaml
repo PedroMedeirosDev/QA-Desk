@@ -56,13 +56,25 @@ appId: br.com.polygonus.mobile.amostra
             notVisible: "ENTRAR"
           commands:
             - extendedWaitUntil:
-                visible: ".*MURAL.*|CARDÁPIO|CARDAPIO|Pedro Jesus|Pedro|Ana|Bruno|Davi"
+                visible: ".*MURAL.*|CARDÁPIO|CARDAPIO|Pedro Jesus|Pedro|Eliza|Teixeira|Ana|Bruno|Davi"
                 timeout: 12000
             - waitForAnimationToEnd:
                 timeout: 500
-            # Menu do usuário — qualquer nome no header (PHJESUS, ETMENEZES, …)
-            - tapOn:
-                point: "28%, 10%"
+            # Abre menu do usuário (Semantics home_menu_usuario; fallback coord)
+            - runFlow:
+                when:
+                  visible:
+                    id: "home_menu_usuario"
+                commands:
+                  - tapOn:
+                      id: "home_menu_usuario"
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "home_menu_usuario"
+                commands:
+                  - tapOn:
+                      point: "28%, 10%"
             - runFlow:
                 when:
                   notVisible: "Sair|Perfil|Tutorial"
@@ -74,7 +86,21 @@ appId: br.com.polygonus.mobile.amostra
             - extendedWaitUntil:
                 visible: "Sair"
                 timeout: 8000
-            - tapOn: "Sair"
+            # Item Sair (Semantics home_menu_sair; fallback texto)
+            - runFlow:
+                when:
+                  visible:
+                    id: "home_menu_sair"
+                commands:
+                  - tapOn:
+                      id: "home_menu_sair"
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "home_menu_sair"
+                  visible: "Sair"
+                commands:
+                  - tapOn: "Sair"
             - runFlow:
                 when:
                   visible: "Tem certeza que deseja sair do aplicativo?"

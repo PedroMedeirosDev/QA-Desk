@@ -1,11 +1,11 @@
 # Descarta rascunho ao sair do composer (diálogo "Gravação Pendente").
-# Aparece quando Back/navegação tenta sair com alterações não enviadas na pilha.
+# Só o título do dialog — textos genéricos geram falso "Sim" na lista.
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow:
     when:
-      visible: "Gravação Pendente|alterações serão perdidas|últimas alterações"
+      visible: "Gravação Pendente"
     commands:
       - tapOn: "Sim"
       - waitForAnimationToEnd:

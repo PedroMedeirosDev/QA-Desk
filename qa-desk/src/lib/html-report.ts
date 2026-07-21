@@ -54,7 +54,7 @@ export function buildHomologationHtmlReport(
         <td class="pend">${s.stats.pending}</td>
         <td class="num">${s.stats.totalRuns}</td>
         <td>${esc(fmtDate(s.stats.lastRunAt))}</td>
-        <td>${s.stats.draftCount > 0 ? `${s.stats.draftCount} em construção` : "—"}</td>
+        <td>${s.stats.draftCount > 0 ? `${s.stats.draftCount} rascunho(s)` : "—"}</td>
       </tr>`,
     )
     .join("");
@@ -190,7 +190,7 @@ export function buildHomologationHtmlReport(
       <div class="card"><div class="label">Taxa</div><div class="value">${metrics.passRatePct}%</div>
         <div class="bar"><i style="width:${metrics.passRatePct}%"></i></div>
       </div>
-      <div class="card"><div class="label">Flows prontos</div><div class="value">${metrics.readyFlows}<span class="muted" style="font-size:.9rem">/${metrics.automated}</span></div></div>
+      <div class="card"><div class="label">Flows estáveis</div><div class="value">${metrics.readyFlows}<span class="muted" style="font-size:.9rem">/${metrics.automated}</span></div></div>
       <div class="card"><div class="label">Bugs abertos</div><div class="value">${metrics.bugsOpen}</div></div>
     </div>
 
@@ -225,7 +225,7 @@ export function buildHomologationHtmlReport(
       <strong>Conclusão (automática)</strong>
       <p style="margin:.4rem 0 0">${esc(conclusion)}</p>
       <p class="muted" style="margin:.5rem 0 0;font-size:.8rem">
-        Revise manualmente antes de liberar build. Em construção: ${metrics.draftFlows} flow(s).
+        Revise manualmente antes de liberar build. Rascunhos: ${metrics.draftFlows} flow(s).
         Última execução: ${esc(fmtDate(metrics.lastRunAt))}.
       </p>
     </div>

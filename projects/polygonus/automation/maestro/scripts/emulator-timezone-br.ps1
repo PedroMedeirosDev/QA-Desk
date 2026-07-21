@@ -23,6 +23,9 @@ Invoke-Adb @("shell", "settings", "put", "global", "auto_time_zone", "0")
 Invoke-Adb @("shell", "settings", "put", "global", "auto_time", "0")
 Invoke-Adb @("shell", "settings", "put", "global", "time_zone", $Timezone)
 Invoke-Adb @("shell", "settings", "put", "system", "time_zone", $Timezone)
+# Composer de evento: formato 12h no device pode gerar horário inválido (BrasilTime)
+Invoke-Adb @("shell", "settings", "put", "system", "time_12_24", "24")
+Invoke-Adb @("shell", "settings", "put", "secure", "time_12_24", "24")
 
 # Em builds de produção setprop costuma falhar — não aborta
 $setpropOk = $true
@@ -35,6 +38,7 @@ try {
 
 Invoke-Adb @("shell", "service", "call", "alarm", "3", "s16", $Timezone) 2>$null
 
+$clock = ((adb -s $Device shell settings get system time_12_24) | Out-String).Trim()
 $tz = ((adb -s $Device shell getprop persist.sys.timezone) | Out-String).Trim()
 $globalTz = ((adb -s $Device shell settings get global time_zone) | Out-String).Trim()
 $auto = ((adb -s $Device shell settings get global auto_time_zone) | Out-String).Trim()
@@ -44,6 +48,7 @@ Write-Host ""
 Write-Host "persist.sys.timezone = $tz"
 Write-Host "global.time_zone     = $globalTz"
 Write-Host "auto_time_zone       = $auto"
+Write-Host "time_12_24           = $clock"
 Write-Host "date                 = $now"
 
 if ($globalTz.Trim() -ne $Timezone) {

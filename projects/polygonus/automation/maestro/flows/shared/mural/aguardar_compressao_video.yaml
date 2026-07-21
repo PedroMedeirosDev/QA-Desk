@@ -1,44 +1,62 @@
-# Aguarda compressão de vídeo só se o progresso (ou o toast) estiver na tela.
-# Pronto quando aparecer: "Video comprimido com sucesso!"
-# Poll em fatias de 5s — cada COMPLETED renova o idle da qa-desk.
+# Aguarda compressao de video no composer (ANEXO-03).
+#
+# Gate: texto/content-desc "Comprimindo" sumir.
+# Sem acentos problematicos; sem regex .* (Maestro + content-desc).
+# Se o overlay nao aparecer na a11y, enviar_comunicado faz retry no alerta.
+#
+# Env:
+#   ESPERAR_TOAST_VIDEO=1  → apos anexar: poll ate Comprimindo sumir (12 min)
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow:
     when:
-      visible: "Compressão em andamento|aguardar o término da compressão|compressão dos vídeos|Video comprimido com sucesso!|Vídeo comprimido com sucesso!"
+      visible: "Compressao em andamento|Compressão em andamento|necessario aguardar|É necessário aguardar"
     commands:
-      - evalScript: "${output.videoComprimidoOk = false}"
-
-      - runFlow:
-          when:
-            visible: "Video comprimido com sucesso!|Vídeo comprimido com sucesso!|.*comprimido com sucesso.*"
-          commands:
-            - evalScript: "${output.videoComprimidoOk = true}"
-
-      - repeat:
-          times: 36
-          commands:
-            - runFlow:
-                when:
-                  visible: "Video comprimido com sucesso!|Vídeo comprimido com sucesso!|.*comprimido com sucesso.*"
-                commands:
-                  - evalScript: "${output.videoComprimidoOk = true}"
-            - runFlow:
-                when:
-                  true: ${!output.videoComprimidoOk}
-                commands:
-                  - waitForAnimationToEnd:
-                      timeout: 5000
-
-      - extendedWaitUntil:
-          visible: "Video comprimido com sucesso!|Vídeo comprimido com sucesso!|.*comprimido com sucesso.*"
-          timeout: 15000
-
+      - tapOn: "Fechar"
       - waitForAnimationToEnd:
           timeout: 500
-      - tapOn:
-          text: "Ok|OK|Fechar"
-          optional: true
+
+- runFlow:
+    when:
+      true: ${ESPERAR_TOAST_VIDEO}
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 3000
+      # Poll: enquanto "Comprimindo" estiver visivel, espera (max ~12 min)
+      - repeat:
+          times: 72
+          while:
+            visible: "Comprimindo"
+          commands:
+            - waitForAnimationToEnd:
+                timeout: 10000
+      - runFlow:
+          when:
+            visible: "comprimido com sucesso"
+          commands:
+            - tapOn:
+                text: "Ok|OK|Fechar"
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 400
+
+- runFlow:
+    when:
+      visible: "Comprimindo"
+    commands:
+      - repeat:
+          times: 72
+          while:
+            visible: "Comprimindo"
+          commands:
+            - waitForAnimationToEnd:
+                timeout: 10000
+
+- runFlow:
+    when:
+      visible: "Compressao em andamento|Compressão em andamento|necessario aguardar|É necessário aguardar"
+    commands:
+      - tapOn: "Fechar"
       - waitForAnimationToEnd:
           timeout: 400
