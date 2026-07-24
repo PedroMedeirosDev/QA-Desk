@@ -8,6 +8,11 @@ import type {
   KbCurationStatus,
   KbCurationVerdict,
 } from "@/types/kb-curation";
+import type {
+  DailyIntent,
+  DailyPortfolioCard,
+  DailySummary,
+} from "@/types/daily-summary";
 
 export interface AutomationFlow {
   id: string;
@@ -250,4 +255,29 @@ export const api = {
       authorResponses: number;
       lastSyncedAt: string;
     }>(`/api/projects/${project}/kb-curation/sync`, { method: "POST" }),
+
+  getDailySummary: (project: ProjectSlug, date?: string) => {
+    const q = date ? `?date=${encodeURIComponent(date)}` : "";
+    return request<DailySummary>(`/api/projects/${project}/daily-summary${q}`);
+  },
+
+  listPortfolioDailySummaries: (project: ProjectSlug) =>
+    request<{ project: ProjectSlug; cards: DailyPortfolioCard[] }>(
+      `/api/projects/${project}/daily-summary/portfolio`,
+    ),
+
+  publishDailySummary: (
+    project: ProjectSlug,
+    data: {
+      date: string;
+      showInPortfolio: boolean;
+      intents?: DailyIntent[];
+      note?: string | null;
+    },
+  ) =>
+    request<DailySummary>(`/api/projects/${project}/daily-summary`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
 };

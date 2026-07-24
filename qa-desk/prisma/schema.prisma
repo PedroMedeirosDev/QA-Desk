@@ -19,6 +19,7 @@ model Project {
   homologations Homologation[]
   runs          TestRun[]
   kbCurations   KbCuration[]
+  dailyMetrics  DailyMetric[]
 
   @@map("projects")
 }
@@ -112,4 +113,26 @@ model KbCuration {
   @@index([projectSlug, status])
   @@index([verdict])
   @@map("kb_curations")
+}
+
+/// Snapshot / meta do resumo diário de atividade QA (portfolio + consulta)
+model DailyMetric {
+  id              String   @id @default(uuid())
+  projectSlug     String   @map("project_slug")
+  /// Dia civil em America/Sao_Paulo (YYYY-MM-DD)
+  date            String
+  showInPortfolio Boolean  @default(false) @map("show_in_portfolio")
+  /// Intenções do dia: homologacao | bugfix | smoke | exploratorio | curadoria_kb
+  intents         Json?
+  note            String?
+  /// Snapshot congelado ao liberar no portfolio (DailySummary)
+  summary         Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectSlug], references: [slug], onDelete: Cascade)
+
+  @@unique([projectSlug, date])
+  @@index([projectSlug, showInPortfolio])
+  @@map("daily_metrics")
 }
