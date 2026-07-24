@@ -1,189 +1,293 @@
 {
   "meta": {
-    "version": "1.0.0",
-    "updatedAt": "2026-07-21",
+    "version": "1.1.0",
+    "updatedAt": "2026-07-23",
     "project": "polygonus",
     "repository": "polygonus-br/polygonus-suporte-kb"
   },
   "pullRequests": [
     {
       "id": "polygonus-br/polygonus-suporte-kb#28",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 28,
-      "title": "NFS-e retorna erro por \"Opção simples\" errada",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/28",
-      "githubState": "merged",
+      "title": "kb(financeiro): NFS-e retorna erro na emissão por \"Opção simples\" errada na Unidade Financeira",
       "status": "mesclada",
-      "verdict": "precisa_correcao",
-      "summary": "Mesclada por Hitgart com Changes Requested aberta (id livre + tabela MEI×ME/EPP).",
-      "solutionReview": "Mesclada por Hitgart sem aplicar as correções: id livre e precisão da tabela MEI × ME/EPP.",
-      "corrections": [
-        "Usar ID livre (ex. fin-012)",
-        "Precisar tabela MEI × ME/EPP (pTotTribSN só no ME/EPP)"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T16:06:55.000Z",
-      "mergedAt": "2026-07-21T20:23:16.000Z",
       "history": [
         {
-          "at": "2026-07-21T16:06:55.000Z",
+          "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Solução válida; pedir id livre e precisar tabela MEI × ME/EPP."
         },
         {
-          "at": "2026-07-21T20:23:16.000Z",
-          "actor": "Hitgart",
-          "action": "kb_pr_merged_ignoring_review",
-          "detail": "Mesclada com Changes Requested aberta — id e tabela MEI×ME/EPP não corrigidos."
+          "at": "2026-07-21T16:06:55.000Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Review enviada no GitHub → aguardando correção"
+        },
+        {
+          "at": "2026-07-21T21:01:21.820Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_merged",
+          "detail": "open → merged"
+        },
+        {
+          "at": "2026-07-22T17:42:09.857Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removidas corrections de id (auto-fix): Usar ID livre (ex. fin-012)"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Solução válida; precisar tabela MEI × ME/EPP.",
+      "verdict": "precisa_correcao",
+      "mergedAt": "2026-07-21T20:23:16Z",
+      "prNumber": 28,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T16:06:55.000Z",
+      "corrections": [
+        "Precisar tabela MEI × ME/EPP (pTotTribSN só no ME/EPP)"
+      ],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "4364fee938fb4c56e09107a1e2aae3d06ad9c54a",
+      "solutionReview": "Solução válida; precisar tabela MEI × ME/EPP.",
+      "githubCreatedAt": "2026-07-17T21:59:02Z",
+      "githubUpdatedAt": "2026-07-21T20:23:16Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#29",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 29,
-      "title": "Baixa pelo retorno sem tarifa",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/29",
-      "githubState": "merged",
+      "title": "kb(financeiro): baixa pelo retorno sem tarifa — valor vem do arquivo do banco (SICREDI/bolepix no QR Code não cobra)",
       "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-21T13:00:00.000Z",
+          "actor": "Pedro",
+          "action": "kb_pr_triaged",
+          "detail": "precisa_correcao: Mecanismo de tarifa confirmado; sugerir rebase sem #28 e relato SICREDI operacional."
+        },
+        {
+          "at": "2026-07-21T16:20:00.000Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Review enviada no GitHub → aguardando correção"
+        },
+        {
+          "at": "2026-07-21T21:01:21.820Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_merged",
+          "detail": "open → merged"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Mecanismo de tarifa confirmado; sugerir rebase sem #28 e relato SICREDI operacional.",
       "verdict": "precisa_correcao",
-      "summary": "Mesclada por Hitgart com Changes Requested aberta (rebase sem #28 + SICREDI operacional).",
-      "solutionReview": "Mesclada por Hitgart sem aplicar as correções: rebase sem o artigo do PR #28 e qualificação SICREDI/QR como relato operacional.",
+      "mergedAt": "2026-07-21T20:23:58Z",
+      "prNumber": 29,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T16:20:00.000Z",
       "corrections": [
         "Rebasear sem o artigo do PR #28",
         "Qualificar tese SICREDI/QR como relato operacional"
       ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T16:20:43.000Z",
-      "mergedAt": "2026-07-21T20:23:58.000Z",
-      "history": [
-        {
-          "at": "2026-07-21T16:20:43.000Z",
-          "actor": "Pedro",
-          "action": "kb_pr_reviewed",
-          "detail": "precisa_correcao: Mecanismo de tarifa confirmado; sugerir rebase sem #28 e relato SICREDI operacional."
-        },
-        {
-          "at": "2026-07-21T20:23:58.000Z",
-          "actor": "Hitgart",
-          "action": "kb_pr_merged_ignoring_review",
-          "detail": "Mesclada com Changes Requested aberta — rebase e qualificação SICREDI não aplicados."
-        }
-      ]
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "ab4280d146bc8e394be370c2f3ea559b5f95a575",
+      "solutionReview": "Mecanismo de tarifa confirmado; sugerir rebase sem #28 e relato SICREDI operacional.",
+      "githubCreatedAt": "2026-07-17T22:03:40Z",
+      "githubUpdatedAt": "2026-07-21T20:23:58Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#30",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 30,
-      "title": "Relatório de inadimplência e competência da baixa",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/30",
-      "githubState": "open",
-      "status": "bloqueada",
-      "verdict": "bloqueado",
-      "summary": "Texto da solução é útil, mas o PR está conflitante e mistura tooling fora do escopo.",
-      "solutionReview": "Texto da solução é útil, mas o PR está conflitante e mistura tooling fora do escopo.",
-      "corrections": [
-        "Resolver conflito",
-        "Separar tooling Opus em outro PR"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(financeiro): relatorio de inadimplencia mostra aluno/valor indevido - baixa em boleto de outra competencia",
+      "status": "aguardando_correcao",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "bloqueado: Texto da solução é útil, mas o PR está conflitante e mistura tooling fora do escopo."
+        },
+        {
+          "at": "2026-07-21T16:47:49.089Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Request changes enviado: conflito + escopo + fin-011"
+        },
+        {
+          "at": "2026-07-22T19:54:43.152Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_author_responded",
+          "detail": "Autor respondeu após a review (kb: id fin-018 (PR #30 — colisão))"
+        },
+        {
+          "at": "2026-07-22T19:59:53.001Z",
+          "actor": "Pedro",
+          "action": "kb_pr_status_corrected",
+          "detail": "Corrigido aguardando_rerevisao → aguardando_correcao: o commit pós-review foi só auto-ajuste de id (curadoria), não resposta do autor"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Artigo útil; ainda CONFLICTING e com tooling fora de escopo. Request changes aberto — autor ainda não respondeu (o commit de id foi da curadoria).",
+      "verdict": "precisa_correcao",
+      "prNumber": 30,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T16:47:49.089Z",
+      "corrections": [
+        "Resolver conflito com master",
+        "Isolar só o artigo de inadimplência (tirar opus-residente e rematrícula)"
+      ],
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "solutionReview": "Artigo útil; ainda CONFLICTING e com tooling fora de escopo. Request changes aberto — autor ainda não respondeu (o commit de id foi da curadoria).",
+      "githubCreatedAt": "2026-07-17T22:08:50Z",
+      "githubUpdatedAt": "2026-07-22T19:59:56Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#34",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 34,
-      "title": "Diário de Classe com coordenador da turma",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/34",
-      "githubState": "merged",
+      "title": "kb(academico): diário de classe imprime coordenador da TURMA como autoridade escolar",
       "status": "mesclada",
-      "verdict": "precisa_correcao",
-      "summary": "Mesclada por Hitgart com review Changes Requested aberta (id aca-008 colidindo + baseURL).",
-      "solutionReview": "Mesclada por Hitgart (Lucas Tolentino) sem aplicar as correções pedidas: id livre (aca-008 colidia) e baseURL do Playwright.",
-      "corrections": [
-        "Usar ID livre (aca-008 colidia no master)",
-        "Reverter ou parametrizar baseURL do Playwright"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T16:54:24.000Z",
-      "mergedAt": "2026-07-21T20:27:42.000Z",
       "history": [
         {
-          "at": "2026-07-21T16:54:24.000Z",
+          "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Opção confirmada no produto; PR tem ID duplicado e side-effect no Playwright."
         },
         {
-          "at": "2026-07-21T20:27:42.000Z",
-          "actor": "Hitgart",
-          "action": "kb_pr_merged_ignoring_review",
-          "detail": "Mesclada com Changes Requested aberta — correções de id e baseURL não aplicadas."
+          "at": "2026-07-21T16:54:29.540Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Request changes: id obrigatório + sugestão Playwright"
+        },
+        {
+          "at": "2026-07-21T21:01:21.820Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_merged",
+          "detail": "open → merged"
+        },
+        {
+          "at": "2026-07-22T17:42:09.859Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removidas corrections de id (auto-fix): Trocar id aca-008 por id livre (obrigatório)"
+        },
+        {
+          "at": "2026-07-22T17:48:55.584Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removida menção a troca de id do resumo (auto-fix)"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Solução confirmada; Playwright baseURL é sugestão.",
+      "verdict": "precisa_correcao",
+      "mergedAt": "2026-07-21T20:27:42Z",
+      "prNumber": 34,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T16:54:29.540Z",
+      "corrections": [
+        "Sugestão: reverter/parametrizar baseURL do Playwright"
+      ],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "6b08cb29dbc027c7a5593a3aa76247d1451a5ec3",
+      "solutionReview": "Solução confirmada; Playwright baseURL é sugestão.",
+      "githubCreatedAt": "2026-07-17T22:50:41Z",
+      "githubUpdatedAt": "2026-07-21T21:56:05Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#35",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 35,
-      "title": "Histórico Escolar: onde lançar observações",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/35",
-      "githubState": "open",
-      "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Solução coerente; precisa alinhar captions e condições de exibição.",
-      "solutionReview": "Solução coerente; precisa alinhar captions e condições de exibição.",
-      "corrections": [
-        "Usar ID livre",
-        "Corrigir captions",
-        "Explicar ind_obs_destaque"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(academico): onde lançar observações no histórico e fronteira com customização",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Solução coerente; precisa alinhar captions e condições de exibição."
+        },
+        {
+          "at": "2026-07-21T17:09:08.928Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Request changes: id obrigatório + captions"
+        },
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_author_responded",
+          "detail": "Autor respondeu após a review (kb(academico): id livre aca-011 e captions reais da aba Opções (revis…)"
+        },
+        {
+          "at": "2026-07-22T13:10:54.300Z",
+          "note": "Re-review: aca-011 ainda colide no master; usar aca-030+",
+          "action": "kb_pr_review_updated"
+        },
+        {
+          "at": "2026-07-22T13:27:37.449Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_author_responded",
+          "detail": "Autor respondeu após a review (kb(academico): id livre aca-011 e captions reais da aba Opções (revis…)"
+        },
+        {
+          "at": "2026-07-22T14:43:12.192Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_awaiting_author",
+          "detail": "Aguardando correção após review de 2026-07-22"
+        },
+        {
+          "at": "2026-07-22T15:36:14.628Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_fixed",
+          "detail": "id → aca-031 (ajuste direto na branch)"
+        },
+        {
+          "at": "2026-07-22T15:52:21.599Z",
+          "action": "kb_pr_merged",
+          "detail": "Mesclada após ajuste de id / desempilhamento"
+        },
+        {
+          "at": "2026-07-22T17:45:39.452Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removida menção a id livre do resumo (auto-fix)"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Id ajustado pela curadoria para aca-031 (colisão no master).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T15:50:53Z",
+      "prNumber": 35,
+      "reviewer": "Pedro",
+      "updatedAt": "2026-07-22",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T15:36:14.628Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "8b728e73090ea7049c716f2645aba7f2bde9be17",
+      "solutionReview": "Solução boa; alinhar captions Observações finais / Linha obs. destaque.",
+      "githubCreatedAt": "2026-07-17T22:50:42Z",
+      "githubUpdatedAt": "2026-07-22T15:50:55Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#36",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 36,
-      "title": "NFS-e rejeitada por telefone do prestador",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/36",
-      "githubState": "merged",
+      "title": "kb(financeiro): NFS-e rejeitada por telefone é o do prestador (entidade), não da ficha",
       "status": "mesclada",
-      "verdict": "aprovavel",
-      "summary": "Correção aplicada: Excluir D.P.S. Local → Excluir RPS local.",
-      "solutionReview": "Correção aplicada: Excluir D.P.S. Local → Excluir RPS local.",
-      "corrections": [],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
-      "mergedAt": "2026-07-21T13:41:43.000Z",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "aprovavel: Correção aplicada: Excluir D.P.S. Local → Excluir RPS local."
         },
         {
@@ -192,112 +296,228 @@
           "action": "kb_pr_merged",
           "detail": "PR #36 mesclado"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Correção aplicada: Excluir D.P.S. Local → Excluir RPS local.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-21T13:41:43Z",
+      "prNumber": 36,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T13:41:43.000Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "09ed8e538fa45653623810bad25e029dde95c91a",
+      "solutionReview": "Correção aplicada: Excluir D.P.S. Local → Excluir RPS local.",
+      "githubCreatedAt": "2026-07-17T22:50:43Z",
+      "githubUpdatedAt": "2026-07-21T13:41:45Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#37",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 37,
-      "title": "Criar perfil de acesso Web para novo cargo",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/37",
-      "githubState": "open",
-      "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Passo a passo omite Função obrigatória e atribui vínculo à aba Usuários.",
-      "solutionReview": "Passo a passo omite Função obrigatória e atribui vínculo à aba Usuários.",
-      "corrections": [
-        "Corrigir fluxo da aba Usuários",
-        "Incluir Função",
-        "Reutilizar mapa existente"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(geral): como criar perfil de acesso ao sistema Web para um novo cargo",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Passo a passo omite Função obrigatória e atribui vínculo à aba Usuários."
+        },
+        {
+          "at": "2026-07-21T17:27:09.325Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Request changes: id + Função obrigatórios; mapa sugestão"
+        },
+        {
+          "at": "2026-07-21T21:01:21.820Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_author_responded",
+          "detail": "Autor respondeu após a review (Retrabalho PR #37: id livre (ger-004), Função no passo a passo, dedup…)"
+        },
+        {
+          "at": "2026-07-22T13:05:39.689Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_merged",
+          "detail": "open → merged"
+        },
+        {
+          "at": "2026-07-22T13:10:54.300Z",
+          "note": "Homologada e mesclada em 2026-07-22",
+          "action": "kb_pr_review_updated"
+        },
+        {
+          "at": "2026-07-22T17:42:09.859Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removidas corrections de id (auto-fix): Trocar id ger-003 por id livre (obrigatório)"
+        },
+        {
+          "at": "2026-07-22T17:48:55.584Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removida menção a troca de id do resumo (auto-fix)"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Incluir Função no passo a passo. Mapa duplicado é sugestão.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T13:03:06Z",
+      "prNumber": 37,
+      "reviewer": "Pedro",
+      "updatedAt": "2026-07-22",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T17:27:09.325Z",
+      "corrections": [
+        "Incluir Função (CbxTipUsuario) no passo a passo (obrigatório)",
+        "Sugestão: enriquecer mapas/seguranca/perfis-de-acesso.md em vez de criar cadastros/"
+      ],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "4b1bab22e5d10c6de36949cf27f789e2078f6492",
+      "solutionReview": "Incluir Função no passo a passo. Mapa duplicado é sugestão.",
+      "githubCreatedAt": "2026-07-17T22:50:44Z",
+      "githubUpdatedAt": "2026-07-22T13:03:08Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#38",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 38,
-      "title": "Dispensar aprovação de envios por perfil",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/38",
-      "githubState": "open",
-      "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Orientação atual pode alterar autorização global; deve apontar para o perfil do cargo.",
-      "solutionReview": "Orientação atual pode alterar autorização global; deve apontar para o perfil do cargo.",
-      "corrections": [
-        "Usar Função do perfil",
-        "Alertar impacto de tip_usuario"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(psicopedagogia): dispensar aprovação de envios quando o perfil do cargo usa função de Orientador",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Orientação atual pode alterar autorização global; deve apontar para o perfil do cargo."
+        },
+        {
+          "at": "2026-07-21T17:45:08.558Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Request changes: conflito com master"
+        },
+        {
+          "at": "2026-07-21T21:01:21.820Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_author_responded",
+          "detail": "Autor respondeu após a review (Merge remote-tracking branch 'origin/master' into curadoria/thread-26…)"
+        },
+        {
+          "at": "2026-07-22T13:05:39.689Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_merged",
+          "detail": "open → merged"
+        },
+        {
+          "at": "2026-07-22T13:10:54.300Z",
+          "note": "Homologada e mesclada em 2026-07-22",
+          "action": "kb_pr_review_updated"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Enrich correto; resolver conflito com master.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T13:03:11Z",
+      "prNumber": 38,
+      "reviewer": "Pedro",
+      "updatedAt": "2026-07-22",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T17:45:08.558Z",
+      "corrections": [
+        "Resolver conflito com master (obrigatório)"
+      ],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "aefd7f7ec7b3399c5e24105b33b781198538e79b",
+      "solutionReview": "Enrich correto; resolver conflito com master.",
+      "githubCreatedAt": "2026-07-17T22:50:46Z",
+      "githubUpdatedAt": "2026-07-22T13:03:13Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#39",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 39,
-      "title": "Botão de gravar ausente no App",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/39",
-      "githubState": "open",
-      "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Notas ficam read-only; em conteúdo/tarefa o FAB some. Texto precisa distinguir.",
-      "solutionReview": "Notas ficam read-only; em conteúdo/tarefa o FAB some. Texto precisa distinguir.",
-      "corrections": [
-        "Usar ID livre",
-        "Separar comportamento por tela",
-        "Desacoplar do PR #37"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(academico): botão de gravar some ao lançar notas/faltas/conteúdo no App (perfil sem permissão)",
+      "status": "fechada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Notas ficam read-only; em conteúdo/tarefa o FAB some. Texto precisa distinguir."
+        },
+        {
+          "at": "2026-07-21T17:32:18.613Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Request changes: id + desempilhar #37 + período de lançamento"
+        },
+        {
+          "at": "2026-07-21T21:01:21.820Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_author_responded",
+          "detail": "Autor respondeu após a review (kb(academico): retrabalho PR #39 — id livre aca-011 e condição do per…)"
+        },
+        {
+          "at": "2026-07-22T13:05:39.689Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_github_state_changed",
+          "detail": "open → closed"
+        },
+        {
+          "at": "2026-07-22T13:10:54.300Z",
+          "note": "PR fechada ao mesclar #37 (base deletada); trabalho segue no #120",
+          "action": "kb_pr_review_updated"
+        },
+        {
+          "at": "2026-07-22T14:57:46.241Z",
+          "actor": "Pedro",
+          "action": "kb_pr_status_renamed",
+          "detail": "bloqueada → fechada (cenário GitHub closed sem merge; segue no #120)"
+        },
+        {
+          "at": "2026-07-22T17:42:09.859Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removidas corrections de id (auto-fix): Trocar id aca-008 por id livre (obrigatório)"
+        },
+        {
+          "at": "2026-07-22T17:48:55.584Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removida menção a troca de id do resumo (auto-fix)"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "PR fechada no GitHub sem merge (empilhada no #37; branch-base apagada). Trabalho continua no #120.",
+      "verdict": "precisa_correcao",
+      "prNumber": 39,
+      "reviewer": "Pedro",
+      "updatedAt": "2026-07-22",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T17:32:18.613Z",
+      "corrections": [
+        "Desempilhar do #37 e rebasear em master (obrigatório)",
+        "Incluir condição do período de lançamento (Acadêmico > Avaliação > Períodos de Lançamento; afeta professor, não secretaria)"
+      ],
+      "githubState": "closed",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "solutionReview": "Causa da permissão confirmada; desempilhar do #37 e incluir período de lançamento.",
+      "githubCreatedAt": "2026-07-17T22:50:47Z",
+      "githubUpdatedAt": "2026-07-22T13:05:00Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#40",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 40,
-      "title": "Múltiplos logins e boletos no App",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/40",
-      "githubState": "merged",
+      "title": "kb(financeiro): responsavel com multiplos logins em unidades nao ve boletos no app",
       "status": "mesclada",
-      "verdict": "aprovavel",
-      "summary": "Solução confirmada no fluxo de unidades do usuário.",
-      "solutionReview": "Solução confirmada no fluxo de unidades do usuário.",
-      "corrections": [],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
-      "mergedAt": "2026-07-21T13:56:00.000Z",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "aprovavel: Solução confirmada no fluxo de unidades do usuário."
         },
         {
@@ -306,29 +526,33 @@
           "action": "kb_pr_merged",
           "detail": "PR #40 mesclado"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Solução confirmada no fluxo de unidades do usuário.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-21T13:56:00Z",
+      "prNumber": 40,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T13:56:00.000Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "e683ce4b691f5db97cc0416a5efa24948edd3d3b",
+      "solutionReview": "Solução confirmada no fluxo de unidades do usuário.",
+      "githubCreatedAt": "2026-07-18T22:14:01Z",
+      "githubUpdatedAt": "2026-07-21T13:56:02Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#41",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 41,
-      "title": "Conversas duplicadas no Fale Conosco v1 × Chat v2",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/41",
-      "githubState": "merged",
+      "title": "kb(atendimento): duplicidade de conversas no Fale Conosco (v1) x dedup no Chat novo (v2)",
       "status": "mesclada",
-      "verdict": "aprovavel",
-      "summary": "Diferença de deduplicação entre v1 e v2 confirmada.",
-      "solutionReview": "Diferença de deduplicação entre v1 e v2 confirmada.",
-      "corrections": [],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
-      "mergedAt": "2026-07-21T13:56:04.000Z",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "aprovavel: Diferença de deduplicação entre v1 e v2 confirmada."
         },
         {
@@ -337,119 +561,175 @@
           "action": "kb_pr_merged",
           "detail": "PR #41 mesclado"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Diferença de deduplicação entre v1 e v2 confirmada.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-21T13:56:04Z",
+      "prNumber": 41,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T13:56:04.000Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "8e673b65b0ecf23d12cca2b441e1f79be4061f22",
+      "solutionReview": "Diferença de deduplicação entre v1 e v2 confirmada.",
+      "githubCreatedAt": "2026-07-18T22:17:20Z",
+      "githubUpdatedAt": "2026-07-21T13:56:05Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#42",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 42,
-      "title": "Declaração de IR abate devoluções",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/42",
-      "githubState": "merged",
+      "title": "kb(financeiro): declaração de IR (Mala Direta) abate devoluções do valor pago",
       "status": "mesclada",
-      "verdict": "precisa_correcao",
-      "summary": "Mesclada por Hitgart com Changes Requested aberta (id livre + precisão do motor).",
-      "solutionReview": "Mesclada por Hitgart sem aplicar as correções: id livre (obrigatório) e precisão do escopo do motor (sugestão).",
-      "corrections": [
-        "Usar ID livre",
-        "Qualificar escopo do motor de carta"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T17:51:28.000Z",
-      "mergedAt": "2026-07-21T20:29:54.000Z",
       "history": [
         {
-          "at": "2026-07-21T17:51:28.000Z",
+          "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Solução fiscal é segura; precisa ID livre e pequena precisão de escopo."
         },
         {
-          "at": "2026-07-21T20:29:54.000Z",
-          "actor": "Hitgart",
-          "action": "kb_pr_merged_ignoring_review",
-          "detail": "Mesclada com Changes Requested aberta — id livre e precisão do motor não aplicados."
+          "at": "2026-07-21T17:51:33.746Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Request changes: id obrigatório; escopo do motor sugestão"
+        },
+        {
+          "at": "2026-07-21T21:01:21.820Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_merged",
+          "detail": "open → merged"
+        },
+        {
+          "at": "2026-07-22T17:42:09.859Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removidas corrections de id (auto-fix): Trocar id fin-009 por id livre (obrigatório)"
+        },
+        {
+          "at": "2026-07-22T17:48:55.584Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removida menção a troca de id do resumo (auto-fix)"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Solução correta; precisão do motor de carta é sugestão.",
+      "verdict": "precisa_correcao",
+      "mergedAt": "2026-07-21T20:29:54Z",
+      "prNumber": 42,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T17:51:33.746Z",
+      "corrections": [
+        "Sugestão: precisar que DescontaCreditosDevolucoes não é só Base Ano do Pagamento"
+      ],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "4deebd720299513f9a4a5146160c8ee4637f74e9",
+      "solutionReview": "Solução correta; precisão do motor de carta é sugestão.",
+      "githubCreatedAt": "2026-07-18T22:22:10Z",
+      "githubUpdatedAt": "2026-07-21T20:29:54Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#43",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 43,
-      "title": "Controle não aparece por perfis indevidos",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/43",
-      "githubState": "open",
-      "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Distinguir botão desabilitado de aba oculta e qualificar precedência.",
-      "solutionReview": "Distinguir botão desabilitado de aba oculta e qualificar precedência.",
-      "corrections": [
-        "Usar ID livre",
-        "Corrigir Enabled × Visible",
-        "Qualificar Negado prevalece"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(seguranca): controle não aparece na gestão web por perfis indevidos",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Distinguir botão desabilitado de aba oculta e qualificar precedência."
+        },
+        {
+          "at": "2026-07-22T15:06:25.680Z",
+          "action": "kb_pr_review_sent",
+          "detail": "Request changes: id seg-001 → seg-005"
+        },
+        {
+          "at": "2026-07-22T15:36:14.628Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_fixed",
+          "detail": "id → seg-005 (ajuste direto na branch)"
+        },
+        {
+          "at": "2026-07-22T15:52:21.599Z",
+          "action": "kb_pr_merged",
+          "detail": "Mesclada após ajuste de id / desempilhamento"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Id ajustado pela curadoria para seg-005 (colisão no master).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T15:50:59Z",
+      "prNumber": 43,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T15:36:14.628Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "8d28ce315c947d958b25e850036f53856a75dedb",
+      "solutionReview": "Distinguir botão desabilitado de aba oculta e qualificar precedência.",
+      "githubCreatedAt": "2026-07-18T22:27:40Z",
+      "githubUpdatedAt": "2026-07-22T15:51:01Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#44",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 44,
-      "title": "Configurar acesso do colaborador ao App",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/44",
-      "githubState": "open",
+      "title": "kb(seguranca): configurar acesso do colaborador ao App via perfil (aba Aplicativo)",
       "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Sobrepõe artigo já existente e repete seg-001.",
-      "solutionReview": "Sobrepõe artigo já existente e repete seg-001.",
-      "corrections": [
-        "Fundir ou diferenciar artigos",
-        "Usar ID livre",
-        "Renomear spec"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "precisa_correcao: Sobrepõe artigo já existente e repete seg-001."
+        },
+        {
+          "at": "2026-07-22T17:42:09.860Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removidas corrections de id (auto-fix): Usar ID livre"
+        },
+        {
+          "at": "2026-07-22T19:04:57.979Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "CHANGES_REQUESTED: duplicidade seg-006 vs seg-001 + o que aproveitar"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Request changes: duplicata de seg-001; fundir/aproveitar sintomas, passo a passo e e2e.",
+      "verdict": "precisa_correcao",
+      "prNumber": 44,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T19:04:57.979Z",
+      "corrections": [
+        "Fundir no seg-001 (ou fechar como duplicata)",
+        "Preservar e2e alinhando nome do spec ao id"
+      ],
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "solutionReview": "Request changes: duplicata de seg-001; fundir/aproveitar sintomas, passo a passo e e2e.",
+      "githubCreatedAt": "2026-07-18T22:37:48Z",
+      "githubUpdatedAt": "2026-07-22T19:06:17Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#45",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 45,
-      "title": "Boletim infantil: conceitos e professor Regente",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/45",
-      "githubState": "merged",
+      "title": "kb(aca-008): conceitos do boletim infantil não aparecem por falta de Regente na turma",
       "status": "mesclada",
-      "verdict": "aprovavel",
-      "summary": "Solução aprovada; paginação e ausência de conceitos são cenários distintos.",
-      "solutionReview": "Solução aprovada; paginação e ausência de conceitos são cenários distintos.",
-      "corrections": [],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
-      "mergedAt": "2026-07-21T14:12:33.000Z",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
+          "action": "kb_pr_triaged",
           "detail": "aprovavel: Solução aprovada; paginação e ausência de conceitos são cenários distintos."
         },
         {
@@ -458,159 +738,1365 @@
           "action": "kb_pr_merged",
           "detail": "PR #45 mesclado"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Solução aprovada; paginação e ausência de conceitos são cenários distintos.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-21T14:12:33Z",
+      "prNumber": 45,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T14:12:33.000Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "09731f01a8b0c98d02c41fd6cc2bfa2fc1cb9a90",
+      "solutionReview": "Solução aprovada; paginação e ausência de conceitos são cenários distintos.",
+      "githubCreatedAt": "2026-07-18T22:43:01Z",
+      "githubUpdatedAt": "2026-07-21T14:12:35Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#46",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 46,
-      "title": "Tipos/termos de ocorrência não aparecem no App",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/46",
-      "githubState": "open",
-      "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Falta orientar o vínculo no perfil do usuário, aba Objetos.",
-      "solutionReview": "Falta orientar o vínculo no perfil do usuário, aba Objetos.",
-      "corrections": [
-        "Adicionar perfil do usuário → aba Objetos → liberar Tipos/Termos"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(psicopedagogia): tipos/termos de ocorrência não aparecem ao lançar pelo App",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
-          "action": "kb_pr_reviewed",
-          "detail": "precisa_correcao: Falta orientar o vínculo no perfil do usuário, aba Objetos."
+          "action": "kb_pr_triaged",
+          "detail": "aprovavel: Correção do perfil/Objetos aplicada pelo autor; PR mesclado."
+        },
+        {
+          "at": "2026-07-21T15:12:36.000Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "Review enviada no GitHub → aguardando correção"
+        },
+        {
+          "at": "2026-07-21T16:06:57.000Z",
+          "actor": "Pedro",
+          "action": "kb_pr_merged",
+          "detail": "PR #46 mesclado"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Correção do perfil/Objetos aplicada pelo autor; PR mesclado.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-21T16:06:57Z",
+      "prNumber": 46,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T15:12:36.000Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "37bb2107525dff8905311d4eb90f52b5fd1e0ac6",
+      "solutionReview": "Correção do perfil/Objetos aplicada pelo autor; PR mesclado.",
+      "githubCreatedAt": "2026-07-18T22:46:30Z",
+      "githubUpdatedAt": "2026-07-21T16:06:59Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#72",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 72,
-      "title": "Conceitos de anos anteriores no Histórico Web",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/72",
-      "githubState": "open",
-      "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Causa confirmada; falta usar ID livre.",
-      "solutionReview": "Causa confirmada; falta usar ID livre.",
-      "corrections": [
-        "Usar ID livre",
-        "Alertar para conferir escala/apuração antes de copiar fórmula"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(academico): conceitos de anos anteriores não aparecem no histórico Web — falta a Fórmula do conceito na grade",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
           "action": "kb_pr_reviewed",
           "detail": "precisa_correcao: Causa confirmada; falta usar ID livre."
+        },
+        {
+          "at": "2026-07-22T15:36:14.628Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_fixed",
+          "detail": "id → aca-033 (ajuste direto na branch)"
+        },
+        {
+          "at": "2026-07-22T15:52:21.599Z",
+          "action": "kb_pr_merged",
+          "detail": "Mesclada após ajuste de id / desempilhamento"
+        },
+        {
+          "at": "2026-07-22T17:45:39.452Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_correction_stripped",
+          "detail": "Removida menção a id livre do resumo (auto-fix)"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Id ajustado pela curadoria para aca-033 (colisão no master).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T15:51:05Z",
+      "prNumber": 72,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T15:36:14.628Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "9375c5451b034f7299f9984fd846c3dd082ceedc",
+      "solutionReview": "Causa confirmada.",
+      "githubCreatedAt": "2026-07-21T03:14:14Z",
+      "githubUpdatedAt": "2026-07-22T15:51:06Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#73",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 73,
-      "title": "NFS-e: competência × data de emissão",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/73",
-      "githubState": "open",
-      "status": "aguardando_correcao",
-      "verdict": "precisa_correcao",
-      "summary": "Texto generaliza a trava; implementação compara MonthOf sem ano.",
-      "solutionReview": "Texto generaliza a trava; implementação compara MonthOf sem ano.",
-      "corrections": [
-        "Descrever comparação MonthOf literalmente",
-        "Marcar IPM como relato operacional"
-      ],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(financeiro): NFS-e — competência x data de emissão em notas atrasadas (fin-010)",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
           "action": "kb_pr_reviewed",
           "detail": "precisa_correcao: Texto generaliza a trava; implementação compara MonthOf sem ano."
+        },
+        {
+          "at": "2026-07-22T19:54:43.152Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_author_responded",
+          "detail": "Autor respondeu após a review (kb: id fin-019 (PR #73 — colisão))"
+        },
+        {
+          "at": "2026-07-22T20:02:02.323Z",
+          "actor": "Pedro",
+          "action": "kb_pr_status_corrected",
+          "detail": "Corrigido aguardando_rerevisao → aguardando_correcao: commit pós-review foi só auto-ajuste de id (curadoria)"
+        },
+        {
+          "at": "2026-07-22T20:13:25.046Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "precisa_correcao: Artigo novo (fin-019) útil; trava de futuro ainda generaliza — no código é MonthOf(comp) > MonthOf(hoje), sem ano. IPM é relato operacional, não regra no fonte."
+        },
+        {
+          "at": "2026-07-22T20:57:54.733Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "aprovavel: Aprovável: competência x emissão (fin-019). IPM como regra da prefeitura ok; trava de mês futuro clara o bastante para o atendente."
+        },
+        {
+          "at": "2026-07-22T21:01:43.922Z",
+          "actor": "Pedro",
+          "action": "kb_pr_merged",
+          "detail": "PR #73 mesclado (autorizado) com comentário de aprovação"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Mesclado: NFS-e competência x emissão (fin-019).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T21:00:06Z",
+      "prNumber": 73,
+      "reviewer": "Pedro",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T20:57:54.733Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "f7b66e103abdf30eaeb4e296f6ed0091b3f44ada",
+      "solutionReview": "Mesclado: NFS-e competência x emissão (fin-019).",
+      "githubCreatedAt": "2026-07-21T03:17:15Z",
+      "githubUpdatedAt": "2026-07-22T21:00:46Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#74",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 74,
-      "title": "Visualizar comunicados enviados por outros usuários",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/74",
-      "githubState": "open",
-      "status": "aprovada",
-      "verdict": "aprovavel",
-      "summary": "Enriquecimento aditivo e coerente; risco de conflito com PR #83.",
-      "solutionReview": "Enriquecimento aditivo e coerente; risco de conflito com PR #83.",
-      "corrections": [],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(seg-001): visualizar todos os comunicados enviados por outros usuários no App",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
           "action": "kb_pr_reviewed",
           "detail": "aprovavel: Enriquecimento aditivo e coerente; risco de conflito com PR #83."
+        },
+        {
+          "at": "2026-07-22T13:36:29.296Z",
+          "note": "Homologada e mesclada; id seg-004 já correto no master",
+          "action": "kb_pr_merged"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Enriquecimento aditivo e coerente; risco de conflito com PR #83.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T13:35:32Z",
+      "prNumber": 74,
+      "reviewer": "Pedro",
+      "updatedAt": "2026-07-22",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "145e45e46816e9f455a274259186a13f2354ac2f",
+      "solutionReview": "Enriquecimento aditivo e coerente; risco de conflito com PR #83.",
+      "githubCreatedAt": "2026-07-21T03:20:29Z",
+      "githubUpdatedAt": "2026-07-22T13:35:34Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#75",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 75,
-      "title": "Mural/Rotina é feed cronológico cumulativo",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/75",
-      "githubState": "open",
-      "status": "aprovada",
-      "verdict": "aprovavel",
-      "summary": "Comportamento confirmado no App e backend.",
-      "solutionReview": "Comportamento confirmado no App e backend.",
-      "corrections": [],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "KB acadêmico: Mural/Rotina do app é feed cronológico cumulativo (dia sem lançamento mostra os anteriores)",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
           "action": "kb_pr_reviewed",
           "detail": "aprovavel: Comportamento confirmado no App e backend."
+        },
+        {
+          "at": "2026-07-22T14:06:37.600Z",
+          "note": "Request changes: trocar kb-aca-007 por aca-030",
+          "action": "kb_pr_review_updated"
+        },
+        {
+          "at": "2026-07-22T15:36:14.628Z",
+          "actor": "Pedro",
+          "action": "kb_pr_id_fixed",
+          "detail": "id → aca-032 (ajuste direto na branch)"
+        },
+        {
+          "at": "2026-07-22T15:52:21.599Z",
+          "action": "kb_pr_merged",
+          "detail": "Mesclada após ajuste de id / desempilhamento"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Id ajustado pela curadoria para aca-032 (colisão no master).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T15:51:10Z",
+      "prNumber": 75,
+      "reviewer": "Pedro",
+      "updatedAt": "2026-07-22",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T15:36:14.628Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "f5f24d5f8c8753fe5774684da067ea9fa5233d06",
+      "solutionReview": "Comportamento confirmado no App e backend.",
+      "githubCreatedAt": "2026-07-21T03:24:01Z",
+      "githubUpdatedAt": "2026-07-22T15:51:12Z"
     },
     {
       "id": "polygonus-br/polygonus-suporte-kb#76",
-      "project": "polygonus",
-      "repository": "polygonus-br/polygonus-suporte-kb",
-      "prNumber": 76,
-      "title": "Competência na impressão da escrita contábil",
       "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/76",
-      "githubState": "open",
-      "status": "aprovada",
-      "verdict": "aprovavel",
-      "summary": "Origem do mês de competência confirmada ponta a ponta.",
-      "solutionReview": "Origem do mês de competência confirmada ponta a ponta.",
-      "corrections": [],
-      "reviewer": "Pedro",
-      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "title": "kb(financeiro): competência na impressão da escrita contábil vem do Mês de competência do documento",
+      "status": "mesclada",
       "history": [
         {
           "at": "2026-07-21T13:00:00.000Z",
           "actor": "Pedro",
           "action": "kb_pr_reviewed",
           "detail": "aprovavel: Origem do mês de competência confirmada ponta a ponta."
+        },
+        {
+          "at": "2026-07-22T14:06:37.600Z",
+          "note": "Homologada e mesclada em 2026-07-22",
+          "action": "kb_pr_merged"
         }
-      ]
+      ],
+      "project": "polygonus",
+      "summary": "Origem do mês de competência confirmada ponta a ponta.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T14:06:01Z",
+      "prNumber": 76,
+      "reviewer": "Pedro",
+      "updatedAt": "2026-07-22",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-21T13:00:00.000Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "ca48c17bb533519ed691de172658797f935bbe36",
+      "solutionReview": "Origem do mês de competência confirmada ponta a ponta.",
+      "githubCreatedAt": "2026-07-21T03:29:21Z",
+      "githubUpdatedAt": "2026-07-22T14:06:04Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#77",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/77",
+      "title": "kb(seguranca): perfil sem acesso a enviar comunicado pelo mural do app",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-22T19:04:57.979Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "aprovavel: Enrich correto do seg-001: FAB do mural gated por podeEnviarMsg / Permitir envio em massa. Confirmado no Flutter."
+        },
+        {
+          "at": "2026-07-22T19:11:55.126Z",
+          "actor": "Pedro",
+          "action": "kb_pr_merged",
+          "detail": "PR #77 mesclado (autorizado)"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Enrich do seg-001 mesclado: caso mural sem botão de comunicado (podeEnviarMsg).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T19:10:45Z",
+      "prNumber": 77,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T19:04:57.979Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "d749287bfb6c09694366b20b083c417d77fff05b",
+      "solutionReview": "Enrich do seg-001 mesclado: caso mural sem botão de comunicado (podeEnviarMsg).",
+      "githubCreatedAt": "2026-07-21T03:31:57Z",
+      "githubUpdatedAt": "2026-07-22T19:10:47Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#78",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/78",
+      "title": "kb(academico): numeração sequencial no Diário de Classe e Frequência (aca-010)",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-22T19:18:48.266Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "aprovavel: Artigo novo (aca-034): opção CbxSubstNumAluno nos diários Classe/Frequência. Confirmado no Delphi; aca-010 no master é outro caso."
+        },
+        {
+          "at": "2026-07-22T19:38:57.368Z",
+          "actor": "Pedro",
+          "action": "kb_pr_merged",
+          "detail": "PR #78 mesclado (autorizado) com comentário de aprovação"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Mesclado: numeração sequencial nos diários (aca-034). Approve + comentário breve.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T19:38:14Z",
+      "prNumber": 78,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T19:18:48.266Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "b1528bb302af44e3aee0eb361ff91d6bdbe37e09",
+      "solutionReview": "Mesclado: numeração sequencial nos diários (aca-034). Approve + comentário breve.",
+      "githubCreatedAt": "2026-07-21T03:37:09Z",
+      "githubUpdatedAt": "2026-07-22T19:38:16Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#79",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/79",
+      "title": "Curadoria: coordenação sem turmas ao enviar comunicado (grade_coordenador)",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-22T19:43:25.286Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "aprovavel: Enrich do aca-022: caso coordenação sem grade_coordenador. Confirmado em acesso.go (tip_usuario=4)."
+        },
+        {
+          "at": "2026-07-22T19:45:35.331Z",
+          "actor": "Pedro",
+          "action": "kb_pr_merged",
+          "detail": "PR #79 mesclado (autorizado) com comentário de aprovação"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Mesclado: enrich aca-022 (coordenação sem grade_coordenador).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T19:45:00Z",
+      "prNumber": 79,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T19:43:25.286Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "af3682c0cc45a80170d9e0d27e4deceec6475dd9",
+      "solutionReview": "Mesclado: enrich aca-022 (coordenação sem grade_coordenador).",
+      "githubCreatedAt": "2026-07-21T03:39:09Z",
+      "githubUpdatedAt": "2026-07-22T19:45:02Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#80",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/80",
+      "title": "kb(seguranca): sintoma de colaborador sem acesso mobile via Web (seg-001)",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-22T19:50:21.123Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "aprovavel: Enrich de sintomas no seg-001 (colaborador sem módulos mobile via Web). Rebaseado sobre #77; só metadados."
+        },
+        {
+          "at": "2026-07-22T19:53:21.548Z",
+          "actor": "Pedro",
+          "action": "kb_pr_merged",
+          "detail": "PR #80 mesclado (autorizado) com comentário de aprovação"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Mesclado: sintomas no seg-001 (módulos mobile via Web).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T19:52:39Z",
+      "prNumber": 80,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-22T19:50:21.123Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "162a0a72053c2f511b6116835eda5aaab92149d8",
+      "solutionReview": "Mesclado: sintomas no seg-001 (módulos mobile via Web).",
+      "githubCreatedAt": "2026-07-21T03:41:12Z",
+      "githubUpdatedAt": "2026-07-22T19:52:41Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#81",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/81",
+      "title": "seg-001: recall p/ colaborador sem acesso aos módulos do app mobile",
+      "status": "aguardando_correcao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T13:11:04.917Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "precisa_correcao: Overlap forte com #80 (já mesclado no seg-001). CONFLICTING. Só sobram deltas menores (tags colaborador/modulos, sintoma com funcionário, outra thread) — rebase + enriquecer o que falta, ou fechar como coberto."
+        },
+        {
+          "at": "2026-07-23T13:13:11.782Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "CHANGES_REQUESTED: rebase + enrich residual vs #80"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Request changes: rebase em master e enriquecer só o que o #80 ainda não cobriu (tags, sintoma funcionário, fonte desta thread).",
+      "verdict": "precisa_correcao",
+      "prNumber": 81,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-23T13:13:11.782Z",
+      "corrections": [
+        "Rebasear em master (conflito com #77/#80)",
+        "Manter só deltas de recall (tags colaborador/modulos, sintoma com funcionário, fonte desta thread)"
+      ],
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "solutionReview": "Request changes: rebase em master e enriquecer só o que o #80 ainda não cobriu (tags, sintoma funcionário, fonte desta thread).",
+      "githubCreatedAt": "2026-07-21T03:43:03Z",
+      "githubUpdatedAt": "2026-07-23T13:12:44Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#82",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/82",
+      "title": "kb(utilitarios): criar modelo de contrato/carta em branco (sem macros) pela Web",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T13:20:02.323Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "aprovavel: Artigo novo (uti-002): modelo de carta/contrato em branco = sem macros. Confirmado UMntCarta (só trava nome duplicado) + motor UDMCarta. Distinto de #99/#119."
+        },
+        {
+          "at": "2026-07-23T13:28:40.025Z",
+          "actor": "Pedro",
+          "action": "kb_pr_merged",
+          "detail": "PR #82 mesclado (autorizado) com comentário de aprovação"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Mesclado: modelo carta/contrato em branco sem macros (uti-002).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-23T13:27:47Z",
+      "prNumber": 82,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-23T13:20:02.323Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "fe35e7c53ded2c08110520b1c81905aef843c9de",
+      "solutionReview": "Mesclado: modelo carta/contrato em branco sem macros (uti-002).",
+      "githubCreatedAt": "2026-07-21T03:54:05Z",
+      "githubUpdatedAt": "2026-07-23T13:27:49Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#83",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/83",
+      "title": "kb(seguranca): colaborador ver comunicados/bilhetes de outros no App (Recebidas→Enviadas)",
+      "status": "aguardando_correcao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T13:36:55.914Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "precisa_correcao: Enrich útil (Recebidas→Enviadas + perfil), mas CONFLICTING com master: artigo já é seg-004 (#74). Rebase + manter Passo 1/2 e sintomas de bilhete; id permanece seg-004."
+        },
+        {
+          "at": "2026-07-23T13:42:57.369Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "CHANGES_REQUESTED: rebase + enrich residual vs #74 / seg-004"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Request changes: rebase em master; manter seg-004; incorporar Passo Recebidas→Enviadas + bilhete (residual vs #74).",
+      "verdict": "precisa_correcao",
+      "prNumber": 83,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-23T13:42:57.369Z",
+      "corrections": [
+        "Rebasear em master (conflito com enrich #74)",
+        "Manter id seg-004 (não seg-001)",
+        "Preservar Passo 1/2 (Recebidas→Enviadas + perfil) e sintomas/fonte de bilhete"
+      ],
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "solutionReview": "Request changes: rebase em master; manter seg-004; incorporar Passo Recebidas→Enviadas + bilhete (residual vs #74).",
+      "githubCreatedAt": "2026-07-21T03:56:38Z",
+      "githubUpdatedAt": "2026-07-23T13:42:30Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#84",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/84",
+      "title": "kb(seguranca): enriquece seg-001 — acesso mobile sem módulos (perfil)",
+      "status": "aguardando_correcao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T13:51:47.613Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "precisa_correcao: Overlap com #80 no seg-001 (CONFLICTING). Residual útil: contraste Web×app e sintoma de coordenador(a); rebase + enriquecer só isso / fonte desta thread."
+        },
+        {
+          "at": "2026-07-23T14:20:23.406Z",
+          "actor": "Pedro",
+          "action": "kb_pr_review_sent",
+          "detail": "CHANGES_REQUESTED: rebase + enrich residual vs #80"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Request changes: rebase em master; enriquecer só residual (Web×app, coordenador, fonte desta thread) vs #80.",
+      "verdict": "precisa_correcao",
+      "prNumber": 84,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-23T14:20:23.406Z",
+      "corrections": [
+        "Rebasear em master (conflito com #77/#80)",
+        "Manter só residual: módulos Web×app, coordenador(a), fonte desta thread"
+      ],
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "solutionReview": "Request changes: rebase em master; enriquecer só residual (Web×app, coordenador, fonte desta thread) vs #80.",
+      "githubCreatedAt": "2026-07-21T03:58:18Z",
+      "githubUpdatedAt": "2026-07-23T14:19:57Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#85",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/85",
+      "title": "kb(academico): anexo de tarefa/conteúdo não abre no app por formato não suportado",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T15:54:38.799Z",
+          "actor": "Pedro",
+          "action": "kb_pr_reviewed",
+          "detail": "aprovavel: Artigo novo: anexo tarefa/conteúdo não abre por formato fora da whitelist do app. Lista bate com upload_whitelist.dart. Id ajustado kb-aca-014 → aca-047."
+        },
+        {
+          "at": "2026-07-23T15:58:44.338Z",
+          "actor": "Pedro",
+          "action": "kb_pr_merged",
+          "detail": "PR #85 mesclado (autorizado) com comentário de aprovação"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Mesclado: anexo tarefa/conteúdo — formato fora da whitelist (aca-047).",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-23T15:58:11Z",
+      "prNumber": 85,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "reviewedAt": "2026-07-23T15:54:38.799Z",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "f19bad549a4190a801dc68b2e2f37ed841656aa8",
+      "solutionReview": "Mesclado: anexo tarefa/conteúdo — formato fora da whitelist (aca-047).",
+      "githubCreatedAt": "2026-07-21T04:01:56Z",
+      "githubUpdatedAt": "2026-07-23T15:58:40Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#86",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/86",
+      "title": "KB aca-010: ocultar Média/Desvio Padrão e assinatura do professor no Relatório Final de Notas",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T19:01:50.767Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_merged",
+          "detail": "open → merged"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "mergedAt": "2026-07-23T16:13:06Z",
+      "prNumber": 86,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "43c30ffe609bab4b7e0db2dde69f59cb2dddf10c",
+      "githubCreatedAt": "2026-07-21T04:46:21Z",
+      "githubUpdatedAt": "2026-07-23T16:13:08Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#87",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/87",
+      "title": "kb(seguranca): colaboradores sem módulos — aba Aplicativo do perfil (seg-001)",
+      "status": "aguardando_correcao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T19:13:15.349Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_awaiting_author",
+          "detail": "Aguardando correção após review de 2026-07-23"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "precisa_correcao",
+      "prNumber": 87,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-21T04:49:27Z",
+      "githubUpdatedAt": "2026-07-23T16:15:43Z",
+      "reviewedAt": "2026-07-23T16:15:43Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#88",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/88",
+      "title": "kb(ate-001): perfil indevido esconde canais do Fale Conosco do colaborador",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T19:01:50.767Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_merged",
+          "detail": "open → merged"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "mergedAt": "2026-07-23T16:56:01Z",
+      "prNumber": 88,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "6bdb9212d0b38571e2f5b49a26b8f6949010d56b",
+      "githubCreatedAt": "2026-07-21T04:56:02Z",
+      "githubUpdatedAt": "2026-07-23T16:56:03Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#89",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/89",
+      "title": "kb(seguranca): coordenador multi-perfil sem ocorrências no app pela Web (trocar perfil ativo)",
+      "status": "aguardando_correcao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T19:13:15.349Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_awaiting_author",
+          "detail": "Aguardando correção após review de 2026-07-23"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "precisa_correcao",
+      "prNumber": 89,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-21T04:59:15Z",
+      "githubUpdatedAt": "2026-07-23T17:02:40Z",
+      "reviewedAt": "2026-07-23T17:02:39Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#90",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/90",
+      "title": "KB: Notas Parciais — mensagem \"somente etapas normais podem ser calculadas\"",
+      "status": "aguardando_correcao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-23T19:13:15.349Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_awaiting_author",
+          "detail": "Aguardando correção após review de 2026-07-23"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "precisa_correcao",
+      "prNumber": 90,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-21T05:07:10Z",
+      "githubUpdatedAt": "2026-07-23T18:00:51Z",
+      "reviewedAt": "2026-07-23T18:00:51Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#91",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/91",
+      "title": "kb(seguranca): login por e-mail no portal e causa de \"credenciais invalidas\"",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 91,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-21T05:11:26Z",
+      "githubUpdatedAt": "2026-07-22T16:06:48Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#92",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/92",
+      "title": "kb(academico): cadastro de e-mail de aluno em massa não é self-service (Web)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 92,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-21T05:15:43Z",
+      "githubUpdatedAt": "2026-07-22T16:06:51Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#93",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/93",
+      "title": "kb(academico): Diário de Frequência — presença após a Data de referência (aca-010)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 93,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-21T05:22:36Z",
+      "githubUpdatedAt": "2026-07-22T16:06:55Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#94",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/94",
+      "title": "kb-aca-006: comunicados antigos na tela principal do novo portal do responsável",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 94,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-21T05:25:06Z",
+      "githubUpdatedAt": "2026-07-21T05:25:06Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#95",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/95",
+      "title": "kb(academico): configurar visualização do boletim pelo responsável no app",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 95,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-21T05:28:57Z",
+      "githubUpdatedAt": "2026-07-22T16:06:59Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#99",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/99",
+      "title": "kb(utilitarios): contrato/correspondência para empresa (PJ) usa macros de responsável financeiro",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 99,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T08:57:21Z",
+      "githubUpdatedAt": "2026-07-22T16:07:03Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#100",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/100",
+      "title": "KB: histórico com nota acima do máximo — fórmula da etapa somando a recuperação",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 100,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T09:00:47Z",
+      "githubUpdatedAt": "2026-07-22T16:08:34Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#101",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/101",
+      "title": "kb(financeiro): baixa do retorno saindo como Dinheiro em vez de PIX (fin-018)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 101,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T09:06:37Z",
+      "githubUpdatedAt": "2026-07-22T16:07:10Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#102",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/102",
+      "title": "kb(academico): teclado não abre p/ valor da avaliação no app quando nota máxima já definida (0,00)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 102,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T09:14:29Z",
+      "githubUpdatedAt": "2026-07-22T16:07:14Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#103",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/103",
+      "title": "kb(financeiro): aluno transferido nao filtrado no relatorio de gratuidades (Web)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 103,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T09:20:37Z",
+      "githubUpdatedAt": "2026-07-22T16:07:18Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#104",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/104",
+      "title": "kb(academico): assinatura do diretor nao sai na carteirinha impressa (Identidade Estudantil)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 104,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T09:56:37Z",
+      "githubUpdatedAt": "2026-07-22T16:07:21Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#106",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/106",
+      "title": "Curadoria: ocultar colunas Soma/Méd./Conc/Recuperação no Diário de Classe (Web) [aca-030]",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 106,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T10:22:52Z",
+      "githubUpdatedAt": "2026-07-22T16:07:25Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#107",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/107",
+      "title": "Curadoria: responsável sem módulos no app — aba Aplicativo do perfil não configurada (atualiza seg-001)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 107,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T10:24:32Z",
+      "githubUpdatedAt": "2026-07-22T10:24:32Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#108",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/108",
+      "title": "kb(financeiro): valores de um curso no TXT/remessa de outro — corrigir matrícula do boleto",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 108,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T10:28:54Z",
+      "githubUpdatedAt": "2026-07-22T16:07:28Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#109",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/109",
+      "title": "kb(financeiro): filtro de descontos no relatório Previsto×Realizado×Inadimplência",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 109,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T10:34:52Z",
+      "githubUpdatedAt": "2026-07-22T16:07:32Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#110",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/110",
+      "title": "kb(financeiro): conta contábil de desconto no TXT do Fechamento Contábil é fixa em código (escala)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 110,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T10:38:17Z",
+      "githubUpdatedAt": "2026-07-22T16:08:38Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#111",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/111",
+      "title": "KB: Meus Alunos não aparece para professor no app (liberar em Funções do Portal por grade)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 111,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T10:46:48Z",
+      "githubUpdatedAt": "2026-07-22T16:07:39Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#113",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/113",
+      "title": "kb(academico): Ficha Individual - carga horaria em horas (opcao \"Carga horaria em hora aula\")",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 113,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T10:50:18Z",
+      "githubUpdatedAt": "2026-07-22T16:07:42Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#114",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/114",
+      "title": "KB aca-022: coordenador sem turmas no comunicado do app por cadastro duplicado na grade",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 114,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T10:54:03Z",
+      "githubUpdatedAt": "2026-07-22T10:54:03Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#115",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/115",
+      "title": "kb(academico): comunicados anteriores nao aparecem no Mural de aluno recem-matriculado (app)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 115,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T11:01:57Z",
+      "githubUpdatedAt": "2026-07-22T16:07:46Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#116",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/116",
+      "title": "kb(academico): status \"Cursando\" é a Situação de matrícula — como alterar (aca-030)",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 116,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T11:17:44Z",
+      "githubUpdatedAt": "2026-07-22T16:07:50Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#117",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/117",
+      "title": "KB seg-005: gerar/redefinir senha do responsável na nova versão do gestão",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 117,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T11:23:47Z",
+      "githubUpdatedAt": "2026-07-22T16:07:54Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#119",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/119",
+      "title": "kb(utilitarios): exportação completa de dados de turma — Consultas e Relatórios + escala p/ extração",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T12:44:28.113Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 119,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T11:47:31Z",
+      "githubUpdatedAt": "2026-07-22T16:07:57Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#120",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/120",
+      "title": "kb(academico): botão de gravar some ao lançar notas/faltas/conteúdo no App (perfil sem permissão)",
+      "status": "mesclada",
+      "history": [
+        {
+          "at": "2026-07-22T13:06:52.702Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        },
+        {
+          "at": "2026-07-22T13:10:54.300Z",
+          "note": "Conflito em perfis-de-acesso.md + id aca-011; review enviada no #120",
+          "action": "kb_pr_review_updated"
+        },
+        {
+          "at": "2026-07-22T15:32:02.769Z",
+          "action": "kb_pr_author_responded",
+          "detail": "Pedro desempilhou a branch (aca-030 + mapa seguranca)"
+        },
+        {
+          "at": "2026-07-22T15:52:21.599Z",
+          "action": "kb_pr_merged",
+          "detail": "Mesclada após ajuste de id / desempilhamento"
+        }
+      ],
+      "project": "polygonus",
+      "summary": "Desempilhada em master: aca-030 + mapa seguranca; sem cadastros/ do #37.",
+      "verdict": "aprovavel",
+      "mergedAt": "2026-07-22T15:51:16Z",
+      "prNumber": 120,
+      "updatedAt": "2026-07-22",
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "corrections": [],
+      "githubState": "merged",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "mergeCommitSha": "61e68301a0080ffb7e17eba1edef91f53755062e",
+      "githubCreatedAt": "2026-07-22T13:05:02Z",
+      "githubUpdatedAt": "2026-07-22T15:51:48Z"
+    },
+    {
+      "id": "polygonus-br/polygonus-suporte-kb#122",
+      "url": "https://github.com/polygonus-br/polygonus-suporte-kb/pull/122",
+      "title": "kb(financeiro): conciliação bancária — marquei todos os movimentos e a Diferença não zera",
+      "status": "aguardando_revisao",
+      "history": [
+        {
+          "at": "2026-07-22T19:54:43.152Z",
+          "actor": "GitHub sync",
+          "action": "kb_pr_imported",
+          "detail": "PR aberta importada para a Curadoria KB"
+        }
+      ],
+      "project": "polygonus",
+      "verdict": "inconclusivo",
+      "prNumber": 122,
+      "repository": "polygonus-br/polygonus-suporte-kb",
+      "githubState": "open",
+      "lastSyncedAt": "2026-07-23T19:13:15.349Z",
+      "githubCreatedAt": "2026-07-22T16:18:18Z",
+      "githubUpdatedAt": "2026-07-22T16:18:18Z"
     }
   ]
 }

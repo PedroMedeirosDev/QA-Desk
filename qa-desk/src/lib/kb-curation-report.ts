@@ -12,6 +12,7 @@ const STATUS_LABELS: Record<KbCurationStatus, string> = {
   aprovada: "Aprovada",
   mesclada: "Mesclada",
   bloqueada: "Bloqueada",
+  fechada: "Fechada (sem merge)",
   pendente: "Aguardando revisão",
   em_revisao: "Aguardando revisão",
 };
@@ -66,6 +67,7 @@ function latestActivity(record: KbCurationRecord): string | undefined {
 function statusClass(status: KbCurationStatus): string {
   if (status === "mesclada" || status === "aprovada") return "ok";
   if (status === "bloqueada") return "fail";
+  if (status === "fechada") return "muted";
   if (status === "aguardando_rerevisao") return "attention";
   if (status === "aguardando_correcao") return "warning";
   return "pending";
@@ -83,6 +85,9 @@ function automaticConclusion(metrics: KbCurationMetrics): string {
   }
   if (metrics.awaitingReview > 0) {
     return `${metrics.awaitingReview} PR(s) ainda aguardam a primeira revisão.`;
+  }
+  if (metrics.closedUnmerged > 0) {
+    return `${metrics.closedUnmerged} PR(s) foram fechadas no GitHub sem merge.`;
   }
   return "Todo o escopo registrado foi aprovado ou mesclado.";
 }
@@ -107,6 +112,7 @@ export function computeKbCurationReportMetrics(
     approved,
     merged,
     blocked: count("bloqueada"),
+    closedUnmerged: count("fechada"),
     completionPercent:
       records.length > 0
         ? Math.round(((approved + merged) / records.length) * 100)
@@ -251,6 +257,7 @@ export function buildKbCurationHtmlReport(
     .badge.warning { color: var(--warning); border-color: #fbbf2466; background: #fbbf2418; }
     .badge.attention { color: var(--attention); border-color: #fb923c66; background: #fb923c18; }
     .badge.fail { color: var(--fail); border-color: #f8717166; background: #f8717118; }
+    .badge.muted { color: #a1a1aa; border-color: #71717a66; background: #71717a18; }
     .badge.pending { color: var(--accent); border-color: #38bdf866; background: #38bdf818; }
     .verdict { color: var(--muted); font-size: .72rem; }
     .details { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--border); font-size: .86rem; }
@@ -289,6 +296,7 @@ export function buildKbCurationHtmlReport(
       <div class="metric"><div class="metric-label">Aprovadas</div><div class="metric-value">${metrics.approved}</div></div>
       <div class="metric"><div class="metric-label">Mescladas</div><div class="metric-value">${metrics.merged}</div></div>
       <div class="metric"><div class="metric-label">Bloqueadas</div><div class="metric-value">${metrics.blocked}</div></div>
+      <div class="metric"><div class="metric-label">Fechadas</div><div class="metric-value">${metrics.closedUnmerged}</div></div>
       <div class="metric"><div class="metric-label">Conclusão</div><div class="metric-value">${metrics.completionPercent}%</div></div>
     </section>
 

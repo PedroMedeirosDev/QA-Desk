@@ -246,6 +246,7 @@ export const api = {
       pullRequests: KbCurationRecord[];
       metrics: KbCurationMetrics;
       synced: number;
+      imported: number;
       authorResponses: number;
       lastSyncedAt: string;
     }>(`/api/projects/${project}/kb-curation/sync`, { method: "POST" }),
