@@ -4,6 +4,7 @@ import type {
   KbCurationStatus,
   KbCurationVerdict,
 } from "@/types/kb-curation";
+import { maskPii } from "@/lib/redact-pii";
 
 const STATUS_LABELS: Record<KbCurationStatus, string> = {
   aguardando_revisao: "Aguardando revisão",
@@ -25,7 +26,7 @@ const VERDICT_LABELS: Record<KbCurationVerdict, string> = {
 };
 
 function esc(value: string): string {
-  return value
+  return maskPii(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

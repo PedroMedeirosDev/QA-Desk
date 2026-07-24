@@ -67,6 +67,7 @@ import {
   applyAutomationReadinessAfterRun,
 } from "../test-key.js";
 import { normalizeMaestroOutput } from "../maestro-output.js";
+import { redactPii } from "../privacy/redact-pii.js";
 import {
   dismissAndroidSystemOverlays,
   ensureAndroidDeviceReady,
@@ -399,7 +400,21 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
 
   const send = (obj: unknown) => {
     if (!stream) return;
-    res.write(`${JSON.stringify(obj)}\n`);
+    let payload = obj;
+    if (
+      payload &&
+      typeof payload === "object" &&
+      "type" in payload &&
+      (payload as { type?: string }).type === "log" &&
+      "line" in payload &&
+      typeof (payload as { line?: unknown }).line === "string"
+    ) {
+      payload = {
+        ...(payload as object),
+        line: redactPii((payload as { line: string }).line),
+      };
+    }
+    res.write(`${JSON.stringify(payload)}\n`);
     const flush = (res as Response & { flush?: () => void }).flush;
     flush?.();
   };

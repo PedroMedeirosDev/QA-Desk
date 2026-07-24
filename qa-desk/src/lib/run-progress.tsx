@@ -27,6 +27,7 @@ import {
   normalizeMaestroOutput,
 } from "@/lib/maestro-output";
 import { interpretMaestroLine } from "@/lib/maestro-progress";
+import { maskPii } from "@/lib/redact-pii";
 import { cn } from "@/lib/utils";
 import type { TestRecord } from "@/types/test-record";
 
@@ -831,10 +832,11 @@ function RunProgressPanel() {
   const canStop = running || state.stopping;
   const position = dragPos ?? prefs;
 
-  const displayLines =
+  const displayLines = (
     prefs.logMode === "limpo"
       ? curateMaestroLogLines(state.lines)
-      : state.lines.map((l) => l.trim()).filter(Boolean);
+      : state.lines.map((l) => l.trim()).filter(Boolean)
+  ).map(maskPii);
   /** Painel: últimas linhas da vista atual (scroll sobe para o restante). */
   const tailLines = displayLines.slice(-40);
 
@@ -1031,10 +1033,7 @@ function RunProgressPanel() {
                   <button
                     type="button"
                     onClick={() => {
-                      const text =
-                        prefs.logMode === "limpo"
-                          ? displayLines.join("\n")
-                          : state.lines.join("\n");
+                      const text = displayLines.join("\n");
                       void navigator.clipboard.writeText(text).then(() => {
                         setLogCopied(true);
                         window.setTimeout(() => setLogCopied(false), 2000);

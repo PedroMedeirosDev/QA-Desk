@@ -1,4 +1,5 @@
 import type { TestRecord } from "@/types/test-record";
+import { maskPii } from "@/lib/redact-pii";
 
 export interface DiscordReportOptions {
   /** Substitui "Console:" no padrão web — logs, JSON, stack */
@@ -87,7 +88,7 @@ export function formatDiscordReport(
 
   blocks.push("", `resultado esperado: ${expected}`);
 
-  return blocks.join("\n");
+  return maskPii(blocks.join("\n"));
 }
 
 export async function copyDiscordReport(text: string): Promise<boolean> {

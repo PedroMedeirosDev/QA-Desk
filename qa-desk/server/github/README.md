@@ -44,6 +44,19 @@ Em desenvolvimento local, use um túnel (ex.: Cloudflare Tunnel / ngrok) apontan
 
 O handler valida `X-Hub-Signature-256`, responde 200 na hora e aplica o sync do PR com debounce (evita rajadas de `synchronize`).
 
+### 4. Oracle / produção — `gh` obrigatório
+
+O sync (botão **e** o trabalho do webhook em background) usa o **GitHub CLI**:
+
+```bash
+# Instalar (Ubuntu) — preferir repo oficial cli.github.com
+sudo apt-get install -y gh
+echo "$GITHUB_TOKEN" | gh auth login --with-token   # PAT com escopo repo
+gh auth status
+```
+
+Sem `gh` no PATH: o UI mostra `spawn gh ENOENT`; o webhook ainda responde 200 no ping/accept, mas **não atualiza** o catálogo.
+
 ### Fallback
 
 O botão **Sincronizar GitHub** na Curadoria continua válido (catch-up / importar abertas / se o webhook falhar).

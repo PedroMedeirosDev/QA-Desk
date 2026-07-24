@@ -53,6 +53,19 @@ npx tsx scripts/apply-mural-checklist.ts
 
 `/api/health` → `"storage":"postgres"`, `"auth":"supabase"`. Evidências em `data/uploads/`.
 
+## Privacidade (PII)
+
+Textos livres e logs passam por redação automática (CPF, CNPJ, telefone, e-mail → `[CPF]` / `[CNPJ]` / `[TELEFONE]` / `[EMAIL]`):
+
+- na **gravação** (API → Postgres/JSON)
+- na **exibição**/export (logs, Discord, HTML)
+
+Para limpar dados já salvos:
+
+```powershell
+npx tsx server/scripts/redact-pii-catalog.ts
+```
+
 ## Homologação Mural
 
 Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
