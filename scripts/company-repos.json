@@ -1,5 +1,7 @@
 {
-  "descricao": "Mapa de clones locais — branch cq para homologação (exceto suporte-kb = master)",
+  "empresa": "polygonus",
+  "org": "polygonus-br",
+  "descricao": "Mapa de clones locais da empresa Polygonus — branch cq para homologação (exceto suporte-kb = master). Não inclui repos pessoais.",
   "repos": [
     {
       "id": "mobile",

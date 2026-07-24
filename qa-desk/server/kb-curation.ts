@@ -131,6 +131,8 @@ export async function writeKbCurationCatalog(
   catalog.meta.updatedAt = new Date().toISOString().slice(0, 10);
   if (isDatabaseEnabled()) {
     await writeDbCatalog(project, catalog);
+    // Mantém o JSON como espelho local (útil se o Postgres cair / migração).
+    writeFileCatalog(project, catalog);
     return;
   }
   writeFileCatalog(project, catalog);
@@ -155,6 +157,7 @@ export function computeKbCurationMetrics(records: KbCurationRecord[]): KbCuratio
     approved,
     merged,
     blocked: records.filter((record) => record.status === "bloqueada").length,
+    closedUnmerged: records.filter((record) => record.status === "fechada").length,
     completionPercent:
       records.length > 0 ? Math.round(((approved + merged) / records.length) * 100) : 0,
     pending: awaitingReview,

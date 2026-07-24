@@ -16,6 +16,8 @@ export type KbCurationStatus =
   | "aprovada"
   | "mesclada"
   | "bloqueada"
+  /** Fechada no GitHub sem merge (ex.: empilhada / base apagada). */
+  | "fechada"
   /** @deprecated legado — normalizado para aguardando_revisao */
   | "pendente"
   /** @deprecated legado — normalizado para aguardando_revisao */
@@ -67,6 +69,8 @@ export interface KbCurationMetrics {
   approved: number;
   merged: number;
   blocked: number;
+  /** PRs fechadas no GitHub sem merge (`status: fechada`). */
+  closedUnmerged: number;
   completionPercent: number;
   /** @deprecated use awaitingReview */
   pending?: number;

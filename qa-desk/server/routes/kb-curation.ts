@@ -24,6 +24,7 @@ const VALID_STATUS = new Set<KbCurationStatus>([
   "aprovada",
   "mesclada",
   "bloqueada",
+  "fechada",
   // legado (aceitamos na API e normalizamos na gravação)
   "pendente",
   "em_revisao",
@@ -142,6 +143,7 @@ kbCurationRouter.post("/sync", requireAdmin, async (req, res) => {
       pullRequests: catalog.pullRequests,
       metrics: computeKbCurationMetrics(catalog.pullRequests),
       synced: result.synced,
+      imported: result.imported,
       authorResponses: result.authorResponses,
       lastSyncedAt: result.at,
     });

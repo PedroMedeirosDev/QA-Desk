@@ -37,6 +37,7 @@ const STATUS_OPTIONS: KbCurationStatus[] = [
   "aprovada",
   "mesclada",
   "bloqueada",
+  "fechada",
 ];
 
 const STATUS_LABELS: Record<KbCurationStatus, string> = {
@@ -46,6 +47,7 @@ const STATUS_LABELS: Record<KbCurationStatus, string> = {
   aprovada: "Aprovada",
   mesclada: "Mesclada",
   bloqueada: "Bloqueada",
+  fechada: "Fechada (sem merge)",
   pendente: "Aguardando revisão",
   em_revisao: "Aguardando revisão",
 };
@@ -65,6 +67,7 @@ const EMPTY_METRICS: KbCurationMetrics = {
   approved: 0,
   merged: 0,
   blocked: 0,
+  closedUnmerged: 0,
   completionPercent: 0,
 };
 
@@ -89,6 +92,9 @@ function badgeClass(status: KbCurationStatus): string {
   }
   if (status === "bloqueada") {
     return "border-red-500/40 bg-red-500/15 text-red-300";
+  }
+  if (status === "fechada") {
+    return "border-zinc-500/40 bg-zinc-500/15 text-zinc-300";
   }
   if (status === "aguardando_rerevisao") {
     return "border-orange-500/50 bg-orange-500/20 text-orange-300";
@@ -314,13 +320,14 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
       const response = await api.syncKbCuration(project);
       setRecords(response.pullRequests);
       setMetrics(response.metrics);
-      if (response.authorResponses > 0) {
-        toast.success(
-          `${response.synced} PRs sincronizados · ${response.authorResponses} resposta(s) do autor para re-revisar.`,
-        );
-      } else {
-        toast.success(`${response.synced} PRs sincronizados com o GitHub.`);
-      }
+      const parts = [
+        `${response.synced} sincronizado(s)`,
+        response.imported > 0 ? `${response.imported} importada(s)` : null,
+        response.authorResponses > 0
+          ? `${response.authorResponses} resposta(s) do autor`
+          : null,
+      ].filter(Boolean);
+      toast.success(parts.join(" · "));
     } catch (error) {
       toast.error(toastErrorMessage(error, "Falha ao sincronizar GitHub"));
     } finally {
@@ -420,7 +427,7 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-8">
         <MetricCard label="Escopo" value={metrics.total} hint="Soma das abas" />
         <MetricCard
           label="Aguardando revisão"
@@ -454,8 +461,13 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
         <MetricCard
           label="Bloqueadas"
           value={metrics.blocked}
-          hint="Travadas / conflito"
+          hint="Trava de curadoria"
           tone="danger"
+        />
+        <MetricCard
+          label="Fechadas"
+          value={metrics.closedUnmerged}
+          hint="GitHub closed sem merge"
         />
       </div>
 

@@ -18,7 +18,11 @@ type SeedInput = Pick<
  * Status de fluxo (GitHub):
  * - aguardando_revisao → ainda não enviamos review
  * - aguardando_correcao → review enviada (request changes), aguardando autor
- * - aprovada / mesclada / bloqueada → estados finais ou de trava
+ * - aprovada / mesclada / bloqueada / fechada → estados finais ou de trava
+ *   (fechada = GitHub closed sem merge; bloqueada = trava de curadoria)
+ *
+ * Colisão de `id` no frontmatter NÃO entra em `corrections` nem em
+ * `precisa_correcao` — é auto-ajuste da homologação (ver skill homologacao-suporte-kb).
  */
 const INPUTS: SeedInput[] = [
   {
@@ -26,8 +30,8 @@ const INPUTS: SeedInput[] = [
     title: 'NFS-e retorna erro por "Opção simples" errada',
     status: "mesclada",
     verdict: "precisa_correcao",
-    summary: "Mesclada por Hitgart com Changes Requested aberta (id livre + tabela MEI×ME/EPP).",
-    corrections: ["Usar ID livre (ex. fin-012)", "Precisar tabela MEI × ME/EPP (pTotTribSN só no ME/EPP)"],
+    summary: "Mesclada por Hitgart com Changes Requested aberta (tabela MEI×ME/EPP).",
+    corrections: ["Precisar tabela MEI × ME/EPP (pTotTribSN só no ME/EPP)"],
     mergedAt: "2026-07-21T20:23:16.000Z",
     reviewSentAt: "2026-07-21T16:06:55.000Z",
   },
@@ -55,11 +59,8 @@ const INPUTS: SeedInput[] = [
     status: "mesclada",
     verdict: "precisa_correcao",
     summary:
-      "Mesclada por Hitgart com review Changes Requested aberta (id aca-008 colidindo + baseURL).",
-    corrections: [
-      "Usar ID livre (aca-008 colidia no master)",
-      "Reverter ou parametrizar baseURL do Playwright",
-    ],
+      "Mesclada por Hitgart com review Changes Requested aberta (baseURL Playwright).",
+    corrections: ["Reverter ou parametrizar baseURL do Playwright"],
     mergedAt: "2026-07-21T20:27:42.000Z",
     reviewSentAt: "2026-07-21T16:54:24.000Z",
   },
@@ -69,7 +70,7 @@ const INPUTS: SeedInput[] = [
     status: "aguardando_revisao",
     verdict: "precisa_correcao",
     summary: "Solução coerente; precisa alinhar captions e condições de exibição.",
-    corrections: ["Usar ID livre", "Corrigir captions", "Explicar ind_obs_destaque"],
+    corrections: ["Corrigir captions", "Explicar ind_obs_destaque"],
   },
   {
     prNumber: 36,
@@ -101,7 +102,7 @@ const INPUTS: SeedInput[] = [
     status: "aguardando_revisao",
     verdict: "precisa_correcao",
     summary: "Notas ficam read-only; em conteúdo/tarefa o FAB some. Texto precisa distinguir.",
-    corrections: ["Usar ID livre", "Separar comportamento por tela", "Desacoplar do PR #37"],
+    corrections: ["Separar comportamento por tela", "Desacoplar do PR #37"],
   },
   {
     prNumber: 40,
@@ -124,8 +125,8 @@ const INPUTS: SeedInput[] = [
     title: "Declaração de IR abate devoluções",
     status: "mesclada",
     verdict: "precisa_correcao",
-    summary: "Mesclada por Hitgart com Changes Requested aberta (id livre + precisão do motor).",
-    corrections: ["Usar ID livre", "Qualificar escopo do motor de carta"],
+    summary: "Mesclada por Hitgart com Changes Requested aberta (precisão do motor).",
+    corrections: ["Qualificar escopo do motor de carta"],
     mergedAt: "2026-07-21T20:29:54.000Z",
     reviewSentAt: "2026-07-21T17:51:28.000Z",
   },
@@ -135,7 +136,7 @@ const INPUTS: SeedInput[] = [
     status: "aguardando_revisao",
     verdict: "precisa_correcao",
     summary: "Distinguir botão desabilitado de aba oculta e qualificar precedência.",
-    corrections: ["Usar ID livre", "Corrigir Enabled × Visible", "Qualificar Negado prevalece"],
+    corrections: ["Corrigir Enabled × Visible", "Qualificar Negado prevalece"],
   },
   {
     prNumber: 44,
@@ -143,7 +144,7 @@ const INPUTS: SeedInput[] = [
     status: "aguardando_revisao",
     verdict: "precisa_correcao",
     summary: "Sobrepõe artigo já existente e repete seg-001.",
-    corrections: ["Fundir ou diferenciar artigos", "Usar ID livre", "Renomear spec"],
+    corrections: ["Fundir ou diferenciar artigos", "Renomear spec"],
   },
   {
     prNumber: 45,
@@ -167,8 +168,8 @@ const INPUTS: SeedInput[] = [
     title: "Conceitos de anos anteriores no Histórico Web",
     status: "aguardando_revisao",
     verdict: "precisa_correcao",
-    summary: "Causa confirmada; falta usar ID livre.",
-    corrections: ["Usar ID livre", "Alertar para conferir escala/apuração antes de copiar fórmula"],
+    summary: "Causa confirmada; alertar escala/apuração antes de copiar fórmula.",
+    corrections: ["Alertar para conferir escala/apuração antes de copiar fórmula"],
   },
   {
     prNumber: 73,
