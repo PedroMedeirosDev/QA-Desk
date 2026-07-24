@@ -10,6 +10,10 @@ import { testsRouter } from "./routes/tests.js";
 import { homologationsRouter } from "./routes/homologations.js";
 import { automationRouter } from "./routes/automation.js";
 import { kbCurationRouter } from "./routes/kb-curation.js";
+import {
+  githubWebhooksRouter,
+  isKbGithubWebhookConfigured,
+} from "./routes/github-webhooks.js";
 import { PROJECTS } from "./types.js";
 
 loadEnv();
@@ -22,6 +26,20 @@ const DIST = path.join(__dirname, "../dist");
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
+
+// Webhooks GitHub precisam do body raw para X-Hub-Signature-256 (antes do json parser).
+app.use(
+  "/api/webhooks/github",
+  express.raw({ type: "application/json", limit: "2mb" }),
+  (req, _res, next) => {
+    (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.isBuffer(req.body)
+      ? req.body
+      : undefined;
+    next();
+  },
+  githubWebhooksRouter,
+);
+
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/api/health", (_req, res) => {
@@ -31,8 +49,10 @@ app.get("/api/health", (_req, res) => {
     storage: storageMode(),
     automationRun: process.env.QA_AUTOMATION_RUN === "1",
     auth: isServerAuthConfigured() ? "supabase" : "mock",
+    kbGithubWebhook: isKbGithubWebhookConfigured(),
   });
 });
+
 
 app.get("/api/projects", (_req, res) => {
   res.json(PROJECTS);
@@ -69,6 +89,11 @@ app.listen(PORT, HOST, () => {
   console.log(`QA App ${IS_PROD ? "PRODUCTION" : "API"} http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
   console.log(`Storage: ${storageMode()}${storageMode() === "json" ? " (defina DATABASE_URL para Postgres)" : ""}`);
   console.log(`Auth: ${isServerAuthConfigured() ? "Supabase JWT" : "mock admin (sem SUPABASE_URL)"}`);
+  console.log(
+    isKbGithubWebhookConfigured()
+      ? "KB Curadoria: webhook GitHub ativo (/api/webhooks/github/kb-curation)"
+      : "KB Curadoria: webhook GitHub inativo (defina GITHUB_WEBHOOK_SECRET — ver server/github/README.md)",
+  );
   console.log(
     automationRun
       ? "Maestro: execução habilitada (QA_AUTOMATION_RUN=1)"

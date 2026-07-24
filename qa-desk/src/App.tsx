@@ -4,6 +4,7 @@ import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { Footer } from "@/components/Footer";
 import { UserBar } from "@/components/UserBar";
 import { ProjectLogo } from "@/components/ProjectLogo";
+import { VisitorPortfolioBanner } from "@/components/VisitorPortfolioBanner";
 import { CHANNEL_LABELS } from "@/config/channels";
 import { PROJECTS } from "@/config/projects";
 import { TestEditorPage } from "@/pages/TestEditorPage";
@@ -96,6 +97,7 @@ function ProjectShell() {
               ["--project-glow" as string]: theme.mainContentGlow,
             }}
           >
+            <VisitorPortfolioBanner />
             {route.view === "dashboard" ? (
               <DashboardPage project={slug} />
             ) : route.view === "kb-curation" ? (

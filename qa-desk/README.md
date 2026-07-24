@@ -2,6 +2,9 @@
 
 Aplicação web do **QA Desk** — registro de testes e homologação multi-projeto.
 
+**Demo:** [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org) (Oracle Always Free + Supabase `sa-east-1`).  
+Acesso **visitante** = portfólio em construção (ainda sem conteúdo público). **Admin** vê tudo.
+
 | Doc | Uso |
 |-----|-----|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Como funciona hoje |
@@ -67,5 +70,6 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 - [x] Auth Supabase (admin / visitor + `showInPortfolio`)
 - [x] Footer na login e nas telas do app
 - [x] Cache Auth + leituras Postgres sem re-sync em todo GET
-- [ ] Deploy Oracle em produção — VM criada; falta SSH + app na instance ([`deploy/oracle/`](deploy/oracle/))
+- [x] Deploy Oracle em produção — [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org) ([`deploy/oracle/`](deploy/oracle/))
+- [ ] Portfólio visitante (casos com `showInPortfolio`) — aviso “em construção” no ar
 - [ ] Bot Discord — [`VISION.md`](VISION.md)
