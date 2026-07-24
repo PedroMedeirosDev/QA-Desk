@@ -94,7 +94,7 @@ Write-Host "QA Automate - sincronizar codigo da empresa" -ForegroundColor White
 Write-Host "Raiz: $Root"
 $empresa = if ($config.empresa) { $config.empresa } else { "(nao informada)" }
 $org = if ($config.org) { $config.org } else { "" }
-Write-Host "Empresa: $empresa$(if ($org) { " ($org)" }) — so repos do mapa; nao toca repos pessoais"
+Write-Host ("Empresa: {0}{1} - so repos do mapa; nao toca repos pessoais" -f $empresa, $(if ($org) { " ($org)" } else { "" }))
 Write-Host "Mapa: company-repos.json"
 
 foreach ($repo in $Repos) {

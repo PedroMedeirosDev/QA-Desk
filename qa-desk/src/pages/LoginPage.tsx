@@ -54,6 +54,9 @@ export function LoginPage() {
             <p className="mt-1.5 max-w-xs text-sm text-zinc-500">
               Acesso admin ou visitante (portfólio).
             </p>
+            <p className="mt-3 max-w-sm rounded-md border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs leading-relaxed text-amber-100/90">
+              Portfólio visitante em construção — ainda sem casos públicos. Em breve.
+            </p>
           </div>
 
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>

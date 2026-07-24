@@ -420,11 +420,18 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
             disabled={syncing}
             onClick={() => void syncGithub()}
             className={cn(actionBtnBase, actionBtn.checklist)}
+            title="Catch-up manual. Com GITHUB_WEBHOOK_SECRET, reviews/merges atualizam sozinhos."
           >
             {syncing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             Sincronizar GitHub
           </button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Sync em lote (GraphQL). Com webhook configurado (
+          <code className="rounded bg-muted px-1">GITHUB_WEBHOOK_SECRET</code>
+          ), status de review/merge atualiza quase em tempo real — o botão fica de
+          catch-up. Setup: <code className="rounded bg-muted px-1">server/github/README.md</code>.
+        </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-8">

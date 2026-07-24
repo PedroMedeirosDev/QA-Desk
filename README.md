@@ -3,7 +3,10 @@
 Repositório **multi-projeto** de qualidade de software: homologação, casos de teste, automação (Maestro) e aplicação web de registro.
 
 > **Produto:** [QA Desk](https://github.com/PedroMedeirosDev/QA-Desk)  
+> **Demo online:** [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org)  
 > **App:** pasta `qa-desk/` (antes `qa-app/`) · projetos `polygonus`, `anihype`, …
+
+Login **visitante:** portfólio público ainda em construção (sem casos/métricas). Conta **admin** vê o conteúdo completo.
 
 ## Projetos
 

@@ -6,7 +6,7 @@
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/QA-Desk/qa-desk}"
-NODE_MAJOR="${NODE_MAJOR:-20}"
+NODE_MAJOR="${NODE_MAJOR:-22}"
 
 echo "==> Atualizando pacotes"
 sudo apt-get update -y
