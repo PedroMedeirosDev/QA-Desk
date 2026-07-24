@@ -8,6 +8,7 @@ import {
 } from "./db/pg-homologations.js";
 import { MURAL_HOMOLOGATION_SLUG, muralTestKeys } from "./homologation-config.js";
 import { CURRENT_USER } from "./config/user.js";
+import { redactPiiDeep } from "./privacy/redact-pii.js";
 import type {
   Homologation,
   HomologationCatalog,
@@ -94,6 +95,9 @@ export async function writeHomologationCatalog(
   project: ProjectSlug,
   catalog: HomologationCatalog,
 ): Promise<void> {
+  const safe = redactPiiDeep(catalog);
+  catalog.meta = safe.meta;
+  catalog.homologations = safe.homologations;
   catalog.meta.updatedAt = new Date().toISOString().slice(0, 10);
   catalog.meta.project = project;
   if (isDatabaseEnabled()) {

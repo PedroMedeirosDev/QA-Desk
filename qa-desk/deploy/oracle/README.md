@@ -97,6 +97,8 @@ sudo systemctl status qa-desk
 
 Teste: `curl -s http://127.0.0.1:3001/api/health`
 
+**GitHub CLI (Curadoria KB):** o sync e o webhook precisam de `gh` autenticado na VM (`gh auth login`). Sem isso: `spawn gh ENOENT`. Ver [`../server/github/README.md`](../../server/github/README.md).
+
 Público sem TLS: `http://IP_PUBLICO:3001` (porta 3001 aberta).
 
 ## 4. Domínio + HTTPS (recomendado)

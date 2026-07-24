@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { isDatabaseEnabled } from "./db/config.js";
 import { readCatalogFromDb, writeCatalogToDb } from "./db/pg-catalog.js";
 import { findHomologationBySlug, readHomologationCatalog } from "./homologations.js";
+import { redactPiiDeep } from "./privacy/redact-pii.js";
 import { normalizeCatalog } from "./test-key.js";
 import type { HistoryEntry, ProjectSlug, TestCatalog, TestRecord } from "./types.js";
 
@@ -111,6 +112,9 @@ export async function readCatalog(project: ProjectSlug): Promise<TestCatalog> {
 }
 
 export async function writeCatalog(project: ProjectSlug, catalog: TestCatalog): Promise<void> {
+  const safe = redactPiiDeep(catalog);
+  catalog.meta = safe.meta;
+  catalog.reports = safe.reports;
   catalog.meta.updatedAt = new Date().toISOString().slice(0, 10);
   catalog.meta.project = project;
   if (isDatabaseEnabled()) {

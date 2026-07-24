@@ -10,6 +10,7 @@ import type {
 import { isDatabaseEnabled } from "./db/config.js";
 import { getPrisma } from "./db/prisma.js";
 import { initialKbCurationCatalog } from "./kb-curation-seed.js";
+import { redactPiiDeep } from "./privacy/redact-pii.js";
 import { PROJECTS, type ProjectSlug } from "./types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -128,6 +129,9 @@ export async function writeKbCurationCatalog(
   project: ProjectSlug,
   catalog: KbCurationCatalog,
 ): Promise<void> {
+  const safe = redactPiiDeep(catalog);
+  catalog.meta = safe.meta;
+  catalog.pullRequests = safe.pullRequests;
   catalog.meta.updatedAt = new Date().toISOString().slice(0, 10);
   if (isDatabaseEnabled()) {
     await writeDbCatalog(project, catalog);

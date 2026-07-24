@@ -9,6 +9,7 @@ import {
   historyRunOutput,
   historyRunResult,
 } from "@/lib/history";
+import { maskPii } from "@/lib/redact-pii";
 import type { HistoryEntry } from "@/types/test-record";
 import { cn } from "@/lib/utils";
 
@@ -111,7 +112,7 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
   const result = historyRunResult(entry);
   const subtitle = historyEntrySubtitle(entry);
   const rawOutput = historyRunOutput(entry);
-  const log = rawOutput ? formatMaestroLog(rawOutput) : null;
+  const log = rawOutput ? formatMaestroLog(maskPii(rawOutput)) : null;
 
   return (
     <li className="border-b border-border/60 py-4 last:border-0">
@@ -147,13 +148,13 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
               >
                 {log.preview}
               </p>
-              <CopyLogButton text={log.full || rawOutput || ""} />
+              <CopyLogButton text={log.full || (rawOutput ? maskPii(rawOutput) : "")} />
             </div>
           )}
 
           {!log.preview && (
             <div className="flex justify-end">
-              <CopyLogButton text={log.full || rawOutput || ""} />
+              <CopyLogButton text={log.full || (rawOutput ? maskPii(rawOutput) : "")} />
             </div>
           )}
 
