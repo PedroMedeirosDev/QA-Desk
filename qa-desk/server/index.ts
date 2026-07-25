@@ -3,9 +3,15 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import helmet from "helmet";
 import { loadEnv } from "./load-env.js";
 import { storageMode } from "./db/config.js";
 import { isServerAuthConfigured } from "./middleware/auth.js";
+import {
+  apiRateLimiter,
+  buildCorsOptions,
+  webhookRateLimiter,
+} from "./middleware/security.js";
 import { testsRouter } from "./routes/tests.js";
 import { homologationsRouter } from "./routes/homologations.js";
 import { automationRouter } from "./routes/automation.js";
@@ -21,16 +27,58 @@ loadEnv();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.QA_APP_PORT ?? 3001);
-const HOST = process.env.QA_APP_HOST ?? "0.0.0.0";
 const IS_PROD = process.env.NODE_ENV === "production";
+/** Em produção (atrás do Caddy) o default é localhost — não expor 3001 na internet. */
+const HOST = process.env.QA_APP_HOST ?? (IS_PROD ? "127.0.0.1" : "0.0.0.0");
 const DIST = path.join(__dirname, "../dist");
 
+const supabaseOrigin = (() => {
+  const url = process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim();
+  if (!url) return null;
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+})();
+
 const app = express();
-app.use(cors({ origin: true, credentials: true }));
+
+if (IS_PROD) {
+  // Caddy → Node: X-Forwarded-For para rate limit por IP real
+  app.set("trust proxy", 1);
+}
+
+app.use(
+  helmet({
+    // SPA + assets locais; connect no Supabase Auth
+    contentSecurityPolicy: IS_PROD
+      ? {
+          useDefaults: true,
+          directives: {
+            "default-src": ["'self'"],
+            "script-src": ["'self'"],
+            "style-src": ["'self'", "'unsafe-inline'"],
+            "img-src": ["'self'", "data:", "blob:"],
+            "font-src": ["'self'", "data:"],
+            "connect-src": ["'self'", ...(supabaseOrigin ? [supabaseOrigin] : [])],
+            "object-src": ["'none'"],
+            "base-uri": ["'self'"],
+            "frame-ancestors": ["'none'"],
+            "form-action": ["'self'"],
+          },
+        }
+      : false,
+    crossOriginEmbedderPolicy: false,
+  }),
+);
+
+app.use(cors(buildCorsOptions()));
 
 // Webhooks GitHub precisam do body raw para X-Hub-Signature-256 (antes do json parser).
 app.use(
   "/api/webhooks/github",
+  webhookRateLimiter,
   express.raw({ type: "application/json", limit: "2mb" }),
   (req, _res, next) => {
     (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.isBuffer(req.body)
@@ -42,18 +90,22 @@ app.use(
 );
 
 app.use(express.json({ limit: "2mb" }));
+app.use("/api", apiRateLimiter);
 
 app.get("/api/health", (_req, res) => {
+  if (IS_PROD) {
+    res.json({ ok: true });
+    return;
+  }
   res.json({
     ok: true,
-    mode: IS_PROD ? "production" : "development",
+    mode: "development",
     storage: storageMode(),
     automationRun: process.env.QA_AUTOMATION_RUN === "1",
     auth: isServerAuthConfigured() ? "supabase" : "mock",
     kbGithubWebhook: isKbGithubWebhookConfigured(),
   });
 });
-
 
 app.get("/api/projects", (_req, res) => {
   res.json(PROJECTS);
@@ -83,12 +135,21 @@ if (IS_PROD && fs.existsSync(DIST)) {
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
-  res.status(500).json({ error: err.message });
+  const isCors = err.message.startsWith("CORS:");
+  if (isCors) {
+    res.status(403).json({ error: "Origem não permitida" });
+    return;
+  }
+  res.status(500).json({
+    error: IS_PROD ? "Erro interno" : err.message,
+  });
 });
 
 app.listen(PORT, HOST, () => {
   const automationRun = process.env.QA_AUTOMATION_RUN === "1";
-  console.log(`QA App ${IS_PROD ? "PRODUCTION" : "API"} http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
+  console.log(
+    `QA App ${IS_PROD ? "PRODUCTION" : "API"} http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`,
+  );
   console.log(`Storage: ${storageMode()}${storageMode() === "json" ? " (defina DATABASE_URL para Postgres)" : ""}`);
   console.log(`Auth: ${isServerAuthConfigured() ? "Supabase JWT" : "mock admin (sem SUPABASE_URL)"}`);
   console.log(
@@ -103,5 +164,7 @@ app.listen(PORT, HOST, () => {
   );
   if (HOST === "0.0.0.0") {
     console.log("Acessível na rede local (mesmo Wi‑Fi) pelo IP desta máquina");
+  } else if (IS_PROD && HOST === "127.0.0.1") {
+    console.log("Bind localhost — acesso público só via Caddy (80/443)");
   }
 });

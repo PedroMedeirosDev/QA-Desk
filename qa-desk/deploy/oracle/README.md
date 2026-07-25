@@ -32,18 +32,8 @@ No subnet / VCN security list da VM, adicione:
 | 22/tcp | Seu IP (ou 0.0.0.0/0 temporário) | SSH |
 | 443/tcp | 0.0.0.0/0 | HTTPS (Caddy) |
 | 80/tcp | 0.0.0.0/0 | ACME / redirect |
-| 3001/tcp | 0.0.0.0/0 | Só se testar sem Caddy |
 
-Também abra as mesmas portas no **iptables**/firewalld da VM se Ubuntu bloquear (UFW):
-
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80
-sudo ufw allow 443
-sudo ufw allow 3001/tcp
-sudo ufw enable
-```
-
+**Não** abra a porta **3001** na internet. O Node escuta só em `127.0.0.1` e o Caddy faz proxy.
 ## 2. Supabase (no PC, antes do deploy)
 
 1. [supabase.com](https://supabase.com) → New project (região próxima, ex. `sa-east-1`).
@@ -124,3 +114,15 @@ sudo systemctl restart qa-desk
 ```
 
 Se mudou `VITE_SUPABASE_*`, o `npm run build` é obrigatório (valores vão no bundle).
+
+### Segurança (produção)
+
+No `.env` da VM:
+
+```bash
+QA_APP_HOST=127.0.0.1
+QA_CORS_ORIGINS=https://qa-desk-pedro.duckdns.org
+QA_AUTOMATION_RUN=0
+```
+
+Feche **3001** no security list OCI e no firewall do host (só 22/80/443). Health público responde só `{ "ok": true }`.
