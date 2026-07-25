@@ -1,10 +1,8 @@
-# Avatar do usuário
+# Avatares
 
-Coloque sua foto aqui com um destes nomes:
+| Perfil   | Arquivo                          |
+|----------|----------------------------------|
+| Admin    | `pedro.png` / `.jpg` / `.webp`   |
+| Visitante| `visitante.png` / `.jpg` / `.webp` |
 
-- `pedro.png`
-- `pedro.jpg`
-- `pedro.jpeg`
-- `pedro.webp`
-
-Enquanto não houver arquivo, a userbar exibe as iniciais **PM**.
+Sem arquivo → iniciais na userbar.

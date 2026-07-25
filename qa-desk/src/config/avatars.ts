@@ -13,6 +13,19 @@ export function getUserAvatarUrl(baseName: string): string | undefined {
   return undefined;
 }
 
+/** Admin → pedro.* · visitante → visitante.* (se existir). */
+export function resolveAvatarForRole(
+  role: "admin" | "visitor" | undefined,
+): string | undefined {
+  if (role === "admin") {
+    return getUserAvatarUrl(CURRENT_USER.avatarBaseName) ?? getUserAvatarUrl("pedro");
+  }
+  if (role === "visitor") {
+    return getUserAvatarUrl("visitante");
+  }
+  return getUserAvatarUrl(CURRENT_USER.avatarBaseName);
+}
+
 export function resolveCurrentUserAvatar(): string | undefined {
   return getUserAvatarUrl(CURRENT_USER.avatarBaseName);
 }
