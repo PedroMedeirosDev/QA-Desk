@@ -1,13 +1,14 @@
 import { useAuth } from "@/auth/AuthProvider";
 import { CURRENT_USER } from "@/config/user";
-import { resolveCurrentUserAvatar } from "@/config/avatars";
+import { resolveAvatarForRole } from "@/config/avatars";
 import { cn } from "@/lib/utils";
 
 export function UserAvatar({ className }: { className?: string }) {
-  const { profile, isAdmin } = useAuth();
-  const src = isAdmin ? resolveCurrentUserAvatar() : null;
+  const { profile, isAdmin, isVisitor } = useAuth();
+  const role = isAdmin ? "admin" : isVisitor ? "visitor" : undefined;
+  const src = resolveAvatarForRole(role);
   const name = profile?.displayName ?? CURRENT_USER.name;
-  const initials = profile?.initials ?? CURRENT_USER.initials;
+  const initials = profile?.initials ?? (isAdmin ? CURRENT_USER.initials : "V");
 
   if (src) {
     return (
