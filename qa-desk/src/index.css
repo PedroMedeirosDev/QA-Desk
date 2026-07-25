@@ -81,10 +81,13 @@
   --ring: #2b73eb;
 }
 
+/* data-theme vive no <html> (:root) — precisa bater no próprio elemento */
+:root:not(.dark)[data-theme="polygonus"],
 :root:not(.dark) [data-theme="polygonus"] {
   --brand-muted: #e8f0fe;
 }
 
+.dark[data-theme="polygonus"],
 .dark [data-theme="polygonus"] {
   --brand-muted: #1a2d52;
 }
@@ -96,10 +99,12 @@
   --ring: #ff0080;
 }
 
+:root:not(.dark)[data-theme="anihype"],
 :root:not(.dark) [data-theme="anihype"] {
   --brand-muted: #fff0f7;
 }
 
+.dark[data-theme="anihype"],
 .dark [data-theme="anihype"] {
   --brand-muted: #1a0010;
 }

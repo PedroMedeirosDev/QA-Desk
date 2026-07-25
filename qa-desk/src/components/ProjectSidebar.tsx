@@ -130,7 +130,7 @@ export function ProjectSidebar({
   return (
     <aside
       className={cn(
-        "sidebar-nav relative flex shrink-0 border-b border-border bg-zinc-950/80 transition-[width,height] duration-200 ease-in-out md:h-full md:flex-col md:border-b-0 md:border-r md:border-zinc-800",
+        "sidebar-nav relative flex shrink-0 border-b border-border bg-slate-50 transition-[width,height] duration-200 ease-in-out dark:bg-zinc-950/80 md:h-full md:flex-col md:border-b-0 md:border-r",
         collapsed
           ? "h-14 w-full flex-row overflow-visible md:h-full md:w-[4.5rem] md:flex-col"
           : "w-full flex-col overflow-hidden md:w-64",
@@ -139,7 +139,7 @@ export function ProjectSidebar({
       {/* Cabeçalho — logo horizontal (arte já inclui “QA DESK”) */}
       <header
         className={cn(
-          "relative flex shrink-0 items-center border-b border-zinc-800/90",
+          "relative flex shrink-0 items-center border-b border-border",
           collapsed
             ? "h-14 justify-center gap-1 px-2 md:h-auto md:flex-col md:gap-2 md:px-2 md:py-3"
             : "gap-2 px-3 py-4",
@@ -147,10 +147,12 @@ export function ProjectSidebar({
       >
         {collapsed ? (
           <CollapsedTooltip label="QA Desk">
-            <BrandLogo size="icon" className="object-left" />
+            <div className="rounded-lg bg-zinc-950 p-1 dark:bg-transparent dark:p-0">
+              <BrandLogo size="icon" className="object-left" />
+            </div>
           </CollapsedTooltip>
         ) : (
-          <div className="flex min-h-14 min-w-0 flex-1 items-center">
+          <div className="flex min-h-14 min-w-0 flex-1 items-center rounded-lg bg-zinc-950 px-2 py-1.5 dark:bg-transparent dark:px-0 dark:py-0">
             <BrandLogo size="sidebar" />
           </div>
         )}
@@ -160,7 +162,7 @@ export function ProjectSidebar({
           title={collapsed ? "Expandir menu" : "Recolher menu"}
           aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
           aria-expanded={!collapsed}
-          className="shrink-0 self-start rounded-md border border-zinc-700 p-1.5 text-zinc-400 transition-colors hover:border-red-600/40 hover:bg-red-950/40 hover:text-red-400"
+          className="shrink-0 self-start rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:border-red-500/40 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
         >
           {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </button>
@@ -202,7 +204,7 @@ export function ProjectSidebar({
                 itemTheme.sidebarCardBg,
                 isSelected
                   ? cn(itemTheme.sidebarBorder, "border-2")
-                  : "border-zinc-800/80 hover:border-zinc-600 hover:bg-zinc-900/80",
+                  : "border-border hover:border-slate-300 hover:bg-white dark:border-zinc-800/80 dark:hover:border-zinc-600 dark:hover:bg-zinc-900/80",
               )}
               style={
                 isSelected
@@ -219,7 +221,7 @@ export function ProjectSidebar({
                 label={project.label}
                 size="sm"
                 className={cn(
-                  isSelected && "ring-1 ring-offset-1 ring-offset-zinc-950",
+                  isSelected && cn("ring-1 ring-offset-1", itemTheme.logoRingOffset),
                 )}
                 style={
                   isSelected
@@ -235,7 +237,7 @@ export function ProjectSidebar({
                   <span
                     className={cn(
                       "block truncate sidebar-project-name",
-                      isSelected ? itemTheme.sidebarText : "text-zinc-400",
+                      isSelected ? itemTheme.sidebarText : "text-slate-600 dark:text-zinc-400",
                     )}
                   >
                     {project.label}
@@ -244,7 +246,9 @@ export function ProjectSidebar({
                     <span
                       className={cn(
                         "sidebar-project-desc mt-0.5 block truncate",
-                        isSelected ? "text-zinc-400" : "text-zinc-600",
+                        isSelected
+                          ? "text-slate-500 dark:text-zinc-400"
+                          : "text-slate-400 dark:text-zinc-600",
                       )}
                     >
                       {project.description}
@@ -264,7 +268,7 @@ export function ProjectSidebar({
               )}
 
               {showChannels && sub && (
-                <div className="ml-1 space-y-4 border-l border-zinc-800 pl-3 pt-1">
+                <div className="ml-1 space-y-4 border-l border-border pl-3 pt-1 dark:border-zinc-800">
                   {channels.map((ch) => {
                     const ChannelIcon = CHANNEL_ICON[ch.id];
                     const testsPath = projectListPath(project.slug, ch.id);
@@ -282,8 +286,8 @@ export function ProjectSidebar({
 
                     return (
                       <div key={ch.id} className="space-y-1.5">
-                        <p className="flex items-center gap-1.5 px-2 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-                          <ChannelIcon className="size-3.5 shrink-0 text-zinc-500" />
+                        <p className="flex items-center gap-1.5 px-2 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-500">
+                          <ChannelIcon className="size-3.5 shrink-0 text-slate-500 dark:text-zinc-500" />
                           {CHANNEL_LABELS[ch.id]}
                         </p>
                         <ul className="space-y-1">
@@ -317,7 +321,7 @@ export function ProjectSidebar({
                       </div>
                     );
                   })}
-                  <div className="space-y-1 border-t border-zinc-800 pt-3">
+                  <div className="space-y-1 border-t border-border pt-3 dark:border-zinc-800">
                     <Link
                       to={dashPath}
                       className={cn(
@@ -435,12 +439,6 @@ export function ProjectSidebar({
           );
         })}
       </nav>
-
-      {!collapsed && (
-        <p className="sidebar-footer shrink-0 border-t border-zinc-800 px-4 py-3 text-zinc-500">
-          {PROJECTS.length} projeto(s)
-        </p>
-      )}
     </aside>
   );
 }

@@ -13,9 +13,9 @@ export const actionBtn = {
   /** Checklist / sincronizar campanha (gera ou atualiza registros) */
   checklist:
     "border border-emerald-500/40 bg-emerald-600 text-white shadow-sm hover:bg-emerald-500",
-  /** Botão visível sobre fundo brand (banner escuro) */
+  /** Botão sobre fundo brand (claro ou escuro) */
   onBrand:
-    "border border-white/35 bg-white/15 text-foreground shadow-sm hover:bg-white/25",
+    "border border-slate-300/80 bg-white text-slate-900 shadow-sm hover:bg-slate-50 dark:border-white/35 dark:bg-white/15 dark:text-foreground dark:hover:bg-white/25",
   /** Voltar / neutro */
   back: "border border-border bg-card text-foreground hover:bg-muted/60",
   /** Secundário / anexar */
