@@ -1,12 +1,44 @@
-# Abre menu ⋮ do 1º comunicado em Enviadas.
-# Header também tem Show menu — usar index 1 (1º card).
+# Abre o menu ⋮ do 1º card (mais recente) na lista Enviadas.
+#
+# Preferência: semantics `mural_card_menu` (content-desc costuma trazer o ID).
+# Fallback: "Show menu" no card (index 1 — index 0 é o header).
+#
+# Pré: lista Enviadas já filtrada (ver abrir_menu_ultimo_comunicado / filtrar_enviadas).
+# Env/output opcional: output.idComunicado ou ID_COMUNICADO para âncora.
+#
+# Editar/Excluir só existem em Enviadas — assert antes de abrir.
 
 appId: br.com.polygonus.mobile.amostra
 ---
+- evalScript: |
+    ${(() => {
+      var digits = "";
+      try {
+        if (typeof ID_COMUNICADO !== "undefined" && ID_COMUNICADO) {
+          digits = String(ID_COMUNICADO).replace(/[^0-9]/g, "");
+        }
+      } catch (e) {}
+      if (!digits && output.idComunicado) {
+        digits = String(output.idComunicado).replace(/[^0-9]/g, "");
+      }
+      output.menuIdDigits = digits;
+      output.menuIdRegex = digits.length > 3 ? (".*ID\\s*" + digits + ".*") : "";
+      output.hasMenuId = digits.length > 3;
+    })()}
+
+- runFlow:
+    when:
+      notVisible: "Enviadas|Enviados"
+    file: filtrar_enviadas.yaml
+
+- assertVisible: "Enviadas|Enviados"
+
 - extendedWaitUntil:
-    visible: "Show menu"
+    visible:
+      id: "mural_card_menu"
     timeout: 10000
 
+# Fecha overlays que cobrem a lista (filtro / cardápio)
 - runFlow:
     when:
       visible: "Remetente|Destinatário|CARDÁPIO|Filtrar"
@@ -14,23 +46,51 @@ appId: br.com.polygonus.mobile.amostra
       - pressKey: Back
       - waitForAnimationToEnd:
           timeout: 500
-- tapOn:
-    text: "Show menu"
-    index: 1
 
+# 1) ⋮ pelo id + content-desc com o ID do card
 - runFlow:
     when:
-      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+      true: ${output.hasMenuId}
+      notVisible: "Editar|Excluir"
     commands:
-      - tapOn:
-          text: "Show menu"
-          index: 0
+      - scrollUntilVisible:
+          element:
+            text: ${output.menuIdRegex}
+          direction: DOWN
+          timeout: 12000
           optional: true
+      - tapOn:
+          id: "mural_card_menu"
+          text: ${output.menuIdRegex}
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 600
+
+# 2) ⋮ pelo id no 1º card da lista (sem âncora de ID)
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir"
+    commands:
       - tapOn:
           id: "mural_card_menu"
           index: 0
           optional: true
+      - waitForAnimationToEnd:
+          timeout: 600
 
+# 3) Fallback legado: accessibility "Show menu" do card (não o do header)
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir"
+    commands:
+      - tapOn:
+          text: "Show menu"
+          index: 1
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 600
+
+# Exige Editar|Excluir — NÃO aceitar só "Salvar/Compartilhar anexos" (Recebidas)
 - extendedWaitUntil:
-    visible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+    visible: "Editar|Excluir"
     timeout: 8000

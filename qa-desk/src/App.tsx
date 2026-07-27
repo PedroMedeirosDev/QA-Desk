@@ -3,6 +3,7 @@ import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { Footer } from "@/components/Footer";
 import { UserBar } from "@/components/UserBar";
+import { AgentStatusBadge } from "@/components/AgentStatusBadge";
 import { ProjectLogo } from "@/components/ProjectLogo";
 import { VisitorPortfolioBanner } from "@/components/VisitorPortfolioBanner";
 import { CHANNEL_LABELS } from "@/config/channels";
@@ -83,7 +84,10 @@ function ProjectShell() {
                 </h1>
               </div>
             </div>
-            <UserBar />
+            <div className="flex shrink-0 items-center gap-3">
+              <AgentStatusBadge />
+              <UserBar />
+            </div>
           </div>
         </header>
 

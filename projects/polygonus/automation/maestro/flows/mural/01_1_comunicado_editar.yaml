@@ -4,16 +4,14 @@
 # Edita o mais recente; valida pelo ID capturado + texto novo.
 #
 # Via qa-desk: prep → adb captura ID → executa flow gerado com ID literal
-# (este YAML é o registro do CT; o runtime pode substituí-lo por .generated/).
-# Via CLI: maestro test -e ID_COMUNICADO=<digitos> mural/01_1_comunicado_editar.yaml
+# Via CLI: sem ID, captura na lista Enviadas antes de abrir o ⋮
 #
-# Contrato: resume → ação → teardown
+# Contrato: resume → Enviadas → ⋮ → Editar → teardown
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow: ../shared/mural/setup_coordenador_mural.yaml
 
-# ID injetado pela qa-desk em flows/.env + -e (evalScript inline no flow raiz).
 - evalScript: |
     ${(() => {
       if (output.idComunicado && String(output.idComunicado).length > 3) return;
@@ -31,13 +29,25 @@ appId: br.com.polygonus.mobile.amostra
       }
     })()}
 
+# Sempre Enviadas + ID fresco do topo (ignora ID_COMUNICADO velho no .env)
+- runFlow:
+    when:
+      notVisible: "Enviadas|Enviados"
+    file: ../shared/mural/filtrar_enviadas.yaml
+
+- assertVisible: "Enviadas|Enviados"
+
+- evalScript: '${output.idComunicado = ""}'
+
+- runFlow: ../shared/mural/capturar_id_ultimo_comunicado.yaml
+
 - assertTrue: ${(output.idComunicado || "").length > 3}
 
 - runFlow:
     file: ../shared/mural/editar_comunicado_lista.yaml
     env:
       NOVO_TEXTO: "Teste Comunicado editado CT02"
-      ID_COMUNICADO: ${ID_COMUNICADO}
       MURAL_ID: ${output.idComunicado}
+
 
 - runFlow: ../shared/auth/teardown_estavel_sessao.yaml

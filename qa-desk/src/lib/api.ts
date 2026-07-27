@@ -37,6 +37,19 @@ export interface AndroidDeviceStatus {
   avdName: string;
   booting: boolean;
   message: string;
+  agentOnline?: boolean;
+  agentHostname?: string;
+}
+
+export interface HealthStatus {
+  ok: boolean;
+  automationRun?: boolean;
+  agentConfigured?: boolean;
+  agentOnline?: boolean;
+  agentHostname?: string;
+  mode?: string;
+  storage?: string;
+  auth?: string;
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -52,6 +65,8 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  health: () => request<HealthStatus>("/api/health"),
+
   listTests: (project: ProjectSlug) =>
     request<TestCatalog>(`/api/projects/${project}/tests`),
 

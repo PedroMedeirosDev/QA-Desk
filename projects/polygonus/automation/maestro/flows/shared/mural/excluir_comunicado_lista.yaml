@@ -1,6 +1,8 @@
 # Exclui o comunicado mais recente em Enviadas (por ID, sem texto fixo).
 #
 # Env: ID_COMUNICADO / MURAL_ID; SKIP_FILTRAR_ENVIADAS (Pipeline qa-desk)
+#
+# Fluxo: Enviadas → ⋮ (mural_card_menu) → Excluir → confirmar Sim → ID some.
 # Grava output.idComunicadoAntes; após excluir confirma que o ID sumiu.
 
 appId: br.com.polygonus.mobile.amostra
@@ -20,7 +22,10 @@ appId: br.com.polygonus.mobile.amostra
 
 - evalScript: '${output.idComunicadoAntes = output.idComunicado}'
 
-- tapOn: "Excluir"
+- runFlow:
+    file: tap_acao_menu_card.yaml
+    env:
+      MENU_ACAO: "Excluir"
 
 - runFlow: confirmar_exclusao_comunicado.yaml
 

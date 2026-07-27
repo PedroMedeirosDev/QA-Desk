@@ -105,6 +105,10 @@ Mesmo que o **único** problema interceptado/ajustado tenha sido o `id`, **não 
 
 Só o texto grounded no código promove de "draft" a "verificado". Para provar de fato na tela: bancada CQ + Playwright/manual em **banco local** (nunca produção). Ver `.claude/skills/bancada-cq` no `acropoly-server` e a suíte em `polygonus-suporte-kb/testes/e2e/`.
 
+## Idioma
+
+Commits, reviews, comentários de PR e vereditos de homologação em **português** (padrão da empresa). Não usar inglês em mensagens de aprovação/correção.
+
 ## Restrições
 
 - **Somente leitura por padrão** (não comentar/aprovar/mesclar no GitHub sem o usuário pedir).

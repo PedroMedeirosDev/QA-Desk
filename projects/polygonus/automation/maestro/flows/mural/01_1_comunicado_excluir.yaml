@@ -3,10 +3,10 @@
 # Pré-requisito: ao menos 1 comunicado em Enviadas (qualquer texto).
 # Exclui o mais recente; confirma que o ID capturado desapareceu.
 #
-# Via qa-desk: prep → adb captura ID → flow gerado com ID literal (.generated/).
-# Via CLI: maestro test -e ID_COMUNICADO=<digitos> mural/01_1_comunicado_excluir.yaml
+# Via qa-desk: prep → adb captura ID → flow gerado com ID literal
+# Via CLI: sem ID, captura na lista Enviadas antes de abrir o ⋮
 #
-# Contrato: resume → ação → teardown
+# Contrato: resume → Enviadas → ⋮ → Excluir → teardown
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -29,12 +29,24 @@ appId: br.com.polygonus.mobile.amostra
       }
     })()}
 
+# Sempre Enviadas + ID fresco do topo (ignora ID_COMUNICADO velho no .env)
+- runFlow:
+    when:
+      notVisible: "Enviadas|Enviados"
+    file: ../shared/mural/filtrar_enviadas.yaml
+
+- assertVisible: "Enviadas|Enviados"
+
+- evalScript: '${output.idComunicado = ""}'
+
+- runFlow: ../shared/mural/capturar_id_ultimo_comunicado.yaml
+
 - assertTrue: ${(output.idComunicado || "").length > 3}
 
 - runFlow:
     file: ../shared/mural/excluir_comunicado_lista.yaml
     env:
-      ID_COMUNICADO: ${ID_COMUNICADO}
       MURAL_ID: ${output.idComunicado}
+
 
 - runFlow: ../shared/auth/teardown_estavel_sessao.yaml

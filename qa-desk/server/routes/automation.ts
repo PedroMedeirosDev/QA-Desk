@@ -81,6 +81,28 @@ import {
 import { actorOf, attachUser, requireAdmin } from "../middleware/auth.js";
 import { recordTestRun } from "../db/test-runs.js";
 import type { TestRecord } from "../types.js";
+import {
+  agentTokenConfigured,
+  cancelAgentJobByRunId,
+  enqueueAgentJob,
+  getAgentPresence,
+  isAgentOnline,
+  waitForAgentJob,
+} from "../agent-jobs.js";
+
+function localAutomationEnabled(): boolean {
+  return process.env.QA_AUTOMATION_RUN === "1";
+}
+
+function agentRemoteUnavailableMessage(): string {
+  if (!agentTokenConfigured()) {
+    return "Automação remota não configurada. Defina QA_AGENT_TOKEN no servidor ou QA_AUTOMATION_RUN=1 no PC.";
+  }
+  if (!isAgentOnline()) {
+    return "Agente offline. No PC, rode: npm run agent (com QA_DESK_URL e QA_AGENT_TOKEN).";
+  }
+  return "Agente indisponível";
+}
 
 function param(req: { params: Record<string, string | string[] | undefined> }, key: string) {
   const v = req.params[key];
@@ -103,6 +125,23 @@ automationRouter.get("/specs", (req, res) => {
 });
 
 automationRouter.get("/device", async (_req, res) => {
+  if (!localAutomationEnabled()) {
+    const agent = getAgentPresence();
+    return res.json({
+      ready: false,
+      devices: [],
+      avdName: process.env.QA_AVD_NAME?.trim() || "Medium_Phone",
+      booting: false,
+      message: agent.online
+        ? `Agente online${agent.hostname ? ` (${agent.hostname})` : ""} — use Ligar emulador`
+        : agentTokenConfigured()
+          ? "Agente offline — inicie npm run agent no PC"
+          : "Sem execução local nem agente (QA_AGENT_TOKEN)",
+      agentOnline: agent.online,
+      agentHostname: agent.hostname,
+    });
+  }
+
   try {
     res.json(await getAndroidDeviceStatus());
   } catch (err) {
@@ -113,9 +152,10 @@ automationRouter.get("/device", async (_req, res) => {
 });
 
 automationRouter.get("/mural-card-id", (req, res) => {
-  if (process.env.QA_AUTOMATION_RUN !== "1") {
+  if (!localAutomationEnabled()) {
     return res.status(403).json({
-      error: "Automação local desabilitada. Defina QA_AUTOMATION_RUN=1 no .env",
+      error:
+        "Captura de ID do card só no PC com QA_AUTOMATION_RUN=1 (não via agente).",
     });
   }
 
@@ -138,13 +178,53 @@ automationRouter.get("/mural-card-id", (req, res) => {
 });
 
 automationRouter.post("/emulator/start", async (req, res) => {
-  if (process.env.QA_AUTOMATION_RUN !== "1") {
-    return res.status(403).json({
-      error: "Automação local desabilitada. Defina QA_AUTOMATION_RUN=1 no .env",
-    });
-  }
-
   const wait = req.query.wait === "1";
+
+  if (!localAutomationEnabled()) {
+    if (!isAgentOnline()) {
+      return res.status(503).json({ error: agentRemoteUnavailableMessage() });
+    }
+
+    const job = enqueueAgentJob({
+      kind: "start_emulator",
+      wait,
+    });
+
+    if (!wait) {
+      return res.json({
+        started: true,
+        message: "Pedido enviado ao agente no PC",
+        jobId: job.id,
+      });
+    }
+
+    try {
+      const finished = await waitForAgentJob(job.id, {
+        timeoutMs: 200_000,
+      });
+      if (finished.status === "cancelled") {
+        return res.status(499).json({ error: "Pedido de emulador cancelado" });
+      }
+      if (finished.status !== "done") {
+        return res.status(500).json({
+          error:
+            finished.error ||
+            finished.log.slice(-500) ||
+            "Falha ao iniciar emulador no agente",
+        });
+      }
+      return res.json({
+        started: true,
+        ready: true,
+        message: finished.log.trim() || "Emulador pronto no PC do agente",
+        jobId: job.id,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        error: err instanceof Error ? err.message : "Falha aguardando agente",
+      });
+    }
+  }
 
   try {
     const start = await startAndroidEmulator();
@@ -286,13 +366,29 @@ automationRouter.post("/mural-checklist", async (req, res) => {
 });
 
 automationRouter.post("/runs/cancel", async (req, res) => {
-  if (process.env.QA_AUTOMATION_RUN !== "1") {
-    return res.status(403).json({
-      error: "Execução local desabilitada. Defina QA_AUTOMATION_RUN=1 no .env",
+  const body = (req.body ?? {}) as { runId?: string };
+
+  if (!localAutomationEnabled()) {
+    const cancelledAgent = body.runId
+      ? cancelAgentJobByRunId(body.runId)
+      : false;
+    if (body.runId) markMaestroRunCancelled(body.runId);
+    const persisted = body.runId
+      ? (
+          await persistCancelledRunSession(
+            body.runId,
+            "\n[qa-desk] Execução cancelada pelo usuário (agente).\n",
+          )
+        ).persisted
+      : false;
+    return res.json({
+      cancelled: cancelledAgent || Boolean(body.runId),
+      persisted,
+      via: "agent",
+      active: null,
     });
   }
 
-  const body = (req.body ?? {}) as { runId?: string };
   if (body.runId) markMaestroRunCancelled(body.runId);
   const active = getActiveMaestroRun();
   const cancelledPw = cancelPlaywrightRun(body.runId);
@@ -315,10 +411,9 @@ automationRouter.post("/runs/cancel", async (req, res) => {
 });
 
 automationRouter.post("/tests/:id/run", async (req, res) => {
-  if (process.env.QA_AUTOMATION_RUN !== "1") {
-    return res.status(403).json({
-      error: "Execução local desabilitada. Defina QA_AUTOMATION_RUN=1 no .env",
-    });
+  const localRun = localAutomationEnabled();
+  if (!localRun && !isAgentOnline()) {
+    return res.status(503).json({ error: agentRemoteUnavailableMessage() });
   }
 
   const project = assertProject(param(req, "slug"));
@@ -477,7 +572,91 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
 
   let result: RunResult | undefined;
 
-  if (wantPlaywrightOnly && pwTarget) {
+  if (!localRun) {
+    const queueMsg =
+      "[qa-desk] Enfileirado no agente do PC — aguardando claim…";
+    send({ type: "log", line: queueMsg });
+    appendRunSessionOutput(runId, `${queueMsg}\n`);
+    send({
+      type: "progress",
+      phase: "Agente remoto",
+      action: "Na fila",
+      status: "running",
+    });
+
+    const job = enqueueAgentJob({
+      kind: "run_test",
+      project,
+      testId: report.id,
+      runId,
+      runNumber,
+      runner,
+      stage,
+      flowPath: report.automation?.flowPath,
+      specPath: pwTarget?.specPath,
+      prepSpecPath: prep?.type === "playwright" ? prep.specPath : undefined,
+      homologationId: homologation?.id,
+      homologationSlug: homologation?.slug,
+      homologationTitle: homologation?.title,
+      recordVideo,
+      startedAt,
+    });
+
+    try {
+      const finished = await waitForAgentJob(job.id, {
+        onLog: (chunk) => {
+          appendRunSessionOutput(runId, chunk);
+          for (const line of chunk.split(/\r?\n/)) {
+            if (!line) continue;
+            const normalized = normalizeMaestroOutput(line);
+            send({ type: "log", line: normalized });
+          }
+        },
+      });
+
+      if (wantPlaywrightOnly) stagesRun.push("playwright");
+      else {
+        if (wantPrep) stagesRun.push("playwright");
+        if (wantMaestro) stagesRun.push("maestro");
+      }
+
+      combinedOutput = finished.log;
+      const cancelled = finished.status === "cancelled";
+      const ok = finished.status === "done" && finished.exitCode === 0;
+      if (!ok && !cancelled) {
+        failedStage = wantPlaywrightOnly
+          ? "playwright"
+          : wantMaestro
+            ? "maestro"
+            : "playwright";
+      }
+      result = {
+        ok,
+        exitCode: finished.exitCode,
+        output: combinedOutput,
+        cancelled,
+        appVersion: finished.appVersion,
+        failure:
+          ok || cancelled
+            ? undefined
+            : {
+                errorSummary:
+                  finished.error ||
+                  `Agente finalizou com status ${finished.status} (exit ${finished.exitCode ?? "?"})`,
+              },
+      };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Falha aguardando o agente";
+      if (stream) {
+        send({ type: "error", message });
+        clearRunSession(runId);
+        return res.end();
+      }
+      clearRunSession(runId);
+      return res.status(503).json({ error: message });
+    }
+  } else if (wantPlaywrightOnly && pwTarget) {
     send({
       type: "progress",
       phase: "Playwright (Web)",

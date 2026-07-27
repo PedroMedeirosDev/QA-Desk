@@ -65,6 +65,8 @@ Maestro: `tapOn: id: "modulo_contexto_acao"`
 | `selecionar_alvo_todos.yaml` | `mural_composer_alvo` |
 | `marcar_dia_inteiro.yaml` | `mural_evento_dia_inteiro` |
 | `selecionar_data_evento_dia_seguinte.yaml` | `mural_evento_data_inicio` |
+| `abrir_menu_primeiro_comunicado.yaml` / `abrir_menu_tres_pontos.yaml` / `abrir_menu_compartilhar_anexos.yaml` | `mural_card_menu` |
+| `tap_acao_menu_card.yaml` | texto `Editar`/`Excluir` (até existir `mural_card_editar` / `mural_card_excluir`) — **só em Enviadas** |
 | `dismiss_coachmarks_pular.yaml` | `home_coach_pular` |
 | `logout.yaml` | `home_menu_usuario`, `home_menu_sair` |
 

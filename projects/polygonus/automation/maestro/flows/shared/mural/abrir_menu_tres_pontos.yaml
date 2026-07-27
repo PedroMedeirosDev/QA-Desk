@@ -1,86 +1,182 @@
 # Menu ⋮ de um comunicado (âncora = texto OU badge ID).
 #
-# Env: ITEM_ANCORAGEM — ex.: "ID 9082697" ou "Teste Comunicado"
+# Env:
+#   ITEM_ANCORAGEM — ex.: "ID 9082697" ou "Teste Comunicado"
+#   MENU_ESPERADO — regex do popup (default: Editar|Excluir|anexos)
 # Legado: ITEM_TEXTO (mesmo papel que ITEM_ANCORAGEM)
 #
-# Semantics: mural_card_menu
-# Evitar vários taps seguidos no card: abre o detalhe e some o popup.
+# Semantics: mural_card_menu (⋮). Itens Editar/Excluir ainda sem id (P1).
+# Preferência: id + content-desc com ID (igual abrir_menu_compartilhar_anexos).
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- evalScript: '${output.itemAncora = (ITEM_ANCORAGEM && ITEM_ANCORAGEM.length > 0) ? ITEM_ANCORAGEM : ITEM_TEXTO}'
+- evalScript: |
+    ${(() => {
+      var ancora = "";
+      try {
+        if (typeof ITEM_ANCORAGEM !== "undefined" && ITEM_ANCORAGEM) {
+          ancora = String(ITEM_ANCORAGEM).trim();
+        }
+      } catch (e) {}
+      if (!ancora || ancora === "undefined") {
+        try {
+          if (typeof ITEM_TEXTO !== "undefined" && ITEM_TEXTO) {
+            ancora = String(ITEM_TEXTO).trim();
+          }
+        } catch (e) {}
+      }
+      output.itemAncora = ancora;
 
-- scrollUntilVisible:
-    element:
-      text: "${output.itemAncora}"
-    direction: DOWN
-    timeout: 15000
-    optional: true
+      var digits = String(ancora || "").replace(/[^0-9]/g, "");
+      output.menuIdDigits = digits;
+      output.menuIdRegex = digits.length > 3 ? (".*ID\\s*" + digits + ".*") : "";
+      output.hasMenuId = digits.length > 3;
 
-- assertVisible: ${output.itemAncora}
+      var esperado = "";
+      try {
+        if (typeof MENU_ESPERADO !== "undefined" && MENU_ESPERADO) {
+          esperado = String(MENU_ESPERADO).trim();
+        }
+      } catch (e) {}
+      if (!esperado || esperado === "undefined") {
+        esperado = "Editar|Excluir|Compartilhar anexos|Salvar anexos";
+      }
+      output.menuEsperado = esperado;
+    })()}
 
-# Se o tap anterior abriu o detalhe, volta à lista (tapOn Back — não pressKey)
+- assertTrue: ${(output.itemAncora || "").length > 2}
+
+# Soften: se o ID não estiver na lista (data / scroll), cai no ⋮ do 1º card
+- runFlow:
+    when:
+      true: ${output.hasMenuId}
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: ${output.menuIdRegex}
+          direction: DOWN
+          timeout: 12000
+          optional: true
+      - runFlow:
+          when:
+            visible: ${output.menuIdRegex}
+          commands:
+            - evalScript: '${output.idVisivelNaLista = true}'
+      - runFlow:
+          when:
+            notVisible: ${output.menuIdRegex}
+          commands:
+            - evalScript: '${output.hasMenuId = false; output.idVisivelNaLista = false; output.useFirstCardMenu = true}'
+
+- runFlow:
+    when:
+      true: ${!output.hasMenuId && !output.useFirstCardMenu}
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: "${output.itemAncora}"
+          direction: DOWN
+          timeout: 15000
+          optional: true
+      - assertVisible: ${output.itemAncora}
+
+# Se o tap anterior abriu o detalhe, volta à lista
 - runFlow:
     when:
       visible: "Comunicado"
       notVisible: "Recebidas|Enviadas|Enviados|Pendentes|JUL\\.|Mural | Tab"
     commands:
       - runFlow: voltar_lista_mural_se_necessario.yaml
-      - scrollUntilVisible:
-          element:
-            text: "${output.itemAncora}"
-          direction: DOWN
-          timeout: 8000
-          optional: true
+      - runFlow:
+          when:
+            true: ${output.hasMenuId}
+          commands:
+            - scrollUntilVisible:
+                element:
+                  text: ${output.menuIdRegex}
+                direction: DOWN
+                timeout: 8000
+                optional: true
+      - runFlow:
+          when:
+            true: ${!output.hasMenuId}
+          commands:
+            - scrollUntilVisible:
+                element:
+                  text: "${output.itemAncora}"
+                direction: DOWN
+                timeout: 8000
+                optional: true
 
-# 1) ⋮ logo abaixo do texto (card correto na lista)
+# 1) Preferido: mural_card_menu com ID no content-desc
 - runFlow:
     when:
-      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+      true: ${output.hasMenuId}
+      notVisible: ${output.menuEsperado}
+    commands:
+      - tapOn:
+          id: "mural_card_menu"
+          text: ${output.menuIdRegex}
+      - waitForAnimationToEnd:
+          timeout: 700
+
+# 2) Fallback: ⋮ abaixo do texto/ID
+- runFlow:
+    when:
+      notVisible: ${output.menuEsperado}
     commands:
       - tapOn:
           id: "mural_card_menu"
           below: "${output.itemAncora}"
           optional: true
       - waitForAnimationToEnd:
-          timeout: 500
-# 2) Fallback: Show menu relativo (content-desc do overflow)
+          timeout: 700
+
+# 3) Fallback: Show menu relativo ao card
 - runFlow:
     when:
-      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+      notVisible: ${output.menuEsperado}
     commands:
       - tapOn:
           text: "Show menu"
           below: "${output.itemAncora}"
           optional: true
       - waitForAnimationToEnd:
-          timeout: 500
-# 3) Se abriu detalhe: ⋮ no header do detalhe
+          timeout: 700
+
+# 4) Se abriu detalhe: ⋮ no header (when sem chave duplicada)
 - runFlow:
     when:
       visible: "Comunicado"
-      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos|Recebidas|Enviadas"
+      notVisible: ${output.menuEsperado}
     commands:
-      - tapOn:
-          id: "mural_card_menu"
-          optional: true
-      - tapOn:
-          text: "Show menu"
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 500
-# 4) Último recurso: sair do detalhe se ainda estiver lá + 1º ⋮ da lista
+      - runFlow:
+          when:
+            notVisible: "Recebidas|Enviadas"
+          commands:
+            - tapOn:
+                id: "mural_card_menu"
+                optional: true
+            - tapOn:
+                text: "Show menu"
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 700
+
+# 5) Último recurso: voltar + 1º ⋮ (só em Enviadas sem Destaque no topo)
 - runFlow:
     when:
-      notVisible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
+      notVisible: ${output.menuEsperado}
     commands:
       - runFlow: voltar_lista_mural_se_necessario.yaml
+      - assertVisible: "Enviadas|Enviados"
       - tapOn:
           id: "mural_card_menu"
           index: 0
           optional: true
       - waitForAnimationToEnd:
-          timeout: 500
+          timeout: 700
+
 - extendedWaitUntil:
-    visible: "Editar|Excluir|Estatísticas|Salvar anexos|Compartilhar anexos"
-    timeout: 8000
+    visible: ${output.menuEsperado}
+    timeout: 10000
