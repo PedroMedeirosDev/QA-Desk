@@ -1,0 +1,30 @@
+# Toca uma ação do popup do ⋮ (Editar / Excluir / …).
+#
+# Env:
+#   MENU_ACAO — texto ou regex (ex.: "Editar", "Excluir")
+#
+# Ainda sem semantics nos itens (P1: mural_card_editar / mural_card_excluir).
+# Pré: lista Enviadas + popup com Editar/Excluir (não o menu só-de-anexos).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- assertTrue: ${(MENU_ACAO || "").length > 0}
+
+- extendedWaitUntil:
+    visible: ${MENU_ACAO}
+    timeout: 8000
+
+- tapOn:
+    text: ${MENU_ACAO}
+- waitForAnimationToEnd:
+    timeout: 500
+
+# Se o popup ainda estiver aberto, a ação não pegou — retap
+- runFlow:
+    when:
+      visible: "Editar|Excluir|Compartilhar anexos|Salvar anexos"
+    commands:
+      - tapOn:
+          text: ${MENU_ACAO}
+      - waitForAnimationToEnd:
+          timeout: 500

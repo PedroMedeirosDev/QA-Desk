@@ -1,20 +1,13 @@
 # Copia o badge "ID 123456" do card na lista (Enviadas/Recebidas).
 #
-# Preferência: output.idComunicado → env → copyTextFrom (frágil no content-desc).
-# Env opcional: TEXTO_ANCORAGEM — confirma envio por texto se ID não capturar.
-# CT-02/03: ID vem da qa-desk/adb.
+# Preferência: copyTextFrom do 1º mural_card_menu (lista atual).
+# Env ID_COMUNICADO / MURAL_ID só se o copy falhar (pipeline qa-desk/adb).
+# NÃO fixar ID_COMUNICADO no .env — fica velho e ancora o ⋮ no card errado.
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow:
-    file: seed_id_comunicado_env.yaml
-    env:
-      ID_COMUNICADO: ${ID_COMUNICADO}
-      MURAL_ID: ${MURAL_ID}
-
 - evalScript: |
     ${(() => {
-      output.needIdFallback = !(output.idComunicado && String(output.idComunicado).length > 3);
       var t = "";
       try {
         if (typeof TEXTO_ANCORAGEM !== "undefined" && TEXTO_ANCORAGEM) {
@@ -25,21 +18,33 @@ appId: br.com.polygonus.mobile.amostra
       output.hasTextoAncoragem = output.textoAncoragem.length > 2;
     })()}
 
+# 1) ID do card visível (sempre tenta — evita ID velho do .env)
+- copyTextFrom:
+    id: "mural_card_menu"
+    index: 0
+    optional: true
+- evalScript: '${output.idComunicado = ((maestro.copiedText || "").match(/ID\\s*[0-9]+/) || [])[0] || ""}'
+- copyTextFrom:
+    text: "ID [0-9]+"
+    index: 0
+    optional: true
+- evalScript: |
+    ${(() => {
+      var fromCopy = ((maestro.copiedText || "").match(/ID\s*[0-9]+/) || [])[0] || "";
+      if (fromCopy) output.idComunicado = fromCopy;
+      if (output.idComunicado && String(output.idComunicado).indexOf("ID") < 0) {
+        output.idComunicado = "ID " + String(output.idComunicado).trim();
+      }
+    })()}
+
+# 2) Fallback: env (qa-desk injeta após adb)
 - runFlow:
     when:
-      true: ${output.needIdFallback}
-    commands:
-      - copyTextFrom:
-          id: "mural_card_menu"
-          index: 0
-          optional: true
-      - evalScript: '${output.idComunicado = ((maestro.copiedText || "").match(/ID\\s*[0-9]+/) || [])[0] || output.idComunicado || ""}'
-      - copyTextFrom:
-          text: "ID [0-9]+"
-          index: 0
-          optional: true
-      - evalScript: '${output.idComunicado = ((maestro.copiedText || "").match(/ID\\s*[0-9]+/) || [])[0] || output.idComunicado || ""}'
-      - evalScript: '${if (output.idComunicado && output.idComunicado.indexOf("ID") < 0) output.idComunicado = "ID " + output.idComunicado.trim()}'
+      true: ${!(output.idComunicado && String(output.idComunicado).length > 3)}
+    file: seed_id_comunicado_env.yaml
+    env:
+      ID_COMUNICADO: ${ID_COMUNICADO}
+      MURAL_ID: ${MURAL_ID}
 
 - evalScript: |
     ${(() => {
@@ -85,5 +90,11 @@ appId: br.com.polygonus.mobile.amostra
           visible: ${output.textoAncoragem}
           timeout: 25000
       - assertVisible: ".*ID\\s*[0-9]+.*"
+      - copyTextFrom:
+          text: "ID [0-9]+"
+          index: 0
+          optional: true
+      - evalScript: '${output.idComunicado = ((maestro.copiedText || "").match(/ID\\s*[0-9]+/) || [])[0] || output.idComunicado || ""}'
+      - evalScript: '${output.hasIdComunicado = !!(output.idComunicado && String(output.idComunicado).length > 3)}'
 
 - assertTrue: ${output.hasIdComunicado || output.hasTextoAncoragem}

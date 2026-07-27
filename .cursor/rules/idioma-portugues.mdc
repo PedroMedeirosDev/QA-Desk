@@ -1,0 +1,27 @@
+---
+description: Comunicação e artefatos de git/GitHub em português (padrão da empresa)
+alwaysApply: true
+---
+
+# Idioma — português
+
+Para este workspace (QA Desk, Polygonus, KB, automação), **escreva em português**.
+
+## Onde vale
+
+- Respostas ao usuário no chat
+- Mensagens de **commit**
+- Comentários e reviews de **PR** (`gh pr review`, `gh pr comment`)
+- Descrições de PR / issue quando criadas daqui
+- Notas de homologação, achados, TODOs e documentação nova do projeto
+
+## Exceções (podem ficar em inglês)
+
+- Identificadores de código já em inglês (`camelCase`, APIs, `testKey`)
+- Citação literal de string/UI/código-fonte em outro idioma
+- Nomes próprios de ferramentas (`Maestro`, `Playwright`, `squash`)
+- Trechos de log/erro reproduzidos fielmente
+
+## Tom
+
+Português claro e direto — o mesmo padrão dos artigos da KB e do suporte. Evitar misturar inglês desnecessário em commits/reviews (“Approved”, “Rewrite”, “fix”) quando houver equivalente natural em português.

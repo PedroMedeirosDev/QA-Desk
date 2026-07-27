@@ -5,11 +5,10 @@
 #   ID_COMUNICADO / MURAL_ID — seed do ID (qa-desk)
 #   SKIP_FILTRAR_ENVIADAS — "1" se já em Enviadas (Pipeline qa-desk)
 #
+# Fluxo: Enviadas → ⋮ (mural_card_menu) → Editar → composer → enviar → assert texto.
+#
 # Valida NOVO_TEXTO na lista. Mesmo ID no topo: adiado — app gera novo
 # comunicado ao editar (bug reportado ao time de desenvolvimento).
-#
-# Se o topo já for exatamente NOVO_TEXTO (re-run), ainda reescreve e envia —
-# o envio deve sair do composer; falha antiga era assert com "Back" falso-positivo.
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -19,6 +18,7 @@ appId: br.com.polygonus.mobile.amostra
       ID_COMUNICADO: ${ID_COMUNICADO}
       MURAL_ID: ${MURAL_ID}
 
+# Sempre garante Enviadas antes do ⋮ (exceto skip explícito do pipeline)
 - runFlow:
     file: abrir_menu_ultimo_comunicado.yaml
     env:
@@ -28,7 +28,10 @@ appId: br.com.polygonus.mobile.amostra
 
 - evalScript: '${output.idComunicadoAntes = output.idComunicado}'
 
-- tapOn: "Editar"
+- runFlow:
+    file: tap_acao_menu_card.yaml
+    env:
+      MENU_ACAO: "Editar"
 
 - runFlow:
     file: substituir_texto_composer.yaml

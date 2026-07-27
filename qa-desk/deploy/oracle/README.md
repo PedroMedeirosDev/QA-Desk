@@ -103,7 +103,7 @@ No Supabase → Authentication → URL Configuration, adicione a URL do site em 
 
 - `/login` com admin → CRUD ok
 - login visitor → só itens com `showInPortfolio`
-- `/api/health` → `"auth":"supabase"`, `"automationRun":false`
+- `/api/health` → `"auth":"supabase"`, `"automationRun":false`, e com agente: `"agentOnline"` / `"agentConfigured"`
 
 ## Atualizar depois de um push
 
@@ -123,6 +123,9 @@ No `.env` da VM:
 QA_APP_HOST=127.0.0.1
 QA_CORS_ORIGINS=https://qa-desk-pedro.duckdns.org
 QA_AUTOMATION_RUN=0
+QA_AGENT_TOKEN=segredo-longo-igual-ao-do-PC
 ```
 
-Feche **3001** no security list OCI e no firewall do host (só 22/80/443). Health público responde só `{ "ok": true }`.
+No PC (agente): `QA_DESK_URL=https://…` + mesmo `QA_AGENT_TOKEN` + `npm run agent` (ver `qa-desk/agent/README.md`).
+
+Feche **3001** no security list OCI e no firewall do host (só 22/80/443). Health público inclui `ok` e status do agente (sem secrets).

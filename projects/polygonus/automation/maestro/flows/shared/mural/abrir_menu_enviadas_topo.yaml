@@ -1,0 +1,132 @@
+# Abre o ⋮ do 1º card em Enviadas e espera Editar|Excluir.
+#
+# Em Enviadas não há "Destaque" no topo — 1º mural_card_menu é o alvo.
+# Tap só por id/index às vezes acerta destinatários ou abre o detalhe;
+# por isso: id + content-desc com ID, depois fallbacks + dismiss de overlays.
+#
+# Semantics: mural_card_menu. Itens Editar/Excluir ainda sem id (P1).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- assertVisible: "Enviadas|Enviados"
+
+- extendedWaitUntil:
+    visible:
+      id: "mural_card_menu"
+    timeout: 10000
+
+# Fecha overlays (filtro / destinatários / cardápio)
+- runFlow:
+    when:
+      visible: "Destinatários da mensagem|Destinatarios da mensagem"
+    commands:
+      - tapOn: "Ok|OK|ok"
+      - waitForAnimationToEnd:
+          timeout: 400
+
+- runFlow:
+    when:
+      visible: "Remetente|Destinatário|CARDÁPIO|Pendentes|Aprovadas|Reprovadas"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 400
+
+- assertVisible: "Enviadas|Enviados"
+
+# Âncora = content-desc do ⋮ (badge ID)
+- copyTextFrom:
+    id: "mural_card_menu"
+    index: 0
+    optional: true
+- evalScript: |
+    ${(() => {
+      var m = ((maestro.copiedText || "").match(/ID\s*[0-9]+/) || [])[0] || "";
+      if (!m && output.idComunicado) m = String(output.idComunicado);
+      var digits = String(m).replace(/[^0-9]/g, "");
+      output.menuTapId = digits.length > 3 ? ("ID " + digits) : "";
+      output.menuTapRegex = digits.length > 3 ? (".*ID\\s*" + digits + ".*") : "";
+      output.hasMenuTapId = digits.length > 3;
+      if (digits.length > 3) output.idComunicado = "ID " + digits;
+    })()}
+
+# 1) Tap preciso: mural_card_menu cujo content-desc tem o ID
+- runFlow:
+    when:
+      true: ${output.hasMenuTapId}
+      notVisible: "Editar|Excluir"
+    commands:
+      - tapOn:
+          id: "mural_card_menu"
+          text: ${output.menuTapRegex}
+      - waitForAnimationToEnd:
+          timeout: 700
+
+# Dismiss Destinatários se o tap errou o alvo
+- runFlow:
+    when:
+      visible: "Destinatários da mensagem|Destinatarios da mensagem"
+    commands:
+      - tapOn: "Ok|OK|ok"
+      - waitForAnimationToEnd:
+          timeout: 400
+
+# 2) Se abriu detalhe — Back e tenta Show menu do card
+- runFlow:
+    when:
+      visible: "Comunicado"
+      notVisible: "Editar|Excluir|Enviadas|Enviados"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir"
+      visible: "Enviadas|Enviados"
+    commands:
+      - tapOn:
+          text: "Show menu"
+          below: ${output.menuTapId}
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 700
+
+# 3) Fallback: Show menu index 1 (0 = header)
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir"
+      visible: "Enviadas|Enviados"
+    commands:
+      - tapOn:
+          text: "Show menu"
+          index: 1
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 700
+
+# 4) Último: id index 0 de novo (lista limpa)
+- runFlow:
+    when:
+      notVisible: "Editar|Excluir"
+      visible: "Enviadas|Enviados"
+    commands:
+      - tapOn:
+          id: "mural_card_menu"
+          index: 0
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 700
+
+- runFlow:
+    when:
+      visible: "Destinatários da mensagem|Destinatarios da mensagem"
+    commands:
+      - tapOn: "Ok|OK|ok"
+      - waitForAnimationToEnd:
+          timeout: 400
+
+- extendedWaitUntil:
+    visible: "Editar|Excluir"
+    timeout: 10000

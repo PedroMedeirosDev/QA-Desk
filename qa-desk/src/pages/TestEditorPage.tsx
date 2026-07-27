@@ -1153,9 +1153,18 @@ export function TestEditorPage({
                     <button
                       type="button"
                       onClick={() => void startEmulator()}
-                      disabled={startingEmulator || busyRun || saving}
+                      disabled={
+                        startingEmulator ||
+                        busyRun ||
+                        saving ||
+                        deviceStatus?.agentOnline === false
+                      }
                       className={cn(actionBtnBase, actionBtn.back, "w-full")}
-                      title={`Inicia o AVD ${deviceStatus?.avdName ?? "Medium_Phone"} via Android SDK`}
+                      title={
+                        deviceStatus?.agentOnline
+                          ? "Envia pedido ao agente no PC para ligar o AVD"
+                          : `Inicia o AVD ${deviceStatus?.avdName ?? "Medium_Phone"} via Android SDK`
+                      }
                     >
                       <Smartphone className="size-4" />
                       {startingEmulator ? "Aguardando boot…" : "Ligar emulador"}

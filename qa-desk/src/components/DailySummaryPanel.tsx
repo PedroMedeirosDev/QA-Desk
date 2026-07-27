@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarDays, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
+import { DatePicker } from "@/components/DatePicker";
 import { api } from "@/lib/api";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { toastErrorMessage, useToast } from "@/lib/toast";
@@ -264,12 +265,10 @@ export function DailySummaryPanel({ project }: { project: ProjectSlug }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="date"
+          <DatePicker
             value={date}
             max={todaySaoPaulo()}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-md border bg-background px-2 py-1.5 text-sm"
+            onChange={setDate}
           />
           <button
             type="button"

@@ -1,26 +1,19 @@
 # Abre o menu ⋮ do comunicado mais recente em Enviadas.
 # Grava output.idComunicado antes de abrir o menu (ou usa ID já seedado).
 #
-# Env opcional:
-#   SKIP_FILTRAR_ENVIADAS=1 — já está em Enviadas (prep/qa-app); evita reabrir o dropdown
+# Editar/Excluir SÓ existem no ⋮ de Enviadas (em Recebidas só anexos).
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- evalScript: |
-    ${(() => {
-      var skip = false;
-      try {
-        if (typeof SKIP_FILTRAR_ENVIADAS !== "undefined" && SKIP_FILTRAR_ENVIADAS) {
-          skip = String(SKIP_FILTRAR_ENVIADAS) === "1" || String(SKIP_FILTRAR_ENVIADAS).toLowerCase() === "true";
-        }
-      } catch (e) {}
-      output.skipFiltrarEnviadas = skip;
-    })()}
-
+# 1) Garantir lista Enviadas
 - runFlow:
     when:
-      true: ${!output.skipFiltrarEnviadas}
+      notVisible: "Enviadas|Enviados"
     file: filtrar_enviadas.yaml
+
+- assertVisible: "Enviadas|Enviados"
+
+- runFlow: aguardar_lista_mural_carregada.yaml
 
 - runFlow:
     file: seed_id_comunicado_env.yaml
@@ -38,4 +31,5 @@ appId: br.com.polygonus.mobile.amostra
 
 - assertTrue: ${(output.idComunicado || "").length > 3}
 
-- runFlow: abrir_menu_primeiro_comunicado.yaml
+# 2) ⋮ do topo em Enviadas → Editar|Excluir
+- runFlow: abrir_menu_enviadas_topo.yaml

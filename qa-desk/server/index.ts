@@ -15,12 +15,17 @@ import {
 import { testsRouter } from "./routes/tests.js";
 import { homologationsRouter } from "./routes/homologations.js";
 import { automationRouter } from "./routes/automation.js";
+import { agentRouter } from "./routes/agent.js";
 import { kbCurationRouter } from "./routes/kb-curation.js";
 import { dailySummaryRouter } from "./routes/daily-summary.js";
 import {
   githubWebhooksRouter,
   isKbGithubWebhookConfigured,
 } from "./routes/github-webhooks.js";
+import {
+  agentTokenConfigured,
+  getAgentPresence,
+} from "./agent-jobs.js";
 import { PROJECTS } from "./types.js";
 
 loadEnv();
@@ -93,8 +98,15 @@ app.use(express.json({ limit: "2mb" }));
 app.use("/api", apiRateLimiter);
 
 app.get("/api/health", (_req, res) => {
+  const agent = getAgentPresence();
   if (IS_PROD) {
-    res.json({ ok: true });
+    res.json({
+      ok: true,
+      automationRun: process.env.QA_AUTOMATION_RUN === "1",
+      agentConfigured: agentTokenConfigured(),
+      agentOnline: agent.online,
+      agentHostname: agent.hostname,
+    });
     return;
   }
   res.json({
@@ -104,6 +116,9 @@ app.get("/api/health", (_req, res) => {
     automationRun: process.env.QA_AUTOMATION_RUN === "1",
     auth: isServerAuthConfigured() ? "supabase" : "mock",
     kbGithubWebhook: isKbGithubWebhookConfigured(),
+    agentConfigured: agentTokenConfigured(),
+    agentOnline: agent.online,
+    agentHostname: agent.hostname,
   });
 });
 
@@ -120,6 +135,7 @@ app.use("/api/projects/:slug/kb-curation", kbCurationRouter);
 app.use("/api/projects/:slug/daily-summary", dailySummaryRouter);
 
 app.use("/api/projects/:slug/automation", automationRouter);
+app.use("/api/agent", agentRouter);
 
 app.use(
   "/api/evidence",
@@ -159,8 +175,10 @@ app.listen(PORT, HOST, () => {
   );
   console.log(
     automationRun
-      ? "Maestro: execução habilitada (QA_AUTOMATION_RUN=1)"
-      : "Maestro: execução desabilitada — copie .env.example para .env ou defina QA_AUTOMATION_RUN=1",
+      ? "Maestro: execução local habilitada (QA_AUTOMATION_RUN=1)"
+      : agentTokenConfigured()
+        ? "Maestro: remoto via agente (QA_AUTOMATION_RUN=0 + QA_AGENT_TOKEN)"
+        : "Maestro: desabilitado — QA_AUTOMATION_RUN=1 (local) ou QA_AGENT_TOKEN (remoto)",
   );
   if (HOST === "0.0.0.0") {
     console.log("Acessível na rede local (mesmo Wi‑Fi) pelo IP desta máquina");

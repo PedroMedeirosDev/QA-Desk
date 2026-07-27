@@ -91,9 +91,10 @@ Arquitetura: [`ARCHITECTURE.md`](ARCHITECTURE.md) · Oracle detalhado: [`deploy/
 | `QA_APP_HOST` | `0.0.0.0` = rede local |
 | `NODE_ENV=production` | Serve build React + API |
 | `QA_AUTOMATION_RUN=1` | Maestro **só** no PC |
+| `QA_AGENT_TOKEN` | Agente remoto (`npm run agent`) quando a API está com `QA_AUTOMATION_RUN=0` |
 
 ---
 
 ## Limitação
 
-**Um clique no navegador** dispara o Maestro **na máquina onde a API roda**. Em cloud = desligado. Homologação com emulador = Opção 1.
+**Na cloud**, Maestro não roda na VM. Use o **agente no PC** (`npm run agent` + `QA_AGENT_TOKEN`) ou rode a API local com `QA_AUTOMATION_RUN=1`.

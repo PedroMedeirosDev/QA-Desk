@@ -72,13 +72,14 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 
 1. Na app → homologação **mural-backend-homologacao** → **Sincronizar checklist Mural**  
    (ou `npx tsx scripts/apply-mural-checklist.ts`)
-2. Emulador + `QA_AUTOMATION_RUN=1` no PC para **Executar**
+2. Emulador + `QA_AUTOMATION_RUN=1` no PC **ou** agente remoto (`npm run agent` — ver [`agent/README.md`](agent/README.md))
 3. Flows: `projects/polygonus/automation/maestro/`
 
 ## Status
 
 - [x] CRUD + homologação + checklist Mural (nomes por suite)
 - [x] Maestro one-click (PC local)
+- [x] Agente remoto (API online → PC com Maestro/emulador)
 - [x] Postgres + Prisma (`qa-desk/`)
 - [x] Auth Supabase (admin / visitor + `showInPortfolio`)
 - [x] Footer na login e nas telas do app
