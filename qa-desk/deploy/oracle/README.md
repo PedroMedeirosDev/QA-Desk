@@ -38,7 +38,8 @@ No subnet / VCN security list da VM, adicione:
 
 1. [supabase.com](https://supabase.com) → New project (região próxima, ex. `sa-east-1`).
 2. **SQL Editor** → cole e rode [`../../supabase/migrations/001_profiles.sql`](../../supabase/migrations/001_profiles.sql).
-3. **Authentication → Users** → Add user:
+3. **SQL Editor** → rode também [`../../supabase/migrations/002_rls_prisma_tables.sql`](../../supabase/migrations/002_rls_prisma_tables.sql) (liga RLS nas tabelas Prisma; evita o alerta *Table publicly accessible*).
+4. **Authentication → Users** → Add user:
    - admin (seu e-mail)
    - visitor (ex. `visitante@qa-desk.local` + senha forte)
 4. SQL:
