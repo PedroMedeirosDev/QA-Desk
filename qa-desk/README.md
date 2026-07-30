@@ -12,6 +12,8 @@ Acesso **visitante** = portfólio em construção (ainda sem conteúdo público)
 | [`DEPLOY.md`](DEPLOY.md) | Local, túnel, Oracle, Koyeb |
 | [`deploy/SUPABASE_CREDENTIALS.md`](deploy/SUPABASE_CREDENTIALS.md) | Onde achar URL/keys/pooler no painel atual |
 | [`deploy/oracle/README.md`](deploy/oracle/README.md) | VM Always Free + systemd + Caddy |
+| [`postman/`](postman/) | Collection Postman + Newman (API) |
+| [`e2e/`](e2e/) | E2E UI + `npm run test:api` |
 
 ## Rodar (dev)
 
@@ -37,6 +39,9 @@ npm run start:prod       # build + API em :3001 (serve dist/)
 - Sem `VITE_SUPABASE_URL` → modo mock admin (dev / Maestro).
 - Com Auth → login em `/login` · roles `admin` | `visitor` (`profiles`).
 - SQL inicial: [`supabase/migrations/001_profiles.sql`](supabase/migrations/001_profiles.sql).
+- RLS nas tabelas Prisma (obrigatório em prod): [`supabase/migrations/002_rls_prisma_tables.sql`](supabase/migrations/002_rls_prisma_tables.sql).
+- Trava RPC `handle_new_user`: [`supabase/migrations/003_lock_handle_new_user.sql`](supabase/migrations/003_lock_handle_new_user.sql).
+- Auth: no Dashboard → Authentication → Providers → Email, ligue **Prevent use of leaked passwords** (HaveIBeenPwned; plano Pro+).
 
 ## Persistência
 
@@ -85,5 +90,6 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 - [x] Footer na login e nas telas do app
 - [x] Cache Auth + leituras Postgres sem re-sync em todo GET
 - [x] Deploy Oracle em produção — [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org) ([`deploy/oracle/`](deploy/oracle/))
+- [x] Testes de API — Postman/Newman + Playwright (`postman/`, `npm run test:api`)
 - [ ] Portfólio visitante (casos com `showInPortfolio`) — aviso “em construção” no ar
 - [ ] Bot Discord — [`VISION.md`](VISION.md)

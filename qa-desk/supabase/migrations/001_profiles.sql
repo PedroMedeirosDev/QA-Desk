@@ -53,6 +53,10 @@ begin
 end;
 $$;
 
+-- Só o trigger de auth.users deve usar esta function (não PostgREST /rpc).
+revoke all on function public.handle_new_user() from public;
+revoke all on function public.handle_new_user() from anon, authenticated;
+
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users

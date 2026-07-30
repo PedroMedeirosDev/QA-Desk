@@ -12,6 +12,7 @@ const baseURL = `http://127.0.0.1:${UI_PORT}`;
 export default defineConfig({
   testDir: ".",
   testMatch: ["**/*.spec.ts"],
+  testIgnore: ["**/api/**", "**/api.playwright.config.ts"],
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
