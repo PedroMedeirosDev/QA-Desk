@@ -73,6 +73,11 @@ Credenciais ficam **só locais** (`.env` gitignored). Modelo: [`qa-desk/.env.exa
 
 Flows em `projects/polygonus/automation/maestro/`. Skill do agente: `.cursor/skills/polygonus-mural-maestro/`.
 
+## Suite API (Newman)
+
+No app: **Suite API** (sidebar do projeto). Collections em `qa-desk/postman/projects/` (`desk` · `polygonus` ficha/amostra).  
+CLI: `cd qa-desk` → `npm run test:api:postman` / `npm run test:api:postman:polygonus`. Detalhes: [`qa-desk/postman/README.md`](qa-desk/postman/README.md).
+
 ## Clones locais (somente leitura)
 
 ```powershell

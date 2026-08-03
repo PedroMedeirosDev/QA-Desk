@@ -1,0 +1,17 @@
+{
+  "id": "polygonus",
+  "label": "Polygonus — Ficha Acadêmica (amostra)",
+  "ready": true,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Auth gestão (SUPPETER) + GET /academico/aluno/contexto na amostra.",
+  "envFromProcess": [
+    "POLY_API_BASE_URL",
+    "POLY_API_LOGIN",
+    "POLY_API_SENHA",
+    "POLY_API_UNIDADE",
+    "POLY_API_HOSTNAME",
+    "POLY_API_ANO"
+  ]
+}

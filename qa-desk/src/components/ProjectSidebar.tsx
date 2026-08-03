@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  FlaskConical,
   GitPullRequest,
   Globe,
   LayoutDashboard,
@@ -26,9 +27,11 @@ import { ProjectLogo } from "@/components/ProjectLogo";
 import { useActiveProject } from "@/lib/active-project";
 import { api } from "@/lib/api";
 import {
+  isApiSuitePath,
   isDashboardPath,
   isHomologationPath,
   isKbCurationPath,
+  projectApiSuitePath,
   projectBugsListPath,
   projectDashboardPath,
   projectHomologationsListPath,
@@ -191,9 +194,11 @@ export function ProjectSidebar({
           const homPath = projectHomologationsListPath(project.slug);
           const dashPath = projectDashboardPath(project.slug);
           const kbCurationPath = projectKbCurationPath(project.slug);
+          const apiSuitePath = projectApiSuitePath(project.slug);
           const onHomologations = isHomologationPath(project.slug, location.pathname);
           const onDashboard = isDashboardPath(project.slug, location.pathname);
           const onKbCuration = isKbCurationPath(project.slug, location.pathname);
+          const onApiSuite = isApiSuitePath(project.slug, location.pathname);
 
           const projectCard = (
             <Link
@@ -279,6 +284,7 @@ export function ProjectSidebar({
                       !onHomologations &&
                       !onDashboard &&
                       !onKbCuration &&
+                      !onApiSuite &&
                       !onBugs &&
                       !location.pathname.startsWith(bugsPath) &&
                       (location.pathname === testsPath ||
@@ -365,6 +371,17 @@ export function ProjectSidebar({
                         )}
                       </Link>
                     )}
+                    <Link
+                      to={apiSuitePath}
+                      className={cn(
+                        "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
+                        homologationsLinkClass(themeSub, onApiSuite),
+                      )}
+                      aria-current={onApiSuite ? "page" : undefined}
+                    >
+                      <FlaskConical className="size-3.5 shrink-0 opacity-90" />
+                      Suite API
+                    </Link>
                   </div>
                 </div>
               )}

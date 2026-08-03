@@ -12,8 +12,21 @@ Acesso **visitante** = portfólio em construção (ainda sem conteúdo público)
 | [`DEPLOY.md`](DEPLOY.md) | Local, túnel, Oracle, Koyeb |
 | [`deploy/SUPABASE_CREDENTIALS.md`](deploy/SUPABASE_CREDENTIALS.md) | Onde achar URL/keys/pooler no painel atual |
 | [`deploy/oracle/README.md`](deploy/oracle/README.md) | VM Always Free + systemd + Caddy |
-| [`postman/`](postman/) | Collection Postman + Newman (API) |
+| [`postman/`](postman/) | Suites API por projeto (Newman) + UI **Suite API** |
 | [`e2e/`](e2e/) | E2E UI + `npm run test:api` |
+
+## Suite API (Newman / Postman)
+
+No app: projeto → menu **Suite API** (`/projects/:slug/suite-api`).
+
+- Collections em [`postman/projects/`](postman/projects/) (`desk` dogfood · `polygonus` amostra/ficha)
+- Botão **Rodar suite** → resumo mastigado + toggle do log Newman fiel
+- CLI:
+  - `npm run test:api:postman` — Desk (mock :3011)
+  - `npm run test:api:postman:polygonus` — Auth SUPPETER + `GET /academico/aluno/contexto` (`…/api/v2`)
+- Credenciais Polygonus: `POLY_API_*` no `.env` (ver `.env.example`) — **não** commitar senha
+
+Detalhes: [`postman/README.md`](postman/README.md).
 
 ## Rodar (dev)
 
@@ -91,5 +104,6 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 - [x] Cache Auth + leituras Postgres sem re-sync em todo GET
 - [x] Deploy Oracle em produção — [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org) ([`deploy/oracle/`](deploy/oracle/))
 - [x] Testes de API — Postman/Newman + Playwright (`postman/`, `npm run test:api`)
+- [x] Suite API na UI (Newman por projeto, digest + log fiel) — ficha Polygonus amostra
 - [ ] Portfólio visitante (casos com `showInPortfolio`) — aviso “em construção” no ar
 - [ ] Bot Discord — [`VISION.md`](VISION.md)

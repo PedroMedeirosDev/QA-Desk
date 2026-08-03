@@ -1,0 +1,229 @@
+{
+  "info": {
+    "_postman_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "name": "Polygonus — Ficha Acadêmica API",
+    "description": "Auth gestão (amostra) + contexto da Ficha Acadêmica.\nCredenciais via environment / POLY_API_* (não commitar senha).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://amostra.polygonus.com.br/api/v2" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "GET corporacao por hostname",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "const id = body.idCorporacao ?? body.id_corporacao ?? body.id;",
+                  "pm.test('retorna idCorporacao', function () {",
+                  "  pm.expect(id).to.exist;",
+                  "});",
+                  "pm.environment.set('idCorporacao', String(id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/corporacoes/host?hostname={{hostname}}"
+          }
+        },
+        {
+          "name": "POST auth token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('login ok (body ou cookie)', function () {",
+                  "  const ok = pm.response.code === 200;",
+                  "  pm.expect(ok).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "id_corporacao", "value": "{{idCorporacao}}" },
+              { "key": "X-App-Origin", "value": "gestao" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{login}}\",\n  \"senha\": \"{{senha}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/token"
+          }
+        },
+        {
+          "name": "GET minhas entidades",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "const list = Array.isArray(body) ? body : (body.items || body.entidades || []);",
+                  "pm.test('lista de entidades', function () {",
+                  "  pm.expect(list.length).to.be.above(0);",
+                  "});",
+                  "const alvo = (pm.environment.get('unidade') || '').toLowerCase()",
+                  "  .normalize('NFD').replace(/\\u0300-\\u036f/g, '');",
+                  "function norm(s) {",
+                  "  return String(s || '').toLowerCase().normalize('NFD').replace(/\\u0300-\\u036f/g, '');",
+                  "}",
+                  "let found = list.find(function (e) {",
+                  "  const nome = norm(e.nomEntidade || e.nome || e.nom_entidade || e.label || '');",
+                  "  return nome.includes(alvo) || alvo.includes(nome) ||",
+                  "    nome.includes('colegio demonstracao') || nome.includes('colegio de demonstracao');",
+                  "});",
+                  "if (!found) found = list[0];",
+                  "const idEnt = found.idEntidade || found.id_entidade || found.id;",
+                  "pm.test('encontrou unidade', function () {",
+                  "  pm.expect(idEnt).to.exist;",
+                  "});",
+                  "pm.environment.set('idEntidade', String(idEnt));",
+                  "console.log('unidade escolhida', found.nomEntidade || found.nome || idEnt);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-App-Origin", "value": "gestao" }
+            ],
+            "url": "{{baseUrl}}/usuarios/eu/entidades"
+          }
+        },
+        {
+          "name": "GET meus perfis",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "const list = Array.isArray(body) ? body : (body.items || body.perfis || []);",
+                  "pm.test('lista de perfis', function () {",
+                  "  pm.expect(list.length).to.be.above(0);",
+                  "});",
+                  "const first = list[0];",
+                  "const idPerfil = first.idPerfil || first.id_perfil || first.id;",
+                  "pm.environment.set('idPerfil', String(idPerfil));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-App-Origin", "value": "gestao" }
+            ],
+            "url": "{{baseUrl}}/usuarios/eu/perfis?id_entidade={{idEntidade}}"
+          }
+        },
+        {
+          "name": "POST auth entidade",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-App-Origin", "value": "gestao" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idEntidade\": {{idEntidade}},\n  \"ano\": {{ano}},\n  \"idPerfil\": {{idPerfil}}\n}"
+            },
+            "url": "{{baseUrl}}/auth/entidade"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Academico",
+      "item": [
+        {
+          "name": "GET aluno contexto (ficha)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('shape ContextoFichaDTO', function () {",
+                  "  pm.expect(body).to.have.property('ufEntidade');",
+                  "  pm.expect(body).to.have.property('mostrarRa');",
+                  "  pm.expect(body).to.have.property('podeVerSitFin');",
+                  "  pm.expect(body.deficiencias).to.be.an('array');",
+                  "  pm.expect(body.classificacoes).to.be.an('array');",
+                  "});",
+                  "console.log('contexto', JSON.stringify({",
+                  "  ufEntidade: body.ufEntidade,",
+                  "  mostrarRa: body.mostrarRa,",
+                  "  podeVerSitFin: body.podeVerSitFin,",
+                  "  deficiencias: body.deficiencias && body.deficiencias.length",
+                  "}));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-App-Origin", "value": "gestao" }
+            ],
+            "url": "{{baseUrl}}/academico/aluno/contexto"
+          }
+        }
+      ]
+    }
+  ]
+}

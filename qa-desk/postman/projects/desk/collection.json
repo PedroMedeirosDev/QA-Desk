@@ -1,0 +1,172 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "QA Desk API",
+    "description": "Contratos HTTP do QA Desk (mock admin, porta 3011).\nAuth: QA_E2E_MOCK=1 — sem JWT.\nRodar: npm run test:api:postman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:3011" },
+    { "key": "project", "value": "polygonus" },
+    { "key": "testId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('ok true', function () {",
+                  "  pm.expect(body.ok).to.eql(true);",
+                  "});",
+                  "pm.test('automationRun false no E2E', function () {",
+                  "  pm.expect(body.automationRun).to.eql(false);",
+                  "});",
+                  "pm.test('auth mock', function () {",
+                  "  pm.expect(body.auth).to.eql('mock');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tests CRUD",
+      "item": [
+        {
+          "name": "GET list tests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('reports é array', function () {",
+                  "  pm.expect(body.reports).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/projects/{{project}}/tests"
+          }
+        },
+        {
+          "name": "POST create CT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('retorna id e title', function () {",
+                  "  pm.expect(body.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(body.title).to.include('API-CT');",
+                  "});",
+                  "pm.collectionVariables.set('testId', body.id);",
+                  "pm.environment.set('testId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"API-CT Postman {{$timestamp}}\",\n  \"recordType\": \"teste\",\n  \"channel\": \"app\",\n  \"status\": \"rascunho\",\n  \"description\": \"Criado pela collection QA Desk API\"\n}"
+            },
+            "url": "{{baseUrl}}/api/projects/{{project}}/tests"
+          }
+        },
+        {
+          "name": "GET test by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "const expected = pm.environment.get('testId') || pm.collectionVariables.get('testId');",
+                  "pm.test('mesmo id criado no POST', function () {",
+                  "  pm.expect(body.id).to.eql(expected);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/projects/{{project}}/tests/{{testId}}"
+          }
+        },
+        {
+          "name": "PUT update CT title",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('título atualizado', function () {",
+                  "  pm.expect(body.title).to.include('atualizado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"API-CT Postman atualizado {{$timestamp}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/projects/{{project}}/tests/{{testId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

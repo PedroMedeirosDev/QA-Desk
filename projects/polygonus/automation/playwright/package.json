@@ -4,7 +4,8 @@
   "scripts": {
     "test": "playwright test",
     "test:mural-dn": "playwright test mural/ajustar-dn-aniversariante.spec.ts --headed --timeout=180000",
-    "test:mural-dn:headed": "playwright test mural/ajustar-dn-aniversariante.spec.ts --headed --timeout=180000"
+    "test:mural-dn:headed": "playwright test mural/ajustar-dn-aniversariante.spec.ts --headed --timeout=180000",
+    "test:ficha-contexto": "playwright test academico/api/aluno-contexto.spec.ts --headed --timeout=240000"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",

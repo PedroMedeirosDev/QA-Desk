@@ -1,48 +1,50 @@
-# Postman / Newman — API QA Desk
+# Postman / Newman — suites por projeto
 
-Collection de contratos HTTP do **próprio** QA Desk (dogfooding).  
-Útil no currículo: Postman Desktop + **Newman** (CLI).
+Collections de contratos HTTP, uma pasta por produto:
 
-## O que cobre (MVP)
+```
+postman/projects/
+  desk/         # dogfood da API do QA Desk (mock 3011)
+  polygonus/    # amostra — Auth SUPPETER + ficha (aluno/contexto)
+```
 
-| Pasta | Requests |
-|-------|----------|
-| Health | `GET /api/health` |
-| Tests CRUD | listar → criar CT → buscar por id → atualizar título |
-
-Auth: **mock admin** (`QA_E2E_MOCK=1`), porta **3011** — sem JWT.
-
-## No Postman Desktop
-
-1. Import → `qa-desk-api.postman_collection.json`
-2. Import → `local.postman_environment.json` e selecione o environment
-3. Suba a API: `npm run e2e:api` (outro terminal)
-4. Run collection
-
-## Via CLI (Newman)
+## CLI
 
 ```powershell
 cd qa-desk
-npm install
-npm run test:api:postman
+npm run test:api:postman              # suite desk
+npm run test:api:postman:polygonus    # precisa POLY_API_SENHA no .env
 ```
 
-O script sobe a API mock, roda a collection e encerra.
+## UI no Desk
 
-Equivalente manual:
+Projeto → **Suite API** (`/projects/:slug/suite-api`):
 
-```powershell
-npm run e2e:api
-# outro terminal:
-npx newman run postman/qa-desk-api.postman_collection.json -e postman/local.postman_environment.json
+- botão **Rodar suite**
+- resumo mastigado (requests / asserts / falhas)
+- toggle **Ver log Newman (fiel)**
+
+## Polygonus — variáveis
+
+No `.env` do `qa-desk` (não commitar senha):
+
+```
+POLY_API_BASE_URL=https://amostra.polygonus.com.br/api/v2
+POLY_API_LOGIN=SUPPETER
+POLY_API_SENHA=...
+POLY_API_UNIDADE=Colégio Demonstração
+POLY_API_HOSTNAME=amostra.polygonus.com.br
+POLY_API_ANO=2026
 ```
 
-## Par Playwright
+Fallback: se `POLY_API_SENHA` estiver vazia, usa `PLAYWRIGHT_SENHA`.
 
-Mesmos cenários em código: `npm run test:api` → [`../e2e/api/`](../e2e/api/).
+## Postman Desktop
 
-## Entrevista (falar assim)
+1. Import `projects/desk/collection.json` + environment  
+2. Ou `projects/polygonus/collection.json` + `amostra.postman_environment.json`  
+3. Preencha `senha` no environment local  
 
-- Montei collection Postman com asserts (`pm.test`) para health e CRUD de CT
-- Automatizei no CI/local com **Newman**
-- Espelhei os mesmos casos em Playwright `APIRequestContext` no monorepo
+## Par Playwright API (Desk)
+
+`npm run test:api` — mesma ideia em TypeScript (`e2e/api/`).
