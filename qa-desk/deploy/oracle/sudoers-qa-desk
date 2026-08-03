@@ -1,0 +1,6 @@
+# sudoers — permite ao ubuntu reiniciar o QA Desk sem senha (só este comando)
+# Instalar na VM:
+#   sudo cp ~/QA-Desk/qa-desk/deploy/oracle/sudoers-qa-desk /etc/sudoers.d/qa-desk
+#   sudo chmod 440 /etc/sudoers.d/qa-desk
+#   sudo visudo -cf /etc/sudoers.d/qa-desk
+ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart qa-desk, /bin/systemctl status qa-desk, /bin/systemctl is-active qa-desk
