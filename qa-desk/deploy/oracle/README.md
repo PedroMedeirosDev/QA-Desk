@@ -8,6 +8,8 @@ Arquivos nesta pasta:
 |---------|-----|
 | [`setup-vm.sh`](setup-vm.sh) | Instala Node 20 + Caddy na Ubuntu |
 | [`qa-desk.service`](qa-desk.service) | systemd (reinicia após reboot) |
+| [`auto-deploy.sh`](auto-deploy.sh) | `git pull` + build + restart (cron) |
+| [`sudoers-qa-desk`](sudoers-qa-desk) | NOPASSWD só para `systemctl restart qa-desk` |
 | [`Caddyfile`](Caddyfile) | HTTPS na frente da porta 3001 |
 | [`../../.env.production.example`](../../.env.production.example) | Modelo de secrets |
 
@@ -108,11 +110,47 @@ No Supabase → Authentication → URL Configuration, adicione a URL do site em 
 
 ## Atualizar depois de um push
 
+Manual:
+
 ```bash
+bash ~/QA-Desk/qa-desk/deploy/oracle/auto-deploy.sh
+# ou:
 cd ~/QA-Desk && git pull
 cd qa-desk && npm ci && npm run build
 sudo systemctl restart qa-desk
 ```
+
+### Auto-deploy (cron, Always Free — R$ 0)
+
+Não precisa de nada da empresa. É só GitHub + esta VM.
+
+**1× na VM** (sudoers + cron + primeiro deploy):
+
+```bash
+cd ~/QA-Desk && git pull
+
+# Reinício sem senha (obrigatório para o cron)
+sudo cp ~/QA-Desk/qa-desk/deploy/oracle/sudoers-qa-desk /etc/sudoers.d/qa-desk
+sudo chmod 440 /etc/sudoers.d/qa-desk
+sudo visudo -cf /etc/sudoers.d/qa-desk
+
+chmod +x ~/QA-Desk/qa-desk/deploy/oracle/auto-deploy.sh
+
+# Suite API Polygonus (opcional — senha só no .env da VM, nunca no Git)
+# nano ~/QA-Desk/qa-desk/.env
+# POLY_API_BASE_URL=https://amostra.polygonus.com.br/api/v2
+# POLY_API_LOGIN=SUPPETER
+# POLY_API_SENHA=...
+# POLY_API_UNIDADE=Colégio Demonstração
+
+# Cron a cada 5 minutos (só age se origin/main avançou)
+(crontab -l 2>/dev/null | grep -v auto-deploy.sh; echo '*/5 * * * * /bin/bash $HOME/QA-Desk/qa-desk/deploy/oracle/auto-deploy.sh >> $HOME/QA-Desk/logs/cron-auto-deploy.log 2>&1') | crontab -
+
+bash ~/QA-Desk/qa-desk/deploy/oracle/auto-deploy.sh
+tail -n 30 ~/QA-Desk/logs/auto-deploy.log
+```
+
+Logs: `~/QA-Desk/logs/auto-deploy.log`. Sem mudança no `main` → exit silencioso.
 
 Se mudou `VITE_SUPABASE_*`, o `npm run build` é obrigatório (valores vão no bundle).
 
