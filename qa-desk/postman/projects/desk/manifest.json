@@ -1,0 +1,9 @@
+{
+  "id": "desk",
+  "label": "QA Desk API (dogfood)",
+  "ready": true,
+  "bootMock": true,
+  "collection": "collection.json",
+  "environment": "local.postman_environment.json",
+  "description": "Health + CRUD de CTs na API mock do próprio Desk (porta 3011)."
+}

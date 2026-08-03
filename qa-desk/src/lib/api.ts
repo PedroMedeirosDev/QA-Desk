@@ -52,6 +52,38 @@ export interface HealthStatus {
   auth?: string;
 }
 
+export interface ApiSuiteFailure {
+  name: string;
+  assertion?: string;
+  error?: string;
+}
+
+export interface ApiSuiteRunResult {
+  ok: boolean;
+  suiteId: string;
+  label: string;
+  summary: {
+    requests: number;
+    assertions: number;
+    failed: number;
+    durationMs: number;
+  };
+  failures: ApiSuiteFailure[];
+  rawCli: string;
+  ranAt: string;
+  exitCode: number;
+}
+
+export interface ApiSuiteStatus {
+  id: string;
+  label: string;
+  ready: boolean;
+  bootMock?: boolean;
+  description?: string;
+  reason?: string;
+  lastRun: ApiSuiteRunResult | null;
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
@@ -280,6 +312,23 @@ export const api = {
     request<{ project: ProjectSlug; cards: DailyPortfolioCard[] }>(
       `/api/projects/${project}/daily-summary/portfolio`,
     ),
+
+  listApiSuites: (project: ProjectSlug) =>
+    request<{ suites: ApiSuiteStatus[] }>(`/api/projects/${project}/api-suite`),
+
+  runApiSuite: async (project: ProjectSlug, suiteId: string) => {
+    const res = await fetch(`/api/projects/${project}/api-suite/${suiteId}/run`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 200 || res.status === 422) {
+      return body as ApiSuiteRunResult;
+    }
+    throw new Error(
+      (body as { error?: string }).error ?? `Falha ao rodar suite (${res.status})`,
+    );
+  },
 
   publishDailySummary: (
     project: ProjectSlug,
