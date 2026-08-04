@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-cobranca",
+  "project": "polygonus",
+  "order": 6,
+  "label": "Cobrança / bancário",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Cobrança, boletos e integração bancária.",
+  "reason": "Scaffold — collection ainda não escrita."
+}

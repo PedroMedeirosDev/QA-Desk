@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-findocs",
+  "project": "polygonus",
+  "order": 5,
+  "label": "Fin docs (documentos & liquidação)",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Documentos financeiros e liquidação.",
+  "reason": "Scaffold — collection ainda não escrita."
+}

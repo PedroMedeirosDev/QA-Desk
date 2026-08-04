@@ -14,6 +14,10 @@ const isWin = process.platform === "win32";
 
 export type ApiSuiteManifest = {
   id: string;
+  /** Projeto da UI (`polygonus`, `desk`, …). Se omitido, usa `id`. */
+  project?: string;
+  /** Ordem estável dos cards (menor primeiro). */
+  order?: number;
   label: string;
   ready: boolean;
   bootMock?: boolean;
@@ -127,8 +131,14 @@ export function getSuiteStatus(suiteId: string) {
 
 export function suitesForProject(projectSlug: string): ApiSuiteManifest[] {
   const all = listSuiteIds().map((id) => readManifest(id));
-  // Só suites cujo id (pasta) coincide com o slug do projeto
-  return all.filter((s) => s.id === projectSlug);
+  return all
+    .filter((s) => (s.project ?? s.id) === projectSlug)
+    .sort((a, b) => {
+      const oa = a.order ?? 999;
+      const ob = b.order ?? 999;
+      if (oa !== ob) return oa - ob;
+      return a.label.localeCompare(b.label, "pt-BR");
+    });
 }
 
 type NewmanJson = {

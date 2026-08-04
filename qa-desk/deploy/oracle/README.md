@@ -100,6 +100,8 @@ Público sem TLS: `http://IP_PUBLICO:3001` (porta 3001 aberta).
 2. Edite `Caddyfile` com o hostname.
 3. `sudo cp deploy/oracle/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy`
 
+O Caddyfile isola o SSE da Curadoria KB (`…/kb-curation/stream`) **sem gzip** e com `flush_interval -1`. Sem isso a stream pode bufferizar e a UI só atualiza no F5.
+
 No Supabase → Authentication → URL Configuration, adicione a URL do site em **Site URL** e **Redirect URLs**.
 
 ## 5. Smoke

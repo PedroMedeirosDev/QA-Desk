@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-ficha",
+  "project": "polygonus",
+  "order": 2,
+  "label": "Acadêmico — Ficha do aluno",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Contexto e dados da ficha acadêmica do aluno.",
+  "reason": "Scaffold — requests ainda não separados."
+}

@@ -60,3 +60,19 @@ Sem `gh` no PATH: o UI mostra `spawn gh ENOENT`; o webhook ainda responde 200 no
 ### Fallback
 
 O botão **Sincronizar GitHub** na Curadoria continua válido (catch-up / importar abertas / se o webhook falhar).
+
+## SSE (UI em tempo quase real)
+
+Com a página **Curadoria KB** aberta, o browser mantém `GET /api/projects/:slug/kb-curation/stream` (Bearer). Cada gravação do catálogo (webhook, sync, parecer) emite `catalog-updated` e a lista recarrega sem F5.
+
+Reconexão automática com backoff se a stream cair. Ao voltar à aba (`visibilitychange`), também há um refresh silencioso.
+
+### Caddy (produção)
+
+O `deploy/oracle/Caddyfile` já isola o path do stream **sem gzip** e com `flush_interval -1` — gzip bufferiza SSE e a UI só atualiza no F5.
+
+Depois de atualizar o Caddyfile na VM:
+
+```bash
+sudo systemctl reload caddy
+```

@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-contab",
+  "project": "polygonus",
+  "order": 8,
+  "label": "Contabilidade",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Fechamento e rotinas contábeis.",
+  "reason": "Scaffold — collection ainda não escrita."
+}

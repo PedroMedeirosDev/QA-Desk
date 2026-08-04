@@ -1,6 +1,8 @@
 {
   "id": "desk",
-  "label": "QA Desk API (dogfood)",
+  "project": "desk",
+  "order": 1,
+  "label": "QA Desk API",
   "ready": true,
   "bootMock": true,
   "collection": "collection.json",

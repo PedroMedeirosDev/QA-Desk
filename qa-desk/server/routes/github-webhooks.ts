@@ -74,7 +74,7 @@ async function applyPrUpdate(repository: string, prNumber: number) {
   if (result.changed) {
     catalog.pullRequests = result.records;
     catalog.meta.updatedAt = result.at.slice(0, 10);
-    await writeKbCurationCatalog(match.project, catalog);
+    await writeKbCurationCatalog(match.project, catalog, { sseReason: "webhook" });
   }
 
   return {

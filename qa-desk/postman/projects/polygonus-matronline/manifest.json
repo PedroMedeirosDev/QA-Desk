@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-matronline",
+  "project": "polygonus",
+  "order": 3,
+  "label": "Matrícula online / inscrição",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Fluxos de inscrição e matrícula online.",
+  "reason": "Scaffold — collection ainda não escrita."
+}

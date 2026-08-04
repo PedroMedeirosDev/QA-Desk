@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-cadastros",
+  "project": "polygonus",
+  "order": 11,
+  "label": "Cadastros & customize",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Cadastros comuns e customizações.",
+  "reason": "Scaffold — collection ainda não escrita."
+}

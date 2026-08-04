@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-grade",
+  "project": "polygonus",
+  "order": 4,
+  "label": "Grade / horários / jornadas",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Grade curricular, horários e jornadas.",
+  "reason": "Scaffold — collection ainda não escrita."
+}

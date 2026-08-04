@@ -1,11 +1,13 @@
 {
-  "id": "polygonus",
-  "label": "Polygonus — Ficha Acadêmica (amostra)",
+  "id": "polygonus-auth",
+  "project": "polygonus",
+  "order": 1,
+  "label": "Auth & sessão (gestão)",
   "ready": true,
   "bootMock": false,
   "collection": "collection.json",
   "environment": "amostra.postman_environment.json",
-  "description": "Auth gestão (SUPPETER) + GET /academico/aluno/contexto na amostra.",
+  "description": "Auth gestão (SUPPETER) na amostra. Inclui GET /academico/aluno/contexto até a Ficha ser separada.",
   "envFromProcess": [
     "POLY_API_BASE_URL",
     "POLY_API_LOGIN",

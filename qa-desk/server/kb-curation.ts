@@ -7,6 +7,7 @@ import type {
   KbCurationMetrics,
   KbCurationRecord,
 } from "../src/types/kb-curation.js";
+import type { KbCurationSseReason } from "./kb-curation-sse.js";
 import { isDatabaseEnabled } from "./db/config.js";
 import { getPrisma } from "./db/prisma.js";
 import { initialKbCurationCatalog } from "./kb-curation-seed.js";
@@ -128,6 +129,7 @@ export async function readKbCurationCatalog(project: ProjectSlug): Promise<KbCur
 export async function writeKbCurationCatalog(
   project: ProjectSlug,
   catalog: KbCurationCatalog,
+  opts?: { sseReason?: KbCurationSseReason },
 ): Promise<void> {
   const safe = redactPiiDeep(catalog);
   catalog.meta = safe.meta;
@@ -137,9 +139,11 @@ export async function writeKbCurationCatalog(
     await writeDbCatalog(project, catalog);
     // Mantém o JSON como espelho local (útil se o Postgres cair / migração).
     writeFileCatalog(project, catalog);
-    return;
+  } else {
+    writeFileCatalog(project, catalog);
   }
-  writeFileCatalog(project, catalog);
+  const { broadcastKbCurationUpdated } = await import("./kb-curation-sse.js");
+  broadcastKbCurationUpdated(project, opts?.sseReason ?? "catalog-write");
 }
 
 export function computeKbCurationMetrics(records: KbCurationRecord[]): KbCurationMetrics {

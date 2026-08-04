@@ -63,7 +63,7 @@ export const PROJECTS: ProjectConfig[] = [
           "bg-red-500 font-medium text-white shadow-sm border border-red-400/60",
       },
     },
-    description: "Portfólio & dogfood",
+    description: "Portfólio & automação",
   },
   {
     slug: "polygonus",

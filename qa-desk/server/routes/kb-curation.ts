@@ -9,6 +9,7 @@ import {
   readKbCurationCatalog,
   writeKbCurationCatalog,
 } from "../kb-curation.js";
+import { subscribeKbCurationSse } from "../kb-curation-sse.js";
 import { actorOf, attachUser, requireAdmin } from "../middleware/auth.js";
 import { assertProject } from "../storage.js";
 
@@ -120,11 +121,19 @@ kbCurationRouter.put("/:prNumber", requireAdmin, async (req, res) => {
   };
 
   catalog.pullRequests[index] = updated;
-  await writeKbCurationCatalog(project, catalog);
+  await writeKbCurationCatalog(project, catalog, { sseReason: "review" });
   res.json({
     pullRequest: updated,
     metrics: computeKbCurationMetrics(catalog.pullRequests),
   });
+});
+
+kbCurationRouter.get("/stream", (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  // Conexão longa: desliga timeout do socket.
+  req.socket.setTimeout(0);
+  res.setTimeout(0);
+  subscribeKbCurationSse(project, res);
 });
 
 kbCurationRouter.post("/sync", requireAdmin, async (req, res) => {
@@ -138,7 +147,7 @@ kbCurationRouter.post("/sync", requireAdmin, async (req, res) => {
     );
     catalog.pullRequests = result.records;
     catalog.meta.updatedAt = result.at.slice(0, 10);
-    await writeKbCurationCatalog(project, catalog);
+    await writeKbCurationCatalog(project, catalog, { sseReason: "sync" });
     res.json({
       pullRequests: catalog.pullRequests,
       metrics: computeKbCurationMetrics(catalog.pullRequests),

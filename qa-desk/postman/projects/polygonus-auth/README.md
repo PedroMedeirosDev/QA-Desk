@@ -1,9 +1,8 @@
-# Polygonus — suite API (amostra CQ)
+# Polygonus — Auth & sessão (gestão)
 
-Collection Newman para homologar a **Ficha Acadêmica** (e evoluir).
+Suite Newman na amostra CQ. Por enquanto ainda carrega o `GET /academico/aluno/contexto` até a collection **Ficha** ser separada.
 
 Gestão CQ: `https://amostra.polygonus.com.br:8443/web/react/gestao/login`  
-Host CQ: até `:8443` (remove o path `/web/react/...`)  
 API: `https://amostra.polygonus.com.br:8443/api/v2`
 
 ## Fluxo
@@ -13,7 +12,7 @@ API: `https://amostra.polygonus.com.br:8443/api/v2`
 3. Entidades → unidade **Colégio Demonstração**  
 4. Perfis → primeiro perfil  
 5. `POST /auth/entidade`  
-6. `GET /academico/aluno/contexto` (shape da ficha)
+6. `GET /academico/aluno/contexto` (vai para polygonus-ficha depois)
 
 ## Credenciais
 

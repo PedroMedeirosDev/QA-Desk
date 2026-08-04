@@ -2,6 +2,16 @@
 # Caddy obtém certificado Let's Encrypt automaticamente.
 
 qa-desk.seudominio.com {
-	encode gzip
-	reverse_proxy 127.0.0.1:3001
+	# SSE da Curadoria KB: sem gzip (bufferiza) e flush imediato
+	@kbSse path_regexp kbSse ^/api/projects/[^/]+/kb-curation/stream$
+	handle @kbSse {
+		reverse_proxy 127.0.0.1:3001 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		encode gzip
+		reverse_proxy 127.0.0.1:3001
+	}
 }
