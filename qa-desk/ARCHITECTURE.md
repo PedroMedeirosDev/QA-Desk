@@ -86,7 +86,7 @@ Sem essas vars: modo mock admin (dev / Maestro local).
 
 - Shell: sidebar `16rem` + header `4rem` + conteúdo `flex-1` (`App.tsx`)
 - Highlights: `--project-highlight-bg|text|border` por `data-theme` (`index.css`)
-- Componentes: `PremiumTooltip`, `DesignCheckbox`, userbar ghost + tooltips
+- Componentes: `PremiumTooltip`, `DesignCheckbox`, UserBar (menu no avatar) + status Agente/AVD
 - Global: scrollbar WebKit, `::selection` temática, `focus-visible` em controles
 
 ## Discord hoje
