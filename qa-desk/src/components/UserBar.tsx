@@ -1,65 +1,144 @@
-import { LogOut } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { ChevronDown, LogOut, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
-import { OpsStatusCluster } from "@/components/OpsStatusCluster";
-import { PremiumTooltip } from "@/components/PremiumTooltip";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { OpsStatusPanel, useOpsStatus } from "@/components/OpsStatusCluster";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useColorScheme } from "@/lib/color-scheme";
 import { cn } from "@/lib/utils";
 
-const actionBtnClass =
-  "flex h-[2rem] w-[2rem] items-center justify-center rounded-md text-[var(--muted-foreground)] outline-none transition-colors duration-200 hover:bg-[var(--accent)] hover:text-[var(--foreground)]";
+function summaryDotClass(tone: string) {
+  return cn(
+    "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-[var(--background)]",
+    tone === "ok" && "bg-emerald-500",
+    tone === "warn" && "bg-amber-500",
+    tone === "off" && "bg-muted-foreground/55",
+    tone === "muted" && "bg-muted-foreground/40",
+  );
+}
 
 export function UserBar({ className }: { className?: string }) {
   const { profile, isAdmin, isVisitor, authEnabled, signOut } = useAuth();
-  const { scheme } = useColorScheme();
+  const { scheme, toggleScheme } = useColorScheme();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+  const { items, summaryTone } = useOpsStatus();
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: PointerEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   async function handleLogout() {
+    setOpen(false);
     await signOut();
     if (authEnabled) navigate("/login", { replace: true });
   }
 
   const name = profile?.displayName ?? "Usuário";
   const roleLabel = isAdmin ? "QA · Admin" : "Visitante · Portfólio";
-  const themeLabel = scheme === "dark" ? "Tema claro" : "Tema escuro";
+  const isDark = scheme === "dark";
 
   return (
-    <div className={cn("flex shrink-0 items-center gap-[0.75rem]", className)}>
-      {!isVisitor && <OpsStatusCluster />}
-
-      <div className="flex items-center gap-[0.75rem]">
-        <UserAvatar className="ring-1 ring-black/5 dark:ring-white/10" />
-        <div className="hidden min-w-0 flex-col items-start sm:flex">
-          <p className="truncate text-[0.875rem] font-semibold leading-none text-[var(--foreground)]">
+    <div ref={rootRef} className={cn("relative shrink-0", className)}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex items-center gap-[0.625rem] rounded-lg px-[0.375rem] py-[0.25rem] text-left outline-none transition-colors duration-200",
+          "hover:bg-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
+          open && "bg-[var(--accent)]",
+        )}
+      >
+        <span className="relative shrink-0">
+          <UserAvatar className="ring-1 ring-black/5 dark:ring-white/10" />
+          {!isVisitor && (
+            <span className={summaryDotClass(summaryTone)} aria-hidden />
+          )}
+        </span>
+        <span className="hidden min-w-0 flex-col items-start sm:flex">
+          <span className="truncate text-[0.875rem] font-semibold leading-none text-[var(--foreground)]">
             {name}
-          </p>
-          <p className="mt-[0.25rem] text-[0.75rem] font-medium text-[var(--muted-foreground)]">
+          </span>
+          <span className="mt-[0.25rem] text-[0.75rem] font-medium text-[var(--muted-foreground)]">
             {roleLabel}
-          </p>
-        </div>
-      </div>
+          </span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "hidden size-4 shrink-0 text-[var(--muted-foreground)] transition-transform duration-200 sm:block",
+            open && "rotate-180",
+          )}
+          strokeWidth={1.75}
+          aria-hidden
+        />
+      </button>
 
-      <div className="mx-[0.125rem] h-[1.5rem] w-px bg-[var(--border)]" aria-hidden />
+      {open && (
+        <div
+          id={menuId}
+          role="menu"
+          className={cn(
+            "absolute right-0 top-full z-50 mt-2 w-[17.5rem] origin-top-right",
+            "rounded-xl border border-[var(--border)] bg-[var(--card)] p-2 shadow-lg",
+            "animate-fade-in-up-soft opacity-0",
+          )}
+        >
+          <div className="border-b border-[var(--border)] px-2 pb-2 pt-1 sm:hidden">
+            <p className="truncate text-sm font-semibold text-foreground">{name}</p>
+            <p className="text-xs text-muted-foreground">{roleLabel}</p>
+          </div>
 
-      <div className="flex items-center gap-[0.25rem]">
-        <PremiumTooltip label={themeLabel} side="bottom" align="end">
-          <ThemeToggle variant="toolbar" className={actionBtnClass} />
-        </PremiumTooltip>
-        {authEnabled && (
-          <PremiumTooltip label="Sair" side="bottom" align="end">
+          {!isVisitor && (
+            <div className="border-b border-[var(--border)] px-1 py-2">
+              <OpsStatusPanel items={items} />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-0.5 py-1">
             <button
               type="button"
-              onClick={() => void handleLogout()}
-              aria-label="Sair"
-              className={actionBtnClass}
+              role="menuitem"
+              onClick={() => toggleScheme()}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
             >
-              <LogOut className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
+              {isDark ? (
+                <Sun className="size-4 text-muted-foreground" strokeWidth={1.75} />
+              ) : (
+                <Moon className="size-4 text-muted-foreground" strokeWidth={1.75} />
+              )}
+              {isDark ? "Tema claro" : "Tema escuro"}
             </button>
-          </PremiumTooltip>
-        )}
-      </div>
+            {authEnabled && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void handleLogout()}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+              >
+                <LogOut className="size-4 text-muted-foreground" strokeWidth={1.75} />
+                Sair
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -110,7 +110,7 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 
 - Tokens por projeto: `--project-highlight-*` em [`docs/COLORS.md`](docs/COLORS.md) / `src/index.css`
 - Tooltips premium (`PremiumTooltip`, seta top/bottom/left/right) — sem `title` nativo
-- UserBar: status permanente **Agente** + **AVD** (além de tema/sair); visitante não vê ops
+- UserBar: menu no avatar/nome (Ambiente: Agente + Emulador, tema, sair); visitante sem bloco de ops
 - Checkbox do sistema (`DesignCheckbox`) — aparência própria, cores do tema
 - Scrollbar custom + `::selection` temática + focus-visible (teclado)
 

@@ -1,6 +1,5 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
-import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { cn } from "@/lib/utils";
 import { getBundledLogoUrl } from "@/config/logos";
 
@@ -39,6 +38,10 @@ function logoNameCandidates(logoFile: string): string[] {
   return [...new Set([logoFile, slug, `${slug}_logo`])];
 }
 
+/**
+ * Logo do projeto — sem tooltip embutido.
+ * Quem precisa de label no hover (ex.: sidebar colapsada) envolve com PremiumTooltip.
+ */
 export function ProjectLogo({ logoFile, label, className, size = "md", style }: ProjectLogoProps) {
   const bundled = getBundledLogoUrl(logoFile);
   const candidates = useMemo(() => logoNameCandidates(logoFile), [logoFile]);
@@ -46,11 +49,13 @@ export function ProjectLogo({ logoFile, label, className, size = "md", style }: 
 
   if (isQaDeskBrand(logoFile)) {
     return (
-      <PremiumTooltip label={label} side="top">
-        <span className={cn("inline-flex", sizeClass[size], className)} style={style}>
-          <BrandLogo markOnly size={BRAND_SIZE[size]} className="h-full w-full justify-center" />
-        </span>
-      </PremiumTooltip>
+      <span
+        className={cn("inline-flex", sizeClass[size], className)}
+        style={style}
+        aria-label={label}
+      >
+        <BrandLogo markOnly size={BRAND_SIZE[size]} className="h-full w-full justify-center" />
+      </span>
     );
   }
 
@@ -70,18 +75,17 @@ export function ProjectLogo({ logoFile, label, className, size = "md", style }: 
 
   if (failed) {
     return (
-      <PremiumTooltip label={label} side="top">
-        <span
-          className={cn(
-            "inline-flex shrink-0 items-center justify-center rounded-lg border bg-muted font-semibold uppercase text-muted-foreground",
-            sizeClass[size],
-            size === "sm" ? "text-xs" : "text-sm",
-            className,
-          )}
-        >
-          {label.slice(0, 2)}
-        </span>
-      </PremiumTooltip>
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center justify-center rounded-lg border bg-muted font-semibold uppercase text-muted-foreground",
+          sizeClass[size],
+          size === "sm" ? "text-xs" : "text-sm",
+          className,
+        )}
+        aria-label={label}
+      >
+        {label.slice(0, 2)}
+      </span>
     );
   }
 
