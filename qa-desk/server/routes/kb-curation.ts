@@ -83,6 +83,9 @@ kbCurationRouter.put("/:prNumber", requireAdmin, async (req, res) => {
   const previous = catalog.pullRequests[index];
   const nextStatus = body.status ? normalizeStatus(body.status) : undefined;
   const reviewedAt = new Date().toISOString();
+  const actor = actorOf(req);
+  const reviewerFromBody = body.reviewer?.trim();
+  const nextReviewer = reviewerFromBody || previous.reviewer || actor;
   const changes: string[] = [];
   if (nextStatus && nextStatus !== previous.status) {
     changes.push(`status ${previous.status} → ${nextStatus}`);
@@ -94,8 +97,8 @@ kbCurationRouter.put("/:prNumber", requireAdmin, async (req, res) => {
     changes.push("parecer da solução atualizado");
   }
   if (body.corrections !== undefined) changes.push("correções atualizadas");
-  if (body.reviewer !== undefined && body.reviewer !== previous.reviewer) {
-    changes.push(`responsável → ${body.reviewer || "não informado"}`);
+  if (nextReviewer !== previous.reviewer) {
+    changes.push(`responsável → ${nextReviewer || "não informado"}`);
   }
 
   const updated = {
@@ -105,14 +108,14 @@ kbCurationRouter.put("/:prNumber", requireAdmin, async (req, res) => {
     summary: body.summary?.trim() || previous.summary,
     solutionReview: body.solutionReview?.trim() || previous.solutionReview,
     corrections: body.corrections?.filter(Boolean) ?? previous.corrections,
-    reviewer: body.reviewer?.trim() || previous.reviewer,
+    reviewer: nextReviewer,
     reviewedAt,
     history: changes.length > 0
       ? [
           ...previous.history,
           {
             at: reviewedAt,
-            actor: actorOf(req),
+            actor,
             action: "kb_pr_review_updated",
             detail: changes.join(" · "),
           },
