@@ -138,7 +138,7 @@ chmod +x ~/QA-Desk/qa-desk/deploy/oracle/auto-deploy.sh
 
 # Suite API Polygonus (opcional — senha só no .env da VM, nunca no Git)
 # nano ~/QA-Desk/qa-desk/.env
-# POLY_API_BASE_URL=https://amostra.polygonus.com.br/api/v2
+# POLY_API_BASE_URL=https://amostra.polygonus.com.br:8443/api/v2
 # POLY_API_LOGIN=SUPPETER
 # POLY_API_SENHA=...
 # POLY_API_UNIDADE=Colégio Demonstração

@@ -271,9 +271,30 @@
     color: #e1306c;
   }
 
-  /* Login — tipografia do rodapé; hover social mantém cor da marca */
+  /* Login — tipografia do rodapé; hover = mesmas cores de marca do rodapé logado */
   .login-footer .social-link {
     @apply text-zinc-400;
+  }
+
+  .login-footer .social-link:hover {
+    transform: scale(1.1);
+  }
+
+  .login-footer .social-link-linkedin:hover {
+    color: #0a66c2;
+  }
+
+  /* Login é sempre superfície escura → GitHub claro no hover */
+  .login-footer .social-link-github:hover {
+    color: #f0f6fc;
+  }
+
+  .login-footer .social-link-youtube:hover {
+    color: #ff0000;
+  }
+
+  .login-footer .social-link-instagram:hover {
+    color: #e1306c;
   }
 
   .login-footer p {

@@ -23,7 +23,7 @@ No app: projeto → menu **Suite API** (`/projects/:slug/suite-api`).
 - Botão **Rodar suite** → resumo mastigado + toggle do log Newman fiel
 - CLI:
   - `npm run test:api:postman` — Desk (mock :3011)
-  - `npm run test:api:postman:polygonus` — Auth SUPPETER + `GET /academico/aluno/contexto` (`…/api/v2`)
+  - `npm run test:api:postman:polygonus` — Auth SUPPETER + `GET /academico/aluno/contexto` (CQ `…:8443/api/v2`)
 - Credenciais Polygonus: `POLY_API_*` no `.env` (ver `.env.example`) — **não** commitar senha
 
 Detalhes: [`postman/README.md`](postman/README.md).
