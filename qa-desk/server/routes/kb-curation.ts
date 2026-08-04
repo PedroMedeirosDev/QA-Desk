@@ -10,7 +10,7 @@ import {
   writeKbCurationCatalog,
 } from "../kb-curation.js";
 import { subscribeKbCurationSse } from "../kb-curation-sse.js";
-import { actorOf, attachUser, requireAdmin } from "../middleware/auth.js";
+import { actorOf, attachUser, isVisitor, requireAdmin } from "../middleware/auth.js";
 import { assertProject } from "../storage.js";
 
 function param(req: { params: Record<string, string | string[] | undefined> }, key: string) {
@@ -46,6 +46,9 @@ export const kbCurationRouter = Router({ mergeParams: true });
 kbCurationRouter.use(attachUser);
 
 kbCurationRouter.get("/", async (req, res) => {
+  if (isVisitor(req)) {
+    return res.status(403).json({ error: "Portfólio visitante ainda em configuração" });
+  }
   const project = assertProject(param(req, "slug"));
   const catalog = await readKbCurationCatalog(project);
   res.json({
@@ -132,6 +135,9 @@ kbCurationRouter.put("/:prNumber", requireAdmin, async (req, res) => {
 });
 
 kbCurationRouter.get("/stream", (req, res) => {
+  if (isVisitor(req)) {
+    return res.status(403).json({ error: "Portfólio visitante ainda em configuração" });
+  }
   const project = assertProject(param(req, "slug"));
   // Conexão longa: desliga timeout do socket.
   req.socket.setTimeout(0);

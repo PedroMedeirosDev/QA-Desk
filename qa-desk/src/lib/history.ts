@@ -1,10 +1,30 @@
 import type { HistoryEntry } from "@/types/test-record";
 import { normalizeMaestroOutput } from "@/lib/maestro-output";
+import type { AutomationRunner } from "@/lib/automation-runners";
 
 const RUN_ACTIONS = new Set(["test_run", "automation_passed", "automation_failed"]);
 
 export function countTestRuns(history: HistoryEntry[]): number {
   return history.filter((h) => RUN_ACTIONS.has(h.action)).length;
+}
+
+/** Conta execuções atribuíveis ao runner (via meta.via / meta.runner). */
+export function countTestRunsForRunner(
+  history: HistoryEntry[],
+  runner: AutomationRunner,
+): number {
+  return history.filter((h) => {
+    if (!RUN_ACTIONS.has(h.action)) return false;
+    const via = h.meta?.via ?? h.meta?.runner;
+    if (typeof via !== "string") {
+      // Legado sem via → conta só no Maestro
+      return runner === "maestro";
+    }
+    if (runner === "playwright") {
+      return via === "playwright" || via.includes("playwright");
+    }
+    return via === "maestro" || via === "playwright+maestro";
+  }).length;
 }
 
 export function historyActionLabel(action: string): string {

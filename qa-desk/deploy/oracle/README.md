@@ -43,18 +43,19 @@ No subnet / VCN security list da VM, adicione:
 3. **SQL Editor** → rode também [`../../supabase/migrations/002_rls_prisma_tables.sql`](../../supabase/migrations/002_rls_prisma_tables.sql) (liga RLS nas tabelas Prisma; evita o alerta *Table publicly accessible*).
 4. **Authentication → Users** → Add user:
    - admin (seu e-mail)
-   - visitor (ex. `visitante@qa-desk.local` + senha forte)
-4. SQL:
+   - visitor (ex. `visitante@qa-desk.local` + senha forte — a mesma de `VITE_VISITOR_PASSWORD` no `.env`)
+5. SQL:
 
 ```sql
 update public.profiles set role = 'admin' where email = 'SEU_EMAIL';
+update public.profiles set role = 'visitor' where email = 'visitante@qa-desk.local';
 ```
 
-5. **API keys** — Project Settings → **API Keys** (ou botão **Connect** no topo):
+6. **API keys** — Project Settings → **API Keys** (ou botão **Connect** no topo):
    - Project URL → `VITE_SUPABASE_URL` / `SUPABASE_URL`
    - Publishable **ou** legado `anon` → `VITE_SUPABASE_ANON_KEY` / `SUPABASE_ANON_KEY`
    - Secret **ou** legado `service_role` → `SUPABASE_SERVICE_ROLE_KEY`
-6. **Postgres** — botão **Connect** no topo do projeto (URI):
+7. **Postgres** — botão **Connect** no topo do projeto (URI):
    - Transaction pooler (`:6543`) → `DATABASE_URL`
    - Session pooler ou Direct → `DIRECT_URL` (em VM IPv4, preferir Session pooler; Direct free costuma ser IPv6)
 
@@ -72,7 +73,7 @@ cd ~/QA-Desk/qa-desk
 bash deploy/oracle/setup-vm.sh
 
 cp .env.production.example .env
-nano .env   # cole URL, keys, DATABASE_URL, DIRECT_URL
+nano .env   # cole URL, keys, DATABASE_URL, DIRECT_URL, VITE_VISITOR_*
 
 npm ci
 npx prisma migrate deploy
@@ -107,7 +108,7 @@ No Supabase → Authentication → URL Configuration, adicione a URL do site em 
 ## 5. Smoke
 
 - `/login` com admin → CRUD ok
-- login visitor → só itens com `showInPortfolio`
+- botão / login visitor → só tela de boas-vindas (sem Curadoria KB / CTs)
 - `/api/health` → `"auth":"supabase"`, `"automationRun":false`, e com agente: `"agentOnline"` / `"agentConfigured"`
 
 ## Atualizar depois de um push

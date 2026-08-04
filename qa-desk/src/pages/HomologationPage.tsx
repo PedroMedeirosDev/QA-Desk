@@ -797,6 +797,7 @@ export function HomologationPage({
                           {hasAny && (
                             <div className="mt-1">
                               <AutomationReadinessBadge
+                                runner={runner}
                                 record={{
                                   automation: {
                                     type: runner === "playwright" ? "playwright" : "maestro",
@@ -827,14 +828,39 @@ export function HomologationPage({
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              "rounded-full border px-2 py-0.5 text-xs",
-                              statusTone(item.status),
-                            )}
-                          >
-                            {HOMOLOGATION_LABELS[item.status]}
-                          </span>
+                          {(() => {
+                            let label = HOMOLOGATION_LABELS[item.status];
+                            let status: HomologationStatus = item.status;
+                            if (runner === "playwright") {
+                              const st = item.playwrightLastRunStatus;
+                              if (st === "success") {
+                                status = "passou";
+                                label = "Passou";
+                              } else if (st === "failed") {
+                                status = "falhou";
+                                label = "Falhou";
+                              } else {
+                                status = "pendente";
+                                label = "Pendente";
+                              }
+                            } else if (item.maestroLastRunStatus === "success") {
+                              status = "passou";
+                              label = "Passou";
+                            } else if (item.maestroLastRunStatus === "failed") {
+                              status = "falhou";
+                              label = "Falhou";
+                            }
+                            return (
+                              <span
+                                className={cn(
+                                  "rounded-full border px-2 py-0.5 text-xs",
+                                  statusTone(status),
+                                )}
+                              >
+                                {label}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-3 tabular-nums text-center">
                           {item.runsInHomologation || "—"}

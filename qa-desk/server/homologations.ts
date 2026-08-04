@@ -290,6 +290,9 @@ export function computeHomologationProgress(
       runsInHomologation,
       lastRunAt:
         test?.automation?.lastRunAt ?? test?.automation?.playwright?.lastRunAt,
+      playwrightLastRunAt: test?.automation?.playwright?.lastRunAt,
+      maestroLastRunStatus: test?.automation?.lastRunStatus,
+      playwrightLastRunStatus: test?.automation?.playwright?.lastRunStatus,
       found: Boolean(test),
       hasAutomation: hasMaestro || hasPlaywright,
       hasMaestro,
