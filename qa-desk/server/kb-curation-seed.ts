@@ -255,7 +255,9 @@ export function initialKbCurationCatalog(project: ProjectSlug): KbCurationCatalo
       version: "1.1.0",
       updatedAt: "2026-07-21",
       project,
-      repository: REPOSITORY,
+      // Só o projeto Polygonus rastreia a KB; desk/anihype não herdam o repo
+      // (senão o webhook GitHub atualiza o catálogo errado).
+      ...(project === "polygonus" ? { repository: REPOSITORY } : {}),
     },
     pullRequests,
   };

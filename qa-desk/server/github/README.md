@@ -44,6 +44,11 @@ Em desenvolvimento local, use um túnel (ex.: Cloudflare Tunnel / ngrok) apontan
 
 O handler valida `X-Hub-Signature-256`, responde 200 na hora e aplica o sync do PR com debounce (evita rajadas de `synchronize`).
 
+### Mapeamento repo → projeto
+
+O webhook usa um mapa **explícito** (`polygonus-br/polygonus-suporte-kb` → `polygonus`).  
+Não inferir pelo `meta.repository` de todos os catálogos — no passado o seed colocava o repo da KB também em `desk`/`anihype`, e o webhook atualizava o projeto errado (merges pareciam “aceitos” mas não mudavam a Curadoria Polygonus).
+
 ### 4. Oracle / produção — `gh` obrigatório
 
 O sync (botão **e** o trabalho do webhook em background) usa o **GitHub CLI**:

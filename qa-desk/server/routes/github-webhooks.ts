@@ -5,12 +5,21 @@ import {
   writeKbCurationCatalog,
 } from "../kb-curation.js";
 import { syncSingleKbPullRequest } from "../github/kb-pull-requests.js";
-import { PROJECTS, type ProjectSlug } from "../types.js";
+import { type ProjectSlug } from "../types.js";
 
 type RequestWithRawBody = Request & { rawBody?: Buffer };
 
 const debounceMs = Number(process.env.GITHUB_WEBHOOK_DEBOUNCE_MS ?? 1500);
 const pending = new Map<string, NodeJS.Timeout>();
+
+/**
+ * Mapa explícito repo GitHub → projeto do Desk.
+ * NÃO inferir pelo seed de todos os projetos — desk/anihype herdavam o
+ * repository da KB e o webhook atualizava o catálogo errado (merges viravam no-op).
+ */
+const REPOSITORY_TO_PROJECT: Record<string, ProjectSlug> = {
+  "polygonus-br/polygonus-suporte-kb": "polygonus",
+};
 
 export function isKbGithubWebhookConfigured(): boolean {
   return Boolean(process.env.GITHUB_WEBHOOK_SECRET?.trim());
@@ -25,17 +34,13 @@ function verifySignature(rawBody: Buffer, signatureHeader: string | undefined, s
   return timingSafeEqual(expected, received);
 }
 
-async function findProjectByRepository(
+function projectForRepository(
   fullName: string,
-): Promise<{ project: ProjectSlug; repository: string } | null> {
-  const normalized = fullName.toLowerCase();
-  for (const project of PROJECTS) {
-    const catalog = await readKbCurationCatalog(project.slug);
-    if (catalog.meta.repository?.toLowerCase() === normalized) {
-      return { project: project.slug, repository: catalog.meta.repository };
-    }
-  }
-  return null;
+): { project: ProjectSlug; repository: string } | null {
+  const normalized = fullName.trim().toLowerCase();
+  const project = REPOSITORY_TO_PROJECT[normalized];
+  if (!project) return null;
+  return { project, repository: fullName };
 }
 
 function shouldHandleEvent(event: string, action: string | undefined): boolean {
@@ -57,7 +62,7 @@ function shouldHandleEvent(event: string, action: string | undefined): boolean {
 }
 
 async function applyPrUpdate(repository: string, prNumber: number) {
-  const match = await findProjectByRepository(repository);
+  const match = projectForRepository(repository);
   if (!match) {
     console.info(`[kb-webhook] repo ${repository} não mapeado na Curadoria — ignorado`);
     return { ok: true, skipped: true as const };
@@ -75,6 +80,11 @@ async function applyPrUpdate(repository: string, prNumber: number) {
     catalog.pullRequests = result.records;
     catalog.meta.updatedAt = result.at.slice(0, 10);
     await writeKbCurationCatalog(match.project, catalog, { sseReason: "webhook" });
+    console.info(
+      `[kb-webhook] #${prNumber} → ${match.project} changed=${result.changed} imported=${result.imported}`,
+    );
+  } else {
+    console.info(`[kb-webhook] #${prNumber} → ${match.project} sem alteração`);
   }
 
   return {
