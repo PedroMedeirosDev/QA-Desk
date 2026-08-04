@@ -143,6 +143,7 @@ export function ProjectSidebar({
     <aside
       className={cn(
         "sidebar-nav relative flex shrink-0 border-b border-border bg-slate-50 transition-[width,height] duration-200 ease-in-out dark:bg-zinc-950/80 md:h-full md:flex-col md:border-b-0 md:border-r",
+        "animate-fade-in-up-soft opacity-0",
         collapsed
           ? "h-14 w-full flex-row overflow-visible md:h-full md:w-[4.5rem] md:flex-col"
           : "w-full flex-col overflow-hidden md:w-64",
@@ -159,12 +160,10 @@ export function ProjectSidebar({
       >
         {collapsed ? (
           <CollapsedTooltip label="QA Desk">
-            <div className="rounded-lg bg-zinc-950 p-1 dark:bg-transparent dark:p-0">
-              <BrandLogo size="icon" className="object-left" />
-            </div>
+            <BrandLogo size="icon" />
           </CollapsedTooltip>
         ) : (
-          <div className="flex min-h-14 min-w-0 flex-1 items-center rounded-lg bg-zinc-950 px-2 py-1.5 dark:bg-transparent dark:px-0 dark:py-0">
+          <div className="flex min-h-14 min-w-0 flex-1 items-center">
             <BrandLogo size="sidebar" />
           </div>
         )}

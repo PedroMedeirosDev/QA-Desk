@@ -1,7 +1,7 @@
 import { Github, Instagram, Linkedin, Youtube } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const SOCIAL_LINKS = [
+export const SOCIAL_LINKS = [
   {
     label: "LinkedIn",
     href: "https://www.linkedin.com/in/pedroo-medeiross/",
@@ -78,10 +78,10 @@ export function Footer({ className, variant = "default" }: FooterProps) {
         className,
       )}
     >
-      <div className="flex flex-col items-center gap-4 px-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="flex w-full flex-col items-center gap-4 px-4 text-[0.875rem] text-gray-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <p className="text-center sm:text-left">
           Desenvolvido por{" "}
-          <span className="font-medium text-foreground/90">Pedro Medeiros</span>
+          <span className="font-medium text-gray-300">Pedro Medeiros</span>
           {" "}
           — 2026
         </p>

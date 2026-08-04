@@ -108,7 +108,11 @@ export function DashboardPage({ project }: { project: ProjectSlug }) {
   }
 
   if (loading) {
-    return <p className="text-muted-foreground">Carregando dashboard…</p>;
+    return (
+      <p className="animate-fade-in-up-soft text-muted-foreground opacity-0">
+        Carregando dashboard…
+      </p>
+    );
   }
 
   const hom = metrics.primaryHomologation;
@@ -199,7 +203,7 @@ export function DashboardPage({ project }: { project: ProjectSlug }) {
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="animate-fade-in-up-soft grid gap-3 opacity-0 sm:grid-cols-2">
         <MetricCard
           label="Bugs abertos"
           value={metrics.bugsOpen}

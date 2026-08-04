@@ -127,7 +127,9 @@ export function BugListPage({
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                  Nenhum bug neste canal.
+                  <span className="animate-fade-in-up-soft inline-block opacity-0">
+                    Nenhum bug neste canal.
+                  </span>
                 </td>
               </tr>
             ) : (

@@ -4,6 +4,7 @@ import type {
   KbCurationStatus,
   KbCurationVerdict,
 } from "@/types/kb-curation";
+import { QA_DESK_MARK_SVG } from "@/config/brand";
 import { maskPii } from "@/lib/redact-pii";
 
 const STATUS_LABELS: Record<KbCurationStatus, string> = {
@@ -212,6 +213,18 @@ export function buildKbCurationHtmlReport(
       line-height: 1.5;
     }
     .wrap { max-width: 1040px; margin: 0 auto; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 1.1rem;
+    }
+    .brand-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-name span { color: #dc2626; }
     h1 { margin: 0; font-size: 1.6rem; }
     h2 { margin: 1.75rem 0 .75rem; color: var(--accent); font-size: 1.05rem; }
     h3 { margin: 0 0 .3rem; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
@@ -278,6 +291,10 @@ export function buildKbCurationHtmlReport(
 </head>
 <body>
   <main class="wrap">
+    <div class="brand">
+      ${QA_DESK_MARK_SVG}
+      <div class="brand-name">QA<span>Desk</span></div>
+    </div>
     <h1>Relatório de Curadoria da Base de Conhecimento</h1>
     <p class="subtitle">
       Repositório: <strong>${esc(repository)}</strong> · Gerado em ${esc(fmtDate(generatedAt))} · ${esc(author)}

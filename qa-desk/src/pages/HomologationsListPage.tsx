@@ -338,7 +338,9 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  Nenhuma homologação neste filtro.
+                  <span className="animate-fade-in-up-soft inline-block opacity-0">
+                    Nenhuma homologação neste filtro.
+                  </span>
                 </td>
               </tr>
             ) : (

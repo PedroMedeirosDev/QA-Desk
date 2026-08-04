@@ -42,7 +42,7 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
       aria-live="assertive"
       className={cn(
         "pointer-events-auto flex w-full max-w-md gap-3 rounded-lg border px-4 py-3 backdrop-blur-sm",
-        "translate-x-0 opacity-100 transition-all duration-300",
+        "animate-fade-in-up-soft opacity-0",
         styles.container,
       )}
     >

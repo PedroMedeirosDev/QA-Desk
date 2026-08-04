@@ -555,12 +555,14 @@ export function TestListPage({
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center">
-                  <p className="text-muted-foreground">Nenhum teste neste canal.</p>
-                  {routeChannel && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {EMPTY_CHANNEL_HINT[routeChannel]}
-                    </p>
-                  )}
+                  <div className="animate-fade-in-up-soft opacity-0">
+                    <p className="text-muted-foreground">Nenhum teste neste canal.</p>
+                    {routeChannel && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {EMPTY_CHANNEL_HINT[routeChannel]}
+                      </p>
+                    )}
+                  </div>
                 </td>
               </tr>
             ) : (

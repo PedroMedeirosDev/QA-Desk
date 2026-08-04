@@ -1,8 +1,25 @@
 import { useState, type FormEvent } from "react";
+import { Eye } from "lucide-react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
-import { Footer } from "@/components/Footer";
+import { SOCIAL_LINKS } from "@/components/Footer";
+import { cn } from "@/lib/utils";
+
+const INPUT_CLASS =
+  "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none transition-all placeholder:text-zinc-500 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/30";
+
+const SHELL_CLASS =
+  "login-surface relative flex h-dvh min-h-0 flex-col overflow-hidden bg-[#0a0a0a]";
+
+function Spotlight() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_40%,rgba(43,115,235,0.16)_0%,rgba(10,10,10,0.85)_50%,#0a0a0a_100%)]"
+    />
+  );
+}
 
 export function LoginPage() {
   const { ready, authEnabled, session, signIn } = useAuth();
@@ -13,15 +30,16 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [visitorNotice, setVisitorNotice] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   if (!ready) {
     return (
-      <div className="login-surface flex min-h-dvh flex-col">
+      <div className={SHELL_CLASS}>
+        <Spotlight />
         <div className="flex flex-1 items-center justify-center text-sm text-zinc-400">
           Carregando…
         </div>
-        <Footer className="login-footer border-zinc-800/80 bg-transparent" />
       </div>
     );
   }
@@ -33,6 +51,7 @@ export function LoginPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setVisitorNotice(false);
     setSubmitting(true);
     try {
       await signIn(email.trim(), password);
@@ -44,62 +63,153 @@ export function LoginPage() {
     }
   }
 
+  function onVisitorClick() {
+    setError(null);
+    setVisitorNotice(true);
+  }
+
   return (
-    <div className="login-surface relative flex min-h-dvh flex-col">
-      <div className="flex flex-1 items-center justify-center px-4 py-10">
-        <div className="login-card w-full max-w-md rounded-2xl border border-red-600/35 bg-zinc-950/90 p-8 backdrop-blur-sm">
-          <div className="flex flex-col items-center text-center">
-            <BrandLogo size="xl" className="mb-5 drop-shadow-[0_0_28px_rgba(220,38,38,0.25)]" />
-            <h1 className="text-2xl font-semibold tracking-tight text-white">Entrar</h1>
-            <p className="mt-1.5 max-w-xs text-sm text-zinc-500">
-              Acesso admin ou visitante (portfólio).
-            </p>
-            <p className="mt-3 max-w-sm rounded-md border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs leading-relaxed text-amber-100/90">
-              Portfólio visitante em construção — ainda sem casos públicos. Em breve.
-            </p>
-          </div>
+    <div className={SHELL_CLASS}>
+      <Spotlight />
 
-          <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-zinc-400">E-mail</span>
-              <input
-                type="email"
-                autoComplete="username"
-                required
-                className="w-full rounded-md border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-red-600 focus:outline-none focus:ring-1 focus:ring-red-600"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-zinc-400">Senha</span>
-              <input
-                type="password"
-                autoComplete="current-password"
-                required
-                className="w-full rounded-md border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-red-600 focus:outline-none focus:ring-1 focus:ring-red-600"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </label>
-
-            {error && (
-              <p className="rounded-md border border-red-500/40 bg-red-950/50 px-3 py-2 text-sm text-red-400">
-                {error}
-              </p>
+      <div className="relative z-0 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-6 sm:px-6">
+        <div
+          className={cn(
+            "animate-fade-in-up grid w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 shadow-2xl opacity-0",
+            "bg-black/40 backdrop-blur-xl",
+            "md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]",
+          )}
+        >
+          {/* Painel da marca */}
+          <aside
+            className={cn(
+              "relative flex flex-col justify-between gap-8 overflow-hidden px-6 py-7 sm:px-8 sm:py-8",
+              "bg-linear-to-br from-[#1c1c1c] to-[#0a0a0a]",
+              "border-b border-white/10 md:border-b-0 md:border-r",
             )}
+          >
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-32 -left-32 size-96 rounded-full bg-red-600/10 blur-[100px]"
+            />
+
+            <div className="relative">
+              <BrandLogo size="lg" className="text-white" />
+              <h1 className="mt-6 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                Homologação e testes
+              </h1>
+              <p className="mt-2 max-w-xs text-sm leading-relaxed text-gray-400">
+                Portfólio QA — cases, curadoria KB e automação em um só lugar.
+              </p>
+              <p className="mt-4 inline-block w-fit rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[0.875rem] text-gray-400">
+                Portfólio visitante em construção — em breve.
+              </p>
+            </div>
+
+            <nav
+              aria-label="Redes sociais"
+              className="relative flex items-center gap-6"
+            >
+              {SOCIAL_LINKS.map(({ label, href, icon: Icon, className }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  title={label}
+                  className={cn(
+                    "text-gray-500 transition-all duration-300 hover:-translate-y-1",
+                    className,
+                  )}
+                >
+                  <Icon className="size-6" strokeWidth={1.75} />
+                </a>
+              ))}
+            </nav>
+          </aside>
+
+          {/* Formulário */}
+          <section className="flex flex-col justify-center px-6 py-7 sm:px-8 sm:py-8">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                Bem-vindo
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">Acesse o QA Desk</p>
+            </div>
+
+            <form className="mt-6 space-y-3.5" onSubmit={onSubmit}>
+              <label className="block space-y-1 text-left">
+                <span className="text-[0.8125rem] font-medium text-zinc-400">E-mail</span>
+                <input
+                  type="email"
+                  autoComplete="username"
+                  required
+                  className={INPUT_CLASS}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
+              <label className="block space-y-1 text-left">
+                <span className="text-[0.8125rem] font-medium text-zinc-400">Senha</span>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className={INPUT_CLASS}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </label>
+
+              {error && (
+                <p className="rounded-lg border border-red-500/40 bg-red-950/50 px-3 py-2 text-sm text-red-400">
+                  {error}
+                </p>
+              )}
+
+              {visitorNotice && (
+                <p className="rounded-lg border border-blue-500/20 bg-blue-900/10 px-3 py-2 text-[0.8125rem] text-blue-300">
+                  Acesso visitante ainda em preparação. Use o login admin por enquanto.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full rounded-lg bg-white py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submitting ? "Entrando…" : "Entrar"}
+              </button>
+            </form>
+
+            <div className="my-4 flex items-center gap-3 text-[0.75rem] text-zinc-600">
+              <span className="h-px flex-1 bg-white/10" />
+              ou
+              <span className="h-px flex-1 bg-white/10" />
+            </div>
 
             <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-md border-2 border-red-600 bg-transparent px-3 py-3 text-sm font-semibold text-red-500 transition-all duration-300 hover:bg-red-600 hover:text-white hover:shadow-[0_0_20px_rgba(220,38,38,0.35)] disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+              onClick={onVisitorClick}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
             >
-              {submitting ? "Entrando…" : "Entrar"}
+              <Eye className="size-3.5 shrink-0 opacity-80" strokeWidth={1.75} />
+              Acessar como visitante
             </button>
-          </form>
+          </section>
         </div>
+
+        <p
+          className="animate-fade-in-up mt-5 text-center text-[0.75rem] text-gray-500"
+          style={{ animationDelay: "0.2s", opacity: 0 }}
+        >
+          Desenvolvido por{" "}
+          <span className="font-medium text-gray-400">Pedro Medeiros</span>
+          {" "}
+          — 2026
+        </p>
       </div>
-      <Footer className="login-footer border-zinc-800/80 bg-transparent" />
     </div>
   );
 }

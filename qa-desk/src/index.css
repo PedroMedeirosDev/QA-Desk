@@ -235,26 +235,13 @@
     letter-spacing: 0.04em;
   }
 
-  /* Login — textura técnica + gradiente radial */
+  /* Login — grid sutil + spotlight frio (aura Polygonus / SaaS) */
   .login-surface {
-    background-color: #050505;
+    background-color: #0a0a0a;
     background-image:
-      radial-gradient(ellipse 80% 55% at 50% 18%, rgba(220, 38, 38, 0.14), transparent 55%),
-      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(220, 38, 38, 0.06), transparent 50%),
       linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-    background-size:
-      auto,
-      auto,
-      28px 28px,
-      28px 28px;
-  }
-
-  .login-card {
-    box-shadow:
-      0 0 0 1px rgba(220, 38, 38, 0.22),
-      0 24px 48px -12px rgba(0, 0, 0, 0.75),
-      0 0 40px rgba(220, 38, 38, 0.1);
+    background-size: 1.75rem 1.75rem;
   }
 
   /* Contêiner principal — brilho contextual do projeto */
@@ -342,5 +329,71 @@
 
   .login-footer span {
     @apply text-zinc-200;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(1.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeInUpSoft {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /** Entrada mais curta (shell, toast, KPI, empty) */
+  .animate-fade-in-up-soft {
+    animation: fadeInUpSoft 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animation-delay-80 {
+    animation-delay: 0.08s;
+  }
+
+  .animation-delay-150 {
+    animation-delay: 0.15s;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-up,
+    .animate-fade-in-up-soft,
+    .animate-fade-in {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 }

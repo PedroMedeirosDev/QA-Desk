@@ -67,7 +67,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+            className="animate-fade-in absolute inset-0 bg-black/60 opacity-0 backdrop-blur-[2px]"
             aria-label="Fechar"
             onClick={() => close(false)}
           />
@@ -76,7 +76,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             aria-modal="true"
             aria-labelledby="qa-confirm-title"
             aria-describedby={opts.description ? "qa-confirm-desc" : undefined}
-            className="relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-2xl"
+            className="animate-fade-in-up relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-5 opacity-0 shadow-2xl"
           >
             <h2 id="qa-confirm-title" className="text-base font-semibold text-foreground">
               {opts.title}
