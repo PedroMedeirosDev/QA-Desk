@@ -17,7 +17,7 @@ export function VisitorWelcomePage() {
       <div className="animate-fade-in-up flex max-w-md flex-col items-center gap-5 opacity-0">
         <BrandLogo size="lg" className="text-foreground" />
 
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-200">
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-600/35 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 dark:border-amber-500/35 dark:bg-amber-500/15 dark:text-amber-200">
           <Construction className="size-3.5 shrink-0" strokeWidth={2} />
           Perfil em configuração
         </div>
