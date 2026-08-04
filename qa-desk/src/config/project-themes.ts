@@ -52,6 +52,18 @@ export const PROJECT_THEMES = {
     logoRingOffset: "ring-offset-slate-50 dark:ring-offset-zinc-950",
     sidebarBg: "bg-pink-50 dark:bg-pink-900/40",
   },
+  /** Projeto QA Desk (dogfood) — marca vermelha */
+  desk: {
+    accent: "#ef4444",
+    highlight: "#dc2626",
+    sidebarCardBg: "bg-red-50 dark:bg-red-950/35",
+    mainContentGlow: "#ef4444",
+    sidebarText: "text-red-950 dark:text-red-100",
+    sidebarBorder: "border-red-300 dark:border-red-500/45",
+    cardShadow: "0 0 20px rgba(220, 38, 38, 0.18)",
+    logoRingOffset: "ring-offset-slate-50 dark:ring-offset-zinc-950",
+    sidebarBg: "bg-red-50 dark:bg-red-950/35",
+  },
   /** Padrão QA Desk — cartão inativo / shell neutra */
   qaDesk: {
     accent: "#ef4444",
@@ -69,5 +81,6 @@ export const PROJECT_THEMES = {
 export function resolveProjectTheme(id: ActiveProjectId): ProjectThemeTokens {
   if (id === "polygonus") return PROJECT_THEMES.polygonus;
   if (id === "anihype") return PROJECT_THEMES.anihype;
+  if (id === "desk") return PROJECT_THEMES.desk;
   return PROJECT_THEMES.qaDesk;
 }

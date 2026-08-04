@@ -1,4 +1,4 @@
-type ProjectSlug = "polygonus" | "anihype";
+type ProjectSlug = "polygonus" | "anihype" | "desk";
 
 interface HistoryEntry {
   at: string;

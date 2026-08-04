@@ -92,6 +92,23 @@
   --brand-muted: #1a2d52;
 }
 
+[data-theme="desk"] {
+  --brand: #ef4444;
+  --brand-muted: #450a0a;
+  --project-accent: #ef4444;
+  --ring: #ef4444;
+}
+
+:root:not(.dark)[data-theme="desk"],
+:root:not(.dark) [data-theme="desk"] {
+  --brand-muted: #fef2f2;
+}
+
+.dark[data-theme="desk"],
+.dark [data-theme="desk"] {
+  --brand-muted: #450a0a;
+}
+
 [data-theme="anihype"] {
   --brand: #ff0080;
   --brand-muted: #1a0010;

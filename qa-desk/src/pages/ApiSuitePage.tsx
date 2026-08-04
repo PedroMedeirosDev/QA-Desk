@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlaskConical, Loader2, Play, Terminal } from "lucide-react";
+import { getProject } from "@/config/projects";
 import { api, type ApiSuiteRunResult, type ApiSuiteStatus } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { ProjectSlug } from "@/types/test-record";
@@ -9,7 +10,18 @@ function formatWhen(iso?: string) {
   return new Date(iso).toLocaleString("pt-BR");
 }
 
+function suiteHint(project: ProjectSlug): string {
+  if (project === "polygonus") {
+    return "Roda a collection, resume o relatório e guarda o log fiel do Newman. Auth gestão CQ (SUPPETER).";
+  }
+  if (project === "desk") {
+    return "Dogfood do próprio Desk: sobe a API mock (porta 3011), roda Newman e guarda o log fiel.";
+  }
+  return "Roda a collection, resume o relatório e guarda o log fiel do Newman.";
+}
+
 export function ApiSuitePage({ project }: { project: ProjectSlug }) {
+  const projectLabel = getProject(project)?.label ?? project;
   const [suites, setSuites] = useState<ApiSuiteStatus[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,32 +30,38 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
   const [result, setResult] = useState<ApiSuiteRunResult | null>(null);
   const [showRaw, setShowRaw] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.listApiSuites(project);
-      setSuites(res.suites);
-      setSelectedId((prev) => {
-        if (prev && res.suites.some((s) => s.id === prev)) return prev;
-        const preferred =
-          res.suites.find((s) => s.id === project) ?? res.suites[0] ?? null;
-        return preferred?.id ?? null;
-      });
-      const preferred =
-        res.suites.find((s) => s.id === project)?.lastRun ??
-        res.suites.find((s) => s.id === "desk")?.lastRun ??
-        null;
-      if (preferred) setResult(preferred);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha ao listar suites");
-    } finally {
-      setLoading(false);
-    }
-  }, [project]);
+  const load = useCallback(
+    async (preferId?: string | null) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await api.listApiSuites(project);
+        setSuites(res.suites);
+        const next =
+          preferId && res.suites.some((s) => s.id === preferId)
+            ? preferId
+            : (res.suites.find((s) => s.id === project) ?? res.suites[0])?.id ??
+              null;
+        setSelectedId(next);
+        setResult(res.suites.find((s) => s.id === next)?.lastRun ?? null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Falha ao listar suites");
+        setSuites([]);
+        setSelectedId(null);
+        setResult(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [project],
+  );
 
   useEffect(() => {
-    void load();
+    setShowRaw(false);
+    setError(null);
+    setSelectedId(null);
+    setResult(null);
+    void load(null);
   }, [load]);
 
   const selected = suites.find((s) => s.id === selectedId) ?? null;
@@ -56,12 +74,19 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
     try {
       const res = await api.runApiSuite(project, selectedId);
       setResult(res);
-      await load();
+      await load(selectedId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao rodar suite");
     } finally {
       setRunning(false);
     }
+  }
+
+  function selectSuite(s: ApiSuiteStatus) {
+    setSelectedId(s.id);
+    setResult(s.lastRun ?? null);
+    setShowRaw(false);
+    setError(null);
   }
 
   return (
@@ -73,11 +98,10 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
             Suite API (Newman / Postman)
           </p>
           <h2 className="mt-1 text-xl font-semibold tracking-tight">
-            Collections por projeto
+            Collections — {projectLabel}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Roda a collection, mastiga o relatório (padrão) e guarda o log fiel do
-            Newman. Polygonus usa auth da amostra (SUPPETER).
+            {suiteHint(project)}
           </p>
         </div>
         <button
@@ -102,6 +126,10 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando suites…</p>
+      ) : suites.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+          Nenhuma collection neste projeto ainda.
+        </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {suites.map((s) => {
@@ -110,10 +138,7 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
               <button
                 key={s.id}
                 type="button"
-                onClick={() => {
-                  setSelectedId(s.id);
-                  if (s.lastRun) setResult(s.lastRun);
-                }}
+                onClick={() => selectSuite(s)}
                 className={cn(
                   "rounded-xl border p-4 text-left transition-colors",
                   active
@@ -152,7 +177,7 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
         </div>
       )}
 
-      {result && (
+      {result && result.suiteId === selectedId && (
         <section className="space-y-4 rounded-xl border border-border bg-card/60 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-semibold">
