@@ -1,4 +1,4 @@
-import { authHeaders } from "@/lib/auth-token";
+import { authHeaders, getAccessToken } from "@/lib/auth-token";
 import type { TestCatalog, TestRecord, ProjectSlug } from "@/types/test-record";
 import type { Homologation, HomologationProgress, HomologationWithProgress } from "@/types/homologation";
 import type {
@@ -131,8 +131,13 @@ export const api = {
     return res.json();
   },
 
-  evidenceUrl: (storageKey: string) =>
-    `/api/evidence/${storageKey.replace(/^uploads\//, "")}`,
+  evidenceUrl: (storageKey: string) => {
+    const path = `/api/evidence/${storageKey.replace(/^uploads\//, "")}`;
+    const token = getAccessToken();
+    if (!token) return path;
+    const sep = path.includes("?") ? "&" : "?";
+    return `${path}${sep}access_token=${encodeURIComponent(token)}`;
+  },
 
   listFlows: (project: ProjectSlug, module?: string) => {
     const q = module ? `?module=${module}` : "";

@@ -54,7 +54,12 @@ Pasta no repo: `qa-desk/` · package npm: `qa-desk` · remoto: [QA-Desk](https:/
 | `/api/projects/:slug/suite-api` | Newman (admin) |
 | `/api/evidence/...` | Arquivos em `data/uploads/` |
 
-Visitante: mutações / automation / Curadoria KB → 403. GET de testes ainda pode filtrar `showInPortfolio` (quando o portfólio público existir).
+Visitante (API):
+- `rejectVisitorMutations` — só GET/HEAD/OPTIONS (403 genérico em mutação)
+- Testes: filtro hardcoded `showInPortfolio === true` + `sanitizeVisitorData` (PII)
+- Homologações / KB / Suite API / Automação: `forbidVisitor` ou `requireAdmin`
+- Evidências: autenticadas; visitante só sob CT público
+- UI: só `VisitorWelcomePage` até o portfólio rico (`VISION.md`)
 
 ## Dados
 

@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { cn } from "@/lib/utils";
 import { getBundledLogoUrl } from "@/config/logos";
 
@@ -45,9 +46,11 @@ export function ProjectLogo({ logoFile, label, className, size = "md", style }: 
 
   if (isQaDeskBrand(logoFile)) {
     return (
-      <span className={cn("inline-flex", sizeClass[size], className)} title={label} style={style}>
-        <BrandLogo markOnly size={BRAND_SIZE[size]} className="h-full w-full justify-center" />
-      </span>
+      <PremiumTooltip label={label} side="top">
+        <span className={cn("inline-flex", sizeClass[size], className)} style={style}>
+          <BrandLogo markOnly size={BRAND_SIZE[size]} className="h-full w-full justify-center" />
+        </span>
+      </PremiumTooltip>
     );
   }
 
@@ -67,17 +70,18 @@ export function ProjectLogo({ logoFile, label, className, size = "md", style }: 
 
   if (failed) {
     return (
-      <span
-        className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-lg border bg-muted font-semibold uppercase text-muted-foreground",
-          sizeClass[size],
-          size === "sm" ? "text-xs" : "text-sm",
-          className,
-        )}
-        title={label}
-      >
-        {label.slice(0, 2)}
-      </span>
+      <PremiumTooltip label={label} side="top">
+        <span
+          className={cn(
+            "inline-flex shrink-0 items-center justify-center rounded-lg border bg-muted font-semibold uppercase text-muted-foreground",
+            sizeClass[size],
+            size === "sm" ? "text-xs" : "text-sm",
+            className,
+          )}
+        >
+          {label.slice(0, 2)}
+        </span>
+      </PremiumTooltip>
     );
   }
 

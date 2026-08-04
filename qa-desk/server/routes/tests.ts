@@ -17,8 +17,13 @@ import {
   attachUser,
   filterPortfolioReports,
   isVisitor,
+  rejectVisitorMutations,
   requireAdmin,
 } from "../middleware/auth.js";
+import {
+  sanitizeVisitorCatalog,
+  sanitizeVisitorTestRecord,
+} from "../privacy/sanitize-visitor.js";
 import type { EvidenceFile, TestRecord } from "../types.js";
 import {
   CT_DRAFT_EXAMPLE,
@@ -55,15 +60,18 @@ const upload = multer({
 export const testsRouter = Router({ mergeParams: true });
 
 testsRouter.use(attachUser);
+testsRouter.use(rejectVisitorMutations);
 
 testsRouter.get("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const catalog = await readCatalog(project);
   if (isVisitor(req)) {
-    return res.json({
+    // showInPortfolio é hardcoded no backend — nunca ler de query/body
+    const filtered = {
       ...catalog,
       reports: filterPortfolioReports(catalog.reports, true),
-    });
+    };
+    return res.json(sanitizeVisitorCatalog(filtered));
   }
   res.json(catalog);
 });
@@ -91,8 +99,11 @@ testsRouter.get("/:id", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const test = (await readCatalog(project)).reports.find((r) => r.id === param(req, "id"));
   if (!test) return res.status(404).json({ error: "Teste não encontrado" });
-  if (isVisitor(req) && !test.showInPortfolio) {
-    return res.status(404).json({ error: "Teste não encontrado" });
+  if (isVisitor(req)) {
+    if (!test.showInPortfolio) {
+      return res.status(404).json({ error: "Teste não encontrado" });
+    }
+    return res.json(sanitizeVisitorTestRecord(test));
   }
   res.json(test);
 });

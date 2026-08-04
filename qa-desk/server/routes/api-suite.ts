@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { attachUser, requireAdmin } from "../middleware/auth.js";
+import { attachUser, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
 import {
   getSuiteStatus,
   readManifest,
@@ -11,6 +11,7 @@ import { assertProject } from "../storage.js";
 export const apiSuiteRouter = Router({ mergeParams: true });
 
 apiSuiteRouter.use(attachUser);
+apiSuiteRouter.use(rejectVisitorMutations);
 apiSuiteRouter.use(requireAdmin);
 
 /** Suites disponíveis só para o projeto da rota. */

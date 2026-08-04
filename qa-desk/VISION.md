@@ -27,11 +27,18 @@ Hoje só há **cópia de texto** para colar no Discord.
 
 ### 2. Portfólio visitante rico
 
-Hoje o visitante só vê a welcome page. Próximo passo:
+Hoje o visitante só vê a welcome page. **API já está blindada** para o próximo passo:
 
-- Liberar cases com `showInPortfolio=true` (sem PII)
+- GET de testes: só `showInPortfolio === true` (hardcoded no backend) + `sanitizeVisitorData`
+- Mutações: `rejectVisitorMutations` → 403
+- Homologações / KB / Suite API / Automação: bloqueadas ao visitante
+- Evidências: autenticadas; visitante só sob CT público
+
+Próximo passo de UI:
+
+- Liberar cases com `showInPortfolio=true` (payload já sanitizado)
 - Campos opcionais `portfolio.headline` / `summary`
-- View limpa (sem homologação interna / Curadoria KB)
+- View limpa (sem homologação interna / Curadoria KB) + `visitor-ui.ts` (inputs read-only)
 - Revisar evidências antes de marcar no portfólio
 
 ### 3. Notificações na UI

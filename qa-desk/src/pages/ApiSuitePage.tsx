@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FlaskConical, Loader2, PanelRightOpen, Play } from "lucide-react";
 import { ApiSuiteResultDrawer } from "@/components/ApiSuiteResultDrawer";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { getProject } from "@/config/projects";
 import { api, type ApiSuiteRunResult, type ApiSuiteStatus } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
@@ -181,21 +182,22 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            disabled={!selectedId}
-            onClick={() => setDrawerOpen(true)}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
-              selectedId
-                ? "border-border bg-card/60 text-foreground hover:bg-muted"
-                : "cursor-not-allowed border-border bg-muted text-muted-foreground",
-            )}
-            title="Abrir painel de resultado"
-          >
-            <PanelRightOpen className="size-4" />
-            Resultado
-          </button>
+          <PremiumTooltip label="Abrir painel de resultado" side="bottom">
+            <button
+              type="button"
+              disabled={!selectedId}
+              onClick={() => setDrawerOpen(true)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
+                selectedId
+                  ? "border-border bg-card/60 text-foreground hover:bg-muted"
+                  : "cursor-not-allowed border-border bg-muted text-muted-foreground",
+              )}
+            >
+              <PanelRightOpen className="size-4" />
+              Resultado
+            </button>
+          </PremiumTooltip>
           <button
             type="button"
             disabled={!selected?.ready || running || loading}

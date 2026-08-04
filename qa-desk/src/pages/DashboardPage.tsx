@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { DailySummaryPanel } from "@/components/DailySummaryPanel";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { api } from "@/lib/api";
 import { computeDashboardMetrics } from "@/lib/dashboard-metrics";
 import {
@@ -235,14 +236,16 @@ export function DashboardPage({ project }: { project: ProjectSlug }) {
                     {f.module} · {f.suite} · {f.testKey ?? f.id}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate(projectDetailPath(project, f.id, "app"))}
-                  className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  title="Abrir"
-                >
-                  <ExternalLink className="size-4" />
-                </button>
+                  <PremiumTooltip label="Abrir" side="top" align="end">
+                    <button
+                      type="button"
+                      onClick={() => navigate(projectDetailPath(project, f.id, "app"))}
+                      className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      aria-label="Abrir"
+                    >
+                      <ExternalLink className="size-4" />
+                    </button>
+                  </PremiumTooltip>
               </li>
             ))}
           </ul>

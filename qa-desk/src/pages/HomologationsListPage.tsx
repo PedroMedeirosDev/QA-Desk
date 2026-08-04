@@ -23,6 +23,7 @@ import {
   type ProductChannel,
 } from "@/config/channels";
 import { MURAL_HOMOLOGATION_SLUG } from "@/config/homologations";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import type { ProjectSlug } from "@/types/test-record";
 import {
   CHANGE_SCOPE_LABELS,
@@ -400,38 +401,52 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1">
-                        <button
-                          type="button"
-                          title="Abrir"
-                          onClick={() => navigate(projectHomologationPath(project, h.slug))}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        >
-                          <ExternalLink className="size-4" />
-                        </button>
-                        {h.status !== "concluida" ? (
+                        <PremiumTooltip label="Abrir" side="top" align="end">
                           <button
                             type="button"
-                            title={
+                            aria-label="Abrir"
+                            onClick={() => navigate(projectHomologationPath(project, h.slug))}
+                            className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          >
+                            <ExternalLink className="size-4" />
+                          </button>
+                        </PremiumTooltip>
+                        {h.status !== "concluida" ? (
+                          <PremiumTooltip
+                            label={
                               allPassed
                                 ? "Marcar como concluída"
                                 : "Concluir (nem todos passaram)"
                             }
-                            disabled={busy}
-                            onClick={() => void setStatus(h.slug, "concluida", h)}
-                            className="rounded p-1.5 text-muted-foreground hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
+                            side="top"
+                            align="end"
                           >
-                            <CheckCircle2 className="size-4" />
-                          </button>
+                            <button
+                              type="button"
+                              aria-label={
+                                allPassed
+                                  ? "Marcar como concluída"
+                                  : "Concluir (nem todos passaram)"
+                              }
+                              disabled={busy}
+                              onClick={() => void setStatus(h.slug, "concluida", h)}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="size-4" />
+                            </button>
+                          </PremiumTooltip>
                         ) : (
-                          <button
-                            type="button"
-                            title="Reabrir"
-                            disabled={busy}
-                            onClick={() => void setStatus(h.slug, "em_andamento", h)}
-                            className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-                          >
-                            <RotateCcw className="size-4" />
-                          </button>
+                          <PremiumTooltip label="Reabrir" side="top" align="end">
+                            <button
+                              type="button"
+                              aria-label="Reabrir"
+                              disabled={busy}
+                              onClick={() => void setStatus(h.slug, "em_andamento", h)}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+                            >
+                              <RotateCcw className="size-4" />
+                            </button>
+                          </PremiumTooltip>
                         )}
                       </div>
                     </td>

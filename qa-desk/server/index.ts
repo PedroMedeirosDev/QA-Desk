@@ -19,6 +19,7 @@ import { agentRouter } from "./routes/agent.js";
 import { kbCurationRouter } from "./routes/kb-curation.js";
 import { dailySummaryRouter } from "./routes/daily-summary.js";
 import { apiSuiteRouter } from "./routes/api-suite.js";
+import { evidenceRouter } from "./routes/evidence.js";
 import {
   githubWebhooksRouter,
   isKbGithubWebhookConfigured,
@@ -139,10 +140,7 @@ app.use("/api/projects/:slug/automation", automationRouter);
 app.use("/api/projects/:slug/api-suite", apiSuiteRouter);
 app.use("/api/agent", agentRouter);
 
-app.use(
-  "/api/evidence",
-  express.static(path.join(__dirname, "../data/uploads"), { fallthrough: true }),
-);
+app.use("/api/evidence", evidenceRouter);
 
 if (IS_PROD && fs.existsSync(DIST)) {
   app.use(express.static(DIST));

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CalendarDays, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { DatePicker } from "@/components/DatePicker";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { api } from "@/lib/api";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { toastErrorMessage, useToast } from "@/lib/toast";
@@ -270,14 +271,16 @@ export function DailySummaryPanel({ project }: { project: ProjectSlug }) {
             max={todaySaoPaulo()}
             onChange={setDate}
           />
-          <button
-            type="button"
-            onClick={() => void loadDay()}
-            className={cn(actionBtnBase, actionBtn.back, "px-2")}
-            title="Atualizar"
-          >
-            <RefreshCw className="size-3.5" />
-          </button>
+          <PremiumTooltip label="Atualizar" side="bottom">
+            <button
+              type="button"
+              onClick={() => void loadDay()}
+              className={cn(actionBtnBase, actionBtn.back, "px-2")}
+              aria-label="Atualizar"
+            >
+              <RefreshCw className="size-3.5" />
+            </button>
+          </PremiumTooltip>
         </div>
       </div>
 
