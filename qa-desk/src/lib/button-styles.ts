@@ -37,4 +37,8 @@ export const actionBtn = {
 } as const;
 
 export const actionBtnBase =
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors h-9 px-4";
+  "inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors outline-none";
+
+/** Anel de foco teclado (espelha a regra global em index.css). */
+export const focusRingClass =
+  "outline-none focus-visible:ring-[0.125rem] focus-visible:ring-[var(--project-highlight-bg)] focus-visible:ring-offset-[0.125rem] focus-visible:ring-offset-[var(--background)]";

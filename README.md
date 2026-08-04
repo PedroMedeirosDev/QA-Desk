@@ -24,7 +24,8 @@ Detalhes: [`projects/README.md`](projects/README.md)
 |--------------|-----|
 | **`projects/`** | Um diretório por cliente/produto (cases, automação, evidência) |
 | **`shared/`** | Templates e recursos comuns |
-| **`qa-desk/`** | App web — [`ARCHITECTURE.md`](qa-desk/ARCHITECTURE.md) · [`DEPLOY.md`](qa-desk/DEPLOY.md) · [`VISION.md`](qa-desk/VISION.md) |
+| [`docs/COLORS.md`](qa-desk/docs/COLORS.md) | Cores: marca, projetos, claro/escuro |
+| **`qa-desk/`** | App web — [`ARCHITECTURE.md`](qa-desk/ARCHITECTURE.md) · [`DEPLOY.md`](qa-desk/DEPLOY.md) · [`VISION.md`](qa-desk/VISION.md) · [`docs/COLORS.md`](qa-desk/docs/COLORS.md) |
 | **`scripts/`** | Utilitários locais (ex. sync repos empresa) |
 | **`polygonus-mobile/`**, **`polygonus-react/`**, … | Clones locais (gitignored — não versionar) |
 

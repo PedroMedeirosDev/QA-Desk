@@ -1,4 +1,5 @@
 import { MonitorSmartphone, Smartphone } from "lucide-react";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { cn } from "@/lib/utils";
 import {
   AUTOMATION_RUNNER_SHORT,
@@ -29,35 +30,32 @@ export function SuiteRunnerToggle({
     >
       {(
         [
-          { id: "maestro" as const, icon: Smartphone },
-          { id: "playwright" as const, icon: MonitorSmartphone },
+          { id: "maestro" as const, icon: Smartphone, tip: "Emulador / Maestro" },
+          { id: "playwright" as const, icon: MonitorSmartphone, tip: "Web / Playwright" },
         ] as const
-      ).map(({ id, icon: Icon }) => {
+      ).map(({ id, icon: Icon, tip }) => {
         const active = value === id;
         return (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={active}
-            title={
-              id === "maestro"
-                ? "Emulador / Maestro"
-                : "Web / Playwright"
-            }
-            onClick={() => onChange(id)}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-[5px] font-medium transition-colors",
-              pad,
-              active
-                ? id === "maestro"
-                  ? "bg-emerald-500/20 text-emerald-300"
-                  : "bg-sky-500/20 text-sky-300"
-                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-            )}
-          >
-            <Icon className={size === "xs" ? "size-3" : "size-3.5"} />
-            {AUTOMATION_RUNNER_SHORT[id]}
-          </button>
+          <PremiumTooltip key={id} label={tip}>
+            <button
+              type="button"
+              aria-pressed={active}
+              aria-label={tip}
+              onClick={() => onChange(id)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-[5px] font-medium transition-colors",
+                pad,
+                active
+                  ? id === "maestro"
+                    ? "bg-emerald-500/20 text-emerald-300"
+                    : "bg-sky-500/20 text-sky-300"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+              )}
+            >
+              <Icon className={size === "xs" ? "size-3" : "size-3.5"} />
+              {AUTOMATION_RUNNER_SHORT[id]}
+            </button>
+          </PremiumTooltip>
         );
       })}
     </div>

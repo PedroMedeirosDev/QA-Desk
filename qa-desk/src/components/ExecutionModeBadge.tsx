@@ -1,4 +1,5 @@
 import { Bot, Hand } from "lucide-react";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { cn } from "@/lib/utils";
 import {
   EXECUTION_MODE_LABELS,
@@ -18,21 +19,26 @@ export function ExecutionModeBadge({
 }) {
   const mode = getExecutionMode(record);
   const Icon = mode === "automated" ? Bot : Hand;
+  const tip =
+    mode === "automated"
+      ? "Teste com flow Maestro/Playwright"
+      : "Teste executado manualmente";
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-        mode === "automated"
-          ? "border-sky-400/20 bg-[#1a1a1a] text-sky-400"
-          : "border-gray-700 bg-[#1a1a1a] text-gray-400",
-        className,
-      )}
-      title={mode === "automated" ? "Teste com flow Maestro/Playwright" : "Teste executado manualmente"}
-    >
-      {showIcon && <Icon className="size-3 shrink-0" strokeWidth={2} />}
-      {EXECUTION_MODE_LABELS[mode]}
-    </span>
+    <PremiumTooltip label={tip}>
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+          mode === "automated"
+            ? "border-sky-400/20 bg-[#1a1a1a] text-sky-400"
+            : "border-gray-700 bg-[#1a1a1a] text-gray-400",
+          className,
+        )}
+      >
+        {showIcon && <Icon className="size-3 shrink-0" strokeWidth={2} />}
+        {EXECUTION_MODE_LABELS[mode]}
+      </span>
+    </PremiumTooltip>
   );
 }
 

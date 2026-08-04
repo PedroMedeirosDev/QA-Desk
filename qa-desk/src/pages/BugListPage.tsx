@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bug, ExternalLink, Plus } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
+import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
 import { api } from "@/lib/api";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import {
@@ -138,9 +139,11 @@ export function BugListPage({
                 return (
                   <tr
                     key={r.id}
-                    className="cursor-pointer border-b last:border-0 hover:bg-muted/40 select-none"
+                    className={cn(
+                      "cursor-pointer select-none border-b last:border-0",
+                      tableRowHoverClass,
+                    )}
                     onClick={() => openDetail(r.id, r)}
-                    title="Clique para abrir"
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium">{r.title}</p>
@@ -172,14 +175,16 @@ export function BugListPage({
                         : "—"}
                     </td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        title="Abrir"
-                        onClick={() => openDetail(r.id, r)}
-                        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      >
-                        <ExternalLink className="size-4" />
-                      </button>
+                      <PremiumTooltip label="Abrir" align="end">
+                        <button
+                          type="button"
+                          aria-label="Abrir"
+                          onClick={() => openDetail(r.id, r)}
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <ExternalLink className="size-4" />
+                        </button>
+                      </PremiumTooltip>
                     </td>
                   </tr>
                 );

@@ -8,6 +8,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
+import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
 import { ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
 import { SuiteListControls } from "@/components/SuiteListControls";
 import { api } from "@/lib/api";
@@ -788,7 +789,10 @@ export function HomologationPage({
                           item.hasAutomation,
                       );
                       return (
-                      <tr key={item.testKey} className="border-b last:border-0">
+                      <tr
+                        key={item.testKey}
+                        className={cn("border-b last:border-0", tableRowHoverClass)}
+                      >
                         <td className="px-4 py-3 pl-8">
                           <p className="font-medium">{item.title}</p>
                           <p className="font-mono text-xs text-muted-foreground">
@@ -868,42 +872,53 @@ export function HomologationPage({
                         <td className="px-4 py-3">
                           {item.testId && (
                             <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                title="Abrir teste"
-                                onClick={() =>
-                                  navigate(
-                                    projectDetailPath(
-                                      project,
-                                      item.testId!,
-                                      homologation.channel,
-                                    ),
-                                  )
-                                }
-                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                              >
-                                <ExternalLink className="size-4" />
-                              </button>
-                              <button
-                                type="button"
-                                title={
+                              <PremiumTooltip label="Abrir teste" align="end">
+                                <button
+                                  type="button"
+                                  aria-label="Abrir teste"
+                                  onClick={() =>
+                                    navigate(
+                                      projectDetailPath(
+                                        project,
+                                        item.testId!,
+                                        homologation.channel,
+                                      ),
+                                    )
+                                  }
+                                  className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                >
+                                  <ExternalLink className="size-4" />
+                                </button>
+                              </PremiumTooltip>
+                              <PremiumTooltip
+                                align="end"
+                                label={
                                   canRun
                                     ? `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
                                     : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
                                 }
-                                disabled={
-                                  runningAll ||
-                                  liveRunning ||
-                                  runningId === item.testId ||
-                                  !canRun
-                                }
-                                onClick={() =>
-                                  void runTest(item.testId!, item.title, runner)
-                                }
-                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
                               >
-                                <Play className="size-4" />
-                              </button>
+                                <button
+                                  type="button"
+                                  aria-label={
+                                    canRun
+                                      ? `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
+                                      : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
+                                  }
+                                  disabled={
+                                    runningAll ||
+                                    liveRunning ||
+                                    runningId === item.testId ||
+                                    !canRun
+                                  }
+                                  onClick={() =>
+                                    void runTest(item.testId!, item.title, runner)
+                                  }
+                                  className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
+                                >
+                                  <Play className="size-4" />
+                                </button>
+                              </PremiumTooltip>
                             </div>
                           )}
                         </td>

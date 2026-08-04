@@ -77,6 +77,13 @@ Com `DATABASE_URL` (+ `DIRECT_URL` para migrate), a API usa Postgres. `bugs.json
 
 Sem essas vars: modo mock admin (dev / Maestro local).
 
+## UI / design tokens
+
+- Shell: sidebar `16rem` + header `4rem` + conteúdo `flex-1` (`App.tsx`)
+- Highlights: `--project-highlight-bg|text|border` por `data-theme` (`index.css`)
+- Componentes: `PremiumTooltip`, `DesignCheckbox`, userbar ghost + tooltips
+- Global: scrollbar WebKit, `::selection` temática, `focus-visible` em controles
+
 ## Discord hoje
 
 - Existe: botão **Copiar report Discord** (clipboard)

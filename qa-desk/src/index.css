@@ -167,13 +167,17 @@
 @layer base {
   * {
     @apply border-border;
-    scrollbar-width: thin;
-    scrollbar-color: #262626 transparent;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: "Segoe UI", system-ui, sans-serif;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent; /* slate-300 */
+  }
+
+  .dark body {
+    scrollbar-color: #3f3f46 transparent; /* zinc-700 */
   }
 
   input,
@@ -186,10 +190,16 @@
     background-color: color-mix(in srgb, var(--muted) 55%, transparent);
   }
 
-  /* Scrollbar — tema escuro (Windows / WebKit) */
+  /* Seleção de texto — cores do projeto ativo */
+  ::selection {
+    background-color: var(--project-highlight-bg);
+    color: var(--project-highlight-text);
+  }
+
+  /* Scrollbar custom (WebKit / Chromium / Windows) */
   ::-webkit-scrollbar {
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 0.375rem;
+    height: 0.375rem;
   }
 
   ::-webkit-scrollbar-track {
@@ -197,13 +207,48 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #262626;
+    background: #cbd5e1; /* slate-300 */
     border-radius: 9999px;
-    border: 0.125rem solid #0d0d0d;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #404040;
+    background: #94a3b8; /* slate-400 */
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #3f3f46; /* zinc-700 */
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #52525b; /* zinc-600 */
+  }
+
+  /* Focus acessível — teclado only (não no clique do mouse) */
+  :where(
+    a,
+    button,
+    input,
+    textarea,
+    select,
+    summary,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus {
+    outline: none;
+  }
+
+  :where(
+    a,
+    button,
+    input,
+    textarea,
+    select,
+    summary,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline: 0.125rem solid var(--project-highlight-bg);
+    outline-offset: 0.125rem;
   }
 }
 
