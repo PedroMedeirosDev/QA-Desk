@@ -13,7 +13,7 @@ export const apiSuiteRouter = Router({ mergeParams: true });
 apiSuiteRouter.use(attachUser);
 apiSuiteRouter.use(requireAdmin);
 
-/** Suites disponíveis para o projeto (slug + desk dogfood). */
+/** Suites disponíveis só para o projeto da rota. */
 apiSuiteRouter.get("/", (req, res) => {
   try {
     const slug = assertProject(req.params.slug);
@@ -28,7 +28,6 @@ apiSuiteRouter.get("/:suiteId", (req, res) => {
   try {
     assertProject(req.params.slug);
     const suiteId = String(req.params.suiteId);
-    // Só permite suite do projeto ou desk
     const allowed = suitesForProject(String(req.params.slug)).some((s) => s.id === suiteId);
     if (!allowed) {
       res.status(404).json({ error: "Suite não disponível neste projeto" });

@@ -1,6 +1,6 @@
 import type { ProjectSlug } from "@/types/test-record";
 
-export type ProjectThemeId = "default" | "polygonus" | "anihype";
+export type ProjectThemeId = "default" | "desk" | "polygonus" | "anihype";
 
 export interface ProjectConfig {
   slug: ProjectSlug;
@@ -34,6 +34,37 @@ export interface ProjectConfig {
 }
 
 export const PROJECTS: ProjectConfig[] = [
+  {
+    slug: "desk",
+    label: "QA Desk",
+    logoFile: "qa_desk",
+    themeId: "desk",
+    accent: {
+      ring: "ring-red-500/40",
+      bg: "bg-red-950/40",
+      bgActive: "bg-red-900/30 text-red-400 border-red-500/35",
+      text: "text-red-400",
+      border: "border-red-500/35",
+      headerBar: "border-l-red-500",
+      contentFrame:
+        "border border-red-500/35 shadow-[inset_0_0_0_1px_rgba(220,38,38,0.12)]",
+      subNav: {
+        rail: "border-slate-200 dark:border-red-500/35",
+        active: "bg-red-100 font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300",
+        activeNested:
+          "bg-red-500/90 font-medium text-white shadow-sm border border-red-400/60",
+        hover:
+          "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-red-900/25 dark:hover:text-red-200",
+        idle: "text-slate-600 dark:text-slate-400",
+        homologationsIdle: "text-slate-600 dark:text-slate-400",
+        homologationsHover:
+          "hover:bg-red-500/80 hover:text-white hover:font-medium hover:border hover:border-red-400/50",
+        homologationsActive:
+          "bg-red-500 font-medium text-white shadow-sm border border-red-400/60",
+      },
+    },
+    description: "Portfólio & dogfood",
+  },
   {
     slug: "polygonus",
     label: "Polygonus",

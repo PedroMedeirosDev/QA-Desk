@@ -127,8 +127,8 @@ export function getSuiteStatus(suiteId: string) {
 
 export function suitesForProject(projectSlug: string): ApiSuiteManifest[] {
   const all = listSuiteIds().map((id) => readManifest(id));
-  // Suite do projeto + dogfood desk sempre listável
-  return all.filter((s) => s.id === projectSlug || s.id === "desk");
+  // Só suites cujo id (pasta) coincide com o slug do projeto
+  return all.filter((s) => s.id === projectSlug);
 }
 
 type NewmanJson = {

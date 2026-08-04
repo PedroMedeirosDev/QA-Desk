@@ -12,7 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_ROOT = path.join(__dirname, "../data/projects");
 const UPLOADS_ROOT = path.join(__dirname, "../data/uploads");
 
-const VALID_PROJECTS = new Set<ProjectSlug>(["polygonus", "anihype"]);
+const VALID_PROJECTS = new Set<ProjectSlug>(["polygonus", "anihype", "desk"]);
 
 export function assertProject(slug: string): ProjectSlug {
   if (!VALID_PROJECTS.has(slug as ProjectSlug)) {

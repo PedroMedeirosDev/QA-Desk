@@ -1,6 +1,6 @@
 import type { DetailedStep } from "./detailed-steps.js";
 
-export type ProjectSlug = "polygonus" | "anihype";
+export type ProjectSlug = "polygonus" | "anihype" | "desk";
 
 export type ProductChannel = "app" | "web" | "portal";
 
@@ -130,6 +130,7 @@ export interface TestCatalog {
 }
 
 export const PROJECTS: { slug: ProjectSlug; label: string }[] = [
+  { slug: "desk", label: "QA Desk" },
   { slug: "polygonus", label: "Polygonus" },
   { slug: "anihype", label: "Anihype" },
 ];

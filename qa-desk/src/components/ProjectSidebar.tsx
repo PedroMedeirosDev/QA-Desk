@@ -100,6 +100,14 @@ export function ProjectSidebar({
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [kbRereviewCount, setKbRereviewCount] = useState(0);
+  /** Submenu do projeto: expandido no ativo; clicar de novo no card recolhe. */
+  const [menuExpandedSlug, setMenuExpandedSlug] = useState<string | null>(
+    activeSlug ?? null,
+  );
+
+  useEffect(() => {
+    setMenuExpandedSlug(activeSlug ?? null);
+  }, [activeSlug]);
 
   useEffect(() => {
     try {
@@ -185,11 +193,16 @@ export function ProjectSidebar({
           const itemTheme = isSelected
             ? resolveProjectTheme(project.slug)
             : brandTheme;
-          const projectHref =
-            project.slug === "polygonus"
+          const isDesk = project.slug === "desk";
+          const projectHref = isDesk
+            ? projectApiSuitePath(project.slug)
+            : project.slug === "polygonus"
               ? projectListPath(project.slug, defaultChannel(project.slug))
               : projectListPath(project.slug);
-          const showChannels = !collapsed && isSelected && channels.length > 0;
+          const menuOpen = isSelected && menuExpandedSlug === project.slug;
+          const showChannels =
+            !collapsed && menuOpen && channels.length > 0 && !isDesk;
+          const showDeskSuiteOnly = !collapsed && menuOpen && isDesk;
           const themeSub = project.accent.subNav;
           const homPath = projectHomologationsListPath(project.slug);
           const dashPath = projectDashboardPath(project.slug);
@@ -203,6 +216,14 @@ export function ProjectSidebar({
           const projectCard = (
             <Link
               to={projectHref}
+              onClick={(e) => {
+                if (!isSelected) return;
+                // Já no projeto: só abre/fecha o submenu (não força nova navegação)
+                e.preventDefault();
+                setMenuExpandedSlug((prev) =>
+                  prev === project.slug ? null : project.slug,
+                );
+              }}
               className={cn(
                 "flex items-center rounded-xl border transition-all duration-300",
                 collapsed ? "justify-center p-2" : "gap-3 px-3 py-3",
@@ -220,6 +241,7 @@ export function ProjectSidebar({
                   : undefined
               }
               aria-current={isSelected && !activeChannel ? "page" : undefined}
+              aria-expanded={isSelected ? menuOpen : undefined}
             >
               <ProjectLogo
                 logoFile={project.logoFile}
@@ -270,6 +292,22 @@ export function ProjectSidebar({
                 <CollapsedTooltip label={project.label}>{projectCard}</CollapsedTooltip>
               ) : (
                 projectCard
+              )}
+
+              {showDeskSuiteOnly && (
+                <div className="ml-1 space-y-1 border-l border-border pl-3 pt-1 dark:border-zinc-800">
+                  <Link
+                    to={apiSuitePath}
+                    className={cn(
+                      "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
+                      homologationsLinkClass(themeSub, onApiSuite),
+                    )}
+                    aria-current={onApiSuite ? "page" : undefined}
+                  >
+                    <FlaskConical className="size-3.5 shrink-0 opacity-90" />
+                    Suite API
+                  </Link>
+                </div>
               )}
 
               {showChannels && sub && (
@@ -386,7 +424,27 @@ export function ProjectSidebar({
                 </div>
               )}
 
-              {collapsed && isSelected && sub && (
+              {collapsed && isSelected && isDesk && menuOpen && (
+                <CollapsedTooltip label="Suite API">
+                  <Link
+                    to={apiSuitePath}
+                    className={cn(
+                      "flex justify-center rounded-xl border px-2 py-2 transition-colors",
+                      onApiSuite
+                        ? cn(project.accent.subNav.homologationsActive)
+                        : cn(
+                            "border-transparent text-muted-foreground",
+                            project.accent.subNav.homologationsHover,
+                          ),
+                    )}
+                    aria-current={onApiSuite ? "page" : undefined}
+                  >
+                    <FlaskConical className="size-4" />
+                  </Link>
+                </CollapsedTooltip>
+              )}
+
+              {collapsed && isSelected && sub && !isDesk && menuOpen && (
                 <>
                   <CollapsedTooltip label="Dashboard">
                     <Link

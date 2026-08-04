@@ -1,6 +1,6 @@
 import type { DetailedStep } from "@/lib/detailed-steps";
 
-export type ProjectSlug = "polygonus" | "anihype";
+export type ProjectSlug = "polygonus" | "anihype" | "desk";
 
 export type ProductChannel = "app" | "web" | "portal";
 

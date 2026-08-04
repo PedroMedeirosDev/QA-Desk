@@ -112,6 +112,9 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
   const channels = getProjectChannels(project);
 
   if (!rest) {
+    if (project === "desk") {
+      return { view: "api-suite", redirectTo: projectApiSuitePath(project) };
+    }
     if (channels.length > 0) {
       return { view: "list", redirectTo: projectListPath(project, defaultChannel(project)) };
     }
@@ -169,9 +172,13 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
     return { view: "editor", channel, id: second, editorKind: "teste" };
   }
 
+  // Projetos sem canais (ex.: desk) — suite-api é a casa
+  if (first === "suite-api") return { view: "api-suite" };
+  if (project === "desk") {
+    return { view: "api-suite", redirectTo: projectApiSuitePath(project) };
+  }
   if (first === "dashboard") return { view: "dashboard" };
   if (first === "curadoria-kb") return { view: "kb-curation" };
-  if (first === "suite-api") return { view: "api-suite" };
   if (first === "homologacoes") return { view: "homologations-list" };
   if (first === "homologacao") {
     if (!second) {
