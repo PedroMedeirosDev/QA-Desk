@@ -60,6 +60,11 @@ async function main() {
       }
     }
 
+    // Curadoria Polygonus: se mesclada/revisada sem ator gravado, assume Pedro.
+    if (!next && (record.status === "mesclada" || record.verdict)) {
+      next = "Pedro";
+    }
+
     if (!next) continue;
     catalog.pullRequests[i] = { ...record, reviewer: next };
     fixed += 1;
