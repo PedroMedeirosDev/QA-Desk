@@ -161,7 +161,26 @@ Sidebar escura: `zinc-950/80` (`#09090bcc` aproximado).
 
 ---
 
-## 5. Cores semânticas de UI (status / ações)
+## 5. Highlights semânticos (`--project-highlight-*`)
+
+Usados em badge do visitante, nested da sidebar e item Homologações — definidos em `index.css` por `data-theme`:
+
+| Tema | Modo | bg | text | border |
+|------|------|-----|------|--------|
+| fallback | claro | `#f1f5f9` | `#0f172a` | `#e2e8f0` |
+| fallback | escuro | `#18181b` | `#f4f4f5` | `#27272a` |
+| polygonus | claro | `#fde68a` (amber-200) | `#141824` | `#fcd34d` |
+| polygonus | escuro | yellow~15% | `#e8e67a` | yellow~30% |
+| anihype | claro | `#fce7f3` | `#831843` | `#fbcfe8` |
+| anihype | escuro | fuchsia~15% | `#f0abfc` | fuchsia~30% |
+| desk | claro | `#fee2e2` | `#7f1d1d` | `#fecaca` |
+| desk | escuro | red~15% | `#fca5a5` | red~30% |
+
+Classes: `bg-[var(--project-highlight-bg)] text-[var(--project-highlight-text)] border-[var(--project-highlight-border)]`.
+
+---
+
+## 6. Cores semânticas de UI (status / ações)
 
 Usadas nas listas, badges e botões (independentes do projeto):
 
@@ -176,14 +195,11 @@ Usadas nas listas, badges e botões (independentes do projeto):
 | Destrutivo | `bg-red-600` texto branco | idem |
 | Primário neutro (Salvar) | fundo branco / texto preto | idem |
 
-Badge “Perfil em configuração” (visitante):
-
-- Claro: `bg-amber-100` + `text-amber-900` + borda `amber-600/35`
-- Escuro: `bg-amber-500/15` + `text-amber-200` + borda `amber-500/35`
+Badge “Perfil em configuração” (visitante): tokens `--project-highlight-*` (segue o `data-theme` do projeto ativo).
 
 ---
 
-## 6. Resumo rápido (hex)
+## 7. Resumo rápido (hex)
 
 ```
 QA Desk     accent #dc2626 (claro) / #ef4444 (escuro)
