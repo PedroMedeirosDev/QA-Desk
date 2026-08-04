@@ -1,6 +1,10 @@
-# Polygonus — suite API (amostra)
+# Polygonus — suite API (amostra CQ)
 
 Collection Newman para homologar a **Ficha Acadêmica** (e evoluir).
+
+Gestão CQ: `https://amostra.polygonus.com.br:8443/web/react/gestao/login`  
+Host CQ: até `:8443` (remove o path `/web/react/...`)  
+API: `https://amostra.polygonus.com.br:8443/api/v2`
 
 ## Fluxo
 

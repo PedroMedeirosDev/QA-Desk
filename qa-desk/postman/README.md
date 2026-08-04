@@ -29,7 +29,8 @@ Projeto → **Suite API** (`/projects/:slug/suite-api`):
 No `.env` do `qa-desk` (não commitar senha):
 
 ```
-POLY_API_BASE_URL=https://amostra.polygonus.com.br/api/v2
+# CQ: gestão …:8443/web/react/gestao — API = mesmo host + /api/v2
+POLY_API_BASE_URL=https://amostra.polygonus.com.br:8443/api/v2
 POLY_API_LOGIN=SUPPETER
 POLY_API_SENHA=...
 POLY_API_UNIDADE=Colégio Demonstração

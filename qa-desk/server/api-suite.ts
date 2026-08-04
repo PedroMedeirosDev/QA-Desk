@@ -200,7 +200,7 @@ function envOverridesForSuite(suite: ApiSuiteManifest): string[] {
   // Defaults sensatos se env não setou
   if (suite.id === "polygonus") {
     if (!process.env.POLY_API_BASE_URL) {
-      args.push("--env-var", "baseUrl=https://amostra.polygonus.com.br/api/v2");
+      args.push("--env-var", "baseUrl=https://amostra.polygonus.com.br:8443/api/v2");
     }
     if (!process.env.POLY_API_LOGIN) args.push("--env-var", "login=SUPPETER");
     if (!process.env.POLY_API_UNIDADE) {
