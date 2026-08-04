@@ -12,6 +12,7 @@ import {
   Save,
   Search,
 } from "lucide-react";
+import { useAuth } from "@/auth/AuthProvider";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { api } from "@/lib/api";
 import { downloadHtmlReport } from "@/lib/html-report";
@@ -174,7 +175,10 @@ function RecordEditor({
     record.solutionReview ?? record.summary ?? "",
   );
   const [corrections, setCorrections] = useState((record.corrections ?? []).join("\n"));
-  const [reviewer, setReviewer] = useState(record.reviewer ?? "");
+  const { user } = useAuth();
+  const [reviewer, setReviewer] = useState(
+    record.reviewer?.trim() || user?.actor || "",
+  );
 
   return (
     <div className="grid gap-4 border-t border-border bg-muted/20 p-4 lg:grid-cols-[1.15fr_0.85fr]">

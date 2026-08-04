@@ -137,7 +137,12 @@ export async function syncSingleKbPullRequest(
 
   const previous = records[index];
   let detail: GithubPrDetail | undefined;
-  if (needsReviewDetail(previous.status) && snapshot.state === "OPEN") {
+  const needDetailForReview =
+    needsReviewDetail(previous.status) && snapshot.state === "OPEN";
+  const needDetailForReviewer =
+    !previous.reviewer?.trim() &&
+    (snapshot.state === "MERGED" || snapshot.state === "OPEN");
+  if (needDetailForReview || needDetailForReviewer) {
     try {
       detail = await fetchPrDetail(repository, prNumber);
     } catch (error) {
@@ -173,6 +178,7 @@ function pickSyncFields(record: KbCurationRecord) {
     mergedAt: record.mergedAt,
     mergeCommitSha: record.mergeCommitSha,
     reviewedAt: record.reviewedAt,
+    reviewer: record.reviewer,
   };
 }
 

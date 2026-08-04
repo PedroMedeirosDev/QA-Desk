@@ -37,6 +37,14 @@ export const CURATOR_LOGINS = new Set(
   ["pedromedeirosdev", "cursoragent"].map((login) => login.toLowerCase()),
 );
 
+/** Login GitHub → nome curto na coluna Responsável da Curadoria. */
+export function reviewerDisplayFromGithubLogin(login?: string | null): string | undefined {
+  if (!login?.trim()) return undefined;
+  const key = login.trim().toLowerCase();
+  if (key === "pedromedeirosdev") return "Pedro";
+  return login.trim();
+}
+
 export function isCuratorHygieneCommit(commit: GithubPrCommit): boolean {
   const headline = commit.messageHeadline ?? "";
   if (/^kb:\s*id\b/i.test(headline) || /auto-ajuste de curadoria/i.test(headline)) {
@@ -121,7 +129,19 @@ export function applyGithubSnapshotToRecord(
   let nextStatus = record.status;
   let nextReviewedAt = record.reviewedAt;
   let nextVerdict = record.verdict;
+  let nextReviewer = record.reviewer?.trim() || undefined;
   let authorResponded = false;
+
+  const decisive = detail ? latestDecisiveReview(detail.reviews) : undefined;
+  if (!nextReviewer && decisive?.author?.login) {
+    nextReviewer = reviewerDisplayFromGithubLogin(decisive.author.login);
+  }
+  if (!nextReviewer && newlyMerged && detail) {
+    const approved = detail.reviews
+      .filter((review) => review.state === "APPROVED")
+      .sort((a, b) => Date.parse(b.submittedAt) - Date.parse(a.submittedAt))[0];
+    nextReviewer = reviewerDisplayFromGithubLogin(approved?.author?.login);
+  }
 
   if (stateChanged) {
     history.push({
@@ -157,7 +177,6 @@ export function applyGithubSnapshotToRecord(
     nextGithubState === "open" &&
     detail
   ) {
-    const decisive = latestDecisiveReview(detail.reviews);
     const baseline = newerIso(decisive?.submittedAt, record.reviewedAt);
 
     if (baseline) {
@@ -205,6 +224,7 @@ export function applyGithubSnapshotToRecord(
       githubState: nextGithubState,
       status: nextStatus,
       verdict: nextVerdict,
+      reviewer: nextReviewer,
       reviewedAt: nextReviewedAt,
       githubCreatedAt: pullRequest.createdAt,
       githubUpdatedAt: pullRequest.updatedAt,
