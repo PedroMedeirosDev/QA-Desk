@@ -2,6 +2,7 @@ import { ChevronDown, ChevronRight, Hammer, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MODULE_LABELS, SUITE_LABELS, type SuiteStats } from "@/lib/suite";
 import { SuiteRunnerToggle } from "@/components/SuiteRunnerToggle";
+import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
 import type { AutomationRunner } from "@/lib/automation-runners";
 
 function formatLastRun(iso?: string): string {
@@ -18,27 +19,27 @@ function formatLastRun(iso?: string): string {
 function PassRateBadge({ stats }: { stats: SuiteStats }) {
   if (stats.total === 0) {
     return (
-      <span
-        className="shrink-0 rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.6875rem] tabular-nums text-muted-foreground"
-        title="Nenhum teste neste runner"
-      >
-        —
-      </span>
+      <PremiumTooltip label="Nenhum teste neste runner">
+        <span className="shrink-0 rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.6875rem] tabular-nums text-muted-foreground">
+          —
+        </span>
+      </PremiumTooltip>
     );
   }
   return (
-    <span
-      className={cn(
-        "shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[0.6875rem] tabular-nums",
-        stats.tone === "ok" && "border-emerald-500/35 bg-emerald-500/10 text-emerald-400",
-        stats.tone === "fail" && "border-red-500/35 bg-red-500/10 text-red-400",
-        stats.tone === "mixed" && "border-amber-500/35 bg-amber-500/10 text-amber-300",
-        stats.tone === "neutral" && "border-border bg-muted text-muted-foreground",
-      )}
-      title={`${stats.passed} de ${stats.total} passou`}
-    >
-      {stats.passRatePct}%
-    </span>
+    <PremiumTooltip label={`${stats.passed} de ${stats.total} passou`}>
+      <span
+        className={cn(
+          "shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[0.6875rem] tabular-nums",
+          stats.tone === "ok" && "border-emerald-500/35 bg-emerald-500/10 text-emerald-400",
+          stats.tone === "fail" && "border-red-500/35 bg-red-500/10 text-red-400",
+          stats.tone === "mixed" && "border-amber-500/35 bg-amber-500/10 text-amber-300",
+          stats.tone === "neutral" && "border-border bg-muted text-muted-foreground",
+        )}
+      >
+        {stats.passRatePct}%
+      </span>
+    </PremiumTooltip>
   );
 }
 
@@ -87,22 +88,25 @@ function RunGroupButton({
   if (!onRun || stats.runnable <= 0) return null;
   const tool =
     runner === "playwright" ? "Playwright" : runner === "maestro" ? "Maestro" : "automação";
+  const tip = `Rodar ${actionLabel.toLowerCase()} ${label} (${stats.runnable} ${tool})`;
   return (
-    <button
-      type="button"
-      title={`Rodar ${actionLabel.toLowerCase()} ${label} (${stats.runnable} ${tool})`}
-      disabled={runDisabled}
-      onClick={onRun}
-      className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
-        "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/15",
-        "disabled:opacity-50",
-        running && "bg-emerald-500/15",
-      )}
-    >
-      <Play className="size-3.5" />
-      {actionLabel}
-    </button>
+    <PremiumTooltip label={tip} align="end">
+      <button
+        type="button"
+        aria-label={tip}
+        disabled={runDisabled}
+        onClick={onRun}
+        className={cn(
+          "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+          "border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/15",
+          "disabled:opacity-50",
+          running && "bg-emerald-500/15",
+        )}
+      >
+        <Play className="size-3.5" />
+        {actionLabel}
+      </button>
+    </PremiumTooltip>
   );
 }
 
@@ -159,7 +163,7 @@ function GroupHeaderRow({
           onClick={onToggle}
           className="flex min-w-0 items-center gap-2 text-left"
           aria-expanded={expanded}
-          title={expanded ? `Recolher ${name}` : `Expandir ${name}`}
+          aria-label={expanded ? `Recolher ${name}` : `Expandir ${name}`}
         >
           <Chevron className="size-4 shrink-0 text-muted-foreground" />
           <span className={titleClass}>{name}</span>
@@ -191,7 +195,7 @@ function GroupHeaderRow({
 
   if (variant === "homologation") {
     return (
-      <tr className={cn("border-b", rowBg)}>
+      <tr className={cn("border-b", rowBg, tableRowHoverClass)}>
         {titleCell}
         <td className="px-4 py-2.5">
           <ResultChips stats={stats} />
@@ -205,42 +209,41 @@ function GroupHeaderRow({
   }
 
   return (
-    <tr className={cn("border-b", rowBg)}>
+    <tr className={cn("border-b", rowBg, tableRowHoverClass)}>
       {titleCell}
       <td className="px-4 py-2.5">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {stats.runnable > 0 ? (
-            <span
-              className="rounded-full border border-sky-400/20 bg-[#1a1a1a] px-2 py-0.5 text-sky-400"
-              title={
+            <PremiumTooltip
+              label={
                 runner === "playwright"
                   ? "CTs com spec Playwright"
                   : "CTs com flow Maestro (executáveis). Inclui rascunho e estáveis."
               }
             >
-              {stats.runnable} {flowLabel}
-            </span>
+              <span className="rounded-full border border-sky-400/20 bg-[#1a1a1a] px-2 py-0.5 text-sky-400">
+                {stats.runnable} {flowLabel}
+              </span>
+            </PremiumTooltip>
           ) : (
             <span className="text-muted-foreground">
               {runner === "playwright" ? "Sem Playwright" : "Manual"}
             </span>
           )}
           {stats.draftCount > 0 && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-[#1a1a1a] px-2 py-0.5 text-amber-300"
-              title={`${stats.draftCount} ainda em rascunho`}
-            >
-              <Hammer className="size-3" />
-              {stats.draftCount} rascunho{stats.draftCount === 1 ? "" : "s"}
-            </span>
+            <PremiumTooltip label={`${stats.draftCount} ainda em rascunho`}>
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-[#1a1a1a] px-2 py-0.5 text-amber-300">
+                <Hammer className="size-3" />
+                {stats.draftCount} rascunho{stats.draftCount === 1 ? "" : "s"}
+              </span>
+            </PremiumTooltip>
           )}
           {stats.readyCount > 0 && stats.draftCount > 0 && (
-            <span
-              className="rounded-full border border-emerald-400/20 bg-[#1a1a1a] px-2 py-0.5 text-emerald-300"
-              title={`${stats.readyCount} validados`}
-            >
-              {stats.readyCount} estáve{stats.readyCount === 1 ? "l" : "is"}
-            </span>
+            <PremiumTooltip label={`${stats.readyCount} validados`}>
+              <span className="rounded-full border border-emerald-400/20 bg-[#1a1a1a] px-2 py-0.5 text-emerald-300">
+                {stats.readyCount} estáve{stats.readyCount === 1 ? "l" : "is"}
+              </span>
+            </PremiumTooltip>
           )}
         </div>
       </td>

@@ -4,6 +4,7 @@ import { ArrowLeft, Bug, Copy, Play, Plus, Smartphone, Sparkles, Trash2, Upload,
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
+import { DesignCheckbox } from "@/components/DesignCheckbox";
 import { api, type AutomationFlow, type AutomationSpec, type AndroidDeviceStatus } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { useRunProgress, QA_RUN_FINISHED_EVENT, type LiveRunState } from "@/lib/run-progress";
@@ -820,7 +821,7 @@ export function TestEditorPage({
             </div>
           </div>
 
-          <aside className="sticky top-8 max-h-[calc(100vh-4rem)] space-y-4 self-start overflow-y-auto rounded-xl border bg-card p-4 scrollbar-thin [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/60">
+          <aside className="sticky top-8 max-h-[calc(100vh-4rem)] space-y-4 self-start overflow-y-auto rounded-xl border bg-card p-4">
             {getProjectChannels(project).length > 0 && (
               <PropSelect
                 label="Canal"
@@ -881,21 +882,14 @@ export function TestEditorPage({
               onChange={(v) => update("platform", v as TestRecord["platform"])}
               disabled={!isAdmin}
             />
-            <label className="flex items-start gap-3 rounded-md border border-border bg-muted/20 px-3 py-2">
-              <input
-                type="checkbox"
-                className="mt-1"
-                checked={Boolean(form.showInPortfolio)}
-                disabled={!isAdmin}
-                onChange={(e) => update("showInPortfolio", e.target.checked)}
-              />
-              <span>
-                <span className="block text-sm font-medium">Mostrar no portfólio</span>
-                <span className="text-xs text-muted-foreground">
-                  Visitantes autenticados só veem itens marcados aqui.
-                </span>
-              </span>
-            </label>
+            <DesignCheckbox
+              className="rounded-md border border-border bg-muted/20 px-3 py-2"
+              checked={Boolean(form.showInPortfolio)}
+              disabled={!isAdmin}
+              onChange={(e) => update("showInPortfolio", e.target.checked)}
+              label={<span className="font-medium text-[var(--foreground)]">Mostrar no portfólio</span>}
+              description="Visitantes autenticados só veem itens marcados aqui."
+            />
             <Field label="Módulo">
               <input
                 className="w-full rounded-md border px-3 py-2 text-sm"
@@ -1170,29 +1164,22 @@ export function TestEditorPage({
                       {startingEmulator ? "Aguardando boot…" : "Ligar emulador"}
                     </button>
                   )}
-                  <label className="flex cursor-pointer items-start gap-2 rounded-md border px-2.5 py-2 text-xs text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      className="mt-0.5"
-                      checked={recordVideo}
-                      disabled={busyRun}
-                      onChange={(e) => {
-                        const on = e.target.checked;
-                        setRecordVideo(on);
-                        try {
-                          sessionStorage.setItem("qa-record-video", on ? "1" : "0");
-                        } catch {
-                          /* ignore */
-                        }
-                      }}
-                    />
-                    <span>
-                      <span className="font-medium text-foreground">Gravar vídeo</span>
-                      <span className="mt-0.5 block leading-snug">
-                        adb screenrecord em paralelo (chunks de ~3 min). Arquivos ficam em Evidência.
-                      </span>
-                    </span>
-                  </label>
+                  <DesignCheckbox
+                    className="rounded-md border px-2.5 py-2"
+                    checked={recordVideo}
+                    disabled={busyRun}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      setRecordVideo(on);
+                      try {
+                        sessionStorage.setItem("qa-record-video", on ? "1" : "0");
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    label={<span className="font-medium text-[var(--foreground)]">Gravar vídeo</span>}
+                    description="adb screenrecord em paralelo (chunks de ~3 min). Arquivos ficam em Evidência."
+                  />
                   <button
                     type="button"
                     onClick={() => void runAutomationStage("all", "maestro")}

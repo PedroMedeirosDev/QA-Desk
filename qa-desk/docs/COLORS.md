@@ -178,6 +178,8 @@ Usados em badge do visitante, nested da sidebar e item Homologações — defini
 
 Classes: `bg-[var(--project-highlight-bg)] text-[var(--project-highlight-text)] border-[var(--project-highlight-border)]`.
 
+Também usados em `::selection` (seleção de texto) e anéis `focus-visible`.
+
 ---
 
 ## 6. Cores semânticas de UI (status / ações)

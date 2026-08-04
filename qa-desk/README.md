@@ -105,6 +105,13 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 3. Flows: `projects/polygonus/automation/maestro/` · Playwright: `projects/polygonus/automation/playwright/`
 4. Na UI, toggle **Maestro | Playwright** por suite — progresso e rodadas são **por runner**
 
+## UI (design system)
+
+- Tokens por projeto: `--project-highlight-*` em [`docs/COLORS.md`](docs/COLORS.md) / `src/index.css`
+- Tooltips premium (`PremiumTooltip`) — sem `title` nativo nas tabelas/userbar
+- Checkbox do sistema (`DesignCheckbox`) — aparência própria, cores do tema
+- Scrollbar custom + `::selection` temática + focus-visible (teclado)
+
 ## Status
 
 - [x] CRUD + homologação + checklist Mural (nomes por suite)
@@ -116,6 +123,7 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 - [x] Login visitante → tela de boas-vindas (sem dados operacionais)
 - [x] Curadoria KB (SSE + webhook GitHub) — admin only
 - [x] Suite API na UI (Newman por projeto)
+- [x] Shell rígido + highlights CSS + polimento UI (tooltip / scrollbar / checkbox)
 - [x] Deploy Oracle — [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org)
 - [ ] Portfólio visitante rico (`showInPortfolio` + cases públicos) — ver [`VISION.md`](VISION.md)
 - [ ] Bot Discord — [`VISION.md`](VISION.md)

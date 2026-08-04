@@ -15,7 +15,10 @@ export function UserAvatar({ className }: { className?: string }) {
       <img
         src={src}
         alt={name}
-        className={cn("size-8 shrink-0 rounded-full border border-border object-cover", className)}
+        className={cn(
+          "size-8 shrink-0 rounded-full border border-border object-cover",
+          className,
+        )}
       />
     );
   }

@@ -4,6 +4,8 @@ import { Bug, ExternalLink, ListChecks, Play, Plus } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
+import { DesignCheckbox } from "@/components/DesignCheckbox";
+import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
 import { ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
 import { SuiteListControls } from "@/components/SuiteListControls";
 import { api } from "@/lib/api";
@@ -479,14 +481,11 @@ export function TestListPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           {homologationCount > 0 && (
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={campaignOnly}
-                onChange={(e) => setCampaignOnly(e.target.checked)}
-              />
-              Só homologações
-            </label>
+            <DesignCheckbox
+              checked={campaignOnly}
+              onChange={(e) => setCampaignOnly(e.target.checked)}
+              label="Só homologações"
+            />
           )}
           <span className="text-xs text-muted-foreground">
             {filtered.length} teste(s)
@@ -628,11 +627,11 @@ export function TestListPage({
                                   <tr
                                     key={r.id}
                                     className={cn(
-                                      "test-row cursor-pointer select-none transition-colors hover:bg-muted/50",
+                                      "test-row cursor-pointer select-none",
+                                      tableRowHoverClass,
                                       rowIdx % 2 === 1 && "bg-muted/25",
                                     )}
                                     onClick={() => openDetail(r.id)}
-                                    title="Clique para abrir"
                                   >
                                     <td className="px-4 py-2 pl-8">
                                       <p className="font-medium leading-snug">{r.title}</p>
@@ -693,28 +692,39 @@ export function TestListPage({
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       <div className="flex items-center gap-1">
-                                        <button
-                                          type="button"
-                                          title="Abrir"
-                                          onClick={() => openDetail(r.id)}
-                                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                        >
-                                          <ExternalLink className="size-4" />
-                                        </button>
-                                        {isAdmin && hasAny && (
+                                        <PremiumTooltip label="Abrir" align="end">
                                           <button
                                             type="button"
-                                            title={
+                                            aria-label="Abrir"
+                                            onClick={() => openDetail(r.id)}
+                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                          >
+                                            <ExternalLink className="size-4" />
+                                          </button>
+                                        </PremiumTooltip>
+                                        {isAdmin && hasAny && (
+                                          <PremiumTooltip
+                                            align="end"
+                                            label={
                                               canRun
                                                 ? `Executar (${AUTOMATION_RUNNER_SHORT[runner]})`
                                                 : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
                                             }
-                                            disabled={busy || !canRun}
-                                            onClick={(e) => void quickRun(e, r.id)}
-                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
                                           >
-                                            <Play className="size-4" />
-                                          </button>
+                                            <button
+                                              type="button"
+                                              aria-label={
+                                                canRun
+                                                  ? `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
+                                                  : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
+                                              }
+                                              disabled={busy || !canRun}
+                                              onClick={(e) => void quickRun(e, r.id)}
+                                              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
+                                            >
+                                              <Play className="size-4" />
+                                            </button>
+                                          </PremiumTooltip>
                                         )}
                                       </div>
                                     </td>
