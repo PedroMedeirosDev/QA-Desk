@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import { Info } from "lucide-react";
 import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
-import { Footer } from "@/components/Footer";
 import { UserBar } from "@/components/UserBar";
 import { AgentStatusBadge } from "@/components/AgentStatusBadge";
 import { ProjectLogo } from "@/components/ProjectLogo";
@@ -22,6 +22,9 @@ import { parseProjectRoute } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
 import type { ProjectSlug } from "@/types/test-record";
 
+const KB_CURATION_HELP =
+  "Stream SSE na página (atualiza sozinha) + webhook GitHub (GITHUB_WEBHOOK_SECRET). O botão de sync é catch-up. Setup: server/github/README.md.";
+
 function ProjectShell() {
   const { project: slugParam, "*": rest } = useParams();
   const slug = slugParam as ProjectSlug;
@@ -37,7 +40,7 @@ function ProjectShell() {
       <ProjectSidebar activeChannel={route.channel} />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="shrink-0 border-b border-border bg-card">
+        <header className="shrink-0 border-b border-border/60 bg-card dark:border-white/5">
           <div
             className="flex items-center justify-between gap-4 border-l-4 px-6 py-3 transition-colors duration-300"
             style={{ borderLeftColor: theme.highlight }}
@@ -66,26 +69,37 @@ function ProjectShell() {
                         ? "Bugs reportados"
                         : "Registro de Testes"}
                 </p>
-                <h1 className="truncate text-lg font-semibold">
-                  {route.view === "dashboard"
-                    ? "Visão geral QA"
-                    : route.view === "kb-curation"
-                      ? "Rastreabilidade da base de conhecimento"
-                    : route.view === "api-suite"
-                      ? "Newman / Postman"
-                    : route.view === "homologations-list"
-                      ? "Todas as seções"
-                      : route.view === "homologation"
-                        ? "Detalhe da campanha"
-                        : route.view === "bugs-list"
-                          ? (current?.label ?? slug)
-                          : (current?.label ?? slug)}
-                  {route.channel &&
-                    (route.view === "list" || route.view === "bugs-list") && (
-                      <span className="ml-2 text-red-500">
-                        · {CHANNEL_LABELS[route.channel]}
-                      </span>
-                    )}
+                <h1 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold">
+                  <span className="truncate">
+                    {route.view === "dashboard"
+                      ? "Visão geral QA"
+                      : route.view === "kb-curation"
+                        ? "Rastreabilidade da base de conhecimento"
+                      : route.view === "api-suite"
+                        ? "Newman / Postman"
+                      : route.view === "homologations-list"
+                        ? "Todas as seções"
+                        : route.view === "homologation"
+                          ? "Detalhe da campanha"
+                          : route.view === "bugs-list"
+                            ? (current?.label ?? slug)
+                            : (current?.label ?? slug)}
+                    {route.channel &&
+                      (route.view === "list" || route.view === "bugs-list") && (
+                        <span className="ml-2 text-red-500">
+                          · {CHANNEL_LABELS[route.channel]}
+                        </span>
+                      )}
+                  </span>
+                  {route.view === "kb-curation" && (
+                    <span
+                      className="inline-flex shrink-0 text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+                      title={KB_CURATION_HELP}
+                      aria-label={KB_CURATION_HELP}
+                    >
+                      <Info className="size-3.5" strokeWidth={1.75} />
+                    </span>
+                  )}
                 </h1>
               </div>
             </div>
@@ -132,8 +146,6 @@ function ProjectShell() {
             )}
           </div>
         </main>
-
-        <Footer />
       </div>
     </div>
   );

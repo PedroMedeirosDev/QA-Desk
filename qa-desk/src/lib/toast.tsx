@@ -16,6 +16,7 @@ export type Toast = {
   variant: ToastVariant;
   title?: string;
   message: string;
+  action?: { label: string; onClick: () => void };
 };
 
 type ToastInput = {
@@ -23,6 +24,7 @@ type ToastInput = {
   title?: string;
   message: string;
   duration?: number;
+  action?: { label: string; onClick: () => void };
 };
 
 const DEFAULT_DURATION: Record<ToastVariant, number> = {
@@ -64,6 +66,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         variant: input.variant,
         title: input.title,
         message: input.message,
+        action: input.action,
       };
 
       setToasts((prev) => [...prev, toast].slice(-5));
@@ -105,26 +108,50 @@ export function useToast() {
   // (senão useEffect([toast]) no Dashboard/Homologação re-fetcha e pisca).
   return useMemo(
     () => ({
-      error: (message: string, opts?: { title?: string; duration?: number }) =>
+      error: (
+        message: string,
+        opts?: {
+          title?: string;
+          duration?: number;
+          action?: { label: string; onClick: () => void };
+        },
+      ) =>
         push({
           variant: "error",
           message,
           title: opts?.title ?? "Erro",
           duration: opts?.duration,
+          action: opts?.action,
         }),
-      success: (message: string, opts?: { title?: string; duration?: number }) =>
+      success: (
+        message: string,
+        opts?: {
+          title?: string;
+          duration?: number;
+          action?: { label: string; onClick: () => void };
+        },
+      ) =>
         push({
           variant: "success",
           message,
           title: opts?.title ?? "Sucesso",
           duration: opts?.duration,
+          action: opts?.action,
         }),
-      info: (message: string, opts?: { title?: string; duration?: number }) =>
+      info: (
+        message: string,
+        opts?: {
+          title?: string;
+          duration?: number;
+          action?: { label: string; onClick: () => void };
+        },
+      ) =>
         push({
           variant: "info",
           message,
           title: opts?.title,
           duration: opts?.duration,
+          action: opts?.action,
         }),
       dismiss,
     }),

@@ -634,7 +634,7 @@ export function TestListPage({
                                   >
                                     <td className="px-4 py-2 pl-8">
                                       <p className="font-medium leading-snug">{r.title}</p>
-                                      <p className="font-mono text-[0.6875rem] text-muted-foreground">
+                                      <p className="font-mono text-[0.6875rem] tabular-nums text-muted-foreground">
                                         {r.testKey ?? formatRecordId(r.id, r)}
                                       </p>
                                       {hasAny && !canRun && (
@@ -652,15 +652,15 @@ export function TestListPage({
                                     <td className="px-4 py-2">
                                       <span
                                         className={cn(
-                                          "rounded-full border px-2 py-0.5 text-xs",
+                                          "rounded-full px-2 py-0.5 text-xs font-medium",
                                           tone === "ok" &&
-                                            "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
+                                            "bg-emerald-600 text-white",
                                           tone === "fail" &&
-                                            "border-red-500/40 bg-red-500/15 text-red-400",
+                                            "bg-red-600 text-white",
                                           tone === "warn" &&
-                                            "border-amber-500/40 bg-amber-500/15 text-amber-300",
+                                            "border border-amber-400/20 bg-[#1a1a1a] text-amber-300",
                                           tone === "neutral" &&
-                                            "border-border bg-muted text-muted-foreground",
+                                            "border border-gray-700 bg-[#1a1a1a] text-gray-400",
                                         )}
                                       >
                                         {label}
@@ -669,7 +669,7 @@ export function TestListPage({
                                     <td className="px-4 py-2 text-center tabular-nums">
                                       {countTestRuns(r.history)}
                                     </td>
-                                    <td className="px-4 py-2 text-xs text-muted-foreground">
+                                    <td className="px-4 py-2 text-xs tabular-nums text-muted-foreground">
                                       {r.automation?.lastRunAt
                                         ? new Date(r.automation.lastRunAt).toLocaleString(
                                             "pt-BR",

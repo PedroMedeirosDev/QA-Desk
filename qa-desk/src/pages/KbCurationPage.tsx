@@ -115,19 +115,27 @@ function MetricCard({
   value,
   hint,
   tone = "neutral",
+  emphasis = false,
 }: {
   label: string;
   value: number | string;
   hint: string;
   tone?: "neutral" | "success" | "warning" | "danger" | "attention";
+  /** Destaque sutil do totalizador (Escopo). */
+  emphasis?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+    <div
+      className={cn(
+        "rounded-xl border border-border bg-card p-4",
+        emphasis && "border-t-2 border-t-gray-500 bg-gray-800/50",
+      )}
+    >
+      <p className="text-[0.75rem] uppercase tracking-wider text-gray-400">{label}</p>
       <p
         className={cn(
-          "mt-2 text-3xl font-semibold tabular-nums",
-          tone === "success" && "text-emerald-400",
+          "mt-2 text-3xl font-semibold tabular-nums text-foreground",
+          tone === "success" && "text-green-400",
           tone === "warning" && "text-amber-300",
           tone === "danger" && "text-red-400",
           tone === "attention" && "text-orange-300",
@@ -441,10 +449,10 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
             Repositório: <code>polygonus-br/polygonus-suporte-kb</code>
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:min-w-80">
           <select
             aria-label="Situação do relatório"
-            className="h-9 rounded-md border bg-background px-3 text-sm text-foreground"
+            className="h-9 rounded-md border border-gray-700 bg-transparent px-3 text-sm text-gray-200"
             value={reportStatus}
             onChange={(event) =>
               setReportStatus(event.target.value as "todas" | KbCurationStatus)
@@ -462,7 +470,10 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
             type="button"
             disabled={loading || reportRecords.length === 0}
             onClick={exportHtmlReport}
-            className={cn(actionBtnBase, actionBtn.create)}
+            className={cn(
+              actionBtnBase,
+              "border border-red-500/50 bg-transparent text-red-400 hover:bg-red-500/10 disabled:opacity-50",
+            )}
             title="Baixar relatório HTML com as PRs da situação selecionada"
           >
             <Download className="size-4" />
@@ -472,23 +483,26 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
             type="button"
             disabled={syncing}
             onClick={() => void syncGithub()}
-            className={cn(actionBtnBase, actionBtn.checklist)}
+            className="rounded-md p-2 text-gray-500 transition-colors hover:text-green-400 disabled:opacity-50"
             title="Catch-up manual. Com GITHUB_WEBHOOK_SECRET, reviews/merges atualizam sozinhos."
+            aria-label="Sincronizar GitHub"
           >
-            {syncing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-            Sincronizar GitHub
+            {syncing ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <RefreshCw className="size-4" />
+            )}
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Stream SSE na página (atualiza sozinha) + webhook GitHub (
-          <code className="rounded bg-muted px-1">GITHUB_WEBHOOK_SECRET</code>
-          ). O botão é catch-up. Setup:{" "}
-          <code className="rounded bg-muted px-1">server/github/README.md</code>.
-        </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-8">
-        <MetricCard label="Escopo" value={metrics.total} hint="Soma das abas" />
+        <MetricCard
+          label="Escopo"
+          value={metrics.total}
+          hint="Soma das abas"
+          emphasis
+        />
         <MetricCard
           label="Aguardando revisão"
           value={metrics.awaitingReview}
@@ -619,15 +633,13 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
               <tbody>
                 {filtered.map((record) => (
                   <Fragment key={record.id}>
-                    <tr
-                      className="border-t border-border align-top transition-colors hover:bg-muted/20"
-                    >
-                      <td className="px-4 py-3">
+                    <tr className="border-t border-border transition-colors hover:bg-[#1a1a1a]">
+                      <td className="px-4 py-3 align-middle">
                         <a
                           href={record.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                          className="inline-flex items-center gap-1 font-medium tabular-nums text-primary hover:underline"
                         >
                           #{record.prNumber} <ExternalLink className="size-3" />
                         </a>
@@ -640,19 +652,19 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
                           {record.githubState}
                         </p>
                       </td>
-                      <td className="max-w-xl px-4 py-3">
+                      <td className="max-w-xl px-4 py-3 align-middle">
                         <p className="font-medium">{record.title}</p>
                         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                           {record.solutionReview ?? record.summary}
                         </p>
                         {(record.corrections?.length ?? 0) > 0 && (
-                          <p className="mt-1 flex items-center gap-1 text-xs text-amber-300">
+                          <p className="mt-1 flex items-center gap-1 text-xs tabular-nums text-amber-300">
                             <AlertTriangle className="size-3" />
                             {record.corrections!.length} correção(ões)
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 align-middle">
                         <span
                           className={cn(
                             "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium leading-5",
@@ -665,15 +677,15 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
                           {VERDICT_LABELS[record.verdict]}
                         </p>
                       </td>
-                      <td className="px-4 py-3">{record.reviewer ?? "—"}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                      <td className="px-4 py-3 align-middle">{record.reviewer ?? "—"}</td>
+                      <td className="px-4 py-3 align-middle text-xs tabular-nums text-muted-foreground">
                         {formatDate(
                           record.history.at(-1)?.at ??
                             record.reviewedAt ??
                             record.lastSyncedAt,
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 align-middle text-right">
                         <button
                           type="button"
                           onClick={() =>

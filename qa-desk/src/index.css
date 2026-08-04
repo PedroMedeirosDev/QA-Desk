@@ -129,6 +129,8 @@
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: #262626 transparent;
   }
 
   body {
@@ -144,6 +146,26 @@
 
   table tbody tr:hover {
     background-color: color-mix(in srgb, var(--muted) 55%, transparent);
+  }
+
+  /* Scrollbar — tema escuro (Windows / WebKit) */
+  ::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #262626;
+    border-radius: 9999px;
+    border: 0.125rem solid #0d0d0d;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #404040;
   }
 }
 

@@ -23,6 +23,7 @@ import {
 import { resolveProjectTheme } from "@/config/project-themes";
 import { getProject, PROJECTS } from "@/config/projects";
 import { BrandLogo } from "@/components/BrandLogo";
+import { Footer } from "@/components/Footer";
 import { ProjectLogo } from "@/components/ProjectLogo";
 import { useActiveProject } from "@/lib/active-project";
 import { api } from "@/lib/api";
@@ -181,7 +182,7 @@ export function ProjectSidebar({
 
       <nav
         className={cn(
-          "flex flex-1 gap-2 p-2.5",
+          "flex min-h-0 flex-1 gap-2 p-2.5",
           collapsed
             ? "flex-row items-center overflow-visible md:flex-col md:overflow-y-auto"
             : "flex-col overflow-y-auto overflow-x-hidden",
@@ -311,7 +312,7 @@ export function ProjectSidebar({
               )}
 
               {showChannels && sub && (
-                <div className="ml-1 space-y-4 border-l border-border pl-3 pt-1 dark:border-zinc-800">
+                <div className="ml-1 space-y-0 border-l border-border pl-3 pt-1 dark:border-zinc-800">
                   {channels.map((ch) => {
                     const ChannelIcon = CHANNEL_ICON[ch.id];
                     const testsPath = projectListPath(project.slug, ch.id);
@@ -329,7 +330,10 @@ export function ProjectSidebar({
                         location.pathname.startsWith(`${testsPath}/`));
 
                     return (
-                      <div key={ch.id} className="space-y-1.5">
+                      <div
+                        key={ch.id}
+                        className="mt-6 space-y-1.5 first:mt-2"
+                      >
                         <p className="flex items-center gap-1.5 px-2 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-500">
                           <ChannelIcon className="size-3.5 shrink-0 text-slate-500 dark:text-zinc-500" />
                           {CHANNEL_LABELS[ch.id]}
@@ -365,7 +369,7 @@ export function ProjectSidebar({
                       </div>
                     );
                   })}
-                  <div className="space-y-1 border-t border-border pt-3 dark:border-zinc-800">
+                  <div className="mt-6 space-y-1 border-t border-border pt-3 dark:border-zinc-800">
                     <Link
                       to={dashPath}
                       className={cn(
@@ -401,7 +405,7 @@ export function ProjectSidebar({
                         <span className="min-w-0 flex-1">Curadoria KB</span>
                         {kbRereviewCount > 0 && (
                           <span
-                            className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-semibold text-zinc-950"
+                            className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 text-[0.625rem] font-semibold tabular-nums text-zinc-950"
                             title={`${kbRereviewCount} PR(s) para re-revisar`}
                           >
                             {kbRereviewCount}
@@ -514,6 +518,8 @@ export function ProjectSidebar({
           );
         })}
       </nav>
+
+      {!collapsed && <Footer variant="sidebar" />}
     </aside>
   );
 }

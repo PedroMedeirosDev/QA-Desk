@@ -19,7 +19,7 @@ function PassRateBadge({ stats }: { stats: SuiteStats }) {
   return (
     <span
       className={cn(
-        "shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[11px] tabular-nums",
+        "shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[0.6875rem] tabular-nums",
         stats.tone === "ok" && "border-emerald-500/35 bg-emerald-500/10 text-emerald-400",
         stats.tone === "fail" && "border-red-500/35 bg-red-500/10 text-red-400",
         stats.tone === "mixed" && "border-amber-500/35 bg-amber-500/10 text-amber-300",
@@ -36,17 +36,17 @@ function ResultChips({ stats }: { stats: SuiteStats }) {
   return (
     <span className="flex flex-wrap items-center gap-1 text-xs">
       {stats.passed > 0 && (
-        <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-emerald-400">
+        <span className="rounded-full bg-emerald-600 px-2 py-0.5 font-medium tabular-nums text-white">
           {stats.passed} passou
         </span>
       )}
       {stats.failed > 0 && (
-        <span className="rounded-full border border-red-500/35 bg-red-500/10 px-2 py-0.5 text-red-400">
+        <span className="rounded-full bg-red-600 px-2 py-0.5 font-medium tabular-nums text-white">
           {stats.failed} falhou
         </span>
       )}
       {stats.pending > 0 && (
-        <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">
+        <span className="rounded-full border border-gray-700 bg-[#1a1a1a] px-2 py-0.5 tabular-nums text-gray-400">
           {stats.pending} pendente
         </span>
       )}
@@ -201,12 +201,7 @@ function GroupHeaderRow({
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {stats.runnable > 0 ? (
             <span
-              className={cn(
-                "rounded-full border px-2 py-0.5",
-                runner === "playwright"
-                  ? "border-sky-500/35 bg-sky-500/10 text-sky-300"
-                  : "border-sky-500/35 bg-sky-500/10 text-sky-300",
-              )}
+              className="rounded-full border border-sky-400/20 bg-[#1a1a1a] px-2 py-0.5 text-sky-400"
               title={
                 runner === "playwright"
                   ? "CTs com spec Playwright"
@@ -222,7 +217,7 @@ function GroupHeaderRow({
           )}
           {stats.draftCount > 0 && (
             <span
-              className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 text-amber-300"
+              className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-[#1a1a1a] px-2 py-0.5 text-amber-300"
               title={`${stats.draftCount} ainda em rascunho`}
             >
               <Hammer className="size-3" />
@@ -231,7 +226,7 @@ function GroupHeaderRow({
           )}
           {stats.readyCount > 0 && stats.draftCount > 0 && (
             <span
-              className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-emerald-300"
+              className="rounded-full border border-emerald-400/20 bg-[#1a1a1a] px-2 py-0.5 text-emerald-300"
               title={`${stats.readyCount} validados`}
             >
               {stats.readyCount} estáve{stats.readyCount === 1 ? "l" : "is"}
@@ -245,7 +240,7 @@ function GroupHeaderRow({
       <td className="px-4 py-2.5 text-center tabular-nums text-muted-foreground">
         {stats.totalRuns}
       </td>
-      <td className="px-4 py-2.5 text-xs text-muted-foreground">
+      <td className="px-4 py-2.5 text-xs tabular-nums text-muted-foreground">
         {formatLastRun(stats.lastRunAt)}
       </td>
       {actionsCell}

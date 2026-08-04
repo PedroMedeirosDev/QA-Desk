@@ -52,7 +52,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const tone = opts?.tone ?? "run";
   const confirmClass =
     tone === "danger"
-      ? "border border-red-500/40 bg-red-600 text-white hover:bg-red-500"
+      ? actionBtn.danger
       : tone === "default"
         ? actionBtn.save
         : actionBtn.create;

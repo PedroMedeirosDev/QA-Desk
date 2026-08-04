@@ -30,9 +30,47 @@ const SOCIAL_LINKS = [
 
 interface FooterProps {
   className?: string;
+  /** Compacto na base da sidebar esquerda do shell logado. */
+  variant?: "default" | "sidebar";
 }
 
-export function Footer({ className }: FooterProps) {
+export function Footer({ className, variant = "default" }: FooterProps) {
+  if (variant === "sidebar") {
+    return (
+      <footer
+        className={cn(
+          "mt-auto hidden shrink-0 border-t border-white/5 p-6 md:block",
+          className,
+        )}
+      >
+        <p className="text-center text-[0.75rem] leading-snug text-gray-500">
+          Desenvolvido por{" "}
+          <span className="font-medium text-gray-400">Pedro Medeiros</span>
+          {" "}
+          — 2026
+        </p>
+        <nav
+          aria-label="Redes sociais"
+          className="mt-3 flex items-center justify-center gap-2"
+        >
+          {SOCIAL_LINKS.map(({ label, href, icon: Icon, className: linkClass }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              title={label}
+              className={cn(linkClass, "text-gray-500 opacity-70 hover:opacity-100")}
+            >
+              <Icon className="size-3.5" strokeWidth={1.75} />
+            </a>
+          ))}
+        </nav>
+      </footer>
+    );
+  }
+
   return (
     <footer
       className={cn(
