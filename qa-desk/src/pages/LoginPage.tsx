@@ -12,6 +12,13 @@ const INPUT_CLASS =
 const SHELL_CLASS =
   "login-surface relative flex h-dvh min-h-0 flex-col overflow-hidden bg-[#0a0a0a]";
 
+const VISITOR_EMAIL =
+  (import.meta.env.VITE_VISITOR_EMAIL as string | undefined)?.trim() ||
+  "visitante@qa-desk.local";
+const VISITOR_PASSWORD = (
+  import.meta.env.VITE_VISITOR_PASSWORD as string | undefined
+)?.trim();
+
 function Spotlight() {
   return (
     <div
@@ -30,8 +37,8 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [visitorNotice, setVisitorNotice] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [visitorSubmitting, setVisitorSubmitting] = useState(false);
 
   if (!ready) {
     return (
@@ -51,7 +58,6 @@ export function LoginPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setVisitorNotice(false);
     setSubmitting(true);
     try {
       await signIn(email.trim(), password);
@@ -63,9 +69,23 @@ export function LoginPage() {
     }
   }
 
-  function onVisitorClick() {
+  async function onVisitorClick() {
     setError(null);
-    setVisitorNotice(true);
+    if (!VISITOR_PASSWORD) {
+      setError(
+        "Login visitante não configurado (falta VITE_VISITOR_PASSWORD no .env).",
+      );
+      return;
+    }
+    setVisitorSubmitting(true);
+    try {
+      await signIn(VISITOR_EMAIL, VISITOR_PASSWORD);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha no login visitante");
+    } finally {
+      setVisitorSubmitting(false);
+    }
   }
 
   return (
@@ -102,7 +122,7 @@ export function LoginPage() {
                 Portfólio QA — cases, curadoria KB e automação em um só lugar.
               </p>
               <p className="mt-4 inline-block w-fit rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[0.875rem] text-gray-400">
-                Portfólio visitante em construção — em breve.
+                Perfil visitante em configuração — em breve.
               </p>
             </div>
 
@@ -168,15 +188,9 @@ export function LoginPage() {
                 </p>
               )}
 
-              {visitorNotice && (
-                <p className="rounded-lg border border-blue-500/20 bg-blue-900/10 px-3 py-2 text-[0.8125rem] text-blue-300">
-                  Acesso visitante ainda em preparação. Use o login admin por enquanto.
-                </p>
-              )}
-
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || visitorSubmitting}
                 className="w-full rounded-lg bg-white py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submitting ? "Entrando…" : "Entrar"}
@@ -191,11 +205,12 @@ export function LoginPage() {
 
             <button
               type="button"
-              onClick={onVisitorClick}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+              onClick={() => void onVisitorClick()}
+              disabled={submitting || visitorSubmitting}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Eye className="size-3.5 shrink-0 opacity-80" strokeWidth={1.75} />
-              Acessar como visitante
+              {visitorSubmitting ? "Entrando…" : "Acessar como visitante"}
             </button>
           </section>
         </div>

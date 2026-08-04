@@ -92,19 +92,26 @@ function homologationsLinkClass(
 
 export function ProjectSidebar({
   activeChannel,
+  visitorMode = false,
 }: {
   activeChannel?: ProductChannel;
+  /** Visitante: só marca + aviso — sem navegação operacional. */
+  visitorMode?: boolean;
 }) {
   const { activeProject: activeSlug, brandTheme } = useActiveProject();
   const channels = getProjectChannels(activeSlug!);
   const activeProjectCfg = getProject(activeSlug!);
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [collapsed, setCollapsed] = useState(() => (visitorMode ? false : readCollapsed));
   const [kbRereviewCount, setKbRereviewCount] = useState(0);
   /** Submenu do projeto: expandido no ativo; clicar de novo no card recolhe. */
   const [menuExpandedSlug, setMenuExpandedSlug] = useState<string | null>(
     activeSlug ?? null,
   );
+
+  useEffect(() => {
+    if (visitorMode) setCollapsed(false);
+  }, [visitorMode]);
 
   useEffect(() => {
     setMenuExpandedSlug(activeSlug ?? null);
@@ -119,7 +126,7 @@ export function ProjectSidebar({
   }, [collapsed]);
 
   useEffect(() => {
-    if (activeSlug !== "polygonus") {
+    if (visitorMode || activeSlug !== "polygonus") {
       setKbRereviewCount(0);
       return;
     }
@@ -135,7 +142,7 @@ export function ProjectSidebar({
     return () => {
       cancelled = true;
     };
-  }, [activeSlug, location.pathname]);
+  }, [activeSlug, location.pathname, visitorMode]);
 
   const sub = activeProjectCfg?.accent.subNav;
 
@@ -167,18 +174,37 @@ export function ProjectSidebar({
             <BrandLogo size="sidebar" />
           </div>
         )}
-        <button
-          type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          title={collapsed ? "Expandir menu" : "Recolher menu"}
-          aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-          aria-expanded={!collapsed}
-          className="shrink-0 self-start rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:border-red-500/40 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
-        >
-          {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
-        </button>
+        {!visitorMode && (
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            title={collapsed ? "Expandir menu" : "Recolher menu"}
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+            aria-expanded={!collapsed}
+            className="shrink-0 self-start rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:border-red-500/40 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+          >
+            {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+          </button>
+        )}
       </header>
 
+      {visitorMode ? (
+        <>
+          {!collapsed && (
+            <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Modo visitante
+              </p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Navegação e dados do projeto ficam disponíveis quando o portfólio
+                público estiver pronto.
+              </p>
+            </div>
+          )}
+          {!collapsed && <Footer variant="sidebar" />}
+        </>
+      ) : (
+        <>
       <nav
         className={cn(
           "flex min-h-0 flex-1 gap-2 p-2.5",
@@ -519,6 +545,8 @@ export function ProjectSidebar({
       </nav>
 
       {!collapsed && <Footer variant="sidebar" />}
+        </>
+      )}
     </aside>
   );
 }

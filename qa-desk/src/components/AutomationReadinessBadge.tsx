@@ -8,12 +8,14 @@ import {
 
 export function AutomationReadinessBadge({
   record,
+  runner,
   className,
 }: {
   record: Pick<TestRecord, "automation">;
+  runner?: "maestro" | "playwright";
   className?: string;
 }) {
-  const readiness = getAutomationReadiness(record);
+  const readiness = getAutomationReadiness(record, runner);
   if (!readiness) return null;
 
   const isReady = readiness === "ready";
@@ -29,8 +31,12 @@ export function AutomationReadinessBadge({
       )}
       title={
         isReady
-          ? "Flow estável — validado no Maestro / emulador"
-          : "Flow em rascunho — existe, mas ainda pode falhar em seletores"
+          ? runner === "playwright"
+            ? "Spec estável — validado no Playwright"
+            : "Flow estável — validado no Maestro / emulador"
+          : runner === "playwright"
+            ? "Spec em rascunho — existe, mas ainda pode falhar"
+            : "Flow em rascunho — existe, mas ainda pode falhar em seletores"
       }
     >
       {isReady ? (

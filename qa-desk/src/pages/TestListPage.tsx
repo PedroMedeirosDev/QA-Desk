@@ -18,7 +18,7 @@ import {
   type LiveRunState,
 } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
-import { countTestRuns } from "@/lib/history";
+import { countTestRunsForRunner } from "@/lib/history";
 import {
   projectBugsListPath,
   projectDetailPath,
@@ -619,7 +619,7 @@ export function TestListPage({
                             />
                             {expanded &&
                               group.items.map((r, rowIdx) => {
-                                const { label, tone } = displayStatus(r);
+                                const { label, tone } = displayStatus(r, runner);
                                 const canRun = supportsRunner(r.automation, runner);
                                 const hasAny =
                                   hasMaestroAutomation(r.automation) ||
@@ -648,7 +648,7 @@ export function TestListPage({
                                     <td className="px-4 py-2">
                                       <div className="flex flex-wrap items-center gap-1.5">
                                         <ExecutionModeBadge record={r} />
-                                        <AutomationReadinessBadge record={r} />
+                                        <AutomationReadinessBadge record={r} runner={runner} />
                                       </div>
                                     </td>
                                     <td className="px-4 py-2">
@@ -669,21 +669,24 @@ export function TestListPage({
                                       </span>
                                     </td>
                                     <td className="px-4 py-2 text-center tabular-nums">
-                                      {countTestRuns(r.history)}
+                                      {countTestRunsForRunner(r.history ?? [], runner)}
                                     </td>
                                     <td className="px-4 py-2 text-xs tabular-nums text-muted-foreground">
-                                      {r.automation?.lastRunAt
-                                        ? new Date(r.automation.lastRunAt).toLocaleString(
-                                            "pt-BR",
-                                            {
+                                      {(() => {
+                                        const lastAt =
+                                          runner === "playwright"
+                                            ? r.automation?.playwright?.lastRunAt
+                                            : r.automation?.lastRunAt;
+                                        return lastAt
+                                          ? new Date(lastAt).toLocaleString("pt-BR", {
                                               day: "2-digit",
                                               month: "2-digit",
                                               year: "numeric",
                                               hour: "2-digit",
                                               minute: "2-digit",
-                                            },
-                                          )
-                                        : "—"}
+                                            })
+                                          : "—";
+                                      })()}
                                     </td>
                                     <td
                                       className="px-4 py-2"

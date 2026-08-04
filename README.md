@@ -1,19 +1,20 @@
 # QA Desk
 
-Repositório **multi-projeto** de qualidade de software: homologação, casos de teste, automação (Maestro) e aplicação web de registro.
+Repositório **multi-projeto** de qualidade de software: homologação, casos de teste, automação (Maestro / Playwright) e aplicação web de registro.
 
 > **Produto:** [QA Desk](https://github.com/PedroMedeirosDev/QA-Desk)  
 > **Demo online:** [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org)  
-> **App:** pasta `qa-desk/` (antes `qa-app/`) · projetos `polygonus`, `anihype`, …
+> **App:** pasta `qa-desk/` · projetos `polygonus`, `anihype`, `desk`, …
 
-Login **visitante:** portfólio público ainda em construção (sem casos/métricas). Conta **admin** vê o conteúdo completo.
+**Login visitante** (`visitante@qa-desk.local`): tela de boas-vindas apenas — portfólio público ainda em configuração (sem CTs, métricas, Curadoria KB). **Admin** vê o conteúdo completo.
 
 ## Projetos
 
 | Slug | Pasta | Status |
 |------|-------|--------|
-| **polygonus** | [`projects/polygonus/`](projects/polygonus/) | Ativo — Mural / Maestro / homologação |
+| **polygonus** | [`projects/polygonus/`](projects/polygonus/) | Ativo — Mural / Maestro / Playwright / Curadoria KB |
 | **anihype** | [`projects/anihype/`](projects/anihype/) | Em setup |
+| **desk** | (só no app) | Dogfood — Suite API do próprio QA Desk |
 
 Detalhes: [`projects/README.md`](projects/README.md)
 
@@ -24,15 +25,15 @@ Detalhes: [`projects/README.md`](projects/README.md)
 | **`projects/`** | Um diretório por cliente/produto (cases, automação, evidência) |
 | **`shared/`** | Templates e recursos comuns |
 | **`qa-desk/`** | App web — [`ARCHITECTURE.md`](qa-desk/ARCHITECTURE.md) · [`DEPLOY.md`](qa-desk/DEPLOY.md) · [`VISION.md`](qa-desk/VISION.md) |
-| **`scripts/`** | Utilitários locais (ex. rename) |
-| **`polygonus-mobile/`**, **`polygonus-react/`** | Clones locais (gitignored — não versionar) |
+| **`scripts/`** | Utilitários locais (ex. sync repos empresa) |
+| **`polygonus-mobile/`**, **`polygonus-react/`**, … | Clones locais (gitignored — não versionar) |
 
 ## Escopo de homologação
 
 | Plataforma | Cobertura |
 |------------|-----------|
 | Android | Sim (emulador + smoke no físico) |
-| Web | Sim |
+| Web | Sim (Playwright / Newman) |
 | iOS | Não neste ambiente |
 
 ## QA Desk (app) — início rápido
@@ -61,6 +62,8 @@ npx tsx scripts/apply-mural-checklist.ts   # checklist Mural canônico (CRUD-01�
 
 Credenciais ficam **só locais** (`.env` gitignored). Modelo: [`qa-desk/.env.example`](qa-desk/.env.example) e [`.env.production.example`](qa-desk/.env.production.example).
 
+Para o botão **Acessar como visitante** no login: `VITE_VISITOR_EMAIL` + `VITE_VISITOR_PASSWORD` (a senha também precisa estar no usuário Supabase Auth).
+
 ## Deploy
 
 | Alvo | Doc |
@@ -69,9 +72,11 @@ Credenciais ficam **só locais** (`.env` gitignored). Modelo: [`qa-desk/.env.exa
 | Oracle Always Free | [`qa-desk/deploy/oracle/README.md`](qa-desk/deploy/oracle/README.md) |
 | Supabase (keys / Connect) | [`qa-desk/deploy/SUPABASE_CREDENTIALS.md`](qa-desk/deploy/SUPABASE_CREDENTIALS.md) |
 
-## Maestro (Polygonus Mural)
+## Maestro / Playwright (Polygonus Mural)
 
-Flows em `projects/polygonus/automation/maestro/`. Skill do agente: `.cursor/skills/polygonus-mural-maestro/`.
+Flows Maestro: `projects/polygonus/automation/maestro/`. Specs Playwright: `projects/polygonus/automation/playwright/`.  
+Na lista de testes, o toggle **Maestro | Playwright** por suite mostra métricas **separadas** por runner.  
+Skill do agente: `.cursor/skills/polygonus-mural-maestro/`.
 
 ## Suite API (Newman)
 

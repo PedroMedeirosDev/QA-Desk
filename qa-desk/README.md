@@ -2,18 +2,23 @@
 
 Aplicação web do **QA Desk** — registro de testes e homologação multi-projeto.
 
-**Demo:** [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org) (Oracle Always Free + Supabase `sa-east-1`).  
-Acesso **visitante** = portfólio em construção (ainda sem conteúdo público). **Admin** vê tudo.
+**Demo:** [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org) (Oracle Always Free + Supabase `sa-east-1`).
+
+| Perfil | O que vê |
+|--------|----------|
+| **Admin** | Tudo — CTs, homologações, Curadoria KB, Suite API, métricas, execução |
+| **Visitante** | Só tela de boas-vindas (portfólio público ainda em configuração) |
 
 | Doc | Uso |
 |-----|-----|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Como funciona hoje |
-| [`VISION.md`](VISION.md) | Backlog (Discord bot, etc.) |
+| [`VISION.md`](VISION.md) | Backlog (Discord bot, portfólio rico, etc.) |
 | [`DEPLOY.md`](DEPLOY.md) | Local, túnel, Oracle, Koyeb |
 | [`deploy/SUPABASE_CREDENTIALS.md`](deploy/SUPABASE_CREDENTIALS.md) | Onde achar URL/keys/pooler no painel atual |
 | [`deploy/oracle/README.md`](deploy/oracle/README.md) | VM Always Free + systemd + Caddy |
 | [`postman/`](postman/) | Suites API por projeto (Newman) + UI **Suite API** |
 | [`e2e/`](e2e/) | E2E UI + `npm run test:api` |
+| [`SPEC.md`](SPEC.md) | Aposentado — não usar |
 
 ## Suite API (Newman / Postman)
 
@@ -51,10 +56,13 @@ npm run start:prod       # build + API em :3001 (serve dist/)
 
 - Sem `VITE_SUPABASE_URL` → modo mock admin (dev / Maestro).
 - Com Auth → login em `/login` · roles `admin` | `visitor` (`profiles`).
+- Botão **Acessar como visitante** → `VITE_VISITOR_EMAIL` + `VITE_VISITOR_PASSWORD` (mesmo user no Supabase Auth; senha em hash no `auth.users`).
 - SQL inicial: [`supabase/migrations/001_profiles.sql`](supabase/migrations/001_profiles.sql).
 - RLS nas tabelas Prisma (obrigatório em prod): [`supabase/migrations/002_rls_prisma_tables.sql`](supabase/migrations/002_rls_prisma_tables.sql).
 - Trava RPC `handle_new_user`: [`supabase/migrations/003_lock_handle_new_user.sql`](supabase/migrations/003_lock_handle_new_user.sql).
 - Auth: no Dashboard → Authentication → Providers → Email, ligue **Prevent use of leaked passwords** (HaveIBeenPwned; plano Pro+).
+
+E-mail canônico do visitante: `visitante@qa-desk.local` (role `visitor` em `profiles`).
 
 ## Persistência
 
@@ -70,6 +78,8 @@ npx tsx scripts/apply-mural-checklist.ts
 ```
 
 `/api/health` → `"storage":"postgres"`, `"auth":"supabase"`. Evidências em `data/uploads/`.
+
+Em produção a fonte da verdade é o **Postgres**; o JSON em `data/` é seed / fallback local — evite commitar dumps de execução.
 
 ## Privacidade (PII)
 
@@ -91,19 +101,20 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 1. Na app → homologação **mural-backend-homologacao** → **Sincronizar checklist Mural**  
    (ou `npx tsx scripts/apply-mural-checklist.ts`)
 2. Emulador + `QA_AUTOMATION_RUN=1` no PC **ou** agente remoto (`npm run agent` — ver [`agent/README.md`](agent/README.md))
-3. Flows: `projects/polygonus/automation/maestro/`
+3. Flows: `projects/polygonus/automation/maestro/` · Playwright: `projects/polygonus/automation/playwright/`
+4. Na UI, toggle **Maestro | Playwright** por suite — progresso e rodadas são **por runner**
 
 ## Status
 
 - [x] CRUD + homologação + checklist Mural (nomes por suite)
-- [x] Maestro one-click (PC local)
+- [x] Maestro one-click (PC local) + toggle Playwright na lista
+- [x] Métricas de suite separadas por runner (Maestro ≠ Playwright)
 - [x] Agente remoto (API online → PC com Maestro/emulador)
 - [x] Postgres + Prisma (`qa-desk/`)
-- [x] Auth Supabase (admin / visitor + `showInPortfolio`)
-- [x] Footer na login e nas telas do app
-- [x] Cache Auth + leituras Postgres sem re-sync em todo GET
-- [x] Deploy Oracle em produção — [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org) ([`deploy/oracle/`](deploy/oracle/))
-- [x] Testes de API — Postman/Newman + Playwright (`postman/`, `npm run test:api`)
-- [x] Suite API na UI (Newman por projeto, digest + log fiel) — ficha Polygonus amostra
-- [ ] Portfólio visitante (casos com `showInPortfolio`) — aviso “em construção” no ar
+- [x] Auth Supabase (admin / visitor)
+- [x] Login visitante → tela de boas-vindas (sem dados operacionais)
+- [x] Curadoria KB (SSE + webhook GitHub) — admin only
+- [x] Suite API na UI (Newman por projeto)
+- [x] Deploy Oracle — [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org)
+- [ ] Portfólio visitante rico (`showInPortfolio` + cases públicos) — ver [`VISION.md`](VISION.md)
 - [ ] Bot Discord — [`VISION.md`](VISION.md)

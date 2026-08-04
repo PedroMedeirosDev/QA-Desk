@@ -1,11 +1,11 @@
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Info } from "lucide-react";
+import { useAuth } from "@/auth/AuthProvider";
 import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { UserBar } from "@/components/UserBar";
 import { AgentStatusBadge } from "@/components/AgentStatusBadge";
 import { ProjectLogo } from "@/components/ProjectLogo";
-import { VisitorPortfolioBanner } from "@/components/VisitorPortfolioBanner";
 import { CHANNEL_LABELS } from "@/config/channels";
 import { PROJECTS } from "@/config/projects";
 import { TestEditorPage } from "@/pages/TestEditorPage";
@@ -17,6 +17,7 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { KbCurationPage } from "@/pages/KbCurationPage";
 import { ApiSuitePage } from "@/pages/ApiSuitePage";
 import { LoginPage } from "@/pages/LoginPage";
+import { VisitorWelcomePage } from "@/pages/VisitorWelcomePage";
 import { ActiveProjectProvider, useActiveProject } from "@/lib/active-project";
 import { parseProjectRoute } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
@@ -29,15 +30,46 @@ function ProjectShell() {
   const { project: slugParam, "*": rest } = useParams();
   const slug = slugParam as ProjectSlug;
   const { theme, project: current } = useActiveProject();
+  const { isVisitor } = useAuth();
   const route = parseProjectRoute(slug, rest);
 
   if (route.redirectTo) {
     return <Navigate to={route.redirectTo} replace />;
   }
 
+  const headerTitle = isVisitor
+    ? "Boas-vindas"
+    : route.view === "dashboard"
+      ? "Dashboard"
+      : route.view === "kb-curation"
+        ? "Curadoria KB"
+        : route.view === "api-suite"
+          ? "Suite API"
+          : route.view === "homologations-list" || route.view === "homologation"
+            ? "Homologações"
+            : route.view === "bugs-list"
+              ? "Bugs reportados"
+              : "Registro de Testes";
+
+  const headerSubtitle = isVisitor
+    ? "Perfil visitante"
+    : route.view === "dashboard"
+      ? "Visão geral QA"
+      : route.view === "kb-curation"
+        ? "Rastreabilidade da base de conhecimento"
+        : route.view === "api-suite"
+          ? "Newman / Postman"
+          : route.view === "homologations-list"
+            ? "Todas as seções"
+            : route.view === "homologation"
+              ? "Detalhe da campanha"
+              : route.view === "bugs-list"
+                ? (current?.label ?? slug)
+                : (current?.label ?? slug);
+
   return (
     <div className="flex h-dvh overflow-hidden bg-background md:flex-row">
-      <ProjectSidebar activeChannel={route.channel} />
+      <ProjectSidebar activeChannel={route.channel} visitorMode={isVisitor} />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="animate-fade-in-up-soft animation-delay-80 shrink-0 border-b border-border/60 bg-card opacity-0 dark:border-white/5">
@@ -56,42 +88,20 @@ function ProjectShell() {
               )}
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {route.view === "dashboard"
-                    ? "Dashboard"
-                    : route.view === "kb-curation"
-                      ? "Curadoria KB"
-                    : route.view === "api-suite"
-                      ? "Suite API"
-                    : route.view === "homologations-list" ||
-                        route.view === "homologation"
-                      ? "Homologações"
-                      : route.view === "bugs-list"
-                        ? "Bugs reportados"
-                        : "Registro de Testes"}
+                  {headerTitle}
                 </p>
                 <h1 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold">
                   <span className="truncate">
-                    {route.view === "dashboard"
-                      ? "Visão geral QA"
-                      : route.view === "kb-curation"
-                        ? "Rastreabilidade da base de conhecimento"
-                      : route.view === "api-suite"
-                        ? "Newman / Postman"
-                      : route.view === "homologations-list"
-                        ? "Todas as seções"
-                        : route.view === "homologation"
-                          ? "Detalhe da campanha"
-                          : route.view === "bugs-list"
-                            ? (current?.label ?? slug)
-                            : (current?.label ?? slug)}
-                    {route.channel &&
+                    {headerSubtitle}
+                    {!isVisitor &&
+                      route.channel &&
                       (route.view === "list" || route.view === "bugs-list") && (
                         <span className="ml-2 text-red-500">
                           · {CHANNEL_LABELS[route.channel]}
                         </span>
                       )}
                   </span>
-                  {route.view === "kb-curation" && (
+                  {!isVisitor && route.view === "kb-curation" && (
                     <span
                       className="inline-flex shrink-0 text-muted-foreground/70 transition-colors hover:text-muted-foreground"
                       title={KB_CURATION_HELP}
@@ -104,7 +114,7 @@ function ProjectShell() {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <AgentStatusBadge />
+              {!isVisitor && <AgentStatusBadge />}
               <UserBar />
             </div>
           </div>
@@ -113,15 +123,16 @@ function ProjectShell() {
         <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-4 sm:px-6 sm:py-6">
           <div
             className={cn(
-              "main-content-container main-content-glow animate-fade-in-up-soft animation-delay-150 min-h-full rounded-xl border border-border/50 border-t-2 bg-card/50 p-4 opacity-0 transition-all duration-300 sm:p-5",
+              "main-content-container main-content-glow animate-fade-in-up-soft animation-delay-150 relative min-h-full rounded-xl border border-border/50 border-t-2 bg-card/50 p-4 opacity-0 transition-all duration-300 sm:p-5",
             )}
             style={{
               borderTopColor: theme.accent,
               ["--project-glow" as string]: theme.mainContentGlow,
             }}
           >
-            <VisitorPortfolioBanner />
-            {route.view === "dashboard" ? (
+            {isVisitor ? (
+              <VisitorWelcomePage />
+            ) : route.view === "dashboard" ? (
               <DashboardPage project={slug} />
             ) : route.view === "kb-curation" ? (
               <KbCurationPage project={slug} />

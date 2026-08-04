@@ -6,11 +6,11 @@ Ideias **ainda não implementadas** (ou só parcialmente). O que já roda está 
 
 ## Feito (diferente do rascunho original)
 
-- App multi-projeto com CT + bugs + homologação + dashboard
+- App multi-projeto com CT + bugs + homologação + dashboard + Curadoria KB + Suite API
 - Auth Supabase (JWT) em vez de bcrypt/cookie em env
-- Visitante: mesma UI, filtro `showInPortfolio` (sem página Portfolio dedicada)
-- Maestro one-click no PC
-- Postgres opcional (Prisma)
+- Visitante: tela de boas-vindas dedicada (portfólio público ainda fechado)
+- Maestro / Playwright one-click no PC + métricas por runner
+- Postgres (Prisma) em produção
 
 ## Backlog desejável
 
@@ -25,11 +25,14 @@ Fluxo alvo:
 
 Hoje só há **cópia de texto** para colar no Discord.
 
-### 2. Portfólio mais rico
+### 2. Portfólio visitante rico
 
-- Campos opcionais `portfolio.headline` / `summary` no registro
-- View visitante mais limpa (sem ruído de homologação interna)
-- Revisar evidências antes de marcar `showInPortfolio` (sem PII)
+Hoje o visitante só vê a welcome page. Próximo passo:
+
+- Liberar cases com `showInPortfolio=true` (sem PII)
+- Campos opcionais `portfolio.headline` / `summary`
+- View limpa (sem homologação interna / Curadoria KB)
+- Revisar evidências antes de marcar no portfólio
 
 ### 3. Notificações na UI
 

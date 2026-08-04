@@ -1,5 +1,5 @@
 import type { HomologationStatus, TestRecord } from "@/types/test-record";
-import { countTestRuns } from "@/lib/history";
+import { countTestRunsForRunner } from "@/lib/history";
 import {
   hasMaestroAutomation,
   hasPlaywrightAutomation,
@@ -243,7 +243,27 @@ function bucketStatus(status?: HomologationStatus | string): "passed" | "failed"
   return "pending";
 }
 
-/** Estatísticas agregadas da suite (cabeçalho expandido ou recolhido). */
+/**
+ * Resultado no escopo do runner — não compartilha status entre Maestro e Playwright.
+ * Playwright usa só `playwright.lastRunStatus`; Maestro usa lastRunStatus + fallback de homologação.
+ */
+export function resultBucketForRunner(
+  item: Pick<TestRecord, "homologationStatus" | "automation">,
+  runner: AutomationRunner,
+): "passed" | "failed" | "pending" {
+  if (runner === "playwright") {
+    const st = item.automation?.playwright?.lastRunStatus;
+    if (st === "success") return "passed";
+    if (st === "failed") return "failed";
+    return "pending";
+  }
+  const st = item.automation?.lastRunStatus;
+  if (st === "success") return "passed";
+  if (st === "failed") return "failed";
+  return bucketStatus(item.homologationStatus);
+}
+
+/** Estatísticas agregadas da suite (cabeçalho expandido ou recolhido), por runner. */
 export function summarizeSuite(
   items: TestRecord[],
   runner: AutomationRunner = "maestro",
@@ -256,41 +276,50 @@ export function summarizeSuite(
   let readyCount = 0;
   let totalRuns = 0;
   let lastRunAt: string | undefined;
+  let scoped = 0;
 
   for (const item of items) {
-    const bucket = bucketStatus(item.homologationStatus);
+    const inScope =
+      runner === "maestro"
+        ? hasMaestroAutomation(item.automation)
+        : hasPlaywrightAutomation(item.automation);
+    if (!inScope) continue;
+
+    scoped += 1;
+    runnable += 1;
+
+    const bucket = resultBucketForRunner(item, runner);
     if (bucket === "passed") passed += 1;
     else if (bucket === "failed") failed += 1;
     else pending += 1;
 
-    if (runner === "maestro" && hasMaestroAutomation(item.automation)) {
-      runnable += 1;
+    if (runner === "maestro") {
       if (item.automation?.readiness === "ready") readyCount += 1;
       else draftCount += 1;
-    } else if (runner === "playwright" && hasPlaywrightAutomation(item.automation)) {
-      runnable += 1;
-      if (item.automation?.playwright?.readiness === "ready") readyCount += 1;
-      else draftCount += 1;
+    } else if (item.automation?.playwright?.readiness === "ready") {
+      readyCount += 1;
+    } else {
+      draftCount += 1;
     }
-    totalRuns += countTestRuns(item.history);
+
+    totalRuns += countTestRunsForRunner(item.history ?? [], runner);
 
     const at =
       runner === "playwright"
-        ? item.automation?.playwright?.lastRunAt ?? item.automation?.lastRunAt
-        : item.automation?.lastRunAt ?? item.automation?.playwright?.lastRunAt;
+        ? item.automation?.playwright?.lastRunAt
+        : item.automation?.lastRunAt;
     if (at && (!lastRunAt || at > lastRunAt)) lastRunAt = at;
   }
 
-  const total = items.length;
   return {
-    total,
+    total: scoped,
     passed,
     failed,
     pending,
     runnable,
     draftCount,
     readyCount,
-    passRatePct: total > 0 ? Math.round((passed / total) * 100) : 0,
+    passRatePct: scoped > 0 ? Math.round((passed / scoped) * 100) : 0,
     totalRuns,
     lastRunAt,
     tone: suiteTone(passed, failed, pending),
@@ -308,6 +337,9 @@ export function summarizeSuiteProgress(
     playwrightReadiness?: "draft" | "ready";
     runsInHomologation?: number;
     lastRunAt?: string;
+    playwrightLastRunAt?: string;
+    playwrightLastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
+    maestroLastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
   }>,
   runner: AutomationRunner = "maestro",
 ): SuiteStats {
@@ -319,41 +351,58 @@ export function summarizeSuiteProgress(
   let readyCount = 0;
   let totalRuns = 0;
   let lastRunAt: string | undefined;
+  let scoped = 0;
 
   for (const item of items) {
-    const bucket = bucketStatus(item.status);
-    if (bucket === "passed") passed += 1;
-    else if (bucket === "failed") failed += 1;
-    else pending += 1;
-
     const canRun =
       runner === "maestro"
         ? Boolean(item.hasMaestro ?? item.hasAutomation)
         : Boolean(item.hasPlaywright);
-    if (canRun) {
-      runnable += 1;
-      const readiness =
-        runner === "playwright" ? item.playwrightReadiness : item.readiness;
-      if (readiness === "ready") readyCount += 1;
-      else draftCount += 1;
+    if (!canRun) continue;
+
+    scoped += 1;
+    runnable += 1;
+
+    let bucket: "passed" | "failed" | "pending";
+    if (runner === "playwright") {
+      const st = item.playwrightLastRunStatus;
+      if (st === "success") bucket = "passed";
+      else if (st === "failed") bucket = "failed";
+      else bucket = "pending";
+    } else {
+      const st = item.maestroLastRunStatus;
+      if (st === "success") bucket = "passed";
+      else if (st === "failed") bucket = "failed";
+      else bucket = bucketStatus(item.status);
     }
+
+    if (bucket === "passed") passed += 1;
+    else if (bucket === "failed") failed += 1;
+    else pending += 1;
+
+    const readiness =
+      runner === "playwright" ? item.playwrightReadiness : item.readiness;
+    if (readiness === "ready") readyCount += 1;
+    else draftCount += 1;
+
     totalRuns += item.runsInHomologation ?? 0;
 
-    if (item.lastRunAt && (!lastRunAt || item.lastRunAt > lastRunAt)) {
-      lastRunAt = item.lastRunAt;
+    const at =
+      runner === "playwright" ? item.playwrightLastRunAt ?? item.lastRunAt : item.lastRunAt;
+    if (at && (!lastRunAt || at > lastRunAt)) {
+      lastRunAt = at;
     }
   }
 
-  const total = items.length;
   return {
-    total,
+    total: scoped,
     passed,
     failed,
     pending,
     runnable,
     draftCount,
     readyCount,
-    passRatePct: total > 0 ? Math.round((passed / total) * 100) : 0,
+    passRatePct: scoped > 0 ? Math.round((passed / scoped) * 100) : 0,
     totalRuns,
     lastRunAt,
     tone: suiteTone(passed, failed, pending),

@@ -16,6 +16,16 @@ function formatLastRun(iso?: string): string {
 }
 
 function PassRateBadge({ stats }: { stats: SuiteStats }) {
+  if (stats.total === 0) {
+    return (
+      <span
+        className="shrink-0 rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.6875rem] tabular-nums text-muted-foreground"
+        title="Nenhum teste neste runner"
+      >
+        —
+      </span>
+    );
+  }
   return (
     <span
       className={cn(

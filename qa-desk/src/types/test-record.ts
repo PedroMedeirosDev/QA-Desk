@@ -162,7 +162,16 @@ export const AUTOMATION_READINESS_LABELS: Record<AutomationReadiness, string> = 
 
 export function getAutomationReadiness(
   record: Pick<TestRecord, "automation">,
+  runner?: "maestro" | "playwright",
 ): AutomationReadiness | null {
+  if (runner === "playwright") {
+    if (!record.automation?.playwright?.specPath?.trim()) return null;
+    return record.automation.playwright.readiness === "ready" ? "ready" : "draft";
+  }
+  if (runner === "maestro") {
+    if (!record.automation?.flowPath?.trim()) return null;
+    return record.automation.readiness === "ready" ? "ready" : "draft";
+  }
   if (record.automation?.flowPath?.trim()) {
     return record.automation.readiness === "ready" ? "ready" : "draft";
   }
@@ -212,11 +221,25 @@ export function formatRecordId(
   return id.replace(/^BUG-/, "TEST-");
 }
 
-export function displayStatus(record: TestRecord): {
+export function displayStatus(
+  record: TestRecord,
+  runner?: "maestro" | "playwright",
+): {
   label: string;
   tone: "neutral" | "ok" | "fail" | "warn";
 } {
   if (isTestCase(record)) {
+    if (runner === "playwright") {
+      const st = record.automation?.playwright?.lastRunStatus;
+      if (st === "success") return { label: "Passou", tone: "ok" };
+      if (st === "failed") return { label: "Falhou", tone: "fail" };
+      return { label: "Pendente", tone: "neutral" };
+    }
+    if (runner === "maestro") {
+      const st = record.automation?.lastRunStatus;
+      if (st === "success") return { label: "Passou", tone: "ok" };
+      if (st === "failed") return { label: "Falhou", tone: "fail" };
+    }
     const h = record.homologationStatus ?? "pendente";
     const tone =
       h === "passou" || h === "homologado" ? "ok" : h === "falhou" ? "fail" : "neutral";

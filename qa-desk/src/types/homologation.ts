@@ -38,6 +38,9 @@ export interface HomologationProgress {
     status: HomologationStatus;
     runsInHomologation: number;
     lastRunAt?: string;
+    playwrightLastRunAt?: string;
+    maestroLastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
+    playwrightLastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
     found: boolean;
     hasAutomation?: boolean;
     hasMaestro?: boolean;

@@ -70,6 +70,7 @@ Se Oracle bloquear a conta: [Koyeb](https://www.koyeb.com) → 1 Web Service fre
 | Variável | Onde |
 |----------|------|
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | Front (build Vite) |
+| `VITE_VISITOR_EMAIL` / `VITE_VISITOR_PASSWORD` | Botão “Acessar como visitante” (bundle público — conta demo) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Server |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Só server** — nunca no Vite |
 | `DATABASE_URL` | Postgres (JSON mode se vazio) |
@@ -77,7 +78,7 @@ Se Oracle bloquear a conta: [Koyeb](https://www.koyeb.com) → 1 Web Service fre
 
 Sem `VITE_SUPABASE_URL` + sem `SUPABASE_URL`: modo **mock admin** (dev local / Maestro).
 
-Com Auth: admin vê tudo; visitor só `showInPortfolio=true`, sem mutações / sem Executar.
+Com Auth: **admin** vê tudo; **visitor** só a tela de boas-vindas (portfólio público ainda fechado). Mutações / automation / Curadoria KB → 403.
 
 Arquitetura: [`ARCHITECTURE.md`](ARCHITECTURE.md) · Oracle detalhado: [`deploy/oracle/README.md`](deploy/oracle/README.md)
 
