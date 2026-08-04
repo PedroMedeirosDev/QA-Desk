@@ -1,4 +1,5 @@
 import { ChevronsDownUp, ChevronsUpDown, Leaf } from "lucide-react";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { cn } from "@/lib/utils";
 
 export function SuiteListControls({
@@ -30,15 +31,16 @@ export function SuiteListControls({
         <ChevronsDownUp className="size-3.5" />
         Recolher tudo
       </button>
-      <button
-        type="button"
-        onClick={onCollapseGreens}
-        title="Recolhe suites com 100% passou"
-        className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 px-2 py-1 text-xs text-emerald-400/90 transition-colors hover:bg-emerald-500/10"
-      >
-        <Leaf className="size-3.5" />
-        Recolher verdes
-      </button>
+      <PremiumTooltip label="Recolhe suites com 100% passou" side="bottom">
+        <button
+          type="button"
+          onClick={onCollapseGreens}
+          className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 px-2 py-1 text-xs text-emerald-400/90 transition-colors hover:bg-emerald-500/10"
+        >
+          <Leaf className="size-3.5" />
+          Recolher verdes
+        </button>
+      </PremiumTooltip>
     </div>
   );
 }

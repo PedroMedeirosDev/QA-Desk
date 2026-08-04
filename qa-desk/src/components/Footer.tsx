@@ -1,4 +1,5 @@
 import { Github, Instagram, Linkedin, Youtube } from "lucide-react";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { cn } from "@/lib/utils";
 
 export const SOCIAL_LINKS = [
@@ -54,17 +55,17 @@ export function Footer({ className, variant = "default" }: FooterProps) {
           className="mt-3 flex items-center justify-center gap-2"
         >
           {SOCIAL_LINKS.map(({ label, href, icon: Icon, className: linkClass }) => (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={label}
-              title={label}
-              className={cn(linkClass, "text-gray-500 opacity-70 hover:opacity-100")}
-            >
-              <Icon className="size-3.5" strokeWidth={1.75} />
-            </a>
+            <PremiumTooltip key={label} label={label} side="top">
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className={cn(linkClass, "text-gray-500 opacity-70 hover:opacity-100")}
+              >
+                <Icon className="size-3.5" strokeWidth={1.75} />
+              </a>
+            </PremiumTooltip>
           ))}
         </nav>
       </footer>
@@ -88,17 +89,17 @@ export function Footer({ className, variant = "default" }: FooterProps) {
 
         <nav aria-label="Redes sociais" className="flex items-center gap-4">
           {SOCIAL_LINKS.map(({ label, href, icon: Icon, className: linkClass }) => (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={label}
-              title={label}
-              className={linkClass}
-            >
-              <Icon className="size-4" strokeWidth={1.75} />
-            </a>
+            <PremiumTooltip key={label} label={label} side="top">
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className={linkClass}
+              >
+                <Icon className="size-4" strokeWidth={1.75} />
+              </a>
+            </PremiumTooltip>
           ))}
         </nav>
       </div>

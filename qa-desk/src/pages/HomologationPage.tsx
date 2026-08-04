@@ -586,28 +586,38 @@ export function HomologationPage({
 
         <div className="flex flex-wrap gap-2">
           {homologation.status !== "concluida" && (
-            <button
-              type="button"
-              disabled={busy || runningAll || Boolean(runningId) || liveRunning}
-              onClick={() => void runAllAutomated()}
-              className={cn(actionBtnBase, actionBtn.run, "px-4 py-2 text-sm font-semibold")}
-              title="Executa todos os testes Maestro desta campanha, um após o outro"
+            <PremiumTooltip
+              label="Executa todos os testes Maestro desta campanha, um após o outro"
+              side="bottom"
+              wide
             >
-              <Play className={cn("size-4", runningAll && "animate-pulse")} />
-              {runningAll ? "Executando campanha…" : "▶ Rodar homologação inteira"}
-            </button>
+              <button
+                type="button"
+                disabled={busy || runningAll || Boolean(runningId) || liveRunning}
+                onClick={() => void runAllAutomated()}
+                className={cn(actionBtnBase, actionBtn.run, "px-4 py-2 text-sm font-semibold")}
+              >
+                <Play className={cn("size-4", runningAll && "animate-pulse")} />
+                {runningAll ? "Executando campanha…" : "▶ Rodar homologação inteira"}
+              </button>
+            </PremiumTooltip>
           )}
           {isMural && homologation.status !== "concluida" && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void syncScope()}
-              className={cn(actionBtnBase, actionBtn.checklist, "px-3")}
-              title="Cria rascunhos faltantes e atualiza títulos/escopo a partir do catálogo Maestro"
+            <PremiumTooltip
+              label="Cria rascunhos faltantes e atualiza títulos/escopo a partir do catálogo Maestro"
+              side="bottom"
+              wide
             >
-              <RefreshCw className={cn("size-4", busy && "animate-spin")} />
-              Sincronizar checklist Mural
-            </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void syncScope()}
+                className={cn(actionBtnBase, actionBtn.checklist, "px-3")}
+              >
+                <RefreshCw className={cn("size-4", busy && "animate-spin")} />
+                Sincronizar checklist Mural
+              </button>
+            </PremiumTooltip>
           )}
           {homologation.status === "concluida" ? (
             <button
@@ -619,16 +629,26 @@ export function HomologationPage({
               Reabrir homologação
             </button>
           ) : (
-            <button
-              type="button"
-              disabled={busy || !allPassed}
-              title={allPassed ? "Marcar homologação como concluída" : "Todos os testes precisam passar"}
-              onClick={() => void markComplete()}
-              className={cn(actionBtnBase, actionBtn.create, "px-3")}
+            <PremiumTooltip
+              label={
+                allPassed
+                  ? "Marcar homologação como concluída"
+                  : "Todos os testes precisam passar"
+              }
+              side="bottom"
+              align="end"
+              wide
             >
-              <CheckCircle2 className="size-4" />
-              Concluir homologação
-            </button>
+              <button
+                type="button"
+                disabled={busy || !allPassed}
+                onClick={() => void markComplete()}
+                className={cn(actionBtnBase, actionBtn.create, "px-3")}
+              >
+                <CheckCircle2 className="size-4" />
+                Concluir homologação
+              </button>
+            </PremiumTooltip>
           )}
         </div>
       </div>

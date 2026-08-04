@@ -85,9 +85,14 @@ function putAuthCache(token: string, user: AuthUser) {
 
 function bearerToken(req: Request): string | null {
   const h = req.headers.authorization;
-  if (!h?.startsWith("Bearer ")) return null;
-  const token = h.slice(7).trim();
-  return token || null;
+  if (h?.startsWith("Bearer ")) {
+    const token = h.slice(7).trim();
+    if (token) return token;
+  }
+  // Evidências via <img>/<a> não enviam Authorization — token na query (mesmo JWT).
+  const q = req.query.access_token;
+  if (typeof q === "string" && q.trim()) return q.trim();
+  return null;
 }
 
 async function profileForUser(user: User): Promise<AuthUser> {
@@ -180,7 +185,26 @@ export function isVisitor(req: Request): boolean {
   return req.user?.role === "visitor";
 }
 
-/** Filtra catálogo de testes para visitante (só portfólio). */
+/**
+ * Visitante: apenas leitura (GET/HEAD/OPTIONS).
+ * Mutações retornam 403 genérico — defesa em profundidade além do requireAdmin.
+ */
+export function rejectVisitorMutations(req: Request, res: Response, next: NextFunction) {
+  if (!isVisitor(req)) return next();
+  const method = req.method.toUpperCase();
+  if (method === "GET" || method === "HEAD" || method === "OPTIONS") return next();
+  return res.status(403).json({ error: "Operação não permitida" });
+}
+
+/** Bloqueia visitante em rotas ainda fechadas no portfólio (KB, homologações, etc.). */
+export function forbidVisitor(req: Request, res: Response, next: NextFunction) {
+  if (isVisitor(req)) {
+    return res.status(403).json({ error: "Operação não permitida" });
+  }
+  next();
+}
+
+/** Filtra catálogo de testes para visitante (só portfólio). Nunca confiar em query/body. */
 export function filterPortfolioReports<T extends { showInPortfolio?: boolean }>(
   reports: T[],
   visitor: boolean,

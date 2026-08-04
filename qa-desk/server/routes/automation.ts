@@ -78,7 +78,7 @@ import {
   startAndroidEmulator,
   waitForAndroidDevice,
 } from "../android-device.js";
-import { actorOf, attachUser, requireAdmin } from "../middleware/auth.js";
+import { actorOf, attachUser, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
 import { recordTestRun } from "../db/test-runs.js";
 import type { TestRecord } from "../types.js";
 import {
@@ -112,6 +112,7 @@ function param(req: { params: Record<string, string | string[] | undefined> }, k
 export const automationRouter = Router({ mergeParams: true });
 
 automationRouter.use(attachUser);
+automationRouter.use(rejectVisitorMutations);
 automationRouter.use(requireAdmin);
 
 automationRouter.get("/flows", (req, res) => {

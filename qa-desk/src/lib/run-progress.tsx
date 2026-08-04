@@ -29,6 +29,7 @@ import {
 import { interpretMaestroLine } from "@/lib/maestro-progress";
 import { maskPii } from "@/lib/redact-pii";
 import { cn } from "@/lib/utils";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import type { TestRecord } from "@/types/test-record";
 
 export type RunFailure = {
@@ -860,29 +861,31 @@ function RunProgressPanel() {
 
   if (prefs.minimized) {
     return (
-      <button
-        type="button"
-        onClick={() => updatePrefs({ minimized: false })}
-        className={cn(
-          "fixed z-50 flex items-center gap-2 rounded-full border bg-card/95 px-3 py-2 text-xs font-medium shadow-lg backdrop-blur-sm",
-          state.result === "success" && "border-emerald-500/45",
-          state.result === "failed" && "border-red-500/45",
-          state.result === "cancelled" && "border-amber-500/45",
-          running && "border-sky-500/45",
-        )}
-        style={{ left: position.x, top: position.y }}
-        title="Expandir painel Maestro"
-      >
-        {statusIcon}
-        <span className="max-w-40 truncate">
-          {state.batchLabel ? `${state.batchLabel} · ` : ""}
-          {state.title}
-        </span>
-        {state.action && (
-          <span className="max-w-28 truncate text-muted-foreground">{state.action}</span>
-        )}
-        <span className="text-muted-foreground">{elapsed}</span>
-      </button>
+      <div className="fixed z-50" style={{ left: position.x, top: position.y }}>
+        <PremiumTooltip label="Expandir painel Maestro" side="top">
+          <button
+            type="button"
+            onClick={() => updatePrefs({ minimized: false })}
+            className={cn(
+              "flex items-center gap-2 rounded-full border bg-card/95 px-3 py-2 text-xs font-medium shadow-lg backdrop-blur-sm",
+              state.result === "success" && "border-emerald-500/45",
+              state.result === "failed" && "border-red-500/45",
+              state.result === "cancelled" && "border-amber-500/45",
+              running && "border-sky-500/45",
+            )}
+          >
+            {statusIcon}
+            <span className="max-w-40 truncate">
+              {state.batchLabel ? `${state.batchLabel} · ` : ""}
+              {state.title}
+            </span>
+            {state.action && (
+              <span className="max-w-28 truncate text-muted-foreground">{state.action}</span>
+            )}
+            <span className="text-muted-foreground">{elapsed}</span>
+          </button>
+        </PremiumTooltip>
+      </div>
     );
   }
 
@@ -959,34 +962,43 @@ function RunProgressPanel() {
             )}
           </div>
           <div className="flex shrink-0 flex-col gap-0.5">
-            <button
-              type="button"
-              onClick={() => updatePrefs({ logOpen: !prefs.logOpen })}
-              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              title={prefs.logOpen ? "Ocultar log" : "Mostrar log"}
+            <PremiumTooltip
+              label={prefs.logOpen ? "Ocultar log" : "Mostrar log"}
+              side="left"
             >
-              {prefs.logOpen ? (
-                <ChevronDown className="size-3.5" />
-              ) : (
-                <ChevronUp className="size-3.5" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => updatePrefs({ minimized: true })}
-              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              title="Minimizar"
-            >
-              <Minimize2 className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={dismiss}
-              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              title="Fechar"
-            >
-              <X className="size-3.5" />
-            </button>
+              <button
+                type="button"
+                onClick={() => updatePrefs({ logOpen: !prefs.logOpen })}
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={prefs.logOpen ? "Ocultar log" : "Mostrar log"}
+              >
+                {prefs.logOpen ? (
+                  <ChevronDown className="size-3.5" />
+                ) : (
+                  <ChevronUp className="size-3.5" />
+                )}
+              </button>
+            </PremiumTooltip>
+            <PremiumTooltip label="Minimizar" side="left">
+              <button
+                type="button"
+                onClick={() => updatePrefs({ minimized: true })}
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Minimizar"
+              >
+                <Minimize2 className="size-3.5" />
+              </button>
+            </PremiumTooltip>
+            <PremiumTooltip label="Fechar" side="left">
+              <button
+                type="button"
+                onClick={dismiss}
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Fechar"
+              >
+                <X className="size-3.5" />
+              </button>
+            </PremiumTooltip>
           </div>
         </div>
 
@@ -1002,69 +1014,89 @@ function RunProgressPanel() {
               </p>
               <div className="flex shrink-0 items-center gap-1">
                 <div className="mr-1 inline-flex rounded-md border border-border/80 p-0.5 text-[0.6rem]">
-                  <button
-                    type="button"
-                    onClick={() => updatePrefs({ logMode: "limpo" })}
-                    className={cn(
-                      "rounded px-1.5 py-0.5",
-                      prefs.logMode === "limpo"
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                    title="Fases, flows e falhas — sem Tap/Assert COMPLETED nem SKIPPED em série"
+                  <PremiumTooltip
+                    label="Fases, flows e falhas — sem Tap/Assert COMPLETED nem SKIPPED em série"
+                    side="top"
+                    wide
                   >
-                    Limpo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updatePrefs({ logMode: "completo" })}
-                    className={cn(
-                      "rounded px-1.5 py-0.5",
-                      prefs.logMode === "completo"
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                    title="Stdout bruto do Maestro (tudo o que chegou ao painel)"
+                    <button
+                      type="button"
+                      onClick={() => updatePrefs({ logMode: "limpo" })}
+                      className={cn(
+                        "rounded px-1.5 py-0.5",
+                        prefs.logMode === "limpo"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      Limpo
+                    </button>
+                  </PremiumTooltip>
+                  <PremiumTooltip
+                    label="Stdout bruto do Maestro (tudo o que chegou ao painel)"
+                    side="top"
+                    wide
                   >
-                    Completo
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => updatePrefs({ logMode: "completo" })}
+                      className={cn(
+                        "rounded px-1.5 py-0.5",
+                        prefs.logMode === "completo"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      Completo
+                    </button>
+                  </PremiumTooltip>
                 </div>
                 {state.lines.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const text = displayLines.join("\n");
-                      void navigator.clipboard.writeText(text).then(() => {
-                        setLogCopied(true);
-                        window.setTimeout(() => setLogCopied(false), 2000);
-                      });
-                    }}
-                    className="inline-flex items-center gap-1 rounded-md border border-border/80 px-2 py-1 text-[0.65rem] text-muted-foreground hover:bg-muted hover:text-foreground"
-                    title={
+                  <PremiumTooltip
+                    label={
                       prefs.logMode === "limpo"
                         ? "Copiar log limpo"
                         : "Copiar log completo"
                     }
+                    side="top"
                   >
-                    {logCopied ? (
-                      <Check className="size-3 text-emerald-400" />
-                    ) : (
-                      <Copy className="size-3" />
-                    )}
-                    {logCopied ? "Copiado" : "Copiar"}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const text = displayLines.join("\n");
+                        void navigator.clipboard.writeText(text).then(() => {
+                          setLogCopied(true);
+                          window.setTimeout(() => setLogCopied(false), 2000);
+                        });
+                      }}
+                      className="inline-flex items-center gap-1 rounded-md border border-border/80 px-2 py-1 text-[0.65rem] text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      {logCopied ? (
+                        <Check className="size-3 text-emerald-400" />
+                      ) : (
+                        <Copy className="size-3" />
+                      )}
+                      {logCopied ? "Copiado" : "Copiar"}
+                    </button>
+                  </PremiumTooltip>
                 )}
                 {canStop && (
-                  <button
-                    type="button"
-                    onClick={() => void stopRun()}
-                    disabled={state.stopping}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-red-500/40 bg-red-500/10 px-2 py-1 text-[0.65rem] font-medium text-red-200 hover:bg-red-500/20 disabled:opacity-50"
-                    title="Interrompe o Maestro — atalho: Esc (o CLI não suporta pausar)"
+                  <PremiumTooltip
+                    label="Interrompe o Maestro — atalho: Esc (o CLI não suporta pausar)"
+                    side="top"
+                    align="end"
+                    wide
                   >
-                    <Square className="size-3 fill-current" />
-                    {state.stopping ? "Parando…" : "Parar teste"}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => void stopRun()}
+                      disabled={state.stopping}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-red-500/40 bg-red-500/10 px-2 py-1 text-[0.65rem] font-medium text-red-200 hover:bg-red-500/20 disabled:opacity-50"
+                    >
+                      <Square className="size-3 fill-current" />
+                      {state.stopping ? "Parando…" : "Parar teste"}
+                    </button>
+                  </PremiumTooltip>
                 )}
               </div>
             </div>

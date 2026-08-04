@@ -13,6 +13,7 @@ import {
   Search,
 } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { api } from "@/lib/api";
 import { downloadHtmlReport } from "@/lib/html-report";
@@ -183,9 +184,9 @@ function RecordEditor({
     record.solutionReview ?? record.summary ?? "",
   );
   const [corrections, setCorrections] = useState((record.corrections ?? []).join("\n"));
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const [reviewer, setReviewer] = useState(
-    record.reviewer?.trim() || user?.actor || "",
+    record.reviewer?.trim() || profile?.displayName || "",
   );
 
   return (
@@ -450,49 +451,65 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
           </p>
         </div>
         <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:min-w-80">
-          <select
-            aria-label="Situação do relatório"
-            className="h-9 rounded-md border border-gray-700 bg-transparent px-3 text-sm text-gray-200"
-            value={reportStatus}
-            onChange={(event) =>
-              setReportStatus(event.target.value as "todas" | KbCurationStatus)
-            }
-            title="Define quais situações serão incluídas no relatório"
+          <PremiumTooltip
+            label="Define quais situações serão incluídas no relatório"
+            side="bottom"
+            wide
           >
-            <option value="todas">Relatório: todas</option>
-            {STATUS_OPTIONS.map((value) => (
-              <option key={value} value={value}>
-                Relatório: {STATUS_LABELS[value]}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            disabled={loading || reportRecords.length === 0}
-            onClick={exportHtmlReport}
-            className={cn(
-              actionBtnBase,
-              "border border-red-500/50 bg-transparent text-red-400 hover:bg-red-500/10 disabled:opacity-50",
-            )}
-            title="Baixar relatório HTML com as PRs da situação selecionada"
+            <select
+              aria-label="Situação do relatório"
+              className="h-9 rounded-md border border-gray-700 bg-transparent px-3 text-sm text-gray-200"
+              value={reportStatus}
+              onChange={(event) =>
+                setReportStatus(event.target.value as "todas" | KbCurationStatus)
+              }
+            >
+              <option value="todas">Relatório: todas</option>
+              {STATUS_OPTIONS.map((value) => (
+                <option key={value} value={value}>
+                  Relatório: {STATUS_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </PremiumTooltip>
+          <PremiumTooltip
+            label="Baixar relatório HTML com as PRs da situação selecionada"
+            side="bottom"
+            wide
           >
-            <Download className="size-4" />
-            Relatório HTML ({reportRecords.length})
-          </button>
-          <button
-            type="button"
-            disabled={syncing}
-            onClick={() => void syncGithub()}
-            className="rounded-md p-2 text-gray-500 transition-colors hover:text-green-400 disabled:opacity-50"
-            title="Catch-up manual. Com GITHUB_WEBHOOK_SECRET, reviews/merges atualizam sozinhos."
-            aria-label="Sincronizar GitHub"
+            <button
+              type="button"
+              disabled={loading || reportRecords.length === 0}
+              onClick={exportHtmlReport}
+              className={cn(
+                actionBtnBase,
+                "border border-red-500/50 bg-transparent text-red-400 hover:bg-red-500/10 disabled:opacity-50",
+              )}
+            >
+              <Download className="size-4" />
+              Relatório HTML ({reportRecords.length})
+            </button>
+          </PremiumTooltip>
+          <PremiumTooltip
+            label="Catch-up manual. Com GITHUB_WEBHOOK_SECRET, reviews/merges atualizam sozinhos."
+            side="bottom"
+            align="end"
+            wide
           >
-            {syncing ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4" />
-            )}
-          </button>
+            <button
+              type="button"
+              disabled={syncing}
+              onClick={() => void syncGithub()}
+              className="rounded-md p-2 text-gray-500 transition-colors hover:text-green-400 disabled:opacity-50"
+              aria-label="Sincronizar GitHub"
+            >
+              {syncing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
+            </button>
+          </PremiumTooltip>
         </div>
       </div>
 

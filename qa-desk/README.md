@@ -12,6 +12,7 @@ Aplicação web do **QA Desk** — registro de testes e homologação multi-proj
 | Doc | Uso |
 |-----|-----|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Como funciona hoje |
+| [`docs/LLM_CONTEXT.md`](docs/LLM_CONTEXT.md) | Contexto completo da stack para IAs (Gemini/Cursor) |
 | [`docs/COLORS.md`](docs/COLORS.md) | Cores: marca, projetos, claro/escuro |
 | [`VISION.md`](VISION.md) | Backlog (Discord bot, portfólio rico, etc.) |
 | [`DEPLOY.md`](DEPLOY.md) | Local, túnel, Oracle, Koyeb |
@@ -108,7 +109,8 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 ## UI (design system)
 
 - Tokens por projeto: `--project-highlight-*` em [`docs/COLORS.md`](docs/COLORS.md) / `src/index.css`
-- Tooltips premium (`PremiumTooltip`) — sem `title` nativo nas tabelas/userbar
+- Tooltips premium (`PremiumTooltip`, seta top/bottom/left/right) — sem `title` nativo
+- UserBar: status permanente **Agente** + **AVD** (além de tema/sair); visitante não vê ops
 - Checkbox do sistema (`DesignCheckbox`) — aparência própria, cores do tema
 - Scrollbar custom + `::selection` temática + focus-visible (teclado)
 

@@ -24,6 +24,7 @@ import { resolveProjectTheme } from "@/config/project-themes";
 import { getProject, PROJECTS } from "@/config/projects";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Footer } from "@/components/Footer";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { ProjectLogo } from "@/components/ProjectLogo";
 import { useActiveProject } from "@/lib/active-project";
 import { api } from "@/lib/api";
@@ -56,17 +57,12 @@ function readCollapsed(): boolean {
   }
 }
 
+/** Tooltip à direita — sidebar recolhida (seta aponta para o ícone). */
 function CollapsedTooltip({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="group/tooltip relative">
+    <PremiumTooltip label={label} side="right" className="flex w-full justify-center">
       {children}
-      <span
-        role="tooltip"
-        className="pointer-events-none absolute left-full top-1/2 z-[100] ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground opacity-0 shadow-lg transition-opacity group-hover/tooltip:opacity-100 md:block"
-      >
-        {label}
-      </span>
-    </div>
+    </PremiumTooltip>
   );
 }
 
@@ -149,7 +145,7 @@ export function ProjectSidebar({
   return (
     <aside
       className={cn(
-        "sidebar-nav relative flex h-full shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--sidebar)] transition-[width] duration-200 ease-in-out",
+        "sidebar-nav relative flex h-full shrink-0 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] transition-[width] duration-200 ease-in-out",
         collapsed ? "w-[4.5rem]" : "w-[16rem]",
       )}
     >
@@ -169,19 +165,35 @@ export function ProjectSidebar({
             <BrandLogo size="sidebar" />
           </div>
         )}
-        {!visitorMode && (
-          <button
-            type="button"
-            onClick={() => setCollapsed((v) => !v)}
-            title={collapsed ? "Expandir menu" : "Recolher menu"}
-            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-            aria-expanded={!collapsed}
-            className="shrink-0 self-start rounded-md border border-border p-1.5 text-muted-foreground transition-colors hover:border-red-500/40 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
-          >
-            {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
-          </button>
-        )}
       </header>
+
+      {!visitorMode && (
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+          aria-expanded={!collapsed}
+          className="group absolute -right-[0.75rem] top-[4rem] z-50 flex h-[1.5rem] w-[1.5rem] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--muted-foreground)] shadow-sm transition-all duration-200 hover:bg-[var(--accent)] hover:text-[var(--foreground)]"
+        >
+          {collapsed ? (
+            <ChevronRight className="size-3.5" strokeWidth={2} />
+          ) : (
+            <ChevronLeft className="size-3.5" strokeWidth={2} />
+          )}
+          {/* Tooltip renderizando para a DIREITA do botão */}
+          <div
+            role="tooltip"
+            className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-slate-100 dark:text-slate-900"
+          >
+            {collapsed ? "Expandir menu" : "Recolher menu"}
+            {/* Setinha apontando para a esquerda */}
+            <div
+              aria-hidden
+              className="absolute top-1/2 right-full -translate-y-1/2 border-[5px] border-transparent border-r-slate-800 dark:border-r-slate-100"
+            />
+          </div>
+        </button>
+      )}
 
       {visitorMode ? (
         <>
@@ -422,12 +434,17 @@ export function ProjectSidebar({
                         <GitPullRequest className="size-3.5 shrink-0 opacity-90" />
                         <span className="min-w-0 flex-1">Curadoria KB</span>
                         {kbRereviewCount > 0 && (
-                          <span
-                            className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 text-[0.625rem] font-semibold tabular-nums text-zinc-950"
-                            title={`${kbRereviewCount} PR(s) para re-revisar`}
+                          <PremiumTooltip
+                            label={`${kbRereviewCount} PR(s) para re-revisar`}
+                            side="right"
                           >
-                            {kbRereviewCount}
-                          </span>
+                            <span
+                              className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 text-[0.625rem] font-semibold tabular-nums text-zinc-950"
+                              aria-label={`${kbRereviewCount} PR(s) para re-revisar`}
+                            >
+                              {kbRereviewCount}
+                            </span>
+                          </PremiumTooltip>
                         )}
                       </Link>
                     )}

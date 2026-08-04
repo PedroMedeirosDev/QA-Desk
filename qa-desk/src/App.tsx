@@ -4,7 +4,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { UserBar } from "@/components/UserBar";
-import { AgentStatusBadge } from "@/components/AgentStatusBadge";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { ProjectLogo } from "@/components/ProjectLogo";
 import { CHANNEL_LABELS } from "@/config/channels";
 import { PROJECTS } from "@/config/projects";
@@ -102,19 +102,19 @@ function ProjectShell() {
                       )}
                   </span>
                   {!isVisitor && route.view === "kb-curation" && (
-                    <span
-                      className="inline-flex shrink-0 text-[var(--muted-foreground)]/70 transition-colors hover:text-[var(--muted-foreground)]"
-                      title={KB_CURATION_HELP}
-                      aria-label={KB_CURATION_HELP}
-                    >
-                      <Info className="size-[0.875rem]" strokeWidth={1.75} />
-                    </span>
+                    <PremiumTooltip label={KB_CURATION_HELP} side="bottom" wide>
+                      <span
+                        className="inline-flex shrink-0 text-[var(--muted-foreground)]/70 transition-colors hover:text-[var(--muted-foreground)]"
+                        aria-label={KB_CURATION_HELP}
+                      >
+                        <Info className="size-[0.875rem]" strokeWidth={1.75} />
+                      </span>
+                    </PremiumTooltip>
                   )}
                 </h1>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-[0.75rem]">
-              {!isVisitor && <AgentStatusBadge />}
               <UserBar />
             </div>
           </div>

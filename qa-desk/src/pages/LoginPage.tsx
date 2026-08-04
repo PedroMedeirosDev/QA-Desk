@@ -4,6 +4,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SOCIAL_LINKS } from "@/components/Footer";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { cn } from "@/lib/utils";
 
 const INPUT_CLASS =
@@ -131,20 +132,20 @@ export function LoginPage() {
               className="relative flex items-center gap-6"
             >
               {SOCIAL_LINKS.map(({ label, href, icon: Icon, className }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  title={label}
-                  className={cn(
-                    "text-gray-500 transition-all duration-300 hover:-translate-y-1",
-                    className,
-                  )}
-                >
-                  <Icon className="size-6" strokeWidth={1.75} />
-                </a>
+                <PremiumTooltip key={label} label={label} side="top">
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className={cn(
+                      "text-gray-500 transition-all duration-300 hover:-translate-y-1",
+                      className,
+                    )}
+                  >
+                    <Icon className="size-6" strokeWidth={1.75} />
+                  </a>
+                </PremiumTooltip>
               ))}
             </nav>
           </aside>

@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
 import { DesignCheckbox } from "@/components/DesignCheckbox";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { api, type AutomationFlow, type AutomationSpec, type AndroidDeviceStatus } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { useRunProgress, QA_RUN_FINISHED_EVENT, type LiveRunState } from "@/lib/run-progress";
@@ -430,13 +431,15 @@ export function TestEditorPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Link
-          to={listPathFor(form)}
-          className={cn(actionBtnBase, actionBtn.back, "size-9 px-0")}
-          title="Voltar à lista"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
+        <PremiumTooltip label="Voltar à lista" side="bottom">
+          <Link
+            to={listPathFor(form)}
+            className={cn(actionBtnBase, actionBtn.back, "size-9 px-0")}
+            aria-label="Voltar à lista"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+        </PremiumTooltip>
         <div>
           <p className="font-mono text-xs text-muted-foreground">
             {isNew
@@ -508,43 +511,46 @@ export function TestEditorPage({
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">Passos do teste</span>
                   <div className="inline-flex rounded-md border p-0.5 text-xs">
-                    <button
-                      type="button"
-                      className={cn(
-                        "rounded px-2 py-0.5",
-                        stepsMode === "resumo"
-                          ? "bg-muted font-medium text-foreground"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                      onClick={() => setStepsMode("resumo")}
-                      title="Atalho QA / Discord"
-                    >
-                      Resumo
-                    </button>
-                    <button
-                      type="button"
-                      className={cn(
-                        "rounded px-2 py-0.5",
-                        stepsMode === "detalhado"
-                          ? "bg-muted font-medium text-foreground"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                      onClick={() => setStepsMode("detalhado")}
-                      title="Roteiro detalhado + âncoras Maestro"
-                    >
-                      Detalhado
-                    </button>
+                    <PremiumTooltip label="Atalho QA / Discord" side="bottom">
+                      <button
+                        type="button"
+                        className={cn(
+                          "rounded px-2 py-0.5",
+                          stepsMode === "resumo"
+                            ? "bg-muted font-medium text-foreground"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => setStepsMode("resumo")}
+                      >
+                        Resumo
+                      </button>
+                    </PremiumTooltip>
+                    <PremiumTooltip label="Roteiro detalhado + âncoras Maestro" side="bottom">
+                      <button
+                        type="button"
+                        className={cn(
+                          "rounded px-2 py-0.5",
+                          stepsMode === "detalhado"
+                            ? "bg-muted font-medium text-foreground"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => setStepsMode("detalhado")}
+                      >
+                        Detalhado
+                      </button>
+                    </PremiumTooltip>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/50"
-                    onClick={applyTextPolish}
-                    title="Normaliza numeração, espaços e unicode"
-                  >
-                    <Sparkles className="size-3" /> Corrigir texto
-                  </button>
+                  <PremiumTooltip label="Normaliza numeração, espaços e unicode" side="bottom" wide>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/50"
+                      onClick={applyTextPolish}
+                    >
+                      <Sparkles className="size-3" /> Corrigir texto
+                    </button>
+                  </PremiumTooltip>
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground"
@@ -621,19 +627,21 @@ export function TestEditorPage({
                                 </p>
                               )}
                             </div>
-                            <button
-                              type="button"
-                              className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
-                              title="Remover passo"
-                              onClick={() =>
-                                update(
-                                  "steps",
-                                  list.filter((_, j) => j !== i),
-                                )
-                              }
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            <PremiumTooltip label="Remover passo" side="top" align="end">
+                              <button
+                                type="button"
+                                className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
+                                aria-label="Remover passo"
+                                onClick={() =>
+                                  update(
+                                    "steps",
+                                    list.filter((_, j) => j !== i),
+                                  )
+                                }
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </PremiumTooltip>
                           </div>
                         );
                       })}
@@ -693,36 +701,46 @@ export function TestEditorPage({
                                   }}
                                 />
                                 <div className="grid gap-1.5 sm:grid-cols-2">
-                                  <input
-                                    className="w-full rounded-md border border-dashed px-2 py-1 text-[0.7rem] text-muted-foreground"
-                                    value={(step.flows ?? []).join(", ")}
-                                    placeholder="Flows YAML (vírgula) — ex. abrir_filtro_extras_composer.yaml"
-                                    title="Basename do flow Maestro que corresponde a este passo"
-                                    onChange={(e) => {
-                                      const flows = e.target.value
-                                        .split(",")
-                                        .map((s) => s.trim())
-                                        .filter(Boolean);
-                                      const next = [...list];
-                                      next[i] = { ...step, flows };
-                                      setDetailed(next);
-                                    }}
-                                  />
-                                  <input
-                                    className="w-full rounded-md border border-dashed px-2 py-1 text-[0.7rem] text-muted-foreground"
-                                    value={(step.actions ?? []).join(", ")}
-                                    placeholder="Ações (vírgula) — ex. mural_composer_filtro"
-                                    title="Trecho da ação Maestro (Tap on …) que casa com este passo"
-                                    onChange={(e) => {
-                                      const actions = e.target.value
-                                        .split(",")
-                                        .map((s) => s.trim())
-                                        .filter(Boolean);
-                                      const next = [...list];
-                                      next[i] = { ...step, actions };
-                                      setDetailed(next);
-                                    }}
-                                  />
+                                  <PremiumTooltip
+                                    label="Basename do flow Maestro que corresponde a este passo"
+                                    side="top"
+                                    wide
+                                  >
+                                    <input
+                                      className="w-full rounded-md border border-dashed px-2 py-1 text-[0.7rem] text-muted-foreground"
+                                      value={(step.flows ?? []).join(", ")}
+                                      placeholder="Flows YAML (vírgula) — ex. abrir_filtro_extras_composer.yaml"
+                                      onChange={(e) => {
+                                        const flows = e.target.value
+                                          .split(",")
+                                          .map((s) => s.trim())
+                                          .filter(Boolean);
+                                        const next = [...list];
+                                        next[i] = { ...step, flows };
+                                        setDetailed(next);
+                                      }}
+                                    />
+                                  </PremiumTooltip>
+                                  <PremiumTooltip
+                                    label="Trecho da ação Maestro (Tap on …) que casa com este passo"
+                                    side="top"
+                                    wide
+                                  >
+                                    <input
+                                      className="w-full rounded-md border border-dashed px-2 py-1 text-[0.7rem] text-muted-foreground"
+                                      value={(step.actions ?? []).join(", ")}
+                                      placeholder="Ações (vírgula) — ex. mural_composer_filtro"
+                                      onChange={(e) => {
+                                        const actions = e.target.value
+                                          .split(",")
+                                          .map((s) => s.trim())
+                                          .filter(Boolean);
+                                        const next = [...list];
+                                        next[i] = { ...step, actions };
+                                        setDetailed(next);
+                                      }}
+                                    />
+                                  </PremiumTooltip>
                                 </div>
                                 {isFailedStep && failInfo && (
                                   <p className="text-[0.7rem] text-red-300">
@@ -732,16 +750,18 @@ export function TestEditorPage({
                                   </p>
                                 )}
                               </div>
-                              <button
-                                type="button"
-                                className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
-                                title="Remover passo"
-                                onClick={() =>
-                                  setDetailed(list.filter((_, j) => j !== i))
-                                }
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
+                              <PremiumTooltip label="Remover passo" side="top" align="end">
+                                <button
+                                  type="button"
+                                  className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
+                                  aria-label="Remover passo"
+                                  onClick={() =>
+                                    setDetailed(list.filter((_, j) => j !== i))
+                                  }
+                                >
+                                  <Trash2 className="size-4" />
+                                </button>
+                              </PremiumTooltip>
                             </div>
                           </div>
                         );
@@ -782,27 +802,27 @@ export function TestEditorPage({
               <span className="text-sm font-medium">Evidência (prints / vídeos)</span>
               <div className="mt-2 flex flex-wrap gap-3">
                 {(form.evidence ?? []).map((ev) => (
-                  <a
-                    key={ev.fileId}
-                    href={api.evidenceUrl(ev.storageKey)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block overflow-hidden rounded-md border"
-                    title={ev.filename}
-                  >
-                    {ev.type === "video" ? (
-                      <span className="flex h-24 w-36 flex-col items-center justify-center gap-1 bg-muted/40 text-xs text-muted-foreground">
-                        <Video className="size-6" />
-                        Vídeo
-                      </span>
-                    ) : (
-                      <img
-                        src={api.evidenceUrl(ev.storageKey)}
-                        alt={ev.filename}
-                        className="h-24 w-auto object-cover"
-                      />
-                    )}
-                  </a>
+                  <PremiumTooltip key={ev.fileId} label={ev.filename} side="top">
+                    <a
+                      href={api.evidenceUrl(ev.storageKey)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block overflow-hidden rounded-md border"
+                    >
+                      {ev.type === "video" ? (
+                        <span className="flex h-24 w-36 flex-col items-center justify-center gap-1 bg-muted/40 text-xs text-muted-foreground">
+                          <Video className="size-6" />
+                          Vídeo
+                        </span>
+                      ) : (
+                        <img
+                          src={api.evidenceUrl(ev.storageKey)}
+                          alt={ev.filename}
+                          className="h-24 w-auto object-cover"
+                        />
+                      )}
+                    </a>
+                  </PremiumTooltip>
                 ))}
               </div>
               <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm surface-brand hover:brightness-110">
@@ -898,13 +918,18 @@ export function TestEditorPage({
               />
             </Field>
             <Field label="Versão do app (login)">
-              <input
-                className="w-full rounded-md border px-3 py-2 font-mono text-sm"
-                value={form.build ?? ""}
-                onChange={(e) => update("build", e.target.value)}
-                placeholder="Preenchida ao rodar o Maestro"
-                title="Mesma versão exibida na tela de login; atualizada a cada execução"
-              />
+              <PremiumTooltip
+                label="Mesma versão exibida na tela de login; atualizada a cada execução"
+                side="top"
+                wide
+              >
+                <input
+                  className="w-full rounded-md border px-3 py-2 font-mono text-sm"
+                  value={form.build ?? ""}
+                  onChange={(e) => update("build", e.target.value)}
+                  placeholder="Preenchida ao rodar o Maestro"
+                />
+              </PremiumTooltip>
             </Field>
             {isMobileChannel && (
               <>
@@ -1110,16 +1135,17 @@ export function TestEditorPage({
                   </label>
                 )}
                 {!isNew && form.automation?.playwright?.specPath && (
-                  <button
-                    type="button"
-                    onClick={() => void runAutomationStage("all", "playwright")}
-                    disabled={busyRun || saving}
-                    className={cn(actionBtnBase, actionBtn.run, "w-full")}
-                    title="Rodar só o spec Playwright (Web)"
-                  >
-                    <Play className="size-4" />
-                    {busyRun ? "Executando…" : "Executar Playwright (Web)"}
-                  </button>
+                  <PremiumTooltip label="Rodar só o spec Playwright (Web)" side="left" wide className="w-full">
+                    <button
+                      type="button"
+                      onClick={() => void runAutomationStage("all", "playwright")}
+                      disabled={busyRun || saving}
+                      className={cn(actionBtnBase, actionBtn.run, "w-full")}
+                    >
+                      <Play className="size-4" />
+                      {busyRun ? "Executando…" : "Executar Playwright (Web)"}
+                    </button>
+                  </PremiumTooltip>
                 )}
               </div>
 
@@ -1144,6 +1170,16 @@ export function TestEditorPage({
                     </span>
                   </div>
                   {!deviceStatus?.ready && (
+                    <PremiumTooltip
+                      label={
+                        deviceStatus?.agentOnline
+                          ? "Envia pedido ao agente no PC para ligar o AVD"
+                          : `Inicia o AVD ${deviceStatus?.avdName ?? "Medium_Phone"} via Android SDK`
+                      }
+                      side="left"
+                      wide
+                      className="w-full"
+                    >
                     <button
                       type="button"
                       onClick={() => void startEmulator()}
@@ -1154,15 +1190,11 @@ export function TestEditorPage({
                         deviceStatus?.agentOnline === false
                       }
                       className={cn(actionBtnBase, actionBtn.back, "w-full")}
-                      title={
-                        deviceStatus?.agentOnline
-                          ? "Envia pedido ao agente no PC para ligar o AVD"
-                          : `Inicia o AVD ${deviceStatus?.avdName ?? "Medium_Phone"} via Android SDK`
-                      }
                     >
                       <Smartphone className="size-4" />
                       {startingEmulator ? "Aguardando boot…" : "Ligar emulador"}
                     </button>
+                    </PremiumTooltip>
                   )}
                   <DesignCheckbox
                     className="rounded-md border px-2.5 py-2"
@@ -1180,16 +1212,21 @@ export function TestEditorPage({
                     label={<span className="font-medium text-[var(--foreground)]">Gravar vídeo</span>}
                     description="adb screenrecord em paralelo (chunks de ~3 min). Arquivos ficam em Evidência."
                   />
+                  <PremiumTooltip
+                    label={
+                      form.automation?.prep
+                        ? "Playwright (seed) e depois Maestro"
+                        : "Rodar flow Maestro"
+                    }
+                    side="left"
+                    wide
+                    className="w-full"
+                  >
                   <button
                     type="button"
                     onClick={() => void runAutomationStage("all", "maestro")}
                     disabled={busyRun || saving || startingEmulator}
                     className={cn(actionBtnBase, actionBtn.run, "w-full")}
-                    title={
-                      form.automation?.prep
-                        ? "Playwright (seed) e depois Maestro"
-                        : "Rodar flow Maestro"
-                    }
                   >
                     {recordVideo ? <Video className="size-4" /> : <Play className="size-4" />}
                     {busyRun
@@ -1202,26 +1239,29 @@ export function TestEditorPage({
                           ? "Executar com vídeo"
                           : "Executar Maestro"}
                   </button>
+                  </PremiumTooltip>
                   {form.automation?.prep?.type === "playwright" && (
                     <div className="grid grid-cols-2 gap-2">
+                      <PremiumTooltip label="Só ajusta DN no web (Chrome headed)" side="top" wide>
                       <button
                         type="button"
                         onClick={() => void runAutomationStage("prep", "maestro")}
                         disabled={busyRun || saving}
                         className={cn(actionBtnBase, actionBtn.back, "w-full text-xs")}
-                        title="Só ajusta DN no web (Chrome headed)"
                       >
                         Seed DN
                       </button>
+                      </PremiumTooltip>
+                      <PremiumTooltip label="Só Maestro (DN já ok)" side="top" wide>
                       <button
                         type="button"
                         onClick={() => void runAutomationStage("maestro", "maestro")}
                         disabled={busyRun || saving || startingEmulator}
                         className={cn(actionBtnBase, actionBtn.back, "w-full text-xs")}
-                        title="Só Maestro (DN já ok)"
                       >
                         Só app
                       </button>
+                      </PremiumTooltip>
                     </div>
                   )}
                 </div>
@@ -1231,25 +1271,31 @@ export function TestEditorPage({
 
             <div className="flex flex-col gap-2 pt-2">
               {isAdmin && isHomologation && !isNew && (
+                <PremiumTooltip
+                  label="Abre um novo bug com dados deste caso de teste"
+                  side="left"
+                  wide
+                >
                 <button
                   type="button"
                   onClick={reportBugFromTest}
                   className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
-                  title="Abre um novo bug com dados deste caso de teste"
                 >
                   <Bug className="size-4" />
                   Reportar bug deste teste
                 </button>
+                </PremiumTooltip>
               )}
+              <PremiumTooltip label="Formato enxuto para Discord" side="left" wide>
               <button
                 type="button"
                 onClick={() => void copyReportForDiscord()}
                 className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
-                title="Formato enxuto para Discord"
               >
                 <Copy className="size-4" />
                 Copiar report Discord
               </button>
+              </PremiumTooltip>
               {isAdmin && (
                 <button
                   type="button"

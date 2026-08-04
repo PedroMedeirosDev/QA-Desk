@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, ChevronDown, Copy } from "lucide-react";
+import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { formatActor } from "@/lib/actor";
 import {
   formatMaestroLog,
@@ -46,19 +47,20 @@ function CopyLogButton({ text }: { text: string }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void copy();
-      }}
-      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      title="Copiar log completo"
-    >
-      {copied ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
-      {copied ? "Copiado" : "Copiar log"}
-    </button>
+    <PremiumTooltip label="Copiar log completo" side="top">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void copy();
+        }}
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        {copied ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+        {copied ? "Copiado" : "Copiar log"}
+      </button>
+    </PremiumTooltip>
   );
 }
 

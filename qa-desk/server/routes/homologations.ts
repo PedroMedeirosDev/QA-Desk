@@ -11,7 +11,7 @@ import {
 } from "../homologations.js";
 import { MURAL_HOMOLOGATION_SLUG } from "../homologation-config.js";
 import { assertProject, readCatalog, writeCatalog } from "../storage.js";
-import { actorOf, attachUser, requireAdmin } from "../middleware/auth.js";
+import { actorOf, attachUser, forbidVisitor, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
 import type { HomologationCycleStatus, HomologationChangeScope, ProductChannel } from "../types.js";
 
 function param(req: { params: Record<string, string | string[] | undefined> }, key: string) {
@@ -22,6 +22,8 @@ function param(req: { params: Record<string, string | string[] | undefined> }, k
 export const homologationsRouter = Router({ mergeParams: true });
 
 homologationsRouter.use(attachUser);
+homologationsRouter.use(rejectVisitorMutations);
+homologationsRouter.use(forbidVisitor);
 
 homologationsRouter.get("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
