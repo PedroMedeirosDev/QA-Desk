@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
-import { FlaskConical, Loader2, Play, Terminal } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FlaskConical, Loader2, PanelRightOpen, Play } from "lucide-react";
+import { ApiSuiteResultDrawer } from "@/components/ApiSuiteResultDrawer";
 import { getProject } from "@/config/projects";
 import { api, type ApiSuiteRunResult, type ApiSuiteStatus } from "@/lib/api";
+import { toastErrorMessage, useToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { ProjectSlug } from "@/types/test-record";
 
-function formatWhen(iso?: string) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-BR");
-}
+const LIVE_PROGRESS = [
+  "newman",
+  "→ boot collection",
+  "→ Auth — corporação / hostname",
+  "→ Auth — POST /auth/token",
+  "→ Auth — entidades / perfis",
+  "→ Auth — POST /auth/entidade",
+  "→ requests da collection…",
+  "→ assertions…",
+];
 
 function suiteHint(project: ProjectSlug): string {
   if (project === "polygonus") {
@@ -22,6 +30,7 @@ function suiteHint(project: ProjectSlug): string {
 
 export function ApiSuitePage({ project }: { project: ProjectSlug }) {
   const projectLabel = getProject(project)?.label ?? project;
+  const toast = useToast();
   const [suites, setSuites] = useState<ApiSuiteStatus[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +38,39 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApiSuiteRunResult | null>(null);
   const [showRaw, setShowRaw] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [liveLines, setLiveLines] = useState<string[]>([]);
+  const liveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopLiveLog = useCallback(() => {
+    if (liveTimer.current) {
+      clearInterval(liveTimer.current);
+      liveTimer.current = null;
+    }
+  }, []);
+
+  const startLiveLog = useCallback(
+    (label: string) => {
+      stopLiveLog();
+      let i = 0;
+      setLiveLines([`# ${label}`, `$ newman run …`]);
+      liveTimer.current = setInterval(() => {
+        if (i >= LIVE_PROGRESS.length) {
+          setLiveLines((prev) =>
+            prev[prev.length - 1]?.includes("aguardando")
+              ? prev
+              : [...prev, "… aguardando fim do Newman"],
+          );
+          return;
+        }
+        const line = LIVE_PROGRESS[i++];
+        setLiveLines((prev) => [...prev, line]);
+      }, 700);
+    },
+    [stopLiveLog],
+  );
+
+  useEffect(() => () => stopLiveLog(), [stopLiveLog]);
 
   const load = useCallback(
     async (preferId?: string | null) => {
@@ -60,22 +102,55 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
     setError(null);
     setSelectedId(null);
     setResult(null);
+    setDrawerOpen(false);
+    setLiveLines([]);
     void load(null);
   }, [load]);
 
   const selected = suites.find((s) => s.id === selectedId) ?? null;
 
   async function runSelected() {
-    if (!selectedId) return;
+    if (!selectedId || !selected) return;
     setRunning(true);
     setError(null);
     setShowRaw(false);
+    setDrawerOpen(true);
+    setResult(null);
+    startLiveLog(selected.label);
     try {
       const res = await api.runApiSuite(project, selectedId);
+      stopLiveLog();
+      setLiveLines((prev) => [
+        ...prev,
+        "",
+        res.ok
+          ? `✔ finalizado — ${res.summary.requests} req / ${res.summary.assertions} asserts`
+          : `✖ falhou — ${res.summary.failed} falha(s), exit ${res.exitCode}`,
+      ]);
       setResult(res);
       await load(selectedId);
+
+      const openDetails = () => {
+        setSelectedId(selectedId);
+        setDrawerOpen(true);
+      };
+      if (res.ok) {
+        toast.success(`Collection ${selected.label} finalizada com sucesso!`, {
+          title: "Suite API",
+          action: { label: "Ver detalhes", onClick: openDetails },
+        });
+      } else {
+        toast.error(`Collection ${selected.label} finalizou com falhas.`, {
+          title: "Suite API",
+          action: { label: "Ver detalhes", onClick: openDetails },
+        });
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha ao rodar suite");
+      stopLiveLog();
+      const message = toastErrorMessage(e, "Falha ao rodar suite");
+      setError(message);
+      setLiveLines((prev) => [...prev, "", `✖ erro: ${message}`]);
+      toast.error(message, { title: "Suite API" });
     } finally {
       setRunning(false);
     }
@@ -86,11 +161,13 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
     setResult(s.lastRun ?? null);
     setShowRaw(false);
     setError(null);
+    setLiveLines([]);
+    if (s.lastRun) setDrawerOpen(true);
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="flex h-[calc(100dvh-11rem)] min-h-[28rem] flex-col gap-4">
+      <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
         <div>
           <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <FlaskConical className="size-4" />
@@ -103,180 +180,118 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
             {suiteHint(project)}
           </p>
         </div>
-        <button
-          type="button"
-          disabled={!selected?.ready || running || loading}
-          onClick={() => void runSelected()}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
-            selected?.ready && !running
-              ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
-              : "cursor-not-allowed border-border bg-muted text-muted-foreground",
-          )}
-        >
-          {running ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Play className="size-4" />
-          )}
-          {running ? "Rodando…" : "Rodar suite"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={!selectedId}
+            onClick={() => setDrawerOpen(true)}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
+              selectedId
+                ? "border-border bg-card/60 text-foreground hover:bg-muted"
+                : "cursor-not-allowed border-border bg-muted text-muted-foreground",
+            )}
+            title="Abrir painel de resultado"
+          >
+            <PanelRightOpen className="size-4" />
+            Resultado
+          </button>
+          <button
+            type="button"
+            disabled={!selected?.ready || running || loading}
+            onClick={() => void runSelected()}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
+              selected?.ready && !running
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
+                : "cursor-not-allowed border-border bg-muted text-muted-foreground",
+            )}
+          >
+            {running ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Play className="size-4" />
+            )}
+            {running ? "Rodando…" : "Rodar suite"}
+          </button>
+        </div>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando suites…</p>
-      ) : suites.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-          Nenhuma collection neste projeto ainda.
-        </p>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {suites.map((s) => {
-            const active = s.id === selectedId;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => selectSuite(s)}
-                className={cn(
-                  "rounded-xl border p-4 text-left transition-colors",
-                  active
-                    ? "border-primary/50 bg-primary/5"
-                    : "border-border bg-card/40 hover:border-border/80",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{s.label}</span>
-                  <span
-                    className={cn(
-                      "rounded-full border px-2 py-0.5 text-[11px]",
-                      s.ready
-                        ? "border-emerald-500/35 text-emerald-400"
-                        : "border-amber-500/35 text-amber-300",
-                    )}
-                  >
-                    {s.ready ? "pronta" : "pendente"}
-                  </span>
-                </div>
-                {s.description && (
-                  <p className="mt-2 text-xs text-muted-foreground">{s.description}</p>
-                )}
-                {s.reason && !s.ready && (
-                  <p className="mt-2 text-xs text-amber-300/90">{s.reason}</p>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-          {error}
-        </div>
-      )}
-
-      {result && result.suiteId === selectedId && (
-        <section className="space-y-4 rounded-xl border border-border bg-card/60 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-semibold">
-              Resultado — {result.label}{" "}
-              <span
-                className={cn(
-                  "ml-2 rounded-md border px-2 py-0.5 text-xs",
-                  result.ok
-                    ? "border-emerald-500/35 text-emerald-400"
-                    : "border-red-500/35 text-red-400",
-                )}
-              >
-                {result.ok ? "OK" : "FALHOU"}
-              </span>
-            </h3>
-            <span className="text-xs text-muted-foreground">
-              {formatWhen(result.ranAt)}
-            </span>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Carregando suites…</p>
+        ) : suites.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+            Nenhuma collection neste projeto ainda.
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {suites.map((s) => {
+              const active = s.id === selectedId;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => selectSuite(s)}
+                  className={cn(
+                    "rounded-xl border p-4 text-left transition-colors",
+                    active
+                      ? "border-primary/50 bg-primary/5"
+                      : "border-border bg-card/40 hover:border-border/80",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{s.label}</span>
+                    <span
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 text-[11px]",
+                        s.ready
+                          ? "border-emerald-500/35 text-emerald-400"
+                          : "border-amber-500/35 text-amber-300",
+                      )}
+                    >
+                      {s.ready ? "pronta" : "pendente"}
+                    </span>
+                  </div>
+                  {s.description && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {s.description}
+                    </p>
+                  )}
+                  {s.reason && !s.ready && (
+                    <p className="mt-2 text-xs text-amber-300/90">{s.reason}</p>
+                  )}
+                  {s.lastRun && (
+                    <p
+                      className={cn(
+                        "mt-2 text-[11px]",
+                        s.lastRun.ok ? "text-emerald-400/90" : "text-red-400/90",
+                      )}
+                    >
+                      Última: {s.lastRun.ok ? "OK" : "falhou"} ·{" "}
+                      {new Date(s.lastRun.ranAt).toLocaleString("pt-BR")}
+                    </p>
+                  )}
+                </button>
+              );
+            })}
           </div>
-
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Stat label="Requests" value={result.summary.requests} />
-            <Stat label="Asserts" value={result.summary.assertions} />
-            <Stat
-              label="Falhas"
-              value={result.summary.failed}
-              tone={result.summary.failed > 0 ? "bad" : "ok"}
-            />
-            <Stat
-              label="Duração"
-              value={`${Math.round(result.summary.durationMs)} ms`}
-            />
-          </div>
-
-          {result.failures.length > 0 && (
-            <div>
-              <p className="mb-2 text-sm font-medium text-red-300">Falhas</p>
-              <ul className="space-y-2 text-sm">
-                {result.failures.map((f, i) => (
-                  <li
-                    key={`${f.name}-${i}`}
-                    className="rounded-lg border border-red-500/25 bg-red-500/5 px-3 py-2"
-                  >
-                    <p className="font-medium">{f.name}</p>
-                    {f.assertion && (
-                      <p className="text-xs text-muted-foreground">{f.assertion}</p>
-                    )}
-                    {f.error && (
-                      <p className="mt-1 text-xs text-red-200/90">{f.error}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowRaw((v) => !v)}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <Terminal className="size-3.5" />
-              {showRaw ? "Ocultar log Newman" : "Ver log Newman (fiel)"}
-            </button>
-            {showRaw && (
-              <pre className="mt-2 max-h-96 overflow-auto rounded-lg border border-border bg-zinc-950 p-3 text-[11px] leading-relaxed text-zinc-300">
-                {result.rawCli || "(vazio)"}
-              </pre>
-            )}
-          </div>
-        </section>
-      )}
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string | number;
-  tone?: "ok" | "bad";
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-background/50 px-3 py-2">
-      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-0.5 font-mono text-lg tabular-nums",
-          tone === "bad" && "text-red-400",
-          tone === "ok" && "text-emerald-400",
         )}
-      >
-        {value}
-      </p>
+      </div>
+
+      <ApiSuiteResultDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        suiteLabel={selected?.label ?? result?.label ?? null}
+        running={running}
+        result={
+          result && (!selectedId || result.suiteId === selectedId) ? result : null
+        }
+        liveLines={liveLines}
+        showRaw={showRaw}
+        onToggleRaw={() => setShowRaw((v) => !v)}
+        error={error}
+      />
     </div>
   );
 }

@@ -21,10 +21,10 @@ export function AutomationReadinessBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium bg-[#1a1a1a]",
         isReady
-          ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
-          : "border-amber-500/40 bg-amber-500/15 text-amber-300",
+          ? "border-emerald-400/20 text-emerald-400"
+          : "border-amber-400/20 text-amber-300",
         className,
       )}
       title={

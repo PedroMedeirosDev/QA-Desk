@@ -24,8 +24,8 @@ export function ExecutionModeBadge({
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
         mode === "automated"
-          ? "border-primary/40 bg-primary/10 text-primary"
-          : "border-border bg-muted text-muted-foreground",
+          ? "border-sky-400/20 bg-[#1a1a1a] text-sky-400"
+          : "border-gray-700 bg-[#1a1a1a] text-gray-400",
         className,
       )}
       title={mode === "automated" ? "Teste com flow Maestro/Playwright" : "Teste executado manualmente"}

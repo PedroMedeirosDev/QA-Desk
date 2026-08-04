@@ -479,8 +479,8 @@ export function TestEditorPage({
       </div>
 
       {tab === "detalhes" ? (
-        <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-          <div className="space-y-4 rounded-xl border bg-card p-6">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
+          <div className="min-w-0 space-y-4 rounded-xl border bg-card p-6">
             <Field label="Título *">
               <input
                 className="w-full rounded-md border px-3 py-2 text-sm"
@@ -820,7 +820,7 @@ export function TestEditorPage({
             </div>
           </div>
 
-          <aside className="space-y-4 rounded-xl border bg-card p-4 h-fit">
+          <aside className="sticky top-8 max-h-[calc(100vh-4rem)] space-y-4 self-start overflow-y-auto rounded-xl border bg-card p-4 scrollbar-thin [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/60">
             {getProjectChannels(project).length > 0 && (
               <PropSelect
                 label="Canal"
@@ -1247,7 +1247,7 @@ export function TestEditorPage({
                 <button
                   type="button"
                   onClick={reportBugFromTest}
-                  className={cn(actionBtnBase, actionBtn.back, "w-full")}
+                  className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
                   title="Abre um novo bug com dados deste caso de teste"
                 >
                   <Bug className="size-4" />
@@ -1257,7 +1257,7 @@ export function TestEditorPage({
               <button
                 type="button"
                 onClick={() => void copyReportForDiscord()}
-                className={cn(actionBtnBase, actionBtn.back, "w-full")}
+                className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
                 title="Formato enxuto para Discord"
               >
                 <Copy className="size-4" />
