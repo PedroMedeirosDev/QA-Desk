@@ -40,7 +40,7 @@ function ProjectShell() {
       <ProjectSidebar activeChannel={route.channel} />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="shrink-0 border-b border-border/60 bg-card dark:border-white/5">
+        <header className="animate-fade-in-up-soft animation-delay-80 shrink-0 border-b border-border/60 bg-card opacity-0 dark:border-white/5">
           <div
             className="flex items-center justify-between gap-4 border-l-4 px-6 py-3 transition-colors duration-300"
             style={{ borderLeftColor: theme.highlight }}
@@ -113,7 +113,7 @@ function ProjectShell() {
         <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-4 sm:px-6 sm:py-6">
           <div
             className={cn(
-              "main-content-container main-content-glow min-h-full rounded-xl border border-border/50 border-t-2 bg-card/50 p-4 transition-all duration-300 sm:p-5",
+              "main-content-container main-content-glow animate-fade-in-up-soft animation-delay-150 min-h-full rounded-xl border border-border/50 border-t-2 bg-card/50 p-4 opacity-0 transition-all duration-300 sm:p-5",
             )}
             style={{
               borderTopColor: theme.accent,

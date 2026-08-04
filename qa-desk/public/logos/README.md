@@ -1,23 +1,19 @@
-# Logos dos projetos
+# Logos
 
-## Marca QA Desk
+## Marca QA Desk (oficial)
 
-`qa_desk.png` — favicon, login e topo da sidebar (não é logo de projeto).
+- **UI:** componente React `BrandLogo` / `BrandMarkSvg` (Stack SVG).
+- **Favicon / estático:** `qa_desk.svg` (ícone com fundo escuro + check vermelho).
+- PNG antigo `qa_desk.png` é legado — não usar na UI.
 
-## Preferência (bundled)
+## Projetos
 
-Logos versionados em `src/assets/logos/` e registrados em `src/config/logos.ts` (ex.: Polygonus). Esse caminho entra no build do Vite.
-
-## Fallback público
+Logos versionados em `src/assets/logos/` e registrados em `src/config/logos.ts` (ex.: Polygonus).
 
 Arquivos em **esta pasta** (`public/logos/`) servem projetos ainda não bundlados. A app resolve por nome:
 
-| Projeto   | Nomes aceitos (sem extensão)    |
-|-----------|----------------------------------|
-| Polygonus | `polygonus_logo` ou `polygonus`  |
-| Anihype   | `anihype_logo` ou `anihype`      |
-| QA Desk   | `qa_desk`                        |
+`{logoFile}.png` · `{slug}.png` · `{slug}_logo.png` (+ svg/webp/jpg)
 
-Extensões (ordem de tentativa): `.png`, `.svg`, `.webp`, `.jpg`, `.jpeg`.
+Ex.: `anihype_logo.png` → `/logos/anihype_logo.png`.
 
-Ex.: `anihype_logo.png` → acessível em runtime como `/logos/anihype_logo.png`.
+O projeto **desk** (`logoFile: qa_desk`) usa o monograma Stack via `BrandLogo`, não o PNG.

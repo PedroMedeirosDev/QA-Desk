@@ -496,7 +496,7 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-8">
+      <div className="animate-fade-in-up-soft grid gap-3 opacity-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-8">
         <MetricCard
           label="Escopo"
           value={metrics.total}
@@ -721,7 +721,9 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-16 text-center text-muted-foreground">
-                      Nenhum PR encontrado com estes filtros.
+                      <span className="animate-fade-in-up-soft inline-block opacity-0">
+                        Nenhum PR encontrado com estes filtros.
+                      </span>
                     </td>
                   </tr>
                 )}

@@ -221,7 +221,7 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
         {loading ? (
           <p className="text-sm text-muted-foreground">Carregando suites…</p>
         ) : suites.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+          <p className="animate-fade-in-up-soft rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground opacity-0">
             Nenhuma collection neste projeto ainda.
           </p>
         ) : (

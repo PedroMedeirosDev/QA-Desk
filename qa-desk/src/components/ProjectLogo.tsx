@@ -1,4 +1,5 @@
 import { useMemo, useState, type CSSProperties } from "react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { cn } from "@/lib/utils";
 import { getBundledLogoUrl } from "@/config/logos";
 
@@ -18,6 +19,20 @@ const sizeClass = {
   lg: "size-14",
 } as const;
 
+const BRAND_SIZE = {
+  sm: "sm",
+  md: "md",
+  lg: "lg",
+} as const satisfies Record<
+  NonNullable<ProjectLogoProps["size"]>,
+  "sm" | "md" | "lg"
+>;
+
+function isQaDeskBrand(logoFile: string): boolean {
+  const slug = logoFile.replace(/_logo$/, "").toLowerCase();
+  return slug === "qa_desk" || slug === "qadesk" || slug === "desk";
+}
+
 function logoNameCandidates(logoFile: string): string[] {
   const slug = logoFile.replace(/_logo$/, "");
   return [...new Set([logoFile, slug, `${slug}_logo`])];
@@ -27,6 +42,14 @@ export function ProjectLogo({ logoFile, label, className, size = "md", style }: 
   const bundled = getBundledLogoUrl(logoFile);
   const candidates = useMemo(() => logoNameCandidates(logoFile), [logoFile]);
   const [attempt, setAttempt] = useState(0);
+
+  if (isQaDeskBrand(logoFile)) {
+    return (
+      <span className={cn("inline-flex", sizeClass[size], className)} title={label} style={style}>
+        <BrandLogo markOnly size={BRAND_SIZE[size]} className="h-full w-full justify-center" />
+      </span>
+    );
+  }
 
   if (bundled) {
     return (

@@ -1,4 +1,5 @@
 import type { DashboardMetrics } from "@/lib/dashboard-metrics";
+import { QA_DESK_MARK_SVG } from "@/config/brand";
 
 function esc(s: string): string {
   return s
@@ -111,6 +112,18 @@ export function buildHomologationHtmlReport(
       padding: 2rem 1.25rem 3rem;
     }
     .wrap { max-width: 920px; margin: 0 auto; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 1.25rem;
+    }
+    .brand-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-name span { color: #dc2626; }
     h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
     h2 { font-size: 1.05rem; margin: 1.75rem 0 0.75rem; color: var(--accent); }
     .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
@@ -176,6 +189,10 @@ export function buildHomologationHtmlReport(
 </head>
 <body>
   <div class="wrap">
+    <div class="brand">
+      ${QA_DESK_MARK_SVG}
+      <div class="brand-name">QA<span>Desk</span></div>
+    </div>
     <h1>Relatório de homologação — ${esc(project)}</h1>
     <p class="sub">
       Gerado em ${esc(fmtDate(metrics.generatedAt))} · ${esc(author)}

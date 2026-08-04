@@ -91,6 +91,12 @@ Evitar que a coluna alta da direita estique o grid e deixe buraco vazio na esque
 
 Em números de PR, métricas, contagens, datas e durações: sempre `tabular-nums`.
 
+## Motion (entrada)
+
+Classes: `animate-fade-in-up` (login), `animate-fade-in-up-soft` (shell/KPI/empty/toast), `animate-fade-in` (overlay).
+
+Usar **só** em momentos de chegada: login, shell (1×), drawer/modal, toast, empty state, grid de KPIs (um bloco). Sem stagger por linha/card. Respeitar `prefers-reduced-motion`.
+
 ## Shell — footer e scroll
 
 - Rodapé (“Desenvolvido por…”) vive na **base da sidebar** (`Footer variant="sidebar"`), não no main.
