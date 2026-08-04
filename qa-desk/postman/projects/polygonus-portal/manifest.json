@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-portal",
+  "project": "polygonus",
+  "order": 10,
+  "label": "Portal",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Portal (sessão própria — fora da gestão).",
+  "reason": "Scaffold — session/env próprios ainda não definidos."
+}

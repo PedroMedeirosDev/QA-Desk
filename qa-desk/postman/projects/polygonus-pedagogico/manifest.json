@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-pedagogico",
+  "project": "polygonus",
+  "order": 9,
+  "label": "Pedagógico & agendas",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Pedagógico, agendas e rotinas escolares.",
+  "reason": "Scaffold — collection ainda não escrita."
+}

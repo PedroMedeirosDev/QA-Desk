@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-gateways",
+  "project": "polygonus",
+  "order": 7,
+  "label": "Gateways / NFSe / orçamento",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Gateways de pagamento, NFS-e e orçamento.",
+  "reason": "Scaffold — collection ainda não escrita."
+}

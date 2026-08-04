@@ -26,7 +26,7 @@
     "e2e:ui-server": "cross-env QA_APP_PORT=3011 QA_VITE_API_TARGET=http://127.0.0.1:3011 vite --mode e2e --host 127.0.0.1 --port 5175 --strictPort",
     "test:api": "playwright test -c e2e/api.playwright.config.ts",
     "test:api:postman": "node scripts/run-api-newman.mjs desk",
-    "test:api:postman:polygonus": "node scripts/run-api-newman.mjs polygonus",
+    "test:api:postman:polygonus": "node scripts/run-api-newman.mjs polygonus-auth",
     "agent": "tsx agent/index.ts"
   },
   "dependencies": {

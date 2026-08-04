@@ -12,10 +12,10 @@ function formatWhen(iso?: string) {
 
 function suiteHint(project: ProjectSlug): string {
   if (project === "polygonus") {
-    return "Roda a collection, resume o relatório e guarda o log fiel do Newman. Auth gestão CQ (SUPPETER).";
+    return "Doze domínios de API (cards). Só Auth está pronta por enquanto; o resto é scaffold de layout.";
   }
   if (project === "desk") {
-    return "Dogfood do próprio Desk: sobe a API mock (porta 3011), roda Newman e guarda o log fiel.";
+    return "Testa o próprio Desk: sobe a API mock (porta 3011), roda Newman e guarda o log fiel.";
   }
   return "Roda a collection, resume o relatório e guarda o log fiel do Newman.";
 }
@@ -40,8 +40,7 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
         const next =
           preferId && res.suites.some((s) => s.id === preferId)
             ? preferId
-            : (res.suites.find((s) => s.id === project) ?? res.suites[0])?.id ??
-              null;
+            : (res.suites.find((s) => s.ready) ?? res.suites[0])?.id ?? null;
         setSelectedId(next);
         setResult(res.suites.find((s) => s.id === next)?.lastRun ?? null);
       } catch (e) {
@@ -90,7 +89,7 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -131,7 +130,7 @@ export function ApiSuitePage({ project }: { project: ProjectSlug }) {
           Nenhuma collection neste projeto ainda.
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {suites.map((s) => {
             const active = s.id === selectedId;
             return (

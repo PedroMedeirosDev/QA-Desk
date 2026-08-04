@@ -20,6 +20,7 @@ import {
   computeKbCurationReportMetrics,
   kbCurationReportFilename,
 } from "@/lib/kb-curation-report";
+import { listenKbCurationStream } from "@/lib/kb-curation-stream";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type {
@@ -279,8 +280,8 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
   const [reportStatus, setReportStatus] = useState<"todas" | KbCurationStatus>("todas");
   const [search, setSearch] = useState("");
 
-  function reload() {
-    setLoading(true);
+  function reload(opts?: { quiet?: boolean }) {
+    if (!opts?.quiet) setLoading(true);
     api
       .listKbCuration(project)
       .then((response) => {
@@ -288,11 +289,59 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
         setMetrics(response.metrics);
       })
       .catch((error) => toast.error(toastErrorMessage(error, "Erro ao carregar Curadoria KB")))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!opts?.quiet) setLoading(false);
+      });
   }
 
   useEffect(() => {
     reload();
+  }, [project]);
+
+  // SSE: atualiza a lista quando webhook/sync/review grava o catálogo.
+  useEffect(() => {
+    const ac = new AbortController();
+    let cancelled = false;
+    let attempt = 0;
+
+    async function loop() {
+      while (!cancelled) {
+        try {
+          await listenKbCurationStream(
+            project,
+            () => {
+              reload({ quiet: true });
+            },
+            ac.signal,
+          );
+          attempt = 0;
+        } catch (error) {
+          if (cancelled || ac.signal.aborted) break;
+          const delay = Math.min(15_000, 1_500 * 2 ** Math.min(attempt, 3));
+          attempt += 1;
+          console.warn(
+            "[kb-curation-sse] reconectando em",
+            delay,
+            "ms",
+            error instanceof Error ? error.message : error,
+          );
+          await new Promise((r) => setTimeout(r, delay));
+        }
+      }
+    }
+
+    void loop();
+
+    function onVisible() {
+      if (document.visibilityState === "visible") reload({ quiet: true });
+    }
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [project]);
 
   const filtered = useMemo(() => {
@@ -427,10 +476,10 @@ export function KbCurationPage({ project }: { project: ProjectSlug }) {
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Sync em lote (GraphQL). Com webhook configurado (
+          Stream SSE na página (atualiza sozinha) + webhook GitHub (
           <code className="rounded bg-muted px-1">GITHUB_WEBHOOK_SECRET</code>
-          ), status de review/merge atualiza quase em tempo real — o botão fica de
-          catch-up. Setup: <code className="rounded bg-muted px-1">server/github/README.md</code>.
+          ). O botão é catch-up. Setup:{" "}
+          <code className="rounded bg-muted px-1">server/github/README.md</code>.
         </p>
       </div>
 

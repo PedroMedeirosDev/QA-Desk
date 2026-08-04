@@ -1,0 +1,12 @@
+{
+  "id": "polygonus-sistema",
+  "project": "polygonus",
+  "order": 12,
+  "label": "Sistema / docs / integração",
+  "ready": false,
+  "bootMock": false,
+  "collection": "collection.json",
+  "environment": "amostra.postman_environment.json",
+  "description": "Sistema, documentação de API e integrações.",
+  "reason": "Scaffold — collection ainda não escrita."
+}
