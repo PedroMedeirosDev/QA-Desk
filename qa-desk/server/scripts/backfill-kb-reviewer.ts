@@ -16,7 +16,14 @@ import {
 } from "../github/kb-pr-sync-core.js";
 import type { ProjectSlug } from "../types.js";
 
-const BOT_ACTORS = /^(GitHub webhook|GitHub sync|catch-up|diagnostico)/i;
+const BOT_ACTORS =
+  /^(GitHub webhook|GitHub sync|catch-up|diagnostico|sync-one-kb-pr|backfill)/i;
+
+function isBadReviewer(value?: string): boolean {
+  const trimmed = value?.trim();
+  if (!trimmed) return true;
+  return BOT_ACTORS.test(trimmed);
+}
 
 async function main() {
   const project = (process.argv[2] as ProjectSlug) || "polygonus";
@@ -26,7 +33,7 @@ async function main() {
 
   for (let i = 0; i < catalog.pullRequests.length; i++) {
     const record = catalog.pullRequests[i];
-    if (record.reviewer?.trim()) continue;
+    if (!isBadReviewer(record.reviewer)) continue;
 
     let next: string | undefined;
     const human = [...record.history]
