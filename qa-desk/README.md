@@ -12,6 +12,7 @@ Aplicação web do **QA Desk** — registro de testes e homologação multi-proj
 | Doc | Uso |
 |-----|-----|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Como funciona hoje |
+| [`docs/COLORS.md`](docs/COLORS.md) | Cores: marca, projetos, claro/escuro |
 | [`VISION.md`](VISION.md) | Backlog (Discord bot, portfólio rico, etc.) |
 | [`DEPLOY.md`](DEPLOY.md) | Local, túnel, Oracle, Koyeb |
 | [`deploy/SUPABASE_CREDENTIALS.md`](deploy/SUPABASE_CREDENTIALS.md) | Onde achar URL/keys/pooler no painel atual |
