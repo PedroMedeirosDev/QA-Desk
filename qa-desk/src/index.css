@@ -24,6 +24,11 @@
   --project-accent: #dc2626;
   --project-glow: #dc2626;
   --project-highlight: #dc2626;
+  /* Highlights semânticos (badges / Homologações / nested) */
+  --project-highlight-bg: #f1f5f9; /* slate-100 */
+  --project-highlight-text: #0f172a; /* slate-900 */
+  --project-highlight-border: #e2e8f0; /* slate-200 */
+  --sidebar: #f8fafc; /* alinhado ao card / sidebar clara */
 }
 
 .dark {
@@ -47,6 +52,10 @@
   --project-accent: #ef4444;
   --project-glow: #ef4444;
   --project-highlight: #ef4444;
+  --project-highlight-bg: #18181b; /* zinc-900 */
+  --project-highlight-text: #f4f4f5; /* zinc-100 */
+  --project-highlight-border: #27272a; /* zinc-800 */
+  --sidebar: #09090b;
 }
 
 @theme inline {
@@ -72,24 +81,35 @@
 
 /*
  * Tema por projeto: NÃO sobrescreve --primary (marca vermelha).
- * Ajusta --brand para banners/surfaces do projeto e --project-accent.
+ * Ajusta --brand, --project-accent e highlights semânticos.
  */
 [data-theme="polygonus"] {
   --brand: #2b73eb;
   --brand-muted: #1a2d52;
   --project-accent: #2b73eb;
   --ring: #2b73eb;
+  /* Claro: amarelo denso (amber-200) + texto escuro — contraste OK */
+  --project-highlight-bg: #fde68a; /* amber-200 */
+  --project-highlight-text: #141824;
+  --project-highlight-border: #fcd34d; /* amber-300 */
 }
 
 /* data-theme vive no <html> (:root) — precisa bater no próprio elemento */
 :root:not(.dark)[data-theme="polygonus"],
 :root:not(.dark) [data-theme="polygonus"] {
   --brand-muted: #e8f0fe;
+  --project-highlight-bg: #fde68a;
+  --project-highlight-text: #141824;
+  --project-highlight-border: #fcd34d;
 }
 
 .dark[data-theme="polygonus"],
 .dark [data-theme="polygonus"] {
   --brand-muted: #1a2d52;
+  /* Escuro: amarelo marca #e8e67a com fundo contido */
+  --project-highlight-bg: color-mix(in srgb, #eab308 15%, transparent);
+  --project-highlight-text: #e8e67a;
+  --project-highlight-border: color-mix(in srgb, #eab308 30%, transparent);
 }
 
 [data-theme="desk"] {
@@ -97,16 +117,25 @@
   --brand-muted: #450a0a;
   --project-accent: #ef4444;
   --ring: #ef4444;
+  --project-highlight-bg: #fee2e2; /* red-100 */
+  --project-highlight-text: #7f1d1d; /* red-900 */
+  --project-highlight-border: #fecaca; /* red-200 */
 }
 
 :root:not(.dark)[data-theme="desk"],
 :root:not(.dark) [data-theme="desk"] {
   --brand-muted: #fef2f2;
+  --project-highlight-bg: #fee2e2;
+  --project-highlight-text: #7f1d1d;
+  --project-highlight-border: #fecaca;
 }
 
 .dark[data-theme="desk"],
 .dark [data-theme="desk"] {
   --brand-muted: #450a0a;
+  --project-highlight-bg: color-mix(in srgb, #ef4444 15%, transparent);
+  --project-highlight-text: #fca5a5;
+  --project-highlight-border: color-mix(in srgb, #ef4444 30%, transparent);
 }
 
 [data-theme="anihype"] {
@@ -114,16 +143,25 @@
   --brand-muted: #1a0010;
   --project-accent: #ff0080;
   --ring: #ff0080;
+  --project-highlight-bg: #fce7f3; /* pink-100 */
+  --project-highlight-text: #831843; /* pink-900 */
+  --project-highlight-border: #fbcfe8; /* pink-200 */
 }
 
 :root:not(.dark)[data-theme="anihype"],
 :root:not(.dark) [data-theme="anihype"] {
   --brand-muted: #fff0f7;
+  --project-highlight-bg: #fce7f3;
+  --project-highlight-text: #831843;
+  --project-highlight-border: #fbcfe8;
 }
 
 .dark[data-theme="anihype"],
 .dark [data-theme="anihype"] {
   --brand-muted: #1a0010;
+  --project-highlight-bg: color-mix(in srgb, #d946ef 15%, transparent);
+  --project-highlight-text: #f0abfc; /* fuchsia-300 */
+  --project-highlight-border: color-mix(in srgb, #d946ef 30%, transparent);
 }
 
 @layer base {

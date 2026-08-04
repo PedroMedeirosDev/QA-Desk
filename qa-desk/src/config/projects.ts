@@ -52,15 +52,15 @@ export const PROJECTS: ProjectConfig[] = [
         rail: "border-slate-200 dark:border-red-500/35",
         active: "bg-red-100 font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300",
         activeNested:
-          "bg-red-500/90 font-medium text-white shadow-sm border border-red-400/60",
+          "bg-[var(--project-highlight-bg)] font-medium text-[var(--project-highlight-text)] shadow-sm border border-[var(--project-highlight-border)]",
         hover:
           "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-red-900/25 dark:hover:text-red-200",
         idle: "text-slate-600 dark:text-slate-400",
         homologationsIdle: "text-slate-600 dark:text-slate-400",
         homologationsHover:
-          "hover:bg-red-500/80 hover:text-white hover:font-medium hover:border hover:border-red-400/50",
+          "hover:bg-[var(--project-highlight-bg)] hover:text-[var(--project-highlight-text)] hover:font-medium hover:border hover:border-[var(--project-highlight-border)]",
         homologationsActive:
-          "bg-red-500 font-medium text-white shadow-sm border border-red-400/60",
+          "bg-[var(--project-highlight-bg)] font-medium text-[var(--project-highlight-text)] shadow-sm border border-[var(--project-highlight-border)]",
       },
     },
     description: "Portfólio & automação",
@@ -82,15 +82,15 @@ export const PROJECTS: ProjectConfig[] = [
         rail: "border-slate-200 dark:border-blue-500/35",
         active: "bg-blue-100 font-semibold text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
         activeNested:
-          "bg-[#e8e67a]/95 font-medium text-[#141824] shadow-sm border border-[#d4d269]/60",
+          "bg-[var(--project-highlight-bg)] font-medium text-[var(--project-highlight-text)] shadow-sm border border-[var(--project-highlight-border)]",
         hover:
           "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-blue-900/25 dark:hover:text-blue-200",
         idle: "text-slate-600 dark:text-slate-400",
         homologationsIdle: "text-slate-600 dark:text-slate-400",
         homologationsHover:
-          "hover:bg-[#e8e67a]/80 hover:text-[#141824] hover:font-medium hover:border hover:border-[#d4d269]/50",
+          "hover:bg-[var(--project-highlight-bg)] hover:text-[var(--project-highlight-text)] hover:font-medium hover:border hover:border-[var(--project-highlight-border)]",
         homologationsActive:
-          "bg-[#e8e67a] font-medium text-[#141824] shadow-sm border border-[#d4d269]/60",
+          "bg-[var(--project-highlight-bg)] font-medium text-[var(--project-highlight-text)] shadow-sm border border-[var(--project-highlight-border)]",
       },
     },
     description: "Gestão Acadêmica",
@@ -113,15 +113,15 @@ export const PROJECTS: ProjectConfig[] = [
         rail: "border-slate-200 dark:border-pink-500/35",
         active: "bg-pink-100 font-medium text-pink-800 dark:bg-pink-900/40 dark:text-pink-300",
         activeNested:
-          "bg-violet-100 font-medium text-violet-900 dark:bg-violet-500/30 dark:text-violet-100",
+          "bg-[var(--project-highlight-bg)] font-medium text-[var(--project-highlight-text)] shadow-sm border border-[var(--project-highlight-border)]",
         hover:
           "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-pink-900/25 dark:hover:text-pink-200",
         idle: "text-slate-600 dark:text-neutral-400",
         homologationsIdle: "text-slate-600 dark:text-neutral-400",
         homologationsHover:
-          "hover:bg-amber-300/80 hover:text-[#1a1008] hover:font-medium hover:border hover:border-amber-400/50",
+          "hover:bg-[var(--project-highlight-bg)] hover:text-[var(--project-highlight-text)] hover:font-medium hover:border hover:border-[var(--project-highlight-border)]",
         homologationsActive:
-          "bg-amber-300 font-medium text-[#1a1008] shadow-sm border border-amber-400/50 dark:bg-amber-400/55",
+          "bg-[var(--project-highlight-bg)] font-medium text-[var(--project-highlight-text)] shadow-sm border border-[var(--project-highlight-border)]",
       },
     },
     description: "Plataforma de anime",

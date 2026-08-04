@@ -149,20 +149,15 @@ export function ProjectSidebar({
   return (
     <aside
       className={cn(
-        "sidebar-nav relative flex shrink-0 border-b border-border bg-slate-50 transition-[width,height] duration-200 ease-in-out dark:bg-zinc-950/80 md:h-full md:flex-col md:border-b-0 md:border-r",
-        "animate-fade-in-up-soft opacity-0",
-        collapsed
-          ? "h-14 w-full flex-row overflow-visible md:h-full md:w-[4.5rem] md:flex-col"
-          : "w-full flex-col overflow-hidden md:w-64",
+        "sidebar-nav relative flex h-full shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--sidebar)] transition-[width] duration-200 ease-in-out",
+        collapsed ? "w-[4.5rem]" : "w-[16rem]",
       )}
     >
       {/* Cabeçalho — logo horizontal (arte já inclui “QA DESK”) */}
       <header
         className={cn(
-          "relative flex shrink-0 items-center border-b border-border",
-          collapsed
-            ? "h-14 justify-center gap-1 px-2 md:h-auto md:flex-col md:gap-2 md:px-2 md:py-3"
-            : "gap-2 px-3 py-4",
+          "relative flex h-[4rem] shrink-0 items-center border-b border-[var(--border)]",
+          collapsed ? "justify-center gap-[0.25rem] px-[0.5rem]" : "gap-[0.5rem] px-[0.75rem]",
         )}
       >
         {collapsed ? (
@@ -207,10 +202,8 @@ export function ProjectSidebar({
         <>
       <nav
         className={cn(
-          "flex min-h-0 flex-1 gap-2 p-2.5",
-          collapsed
-            ? "flex-row items-center overflow-visible md:flex-col md:overflow-y-auto"
-            : "flex-col overflow-y-auto overflow-x-hidden",
+          "flex min-h-0 flex-1 flex-col gap-[0.5rem] overflow-y-auto p-[0.625rem]",
+          collapsed && "overflow-visible",
         )}
         aria-label="Selecionar projeto"
       >

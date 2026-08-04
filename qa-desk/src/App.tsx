@@ -68,16 +68,16 @@ function ProjectShell() {
                 : (current?.label ?? slug);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background md:flex-row">
+    <div className="flex h-screen w-full overflow-hidden bg-[var(--background)]">
       <ProjectSidebar activeChannel={route.channel} visitorMode={isVisitor} />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="animate-fade-in-up-soft animation-delay-80 shrink-0 border-b border-border/60 bg-card opacity-0 dark:border-white/5">
+      <div className="relative flex h-full min-w-0 flex-1 flex-col">
+        <header className="flex h-[4rem] w-full shrink-0 items-center border-b border-[var(--border)] bg-[var(--background)] px-[1.5rem]">
           <div
-            className="flex items-center justify-between gap-4 border-l-4 px-6 py-3 transition-colors duration-300"
-            style={{ borderLeftColor: theme.highlight }}
+            className="flex w-full items-center justify-between gap-[1rem] border-l-4 pl-[1rem] transition-colors duration-300"
+            style={{ borderLeftColor: "var(--project-highlight-border, var(--project-accent))" }}
           >
-            <div className="flex min-w-0 items-center gap-4">
+            <div className="flex min-w-0 items-center gap-[1rem]">
               {current && (
                 <ProjectLogo
                   logoFile={current.logoFile}
@@ -87,46 +87,46 @@ function ProjectShell() {
                 />
               )}
               <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="text-[0.75rem] font-medium uppercase tracking-wider text-[var(--muted-foreground)]">
                   {headerTitle}
                 </p>
-                <h1 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold">
+                <h1 className="flex min-w-0 items-center gap-[0.375rem] text-[1.125rem] font-semibold text-[var(--foreground)]">
                   <span className="truncate">
                     {headerSubtitle}
                     {!isVisitor &&
                       route.channel &&
                       (route.view === "list" || route.view === "bugs-list") && (
-                        <span className="ml-2 text-red-500">
+                        <span className="ml-[0.5rem] text-[var(--primary)]">
                           · {CHANNEL_LABELS[route.channel]}
                         </span>
                       )}
                   </span>
                   {!isVisitor && route.view === "kb-curation" && (
                     <span
-                      className="inline-flex shrink-0 text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+                      className="inline-flex shrink-0 text-[var(--muted-foreground)]/70 transition-colors hover:text-[var(--muted-foreground)]"
                       title={KB_CURATION_HELP}
                       aria-label={KB_CURATION_HELP}
                     >
-                      <Info className="size-3.5" strokeWidth={1.75} />
+                      <Info className="size-[0.875rem]" strokeWidth={1.75} />
                     </span>
                   )}
                 </h1>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-[0.75rem]">
               {!isVisitor && <AgentStatusBadge />}
               <UserBar />
             </div>
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-4 sm:px-6 sm:py-6">
+        <main className="flex-1 overflow-y-auto bg-[var(--muted)] p-[1.5rem]">
           <div
             className={cn(
-              "main-content-container main-content-glow animate-fade-in-up-soft animation-delay-150 relative min-h-full rounded-xl border border-border/50 border-t-2 bg-card/50 p-4 opacity-0 transition-all duration-300 sm:p-5",
+              "main-content-container main-content-glow relative min-h-full rounded-[0.75rem] border border-[var(--border)] border-t-2 bg-[var(--card)] p-[1.25rem] transition-all duration-300",
             )}
             style={{
-              borderTopColor: theme.accent,
+              borderTopColor: "var(--project-accent)",
               ["--project-glow" as string]: theme.mainContentGlow,
             }}
           >
