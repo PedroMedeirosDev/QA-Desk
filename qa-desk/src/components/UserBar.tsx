@@ -7,6 +7,9 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useColorScheme } from "@/lib/color-scheme";
 import { cn } from "@/lib/utils";
 
+const menuActionClass =
+  "flex w-full cursor-pointer items-center gap-[0.625rem] rounded-[0.375rem] px-[0.625rem] py-[0.5rem] text-[0.8125rem] font-medium text-slate-100 transition-colors duration-150 hover:bg-white/10";
+
 function summaryDotClass(tone: string) {
   return cn(
     "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-[var(--background)]",
@@ -95,33 +98,32 @@ export function UserBar({ className }: { className?: string }) {
           id={menuId}
           role="menu"
           className={cn(
-            "absolute right-0 top-full z-50 mt-2 w-[17.5rem] origin-top-right",
-            "rounded-xl border border-[var(--border)] bg-[var(--card)] p-2 shadow-lg",
+            "absolute right-0 top-full z-50 mt-2 w-[20rem] origin-top-right",
+            "rounded-[0.75rem] border border-[var(--border)] bg-slate-900/95 p-[0.875rem] text-[0.8125rem] text-slate-100 shadow-2xl backdrop-blur-md",
+            "dark:bg-zinc-900/95",
             "animate-fade-in-up-soft opacity-0",
           )}
         >
-          <div className="border-b border-[var(--border)] px-2 pb-2 pt-1 sm:hidden">
-            <p className="truncate text-sm font-semibold text-foreground">{name}</p>
-            <p className="text-xs text-muted-foreground">{roleLabel}</p>
+          <div className="mb-[0.75rem] sm:hidden">
+            <p className="truncate text-[0.875rem] font-semibold text-slate-100">{name}</p>
+            <p className="text-[0.75rem] text-slate-400">{roleLabel}</p>
           </div>
 
-          {!isVisitor && (
-            <div className="border-b border-[var(--border)] px-1 py-2">
-              <OpsStatusPanel items={items} />
-            </div>
-          )}
+          {!isVisitor && <OpsStatusPanel items={items} />}
 
-          <div className="flex flex-col gap-0.5 py-1">
+          <div className="my-[0.75rem] border-t border-[var(--border)] opacity-60" />
+
+          <div className="flex flex-col gap-[0.125rem]">
             <button
               type="button"
               role="menuitem"
               onClick={() => toggleScheme()}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+              className={menuActionClass}
             >
               {isDark ? (
-                <Sun className="size-4 text-muted-foreground" strokeWidth={1.75} />
+                <Sun className="size-[1rem] text-slate-400" strokeWidth={1.75} />
               ) : (
-                <Moon className="size-4 text-muted-foreground" strokeWidth={1.75} />
+                <Moon className="size-[1rem] text-slate-400" strokeWidth={1.75} />
               )}
               {isDark ? "Tema claro" : "Tema escuro"}
             </button>
@@ -130,9 +132,12 @@ export function UserBar({ className }: { className?: string }) {
                 type="button"
                 role="menuitem"
                 onClick={() => void handleLogout()}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                className={cn(
+                  menuActionClass,
+                  "hover:bg-red-500/10 hover:text-red-400",
+                )}
               >
-                <LogOut className="size-4 text-muted-foreground" strokeWidth={1.75} />
+                <LogOut className="size-[1rem] text-slate-400" strokeWidth={1.75} />
                 Sair
               </button>
             )}
