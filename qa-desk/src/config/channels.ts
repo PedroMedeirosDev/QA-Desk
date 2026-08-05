@@ -15,12 +15,35 @@ export const CHANNEL_LABELS: Record<ProductChannel, string> = {
   portal: "PORTAL",
 };
 
+/**
+ * Maestro (emulador) só no App.
+ * WEB e PORTAL usam apenas Playwright.
+ * Sem canal (= legado) → trata como App.
+ */
+export function channelSupportsMaestro(
+  channel?: ProductChannel | null,
+): boolean {
+  return channel !== "web" && channel !== "portal";
+}
+
 /** Subcategorias por projeto — adicione canais conforme escalar */
 export const PROJECT_CHANNELS: Partial<Record<ProjectSlug, ChannelConfig[]>> = {
   polygonus: [
-    { id: "app", label: "App", description: "Mobile Android/iOS — Maestro" },
-    { id: "web", label: "WEB", description: "Aplicações web" },
-    { id: "portal", label: "PORTAL", description: "Portal escolar" },
+    {
+      id: "app",
+      label: "App",
+      description: "Mobile / desktop no app — Maestro (+ Playwright quando houver)",
+    },
+    {
+      id: "web",
+      label: "WEB",
+      description: "Aplicações web — Playwright",
+    },
+    {
+      id: "portal",
+      label: "PORTAL",
+      description: "Portal escolar — Playwright",
+    },
   ],
 };
 

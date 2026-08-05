@@ -133,6 +133,7 @@ type RunProgressContextValue = {
     recordVideo?: boolean;
     stage?: "all" | "prep" | "maestro";
     runner?: "maestro" | "playwright";
+    headed?: boolean;
   }) => Promise<RunAutomationResult>;
   stopRun: () => Promise<void>;
   dismiss: () => void;
@@ -365,6 +366,7 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
       recordVideo?: boolean;
       stage?: "all" | "prep" | "maestro";
       runner?: "maestro" | "playwright";
+      headed?: boolean;
     }) => {
       if (isBatchStopRequested()) {
         throw new Error(RUN_CANCELLED_MESSAGE);
@@ -379,7 +381,9 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
       const runner = opts.runner ?? "maestro";
       const startPhase =
         runner === "playwright"
-          ? "Iniciando Playwright (Web)…"
+          ? opts.headed === false
+            ? "Iniciando Playwright (headless)…"
+            : "Iniciando Playwright (Web)…"
           : stage === "prep"
             ? "Iniciando Playwright (seed)…"
             : stage === "maestro"
@@ -421,6 +425,7 @@ export function RunProgressProvider({ children }: { children: ReactNode }) {
             ...(opts.recordVideo ? { recordVideo: true } : {}),
             ...(stage !== "all" ? { stage } : {}),
             ...(runner !== "maestro" ? { runner } : {}),
+            ...(typeof opts.headed === "boolean" ? { headed: opts.headed } : {}),
           }),
           signal: activeAbort.signal,
         },

@@ -17,6 +17,7 @@ import { homologationsRouter } from "./routes/homologations.js";
 import { automationRouter } from "./routes/automation.js";
 import { agentRouter } from "./routes/agent.js";
 import { kbCurationRouter } from "./routes/kb-curation.js";
+import { implantacoesRouter } from "./routes/implantacoes.js";
 import { dailySummaryRouter } from "./routes/daily-summary.js";
 import { apiSuiteRouter } from "./routes/api-suite.js";
 import { evidenceRouter } from "./routes/evidence.js";
@@ -134,6 +135,7 @@ app.use("/api/projects/:slug/bugs", testsRouter);
 
 app.use("/api/projects/:slug/homologations", homologationsRouter);
 app.use("/api/projects/:slug/kb-curation", kbCurationRouter);
+app.use("/api/projects/:slug/implantacoes", implantacoesRouter);
 app.use("/api/projects/:slug/daily-summary", dailySummaryRouter);
 
 app.use("/api/projects/:slug/automation", automationRouter);

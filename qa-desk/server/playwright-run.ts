@@ -23,7 +23,26 @@ export type PlaywrightRunResult = {
   output: string;
   cancelled?: boolean;
   durationMs: number;
+  /** Versão do rodapé login amostra CQ (CTs WEB) — parseada do log */
+  appVersion?: string;
 };
+
+/** Marcador emitido pelos specs WEB (`shared/gestao-auth.ts`). */
+export const WEB_BUILD_MARKER = "[qa-desk] web-build:";
+
+export function parseWebBuildFromPlaywrightOutput(
+  output: string,
+): string | undefined {
+  const lines = output.split(/\r?\n/);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i];
+    const idx = line.indexOf(WEB_BUILD_MARKER);
+    if (idx < 0) continue;
+    const value = line.slice(idx + WEB_BUILD_MARKER.length).trim();
+    if (value) return value;
+  }
+  return undefined;
+}
 
 export type PlaywrightSpecInfo = {
   id: string;
@@ -139,7 +158,11 @@ export async function runPlaywrightSpec(
 
   const child = spawn("npx", args, {
     cwd: PLAYWRIGHT_ROOT,
-    env: { ...process.env, FORCE_COLOR: "0" },
+    env: {
+      ...process.env,
+      FORCE_COLOR: "0",
+      PLAYWRIGHT_HEADED: headed ? "1" : "0",
+    },
     shell: true,
     windowsHide: false,
   });
@@ -193,5 +216,6 @@ export async function runPlaywrightSpec(
     output,
     cancelled: cancelled || undefined,
     durationMs: Date.now() - started,
+    appVersion: parseWebBuildFromPlaywrightOutput(output),
   };
 }

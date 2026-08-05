@@ -78,12 +78,20 @@ function FailureCallout({ entry }: { entry: HistoryEntry }) {
       )}
       {failure.action && (
         <p className="mt-0.5">
-          <span className="text-red-400/80">Ação Maestro:</span> {failure.action}
+          <span className="text-red-400/80">
+            {failure.flow?.endsWith(".spec.ts") || /playwright/i.test(failure.action)
+              ? "Ação Playwright:"
+              : "Ação Maestro:"}
+          </span>{" "}
+          {failure.action}
         </p>
       )}
       {failure.flow && (
         <p className="mt-0.5">
-          <span className="text-red-400/80">Flow:</span> {failure.flow}
+          <span className="text-red-400/80">
+            {failure.flow.endsWith(".spec.ts") ? "Spec:" : "Flow:"}
+          </span>{" "}
+          {failure.flow}
         </p>
       )}
       {failure.errorSummary && (

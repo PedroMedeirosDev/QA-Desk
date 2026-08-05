@@ -15,6 +15,8 @@ import { HomologationPage } from "@/pages/HomologationPage";
 import { HomologationsListPage } from "@/pages/HomologationsListPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { KbCurationPage } from "@/pages/KbCurationPage";
+import { ImplantacoesListPage } from "@/pages/ImplantacoesListPage";
+import { ImplantacaoPage } from "@/pages/ImplantacaoPage";
 import { ApiSuitePage } from "@/pages/ApiSuitePage";
 import { LoginPage } from "@/pages/LoginPage";
 import { VisitorWelcomePage } from "@/pages/VisitorWelcomePage";
@@ -43,13 +45,15 @@ function ProjectShell() {
       ? "Dashboard"
       : route.view === "kb-curation"
         ? "Curadoria KB"
-        : route.view === "api-suite"
-          ? "Suite API"
-          : route.view === "homologations-list" || route.view === "homologation"
-            ? "Homologações"
-            : route.view === "bugs-list"
-              ? "Bugs reportados"
-              : "Registro de Testes";
+        : route.view === "implantacoes-list" || route.view === "implantacao"
+          ? "Implantações"
+          : route.view === "api-suite"
+            ? "Suite API"
+            : route.view === "homologations-list" || route.view === "homologation"
+              ? "Homologações"
+              : route.view === "bugs-list"
+                ? "Bugs reportados"
+                : "Registro de Testes";
 
   const headerSubtitle = isVisitor
     ? "Perfil visitante"
@@ -57,15 +61,19 @@ function ProjectShell() {
       ? "Visão geral QA"
       : route.view === "kb-curation"
         ? "Rastreabilidade da base de conhecimento"
-        : route.view === "api-suite"
-          ? "Newman / Postman"
-          : route.view === "homologations-list"
-            ? "Todas as seções"
-            : route.view === "homologation"
-              ? "Detalhe da campanha"
-              : route.view === "bugs-list"
-                ? (current?.label ?? slug)
-                : (current?.label ?? slug);
+        : route.view === "implantacoes-list"
+          ? "Tipos e requisitos operacionais"
+          : route.view === "implantacao"
+            ? "Checklist do tipo"
+            : route.view === "api-suite"
+              ? "Newman / Postman"
+              : route.view === "homologations-list"
+                ? "Todas as seções"
+                : route.view === "homologation"
+                  ? "Detalhe da campanha"
+                  : route.view === "bugs-list"
+                    ? (current?.label ?? slug)
+                    : (current?.label ?? slug);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--background)]">
@@ -136,6 +144,10 @@ function ProjectShell() {
               <DashboardPage project={slug} />
             ) : route.view === "kb-curation" ? (
               <KbCurationPage project={slug} />
+            ) : route.view === "implantacoes-list" ? (
+              <ImplantacoesListPage project={slug} />
+            ) : route.view === "implantacao" && route.impSlug ? (
+              <ImplantacaoPage project={slug} impSlug={route.impSlug} />
             ) : route.view === "api-suite" ? (
               <ApiSuitePage project={slug} />
             ) : route.view === "list" ? (

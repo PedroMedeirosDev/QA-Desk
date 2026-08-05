@@ -6,6 +6,9 @@ import { testKeyFromFlow } from "./test-key.js";
 
 export const MURAL_HOMOLOGATION_SLUG = "mural-backend-homologacao";
 
+/** Homologação Web — Ficha Acadêmica (amostra CQ / Playwright). */
+export const FICHA_HOMOLOGATION_SLUG = "ficha-academica-homologacao";
+
 /** Chaves canônicas na ordem das suites (CRUD → … → E2E). */
 export function muralTestKeys(): string[] {
   return MURAL_HOMOLOGATION_ITEMS.map((item) => muralDomainTestKey(item.ctId));

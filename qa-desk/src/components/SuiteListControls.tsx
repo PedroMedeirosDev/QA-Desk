@@ -1,4 +1,5 @@
 import { ChevronsDownUp, ChevronsUpDown, Leaf } from "lucide-react";
+import { DesignCheckbox } from "@/components/DesignCheckbox";
 import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { cn } from "@/lib/utils";
 
@@ -6,11 +7,16 @@ export function SuiteListControls({
   onExpandAll,
   onCollapseAll,
   onCollapseGreens,
+  playwrightHeaded,
+  onPlaywrightHeadedChange,
   className,
 }: {
   onExpandAll: () => void;
   onCollapseAll: () => void;
   onCollapseGreens: () => void;
+  /** Quando definido, mostra o toggle headed/headless do Playwright */
+  playwrightHeaded?: boolean;
+  onPlaywrightHeadedChange?: (headed: boolean) => void;
   className?: string;
 }) {
   return (
@@ -41,6 +47,27 @@ export function SuiteListControls({
           Recolher verdes
         </button>
       </PremiumTooltip>
+      {typeof playwrightHeaded === "boolean" && onPlaywrightHeadedChange && (
+        <PremiumTooltip
+          label={
+            playwrightHeaded
+              ? "Chrome visível (melhor p/ Cloudflare). Desmarque para headless."
+              : "Headless — mais rápido; Cloudflare na amostra pode falhar."
+          }
+          side="bottom"
+          wide
+        >
+          <div className="ml-1">
+            <DesignCheckbox
+              checked={!playwrightHeaded}
+              onChange={(e) => onPlaywrightHeadedChange(!e.target.checked)}
+              label={
+                <span className="text-xs text-muted-foreground">Headless</span>
+              }
+            />
+          </div>
+        </PremiumTooltip>
+      )}
     </div>
   );
 }

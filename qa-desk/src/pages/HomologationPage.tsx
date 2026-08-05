@@ -18,7 +18,7 @@ import { useRunProgress, RUN_CANCELLED_MESSAGE, clearBatchStop, isBatchStopReque
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { projectDetailPath, projectHomologationsListPath } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
-import { CHANNEL_LABELS } from "@/config/channels";
+import { CHANNEL_LABELS, channelSupportsMaestro } from "@/config/channels";
 import { MURAL_HOMOLOGATION_SLUG } from "@/config/homologations";
 import {
   groupByModuleThenSuite,
@@ -29,7 +29,10 @@ import {
 } from "@/lib/suite";
 import {
   AUTOMATION_RUNNER_SHORT,
+  defaultRunnerForChannel,
+  readPlaywrightHeaded,
   readSuiteRunner,
+  writePlaywrightHeaded,
   writeSuiteRunner,
   type AutomationRunner,
 } from "@/lib/automation-runners";
@@ -103,6 +106,10 @@ export function HomologationPage({
   const [catalogTests, setCatalogTests] = useState<TestRecord[]>([]);
   const [collapsed, setCollapsed] = useState<Set<string> | null>(null);
   const [suiteRunners, setSuiteRunners] = useState<Record<string, AutomationRunner>>({});
+  const [playwrightHeaded, setPlaywrightHeaded] = useState(readPlaywrightHeaded);
+
+  const maestroAllowed = channelSupportsMaestro(homologation?.channel);
+  const channelDefaultRunner = defaultRunnerForChannel(homologation?.channel);
 
   useEffect(() => {
     setCollapsed(null);
@@ -110,7 +117,8 @@ export function HomologationPage({
   }, [homSlug]);
 
   function suiteRunnerFor(module: string, suite: string): AutomationRunner {
-    return suiteRunners[suiteCollapseKey(module, suite)] ?? "maestro";
+    if (!maestroAllowed) return "playwright";
+    return suiteRunners[suiteCollapseKey(module, suite)] ?? channelDefaultRunner;
   }
 
   function setSuiteRunner(module: string, suite: string, runner: AutomationRunner) {
@@ -261,6 +269,7 @@ export function HomologationPage({
         title: title ?? testId,
         homologationId: homologation?.id,
         runner,
+        ...(runner === "playwright" ? { headed: playwrightHeaded } : {}),
       });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
       if (res.ok) {
@@ -325,6 +334,7 @@ export function HomologationPage({
             homologationId: homologation.id,
             batchLabel: `${opts.batchTitle} ${i + 1}/${queue.length}`,
             runner,
+            ...(runner === "playwright" ? { headed: playwrightHeaded } : {}),
           });
           if (res.cancelled || isBatchStopRequested()) {
             toast.info(`${opts.batchTitle} interrompida.`, {
@@ -452,7 +462,7 @@ export function HomologationPage({
   }, [progress?.items, catalogTests]);
 
   useEffect(() => {
-    if (moduleGroups.length === 0) return;
+    if (!homologation || moduleGroups.length === 0) return;
     setSuiteRunners((prev) => {
       const next = { ...prev };
       let changed = false;
@@ -460,13 +470,15 @@ export function HomologationPage({
         for (const suite of mod.suites) {
           const key = suiteCollapseKey(mod.module, suite.suite);
           if (key in next) continue;
-          next[key] = readSuiteRunner(key);
+          next[key] = maestroAllowed
+            ? readSuiteRunner(key)
+            : channelDefaultRunner;
           changed = true;
         }
       }
       return changed ? next : prev;
     });
-  }, [moduleGroups]);
+  }, [homologation, moduleGroups, maestroAllowed, channelDefaultRunner]);
 
   useEffect(() => {
     if (collapsed !== null || moduleGroups.length === 0) return;
@@ -724,6 +736,11 @@ export function HomologationPage({
               }
               persistCollapsed(next);
             }}
+            playwrightHeaded={playwrightHeaded}
+            onPlaywrightHeadedChange={(headed) => {
+              writePlaywrightHeaded(headed);
+              setPlaywrightHeaded(headed);
+            }}
           />
         </div>
       <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -796,8 +813,11 @@ export function HomologationPage({
                     runDisabled={runningAll || liveRunning || Boolean(runningId)}
                     running={runningAll}
                     runner={runner}
-                    onRunnerChange={(next) =>
-                      setSuiteRunner(mod.module, group.suite, next)
+                    onRunnerChange={
+                      maestroAllowed
+                        ? (next) =>
+                            setSuiteRunner(mod.module, group.suite, next)
+                        : undefined
                     }
                   />
                   {expanded &&
