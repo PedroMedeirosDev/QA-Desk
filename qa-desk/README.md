@@ -102,6 +102,8 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 
 1. Na app → homologação **mural-backend-homologacao** → **Sincronizar checklist Mural**  
    (ou `npx tsx scripts/apply-mural-checklist.ts`)
+2. Homologação **ficha-academica-homologacao** (Ficha Acadêmica / Playwright):  
+   `npx tsx scripts/seed-ficha-homologacao.ts`
 2. Emulador + `QA_AUTOMATION_RUN=1` no PC **ou** agente remoto (`npm run agent` — ver [`agent/README.md`](agent/README.md))
 3. Flows: `projects/polygonus/automation/maestro/` · Playwright: `projects/polygonus/automation/playwright/`
 4. Na UI, toggle **Maestro | Playwright** por suite — progresso e rodadas são **por runner**

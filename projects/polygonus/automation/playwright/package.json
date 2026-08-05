@@ -5,10 +5,16 @@
     "test": "playwright test",
     "test:mural-dn": "playwright test mural/ajustar-dn-aniversariante.spec.ts --headed --timeout=180000",
     "test:mural-dn:headed": "playwright test mural/ajustar-dn-aniversariante.spec.ts --headed --timeout=180000",
+    "test:ficha": "playwright test academico/ui/ficha-abrir-novo.spec.ts --headed --timeout=240000",
+    "test:ficha:dados": "playwright test academico/ui/ficha-dados-principais.spec.ts --headed --timeout=300000",
+    "test:ficha:matricula": "playwright test academico/ui/ficha-matricula-cascata.spec.ts --headed --timeout=420000",
+    "test:ficha:e2e": "playwright test academico/ui/ficha-e2e-novo-aluno.spec.ts --headed --timeout=480000",
+    "test:ficha:gravar-keep": "playwright test academico/ui/ficha-gravar-keep.spec.ts --headed --timeout=360000",
     "test:ficha-contexto": "playwright test academico/api/aluno-contexto.spec.ts --headed --timeout=240000"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "massa-br": "^0.1.0"
   }
 }

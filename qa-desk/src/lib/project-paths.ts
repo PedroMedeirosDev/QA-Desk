@@ -10,13 +10,16 @@ export type ProjectRouteView =
   | "homologations-list"
   | "kb-curation"
   | "dashboard"
-  | "api-suite";
+  | "api-suite"
+  | "implantacoes-list"
+  | "implantacao";
 
 export interface ParsedProjectRoute {
   view: ProjectRouteView;
   channel?: ProductChannel;
   id?: string;
   homSlug?: string;
+  impSlug?: string;
   isNew?: boolean;
   /** Ao criar via /bugs/novo */
   editorKind?: "bug" | "teste";
@@ -85,6 +88,14 @@ export function projectKbCurationPath(project: ProjectSlug): string {
   return `${projectRootPath(project)}/curadoria-kb`;
 }
 
+export function projectImplantacoesListPath(project: ProjectSlug): string {
+  return `${projectRootPath(project)}/implantacoes`;
+}
+
+export function projectImplantacaoPath(project: ProjectSlug, impSlug: string): string {
+  return `${projectRootPath(project)}/implantacao/${impSlug}`;
+}
+
 export function projectApiSuitePath(project: ProjectSlug): string {
   return `${projectRootPath(project)}/suite-api`;
 }
@@ -102,6 +113,14 @@ export function isDashboardPath(project: ProjectSlug, pathname: string): boolean
 
 export function isKbCurationPath(project: ProjectSlug, pathname: string): boolean {
   return pathname === projectKbCurationPath(project);
+}
+
+export function isImplantacoesPath(project: ProjectSlug, pathname: string): boolean {
+  const root = projectRootPath(project);
+  return (
+    pathname === `${root}/implantacoes` ||
+    pathname.startsWith(`${root}/implantacao/`)
+  );
 }
 
 export function isApiSuitePath(project: ProjectSlug, pathname: string): boolean {
@@ -131,6 +150,18 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
     }
     if (first === "curadoria-kb") {
       return { view: "kb-curation" };
+    }
+    if (first === "implantacoes") {
+      return { view: "implantacoes-list" };
+    }
+    if (first === "implantacao") {
+      if (!second) {
+        return {
+          view: "implantacoes-list",
+          redirectTo: projectImplantacoesListPath(project),
+        };
+      }
+      return { view: "implantacao", impSlug: second };
     }
     if (first === "suite-api") {
       return { view: "api-suite" };
@@ -179,6 +210,16 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
   }
   if (first === "dashboard") return { view: "dashboard" };
   if (first === "curadoria-kb") return { view: "kb-curation" };
+  if (first === "implantacoes") return { view: "implantacoes-list" };
+  if (first === "implantacao") {
+    if (!second) {
+      return {
+        view: "implantacoes-list",
+        redirectTo: projectImplantacoesListPath(project),
+      };
+    }
+    return { view: "implantacao", impSlug: second };
+  }
   if (first === "homologacoes") return { view: "homologations-list" };
   if (first === "homologacao") {
     if (!second) {

@@ -172,12 +172,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: "Segoe UI", system-ui, sans-serif;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent; /* slate-300 */
-  }
-
-  .dark body {
-    scrollbar-color: #3f3f46 transparent; /* zinc-700 */
   }
 
   input,
@@ -194,33 +188,6 @@
   ::selection {
     background-color: var(--project-highlight-bg);
     color: var(--project-highlight-text);
-  }
-
-  /* Scrollbar custom (WebKit / Chromium / Windows) */
-  ::-webkit-scrollbar {
-    width: 0.375rem;
-    height: 0.375rem;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #cbd5e1; /* slate-300 */
-    border-radius: 9999px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8; /* slate-400 */
-  }
-
-  .dark ::-webkit-scrollbar-thumb {
-    background: #3f3f46; /* zinc-700 */
-  }
-
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: #52525b; /* zinc-600 */
   }
 
   /* Focus acessível — teclado only (não no clique do mouse) */
@@ -479,4 +446,85 @@
       transform: none !important;
     }
   }
+}
+
+/*
+ * Scrollbars — fora de @layer para vencer UA no Chromium/Windows.
+ * Aplica em body, main e nav da sidebar (overflow-y-auto).
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 transparent;
+}
+
+.dark * {
+  scrollbar-color: #52525b transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 0.25rem;
+  height: 0.25rem;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: #52525b;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: #71717a;
+}
+
+/* Sidebar: ainda mais discreta */
+.sidebar-nav nav,
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #64748b transparent;
+}
+
+.dark .sidebar-nav nav,
+.dark .sidebar-scroll {
+  scrollbar-color: #3f3f46 transparent;
+}
+
+.sidebar-nav nav::-webkit-scrollbar,
+.sidebar-scroll::-webkit-scrollbar {
+  width: 0.1875rem; /* 3px */
+  height: 0.1875rem;
+}
+
+.sidebar-nav nav::-webkit-scrollbar-button,
+.sidebar-scroll::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.sidebar-nav nav::-webkit-scrollbar-thumb,
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 9999px;
+}
+
+.dark .sidebar-nav nav::-webkit-scrollbar-thumb,
+.dark .sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #3f3f46;
 }

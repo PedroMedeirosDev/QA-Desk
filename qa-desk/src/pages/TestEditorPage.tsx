@@ -20,7 +20,7 @@ import {
   projectNewBugPath,
 } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
-import { getProjectChannels, type ProductChannel } from "@/config/channels";
+import { channelSupportsMaestro, getProjectChannels, type ProductChannel } from "@/config/channels";
 import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
 import {
   BUG_STATUS_LABELS,
@@ -38,6 +38,10 @@ import {
   detailedStepsFromRecord,
   type DetailedStep,
 } from "@/lib/detailed-steps";
+import {
+  readPlaywrightHeaded,
+  writePlaywrightHeaded,
+} from "@/lib/automation-runners";
 
 const emptyDraft = (
   project: ProjectSlug,
@@ -101,6 +105,7 @@ export function TestEditorPage({
       return false;
     }
   });
+  const [playwrightHeaded, setPlaywrightHeaded] = useState(readPlaywrightHeaded);
   const busyRun = running || liveRunning;
 
   const isHomologation = isTestCase(form);
@@ -263,6 +268,7 @@ export function TestEditorPage({
         recordVideo: runner === "playwright" || stage === "prep" ? false : recordVideo,
         stage: runner === "playwright" ? "all" : stage,
         runner,
+        ...(runner === "playwright" ? { headed: playwrightHeaded } : {}),
       });
       setForm(res.report);
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
@@ -426,6 +432,7 @@ export function TestEditorPage({
 
   const isMobileChannel =
     form.channel === "app" || form.platform === "android" || form.platform === "ios";
+  const maestroAllowed = channelSupportsMaestro(form.channel);
   const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
 
   return (
@@ -917,9 +924,19 @@ export function TestEditorPage({
                 onChange={(e) => update("module", e.target.value)}
               />
             </Field>
-            <Field label="Versão do app (login)">
+            <Field
+              label={
+                form.channel === "web"
+                  ? "Versão (login amostra CQ)"
+                  : "Versão do app (login)"
+              }
+            >
               <PremiumTooltip
-                label="Mesma versão exibida na tela de login; atualizada a cada execução"
+                label={
+                  form.channel === "web"
+                    ? "Front/Back do rodapé do login na amostra CQ — atualizado ao rodar Playwright"
+                    : "Mesma versão exibida na tela de login; atualizada a cada execução Maestro"
+                }
                 side="top"
                 wide
               >
@@ -927,7 +944,11 @@ export function TestEditorPage({
                   className="w-full rounded-md border px-3 py-2 font-mono text-sm"
                   value={form.build ?? ""}
                   onChange={(e) => update("build", e.target.value)}
-                  placeholder="Preenchida ao rodar o Maestro"
+                  placeholder={
+                    form.channel === "web"
+                      ? "Front: … · Back: … — ao rodar Playwright"
+                      : "Preenchida ao rodar o Maestro"
+                  }
                 />
               </PremiumTooltip>
             </Field>
@@ -966,7 +987,7 @@ export function TestEditorPage({
             <div className="space-y-4 border-t pt-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">Automação</span>
-                {form.automation?.prep?.type === "playwright" && (
+                {maestroAllowed && form.automation?.prep?.type === "playwright" && (
                   <span className="rounded border px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
                     Seed PW → Maestro
                   </span>
@@ -978,6 +999,7 @@ export function TestEditorPage({
                 )}
               </div>
 
+              {maestroAllowed && (
               <div className="space-y-2 rounded-lg border border-border/70 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Emulador / Maestro
@@ -1046,13 +1068,16 @@ export function TestEditorPage({
                   </select>
                 )}
               </div>
+              )}
 
               <div className="space-y-2 rounded-lg border border-sky-500/25 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-300/90">
                   Web / Playwright
                 </p>
                 <p className="text-[0.7rem] text-muted-foreground">
-                  Mesmo CT, executor alternativo (App no navegador). Separado do seed acima.
+                  {maestroAllowed
+                    ? "Mesmo CT, executor alternativo (App no navegador). Separado do seed acima."
+                    : "Executor Web/Portal — specs Playwright na amostra CQ."}
                 </p>
                 {form.automation?.playwright?.specPath ? (
                   <>
@@ -1135,21 +1160,52 @@ export function TestEditorPage({
                   </label>
                 )}
                 {!isNew && form.automation?.playwright?.specPath && (
-                  <PremiumTooltip label="Rodar só o spec Playwright (Web)" side="left" wide className="w-full">
-                    <button
-                      type="button"
-                      onClick={() => void runAutomationStage("all", "playwright")}
-                      disabled={busyRun || saving}
-                      className={cn(actionBtnBase, actionBtn.run, "w-full")}
+                  <>
+                    <DesignCheckbox
+                      className="rounded-md border px-2.5 py-2"
+                      checked={!playwrightHeaded}
+                      disabled={busyRun}
+                      onChange={(e) => {
+                        const headless = e.target.checked;
+                        writePlaywrightHeaded(!headless);
+                        setPlaywrightHeaded(!headless);
+                      }}
+                      label={
+                        <span className="font-medium text-foreground">
+                          Headless
+                        </span>
+                      }
+                      description="Sem janela Chrome. Na amostra, Cloudflare pode exigir headed."
+                    />
+                    <PremiumTooltip
+                      label={
+                        playwrightHeaded
+                          ? "Rodar só o spec Playwright (Chrome visível)"
+                          : "Rodar Playwright em headless"
+                      }
+                      side="left"
+                      wide
+                      className="w-full"
                     >
-                      <Play className="size-4" />
-                      {busyRun ? "Executando…" : "Executar Playwright (Web)"}
-                    </button>
-                  </PremiumTooltip>
+                      <button
+                        type="button"
+                        onClick={() => void runAutomationStage("all", "playwright")}
+                        disabled={busyRun || saving}
+                        className={cn(actionBtnBase, actionBtn.run, "w-full")}
+                      >
+                        <Play className="size-4" />
+                        {busyRun
+                          ? "Executando…"
+                          : playwrightHeaded
+                            ? "Executar Playwright (Web)"
+                            : "Executar Playwright (headless)"}
+                      </button>
+                    </PremiumTooltip>
+                  </>
                 )}
               </div>
 
-              {!isNew && form.automation?.flowPath && (
+              {!isNew && maestroAllowed && form.automation?.flowPath && (
                 <div className="space-y-2">
                   <div className="flex items-start gap-2 rounded-md border bg-muted/20 px-2.5 py-2 text-xs text-muted-foreground">
                     <span

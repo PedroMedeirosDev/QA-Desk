@@ -9,6 +9,12 @@ import type {
   KbCurationVerdict,
 } from "@/types/kb-curation";
 import type {
+  ImplantacaoCatalog,
+  ImplantacaoExecutor,
+  ImplantacaoRequisitoTipo,
+  ImplantacaoTipo,
+} from "@/types/implantacao";
+import type {
   DailyIntent,
   DailyPortfolioCard,
   DailySummary,
@@ -179,6 +185,7 @@ export const api = {
       recordVideo?: boolean;
       stage?: "all" | "prep" | "maestro";
       runner?: "maestro" | "playwright";
+      headed?: boolean;
     },
   ) =>
     request<{
@@ -210,6 +217,7 @@ export const api = {
         ...(opts?.recordVideo ? { recordVideo: true } : {}),
         ...(opts?.stage && opts.stage !== "all" ? { stage: opts.stage } : {}),
         ...(opts?.runner && opts.runner !== "maestro" ? { runner: opts.runner } : {}),
+        ...(typeof opts?.headed === "boolean" ? { headed: opts.headed } : {}),
       }),
     }),
 
@@ -307,6 +315,66 @@ export const api = {
       authorResponses: number;
       lastSyncedAt: string;
     }>(`/api/projects/${project}/kb-curation/sync`, { method: "POST" }),
+
+  listImplantacoes: (project: ProjectSlug) =>
+    request<ImplantacaoCatalog>(`/api/projects/${project}/implantacoes`),
+
+  getImplantacao: (project: ProjectSlug, slug: string) =>
+    request<{ tipo: ImplantacaoTipo }>(
+      `/api/projects/${project}/implantacoes/${slug}`,
+    ),
+
+  createImplantacao: (
+    project: ProjectSlug,
+    data: { title: string; description?: string; slug?: string },
+  ) =>
+    request<{ tipo: ImplantacaoTipo }>(`/api/projects/${project}/implantacoes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+
+  updateImplantacao: (
+    project: ProjectSlug,
+    slug: string,
+    data: {
+      title?: string;
+      description?: string;
+      status?: "ativo" | "arquivado";
+    },
+  ) =>
+    request<{ tipo: ImplantacaoTipo }>(
+      `/api/projects/${project}/implantacoes/${slug}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      },
+    ),
+
+  addImplantacaoRequisito: (
+    project: ProjectSlug,
+    slug: string,
+    data: {
+      titulo: string;
+      detalhe: string;
+      tipo?: ImplantacaoRequisitoTipo;
+      executor?: ImplantacaoExecutor;
+      obrigatorio?: boolean;
+      fonte?: string;
+      fonteEm?: string;
+      notas?: string;
+      ordem?: number;
+    },
+  ) =>
+    request<{ tipo: ImplantacaoTipo }>(
+      `/api/projects/${project}/implantacoes/${slug}/requisitos`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      },
+    ),
 
   getDailySummary: (project: ProjectSlug, date?: string) => {
     const q = date ? `?date=${encodeURIComponent(date)}` : "";

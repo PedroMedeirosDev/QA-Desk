@@ -1,3 +1,4 @@
+import { channelSupportsMaestro, type ProductChannel } from "@/config/channels";
 import type {
   AutomationLink,
   AutomationPlaywrightTarget,
@@ -5,6 +6,13 @@ import type {
 } from "@/types/test-record";
 
 export type AutomationRunner = "maestro" | "playwright";
+
+/** Default do toggle de suite: App → Maestro; WEB/PORTAL → Playwright. */
+export function defaultRunnerForChannel(
+  channel?: ProductChannel | null,
+): AutomationRunner {
+  return channelSupportsMaestro(channel) ? "maestro" : "playwright";
+}
 
 export const AUTOMATION_RUNNER_LABELS: Record<AutomationRunner, string> = {
   maestro: "Emulador / Maestro",
@@ -79,6 +87,28 @@ export function writeSuiteRunner(
 ): void {
   try {
     sessionStorage.setItem(runnerStorageKey(suiteCollapseKey), runner);
+  } catch {
+    /* ignore */
+  }
+}
+
+const PLAYWRIGHT_HEADED_KEY = "qa-playwright-headed";
+
+/** Default true (headed) — amostra/Cloudflare costuma precisar de janela. */
+export function readPlaywrightHeaded(): boolean {
+  try {
+    const raw = sessionStorage.getItem(PLAYWRIGHT_HEADED_KEY);
+    if (raw === "0") return false;
+    if (raw === "1") return true;
+  } catch {
+    /* ignore */
+  }
+  return true;
+}
+
+export function writePlaywrightHeaded(headed: boolean): void {
+  try {
+    sessionStorage.setItem(PLAYWRIGHT_HEADED_KEY, headed ? "1" : "0");
   } catch {
     /* ignore */
   }

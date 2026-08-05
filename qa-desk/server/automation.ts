@@ -1367,7 +1367,7 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
     expectedResult:
       "Comunicado em Enviadas; ANIVERSARI vê o mesmo ID em Recebidas.",
     steps: [
-      "Playwright: gestão → Colaboradores → Aniversariante → DN dia/mês → Gravar",
+      "Playwright: amostra CQ → Colaboradores → Aniversariante → DN dia/mês → Gravar",
       "Funil → Aniversariantes do dia → enviar → Enviadas",
       "Logout → ANIVERSARI → assert ID",
     ],

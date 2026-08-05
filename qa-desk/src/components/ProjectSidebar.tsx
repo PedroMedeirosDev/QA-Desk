@@ -10,6 +10,7 @@ import {
   Globe,
   LayoutDashboard,
   ListChecks,
+  Rocket,
   Smartphone,
   PanelTop,
 } from "lucide-react";
@@ -32,11 +33,13 @@ import {
   isApiSuitePath,
   isDashboardPath,
   isHomologationPath,
+  isImplantacoesPath,
   isKbCurationPath,
   projectApiSuitePath,
   projectBugsListPath,
   projectDashboardPath,
   projectHomologationsListPath,
+  projectImplantacoesListPath,
   projectKbCurationPath,
   projectListPath,
 } from "@/lib/project-paths";
@@ -214,7 +217,7 @@ export function ProjectSidebar({
         <>
       <nav
         className={cn(
-          "flex min-h-0 flex-1 flex-col gap-[0.5rem] overflow-y-auto p-[0.625rem]",
+          "sidebar-scroll flex min-h-0 flex-1 flex-col gap-[0.5rem] overflow-y-auto p-[0.625rem]",
           collapsed && "overflow-visible",
         )}
         aria-label="Selecionar projeto"
@@ -238,10 +241,12 @@ export function ProjectSidebar({
           const homPath = projectHomologationsListPath(project.slug);
           const dashPath = projectDashboardPath(project.slug);
           const kbCurationPath = projectKbCurationPath(project.slug);
+          const implantacoesPath = projectImplantacoesListPath(project.slug);
           const apiSuitePath = projectApiSuitePath(project.slug);
           const onHomologations = isHomologationPath(project.slug, location.pathname);
           const onDashboard = isDashboardPath(project.slug, location.pathname);
           const onKbCuration = isKbCurationPath(project.slug, location.pathname);
+          const onImplantacoes = isImplantacoesPath(project.slug, location.pathname);
           const onApiSuite = isApiSuitePath(project.slug, location.pathname);
 
           const projectCard = (
@@ -353,6 +358,7 @@ export function ProjectSidebar({
                       !onHomologations &&
                       !onDashboard &&
                       !onKbCuration &&
+                      !onImplantacoes &&
                       !onApiSuite &&
                       !onBugs &&
                       !location.pathname.startsWith(bugsPath) &&
@@ -446,6 +452,19 @@ export function ProjectSidebar({
                             </span>
                           </PremiumTooltip>
                         )}
+                      </Link>
+                    )}
+                    {project.slug === "polygonus" && (
+                      <Link
+                        to={implantacoesPath}
+                        className={cn(
+                          "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
+                          homologationsLinkClass(themeSub, onImplantacoes),
+                        )}
+                        aria-current={onImplantacoes ? "page" : undefined}
+                      >
+                        <Rocket className="size-3.5 shrink-0 opacity-90" />
+                        Implantações
                       </Link>
                     )}
                     <Link
@@ -544,6 +563,25 @@ export function ProjectSidebar({
                         {kbRereviewCount > 0 && (
                           <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-orange-500" />
                         )}
+                      </Link>
+                    </CollapsedTooltip>
+                  )}
+                  {project.slug === "polygonus" && (
+                    <CollapsedTooltip label="Implantações">
+                      <Link
+                        to={implantacoesPath}
+                        className={cn(
+                          "flex justify-center rounded-xl border px-2 py-2 transition-colors",
+                          onImplantacoes
+                            ? cn(project.accent.subNav.homologationsActive)
+                            : cn(
+                                "border-transparent text-muted-foreground",
+                                project.accent.subNav.homologationsHover,
+                              ),
+                        )}
+                        aria-current={onImplantacoes ? "page" : undefined}
+                      >
+                        <Rocket className="size-4" />
                       </Link>
                     </CollapsedTooltip>
                   )}

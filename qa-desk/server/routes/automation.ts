@@ -424,6 +424,8 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     recordVideo?: boolean;
     stage?: "all" | "prep" | "maestro";
     runner?: AutomationRunner;
+    /** Override runtime do Playwright (default: automation.playwright.headed ?? true) */
+    headed?: boolean;
   };
   const recordVideo = Boolean(body.recordVideo);
   const runner = parseAutomationRunner(body.runner, "maestro");
@@ -664,9 +666,13 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
       action: path.basename(pwTarget.specPath),
       status: "running",
     });
+    const pwHeaded =
+      typeof body.headed === "boolean"
+        ? body.headed
+        : pwTarget.headed !== false;
     send({
       type: "log",
-      line: `[qa-desk] Playwright Web: ${pwTarget.specPath}${pwTarget.headed === false ? "" : " (headed)"}`,
+      line: `[qa-desk] Playwright Web: ${pwTarget.specPath}${pwHeaded ? " (headed)" : " (headless)"}`,
     });
     appendRunSessionOutput(
       runId,
@@ -674,7 +680,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     );
 
     const pw = await runPlaywrightSpec(pwTarget.specPath, {
-      headed: pwTarget.headed !== false,
+      headed: pwHeaded,
       runId,
       onOutput: (chunk) => {
         appendRunSessionOutput(runId, chunk);
@@ -684,11 +690,20 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     });
     stagesRun.push("playwright");
     combinedOutput += pw.output;
+    const webBuild =
+      report.channel === "web" ? pw.appVersion : undefined;
+    if (webBuild) {
+      send({
+        type: "log",
+        line: `[qa-desk] Versão amostra CQ (login) → build: ${webBuild}`,
+      });
+    }
     result = {
       ok: pw.ok && !pw.cancelled,
       exitCode: pw.exitCode,
       output: combinedOutput,
       cancelled: pw.cancelled,
+      appVersion: webBuild,
       failure:
         pw.ok && !pw.cancelled
           ? undefined
@@ -968,18 +983,23 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
       : result.failure;
 
   if (result.appVersion) {
-    report.build = result.appVersion;
+    // Maestro (app) ou Playwright WEB — Portal não usa este build
+    if (!wantPlaywrightOnly || report.channel === "web") {
+      report.build = result.appVersion;
+    }
   }
 
   if (homologation && result.appVersion) {
-    const homCatalog = await readHomologationCatalog(project);
-    const idxHom = homCatalog.homologations.findIndex((h) => h.id === homologation.id);
-    if (idxHom >= 0) {
-      homCatalog.homologations[idxHom] = {
-        ...homCatalog.homologations[idxHom],
-        build: result.appVersion,
-      };
-      await writeHomologationCatalog(project, homCatalog);
+    if (!wantPlaywrightOnly || report.channel === "web") {
+      const homCatalog = await readHomologationCatalog(project);
+      const idxHom = homCatalog.homologations.findIndex((h) => h.id === homologation.id);
+      if (idxHom >= 0) {
+        homCatalog.homologations[idxHom] = {
+          ...homCatalog.homologations[idxHom],
+          build: result.appVersion,
+        };
+        await writeHomologationCatalog(project, homCatalog);
+      }
     }
   }
 

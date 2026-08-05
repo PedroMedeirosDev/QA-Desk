@@ -28,7 +28,12 @@ import {
   projectNewPath,
 } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
-import { CHANNEL_LABELS, getProjectChannels, type ProductChannel } from "@/config/channels";
+import {
+  CHANNEL_LABELS,
+  channelSupportsMaestro,
+  getProjectChannels,
+  type ProductChannel,
+} from "@/config/channels";
 import type { ProjectSlug, TestRecord } from "@/types/test-record";
 import {
   displayStatus,
@@ -50,10 +55,13 @@ import {
 } from "@/lib/suite";
 import {
   AUTOMATION_RUNNER_SHORT,
+  defaultRunnerForChannel,
   hasMaestroAutomation,
   hasPlaywrightAutomation,
+  readPlaywrightHeaded,
   readSuiteRunner,
   supportsRunner,
+  writePlaywrightHeaded,
   writeSuiteRunner,
   type AutomationRunner,
 } from "@/lib/automation-runners";
@@ -125,6 +133,7 @@ export function TestListPage({
   const [collapsed, setCollapsed] = useState<Set<string> | null>(null);
   /** Executor selecionado por chave `Módulo::Suite` */
   const [suiteRunners, setSuiteRunners] = useState<Record<string, AutomationRunner>>({});
+  const [playwrightHeaded, setPlaywrightHeaded] = useState(readPlaywrightHeaded);
 
   useEffect(() => {
     setCollapsed(null);
@@ -182,6 +191,9 @@ export function TestListPage({
 
   const moduleGroups = useMemo(() => groupByModuleThenSuite(filtered), [filtered]);
 
+  const maestroAllowed = channelSupportsMaestro(routeChannel);
+  const channelDefaultRunner = defaultRunnerForChannel(routeChannel);
+
   useEffect(() => {
     if (loading || moduleGroups.length === 0) return;
     setSuiteRunners((prev) => {
@@ -191,16 +203,19 @@ export function TestListPage({
         for (const suite of mod.suites) {
           const key = suiteCollapseKey(mod.module, suite.suite);
           if (key in next) continue;
-          next[key] = readSuiteRunner(key);
+          next[key] = maestroAllowed
+            ? readSuiteRunner(key)
+            : channelDefaultRunner;
           changed = true;
         }
       }
       return changed ? next : prev;
     });
-  }, [loading, moduleGroups]);
+  }, [loading, moduleGroups, maestroAllowed, channelDefaultRunner]);
 
   function suiteRunnerFor(module: string, suite: string): AutomationRunner {
-    return suiteRunners[suiteCollapseKey(module, suite)] ?? "maestro";
+    if (!maestroAllowed) return "playwright";
+    return suiteRunners[suiteCollapseKey(module, suite)] ?? channelDefaultRunner;
   }
 
   function setSuiteRunner(module: string, suite: string, runner: AutomationRunner) {
@@ -264,6 +279,7 @@ export function TestListPage({
         testId: id,
         title: report?.title ?? formatRecordId(id, report),
         runner,
+        ...(runner === "playwright" ? { headed: playwrightHeaded } : {}),
       });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
       const runnerTitle = AUTOMATION_RUNNER_SHORT[runner];
@@ -371,6 +387,7 @@ export function TestListPage({
             title: item.title,
             batchLabel: `${name} ${i + 1}/${queue.length}`,
             runner,
+            ...(runner === "playwright" ? { headed: playwrightHeaded } : {}),
           });
           if (res.cancelled || isBatchStopRequested()) {
             toast.info(`${kindLabel} ${name} interrompido.`, { title: "Execução em lote" });
@@ -529,6 +546,11 @@ export function TestListPage({
           onExpandAll={expandAllSuites}
           onCollapseAll={collapseAllSuites}
           onCollapseGreens={collapseGreenSuites}
+          playwrightHeaded={playwrightHeaded}
+          onPlaywrightHeadedChange={(headed) => {
+            writePlaywrightHeaded(headed);
+            setPlaywrightHeaded(headed);
+          }}
         />
       )}
 
@@ -612,8 +634,15 @@ export function TestListPage({
                               runDisabled={busy}
                               running={runningGroup === sk}
                               runner={runner}
-                              onRunnerChange={(next) =>
-                                setSuiteRunner(mod.module, group.suite, next)
+                              onRunnerChange={
+                                maestroAllowed
+                                  ? (next) =>
+                                      setSuiteRunner(
+                                        mod.module,
+                                        group.suite,
+                                        next,
+                                      )
+                                  : undefined
                               }
                             />
                             {expanded &&

@@ -38,15 +38,15 @@ loadDotEnv();
 
 const GESTAO_URL =
   process.env.PLAYWRIGHT_GESTAO_URL?.trim() ||
-  "https://amostra.polygonus.com.br/web/react/gestao";
+  "https://amostra.polygonus.com.br:8443/web/react/gestao";
 
 /** basePath Next = /web/react → ficha em /web/react/academico/alunos/novo */
 const FICHA_NOVO_URL = GESTAO_URL.replace(/\/gestao\/?$/, "/academico/alunos/novo");
 
 const LOGIN =
   process.env.PLAYWRIGHT_LOGIN?.trim() ||
-  process.env.LOGIN_PHJESUS?.trim() ||
-  "PHJESUS";
+  process.env.LOGIN_SUPPETER?.trim() ||
+  "SUPPETER";
 
 const SENHA =
   process.env.PLAYWRIGHT_SENHA?.trim() ||
@@ -54,7 +54,7 @@ const SENHA =
   "poly1000";
 
 const UNIDADE =
-  process.env.PLAYWRIGHT_UNIDADE?.trim() || "Colégio de Demonstração";
+  process.env.PLAYWRIGHT_UNIDADE?.trim() || "Colégio Demonstração";
 
 const PROFILE_DIR =
   process.env.PLAYWRIGHT_CHROME_PROFILE_FICHA?.trim() ||
@@ -108,7 +108,7 @@ async function loginGestaoSePreciso(page: Page) {
   if (await geral.isVisible().catch(() => false)) return;
 
   if (await senhaInput.isVisible().catch(() => false)) {
-    console.log(`[ficha-api] login gestão como ${LOGIN}`);
+    console.log(`[ficha-api] login amostra CQ como ${LOGIN}`);
     const userInput = page
       .locator(
         'input[type="text"], input[type="email"], input[name*="login" i], input[name*="user" i], input[placeholder*="Login" i], input[placeholder*="mail" i]',
@@ -135,8 +135,15 @@ async function loginGestaoSePreciso(page: Page) {
     (await unidadeHeading.isVisible().catch(() => false))
   ) {
     console.log(`[ficha-api] unidade "${UNIDADE}" → Continuar`);
-    const item = page.getByText(UNIDADE, { exact: true }).first();
-    if (await item.isVisible().catch(() => false)) await item.click();
+    const itemExact = page.getByText(UNIDADE, { exact: true }).first();
+    const itemFuzzy = page.getByText(/Col[eé]gio\s+(de\s+)?Demonstra/i).first();
+    if (await itemExact.isVisible().catch(() => false)) await itemExact.click();
+    else if (await itemFuzzy.isVisible().catch(() => false)) await itemFuzzy.click();
+    else {
+      throw new Error(
+        `[ficha-api] unidade "${UNIDADE}" não encontrada na tela Selecione sua unidade`,
+      );
+    }
     await continuar.click({ timeout: 15_000 });
   }
 
@@ -148,7 +155,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test("Ficha: GET /academico/aluno/contexto (interceptado da tela)", async () => {
   test.setTimeout(240_000);
 
-  console.log("[ficha-api] gestão =", GESTAO_URL);
+  console.log("[ficha-api] amostra CQ =", GESTAO_URL);
   console.log("[ficha-api] novo aluno =", FICHA_NOVO_URL);
 
   const context = await chromium.launchPersistentContext(PROFILE_DIR, {

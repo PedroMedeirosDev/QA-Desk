@@ -1,7 +1,10 @@
 import { ChevronDown, ChevronRight, Hammer, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MODULE_LABELS, SUITE_LABELS, type SuiteStats } from "@/lib/suite";
-import { SuiteRunnerToggle } from "@/components/SuiteRunnerToggle";
+import {
+  SuiteRunnerBadge,
+  SuiteRunnerToggle,
+} from "@/components/SuiteRunnerToggle";
 import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
 import type { AutomationRunner } from "@/lib/automation-runners";
 
@@ -174,6 +177,9 @@ function GroupHeaderRow({
         </button>
         {level === "suite" && runner && onRunnerChange && (
           <SuiteRunnerToggle value={runner} onChange={onRunnerChange} size="xs" />
+        )}
+        {level === "suite" && runner && !onRunnerChange && (
+          <SuiteRunnerBadge runner={runner} size="xs" />
         )}
       </div>
     </td>

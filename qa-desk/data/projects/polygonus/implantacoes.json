@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "project": "polygonus",
+    "updatedAt": "2026-08-05"
+  },
+  "tipos": [
+    {
+      "id": "IMP-001",
+      "slug": "chat-nova-unidade",
+      "title": "Chat em nova unidade",
+      "description": "Checklist na implantação do chat em unidade nova. QA anota e escala; não executa SQL.",
+      "status": "ativo",
+      "createdAt": "2026-08-05T19:42:57.440Z",
+      "updatedAt": "2026-08-05T19:42:57.440Z",
+      "requisitos": [
+        {
+          "id": "req-1",
+          "ordem": 1,
+          "titulo": "Backfill migração chat novo",
+          "detalhe": "Na implantação do chat em nova unidade, rodar o script chat_backfill_migracao_chat_novo.sql",
+          "tipo": "sql",
+          "executor": "dba",
+          "obrigatorio": true,
+          "fonte": "Moacir Schmidt",
+          "fonteEm": "2026-08-05",
+          "notas": "Pedido no chat interno após homologação. QA não tem permissão de SQL — escalar DBA / quem implantar."
+        }
+      ]
+    }
+  ]
+}

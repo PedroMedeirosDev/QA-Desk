@@ -1,10 +1,58 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-07-19",
+    "updatedAt": "2026-08-05",
     "project": "polygonus"
   },
   "homologations": [
+    {
+      "id": "HOM-2026-002",
+      "slug": "ficha-academica-homologacao",
+      "build": "Front: 05/08/26, 11:49 · Back: 05/08/26, 14:47 · Legado: 05/08/26, 10:05",
+      "title": "Homologação Ficha Acadêmica",
+      "status": "em_andamento",
+      "channel": "web",
+      "history": [
+        {
+          "at": "2026-08-05T14:06:03.869Z",
+          "actor": "Pedro",
+          "action": "homologation_created",
+          "detail": "Homologação criada: Homologação Ficha Acadêmica"
+        },
+        {
+          "at": "2026-08-05T14:06:03.153Z",
+          "actor": "system",
+          "action": "homologation_synced",
+          "detail": "Checklist Ficha: 3 no escopo · 3 novo(s) · 0 atualizado(s)"
+        },
+        {
+          "at": "2026-08-05T14:08:10.221Z",
+          "actor": "system",
+          "action": "homologation_synced",
+          "detail": "Checklist Ficha: 3 no escopo · 0 novo(s) · 3 atualizado(s)"
+        },
+        {
+          "at": "2026-08-05T19:17:46.964Z",
+          "actor": "system",
+          "action": "homologation_synced",
+          "detail": "Checklist Ficha: 7 no escopo · 4 novo(s) · 3 atualizado(s)"
+        }
+      ],
+      "project": "polygonus",
+      "campaign": "ficha-academica-homologacao",
+      "testKeys": [
+        "academico/ficha-01",
+        "academico/ficha-02",
+        "academico/ficha-03",
+        "academico/ficha-10",
+        "academico/ficha-20",
+        "academico/ficha-30",
+        "academico/ficha-90"
+      ],
+      "startedAt": "2026-08-05T14:06:03.869Z",
+      "changeScope": "backend",
+      "description": "Smoke + Cadastro + Matrícula + E2E Web da Ficha Acadêmica (amostra CQ) via Playwright / massa-br."
+    },
     {
       "id": "HOM-2026-001",
       "slug": "mural-backend-homologacao",
