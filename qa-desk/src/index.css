@@ -466,10 +466,25 @@
   height: 0.25rem;
 }
 
-*::-webkit-scrollbar-button {
-  display: none;
-  width: 0;
-  height: 0;
+/* Windows Chromium: esconde setas ↑↓ (single-button + double-button) */
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-button:start,
+*::-webkit-scrollbar-button:end,
+*::-webkit-scrollbar-button:vertical:start:decrement,
+*::-webkit-scrollbar-button:vertical:end:increment,
+*::-webkit-scrollbar-button:vertical:start:increment,
+*::-webkit-scrollbar-button:vertical:end:decrement,
+*::-webkit-scrollbar-button:horizontal:start:decrement,
+*::-webkit-scrollbar-button:horizontal:end:increment,
+*::-webkit-scrollbar-button:horizontal:start:increment,
+*::-webkit-scrollbar-button:horizontal:end:decrement {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  appearance: none;
+  background: transparent;
+  border: none;
 }
 
 *::-webkit-scrollbar-track {
@@ -512,10 +527,16 @@
 }
 
 .sidebar-nav nav::-webkit-scrollbar-button,
-.sidebar-scroll::-webkit-scrollbar-button {
-  display: none;
-  width: 0;
-  height: 0;
+.sidebar-scroll::-webkit-scrollbar-button,
+.sidebar-nav nav::-webkit-scrollbar-button:single-button,
+.sidebar-scroll::-webkit-scrollbar-button:single-button,
+.sidebar-nav nav::-webkit-scrollbar-button:vertical:start:decrement,
+.sidebar-scroll::-webkit-scrollbar-button:vertical:start:decrement,
+.sidebar-nav nav::-webkit-scrollbar-button:vertical:end:increment,
+.sidebar-scroll::-webkit-scrollbar-button:vertical:end:increment {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .sidebar-nav nav::-webkit-scrollbar-thumb,

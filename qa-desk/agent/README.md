@@ -25,14 +25,13 @@ QA_AUTOMATION_RUN=0
 QA_AGENT_TOKEN=mesmo-token
 ```
 
-## Uso
+## Uso (1 clique)
 
-```bash
-cd qa-desk
-npm run agent
-```
+1. **Atalho na Área de Trabalho:** `QA Desk — Agente` (ícone do QA Desk).
+2. Ou, na pasta `qa-desk/`, dois cliques em **`Iniciar Agente QA Desk.cmd`**.
+3. Alternativa: `powershell -File scripts/start-qa-agent.ps1` / `npm run agent`.
 
-Deixe o terminal aberto. A UI online mostra **Agente: online** e passa a:
+Deixe a janela aberta. A UI online mostra **Agente: online** e passa a:
 
 - enfileirar **Executar** Maestro/Playwright
 - aceitar **Ligar emulador**
