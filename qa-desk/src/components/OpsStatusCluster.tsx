@@ -119,7 +119,8 @@ function buildItems(
         id: "agent",
         title: "Agente Remoto",
         value: "—",
-        detail: "QA_AGENT_TOKEN não configurado no servidor",
+        detail:
+          "Token ausente no servidor. No PC: abra «Iniciar Agente QA Desk.cmd» (pasta qa-desk/) após configurar QA_AGENT_TOKEN",
         tone: "muted",
       },
     ];
@@ -128,7 +129,8 @@ function buildItems(
         id: "avd",
         title: "Emulador",
         value: "—",
-        detail: "Precisa de agente remoto (npm run agent) ou QA_AUTOMATION_RUN=1 local",
+        detail:
+          "Precisa do agente no PC («Iniciar Agente QA Desk.cmd») ou QA_AUTOMATION_RUN=1 no localhost",
         tone: "muted",
       });
     }
@@ -144,7 +146,7 @@ function buildItems(
       value: online ? "Online" : "Offline",
       detail: online
         ? `Agente online${host ? ` · ${host}` : ""} — Executar e emulador via PC`
-        : "Agente offline — no PC: npm run agent",
+        : "Offline — no PC abra «Iniciar Agente QA Desk.cmd» (ou npm run agent) e deixe a janela aberta",
       tone: online ? "ok" : "off",
     },
   ];
@@ -156,7 +158,7 @@ function buildItems(
     if (!online) {
       tone = "off";
       value = "Off";
-      detail = "Agente offline — emulador indisponível";
+      detail = "Agente offline — rode «Iniciar Agente QA Desk.cmd» no PC";
     } else if (device?.ready) {
       tone = "ok";
       value = "Pronto";

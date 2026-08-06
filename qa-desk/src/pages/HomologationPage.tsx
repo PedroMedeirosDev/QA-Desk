@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   ExternalLink,
+  MonitorOff,
   Play,
   RefreshCw,
 } from "lucide-react";
@@ -260,18 +261,27 @@ export function HomologationPage({
     testId: string,
     title?: string,
     runner: AutomationRunner = "maestro",
+    headedOverride?: boolean,
   ) {
     setRunningId(testId);
     try {
+      const headed =
+        runner === "playwright"
+          ? (headedOverride ?? playwrightHeaded)
+          : undefined;
       const res = await runAutomation({
         project,
         testId,
         title: title ?? testId,
         homologationId: homologation?.id,
         runner,
-        ...(runner === "playwright" ? { headed: playwrightHeaded } : {}),
+        ...(runner === "playwright" ? { headed } : {}),
       });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
+      const runnerTitle =
+        runner === "playwright" && headed === false
+          ? "Playwright (headless)"
+          : AUTOMATION_RUNNER_SHORT[runner];
       if (res.ok) {
         toast.success(`Execução #${res.runNumber} passou${ver}`);
       } else {
@@ -280,7 +290,7 @@ export function HomologationPage({
           res.failure?.failedAction ??
           "veja o teste";
         toast.error(`Execução #${res.runNumber} falhou${ver} — ${where}`, {
-          title: AUTOMATION_RUNNER_SHORT[runner],
+          title: runnerTitle,
         });
       }
       reload({ soft: true });
@@ -934,7 +944,11 @@ export function HomologationPage({
                                 align="end"
                                 label={
                                   canRun
-                                    ? `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
+                                    ? runner === "playwright"
+                                      ? playwrightHeaded
+                                        ? "Executar Playwright (Chrome visível)"
+                                        : "Executar Playwright (headless — preferência)"
+                                      : `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
                                     : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
                                 }
                               >
@@ -959,6 +973,35 @@ export function HomologationPage({
                                   <Play className="size-4" />
                                 </button>
                               </PremiumTooltip>
+                              {Boolean(item.hasPlaywright) &&
+                                (runner === "playwright" || !maestroAllowed) && (
+                                  <PremiumTooltip
+                                    align="end"
+                                    label="Executar Playwright headless (sem janela)"
+                                    wide
+                                  >
+                                    <button
+                                      type="button"
+                                      aria-label="Executar Playwright headless"
+                                      disabled={
+                                        runningAll ||
+                                        liveRunning ||
+                                        runningId === item.testId
+                                      }
+                                      onClick={() =>
+                                        void runTest(
+                                          item.testId!,
+                                          item.title,
+                                          "playwright",
+                                          false,
+                                        )
+                                      }
+                                      className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-sky-500/15 hover:text-sky-400 disabled:opacity-50"
+                                    >
+                                      <MonitorOff className="size-4" />
+                                    </button>
+                                  </PremiumTooltip>
+                                )}
                             </div>
                           )}
                         </td>

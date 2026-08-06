@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, ExternalLink, ListChecks, Play, Plus } from "lucide-react";
+import { Bug, ExternalLink, ListChecks, MonitorOff, Play, Plus } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
@@ -261,10 +261,15 @@ export function TestListPage({
     navigate(projectDetailPath(project, id, ch));
   }
 
-  async function quickRun(e: React.MouseEvent, id: string) {
+  async function quickRun(
+    e: React.MouseEvent,
+    id: string,
+    opts?: { runner?: AutomationRunner; headed?: boolean },
+  ) {
     e.stopPropagation();
     const report = reports.find((r) => r.id === id);
-    const runner = report ? runnerForRecord(report) : "maestro";
+    const runner =
+      opts?.runner ?? (report ? runnerForRecord(report) : "maestro");
     if (report && !supportsRunner(report.automation, runner)) {
       toast.info(
         `${AUTOMATION_RUNNER_SHORT[runner]} não configurado neste CT.`,
@@ -272,6 +277,10 @@ export function TestListPage({
       );
       return;
     }
+    const headed =
+      runner === "playwright"
+        ? (opts?.headed ?? playwrightHeaded)
+        : undefined;
     setRunningId(id);
     try {
       const res = await runAutomation({
@@ -279,10 +288,13 @@ export function TestListPage({
         testId: id,
         title: report?.title ?? formatRecordId(id, report),
         runner,
-        ...(runner === "playwright" ? { headed: playwrightHeaded } : {}),
+        ...(runner === "playwright" ? { headed } : {}),
       });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
-      const runnerTitle = AUTOMATION_RUNNER_SHORT[runner];
+      const runnerTitle =
+        runner === "playwright" && headed === false
+          ? "Playwright (headless)"
+          : AUTOMATION_RUNNER_SHORT[runner];
       if (res.cancelled) {
         clearBatchStop();
         toast.info(`Execução #${res.runNumber} cancelada${ver}`, {
@@ -563,7 +575,7 @@ export function TestListPage({
               <th className="px-4 py-2.5 font-medium">Resultado</th>
               <th className="px-4 py-2.5 font-medium">Rodadas</th>
               <th className="px-4 py-2.5 font-medium">Última</th>
-              <th className="px-4 py-2.5 font-medium w-28">Ações</th>
+              <th className="px-4 py-2.5 font-medium w-36">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -736,7 +748,11 @@ export function TestListPage({
                                             align="end"
                                             label={
                                               canRun
-                                                ? `Executar (${AUTOMATION_RUNNER_SHORT[runner]})`
+                                                ? runner === "playwright"
+                                                  ? playwrightHeaded
+                                                    ? "Executar Playwright (Chrome visível)"
+                                                    : "Executar Playwright (headless — preferência)"
+                                                  : `Executar (${AUTOMATION_RUNNER_SHORT[runner]})`
                                                 : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
                                             }
                                           >
@@ -755,6 +771,31 @@ export function TestListPage({
                                             </button>
                                           </PremiumTooltip>
                                         )}
+                                        {isAdmin &&
+                                          hasPlaywrightAutomation(r.automation) &&
+                                          (runner === "playwright" ||
+                                            !maestroAllowed) && (
+                                            <PremiumTooltip
+                                              align="end"
+                                              label="Executar Playwright headless (sem janela)"
+                                              wide
+                                            >
+                                              <button
+                                                type="button"
+                                                aria-label="Executar Playwright headless"
+                                                disabled={busy}
+                                                onClick={(e) =>
+                                                  void quickRun(e, r.id, {
+                                                    runner: "playwright",
+                                                    headed: false,
+                                                  })
+                                                }
+                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-sky-500/15 hover:text-sky-400 disabled:opacity-50"
+                                              >
+                                                <MonitorOff className="size-4" />
+                                              </button>
+                                            </PremiumTooltip>
+                                          )}
                                       </div>
                                     </td>
                                   </tr>
