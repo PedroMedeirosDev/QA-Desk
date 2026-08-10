@@ -40,6 +40,8 @@ export function historyActionLabel(action: string): string {
     status_changed: "Status alterado",
     homologated: "Homologado",
     evidence_uploaded: "Print anexado",
+    github_issue_created: "Issue GitHub aberta",
+    discord_sent: "Enviado ao Discord",
     automation_started: "Automação iniciada",
     automation_passed: "Automação passou",
     automation_failed: "Automação falhou",

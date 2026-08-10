@@ -18,6 +18,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:migrate-json": "tsx server/scripts/migrate-json-to-pg.ts",
+    "storage:seed-avatar": "tsx server/scripts/seed-avatar-storage.ts",
     "postinstall": "prisma generate",
     "e2e": "playwright test -c e2e/playwright.config.ts",
     "e2e:ui": "playwright test -c e2e/playwright.config.ts --ui",

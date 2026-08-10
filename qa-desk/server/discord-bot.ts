@@ -153,7 +153,9 @@ export async function ensureDiscordBot(): Promise<Client | null> {
 }
 
 export type BotSendFile = {
-  abs: string;
+  /** Caminho local (legado) ou omitido se `buffer` for passado. */
+  abs?: string;
+  buffer?: Buffer;
   filename: string;
   mimeType?: string;
 };
@@ -189,7 +191,10 @@ export async function sendBugMessageViaBot(opts: {
   }
 
   const attachments = opts.files.map((f) => {
-    const buf = fs.readFileSync(f.abs);
+    const buf = f.buffer ?? (f.abs ? fs.readFileSync(f.abs) : null);
+    if (!buf) {
+      throw new Error(`Anexo Discord sem bytes: ${f.filename}`);
+    }
     return new AttachmentBuilder(buf, { name: f.filename });
   });
 

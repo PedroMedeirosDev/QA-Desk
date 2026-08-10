@@ -13,7 +13,19 @@ export function getUserAvatarUrl(baseName: string): string | undefined {
   return undefined;
 }
 
-/** Admin → pedro.* · visitante → visitante.* (se existir). */
+/**
+ * Preferência: URL pública do Storage (`avatarUrl`) → bundle local por role.
+ */
+export function resolveAvatarSrc(opts: {
+  role?: "admin" | "visitor";
+  avatarUrl?: string | null;
+}): string | undefined {
+  const remote = opts.avatarUrl?.trim();
+  if (remote) return remote;
+  return resolveAvatarForRole(opts.role);
+}
+
+/** Admin → pedro.* · visitante → visitante.* (se existir). Bundle local. */
 export function resolveAvatarForRole(
   role: "admin" | "visitor" | undefined,
 ): string | undefined {

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { OpsStatusPanel, useOpsStatus } from "@/components/OpsStatusCluster";
 import { UserAvatar } from "@/components/UserAvatar";
+import { api } from "@/lib/api";
 import { useColorScheme } from "@/lib/color-scheme";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +22,14 @@ function summaryDotClass(tone: string) {
 }
 
 export function UserBar({ className }: { className?: string }) {
-  const { profile, isAdmin, isVisitor, authEnabled, signOut } = useAuth();
+  const { profile, isAdmin, isVisitor, authEnabled, signOut, applyAvatar } = useAuth();
   const { scheme, toggleScheme } = useColorScheme();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const menuId = useId();
   const { items, summaryTone } = useOpsStatus();
 
@@ -51,12 +55,55 @@ export function UserBar({ className }: { className?: string }) {
     if (authEnabled) navigate("/login", { replace: true });
   }
 
+  function openAvatarPicker() {
+    setAvatarError(null);
+    fileInputRef.current?.click();
+  }
+
+  async function onAvatarSelected(file: File | undefined) {
+    if (!file || !isAdmin) return;
+    setUploadingAvatar(true);
+    setAvatarError(null);
+    try {
+      const result = await api.uploadAvatar(file);
+      applyAvatar(result.avatarPath, result.avatarUrl);
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "Falha ao enviar foto");
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   const name = profile?.displayName ?? "Usuário";
   const roleLabel = isAdmin ? "QA · Admin" : "Visitante · Portfólio";
   const isDark = scheme === "dark";
 
   return (
-    <div ref={rootRef} className={cn("relative shrink-0", className)}>
+    <div ref={rootRef} className={cn("relative flex shrink-0 items-center gap-1", className)}>
+      {isAdmin && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="sr-only"
+          tabIndex={-1}
+          onChange={(e) => void onAvatarSelected(e.target.files?.[0])}
+        />
+      )}
+
+      {isAdmin ? (
+        <span className="relative shrink-0">
+          <UserAvatar
+            className="ring-1 ring-black/5 dark:ring-white/10"
+            editable
+            uploading={uploadingAvatar}
+            onPickFile={openAvatarPicker}
+          />
+          <span className={summaryDotClass(summaryTone)} aria-hidden />
+        </span>
+      ) : null}
+
       <button
         type="button"
         aria-haspopup="menu"
@@ -69,12 +116,11 @@ export function UserBar({ className }: { className?: string }) {
           open && "bg-[var(--accent)]",
         )}
       >
-        <span className="relative shrink-0">
-          <UserAvatar className="ring-1 ring-black/5 dark:ring-white/10" />
-          {!isVisitor && (
-            <span className={summaryDotClass(summaryTone)} aria-hidden />
-          )}
-        </span>
+        {!isAdmin && (
+          <span className="relative shrink-0">
+            <UserAvatar className="ring-1 ring-black/5 dark:ring-white/10" />
+          </span>
+        )}
         <span className="hidden min-w-0 flex-col items-start sm:flex">
           <span className="truncate text-[0.875rem] font-semibold leading-none text-[var(--foreground)]">
             {name}
@@ -108,6 +154,24 @@ export function UserBar({ className }: { className?: string }) {
             <p className="truncate text-[0.875rem] font-semibold text-slate-100">{name}</p>
             <p className="text-[0.75rem] text-slate-400">{roleLabel}</p>
           </div>
+
+          {isAdmin && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={openAvatarPicker}
+              disabled={uploadingAvatar}
+              className={cn(menuActionClass, "mb-[0.5rem]")}
+            >
+              <UserAvatar className="size-7" uploading={uploadingAvatar} />
+              <span className="min-w-0 flex-1 text-left">
+                {uploadingAvatar ? "Enviando foto…" : "Alterar foto de perfil"}
+              </span>
+            </button>
+          )}
+          {avatarError && (
+            <p className="mb-[0.5rem] px-[0.625rem] text-[0.75rem] text-red-400">{avatarError}</p>
+          )}
 
           {!isVisitor && <OpsStatusPanel items={items} />}
 

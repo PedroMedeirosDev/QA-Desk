@@ -1,15 +1,13 @@
 /**
  * Envia report de bug/CT para Discord (bot preferencial; webhook como fallback).
  */
-import fs from "node:fs";
-import path from "node:path";
 import { formatDiscordReport } from "../src/lib/discord-report.js";
 import {
   discordReactionLegend,
   isDiscordBotConfigured,
   sendBugMessageViaBot,
 } from "./discord-bot.js";
-import { UPLOADS_ROOT } from "./storage.js";
+import { resolveEvidenceForAttach } from "./supabase-storage.js";
 import type { EvidenceFile, TestRecord } from "./types.js";
 
 const DISCORD_CONTENT_MAX = 2000;
@@ -26,18 +24,12 @@ export type DiscordSendResult = {
   channelId?: string;
 };
 
-function resolveEvidencePath(storageKey: string): string | null {
-  const rel = storageKey.replace(/^uploads[/\\]/, "").replace(/\\/g, "/");
-  if (!rel || rel.includes("..")) return null;
-  const abs = path.join(UPLOADS_ROOT, ...rel.split("/"));
-  if (!abs.startsWith(UPLOADS_ROOT)) return null;
-  return abs;
-}
+type AttachReady = { evidence: EvidenceFile; buffer: Buffer };
 
-function pickEvidenceFiles(evidence: EvidenceFile[]): {
-  attach: Array<{ evidence: EvidenceFile; abs: string }>;
+async function pickEvidenceFiles(evidence: EvidenceFile[]): Promise<{
+  attach: AttachReady[];
   skipped: Array<{ filename: string; reason: string }>;
-} {
+}> {
   const skipped: Array<{ filename: string; reason: string }> = [];
   const candidates = evidence.filter(
     (e) => e.type === "screenshot" || e.type === "video",
@@ -47,32 +39,28 @@ function pickEvidenceFiles(evidence: EvidenceFile[]): {
     return a.type === "screenshot" ? -1 : 1;
   });
 
-  const attach: Array<{ evidence: EvidenceFile; abs: string }> = [];
+  const attach: AttachReady[] = [];
   for (const ev of candidates) {
     if (attach.length >= DISCORD_MAX_FILES) {
       skipped.push({ filename: ev.filename, reason: "limite de arquivos" });
       continue;
     }
-    const abs = resolveEvidencePath(ev.storageKey);
-    if (!abs || !fs.existsSync(abs)) {
-      skipped.push({ filename: ev.filename, reason: "arquivo ausente no disco" });
+    const loaded = await resolveEvidenceForAttach(ev.storageKey);
+    if (!loaded) {
+      skipped.push({
+        filename: ev.filename,
+        reason: "arquivo ausente (Storage/disco)",
+      });
       continue;
     }
-    let size = ev.sizeBytes;
-    try {
-      size = fs.statSync(abs).size;
-    } catch {
-      skipped.push({ filename: ev.filename, reason: "stat falhou" });
-      continue;
-    }
-    if (size > DISCORD_FILE_MAX_BYTES) {
+    if (loaded.size > DISCORD_FILE_MAX_BYTES) {
       skipped.push({
         filename: ev.filename,
         reason: `acima de ${Math.round(DISCORD_FILE_MAX_BYTES / (1024 * 1024))} MB`,
       });
       continue;
     }
-    attach.push({ evidence: ev, abs });
+    attach.push({ evidence: ev, buffer: loaded.buffer });
   }
   return { attach, skipped };
 }
@@ -104,7 +92,7 @@ function buildContent(report: TestRecord): {
 
 async function sendViaWebhook(
   content: string,
-  attach: Array<{ evidence: EvidenceFile; abs: string }>,
+  attach: AttachReady[],
 ): Promise<{ messageId?: string; channelId?: string }> {
   const webhook = process.env.DISCORD_BUG_WEBHOOK_URL?.trim();
   if (!webhook) {
@@ -126,9 +114,8 @@ async function sendViaWebhook(
   );
 
   for (let i = 0; i < attach.length; i++) {
-    const { evidence, abs } = attach[i];
-    const buf = fs.readFileSync(abs);
-    const blob = new Blob([buf], {
+    const { evidence, buffer } = attach[i];
+    const blob = new Blob([new Uint8Array(buffer)], {
       type: evidence.mimeType || "application/octet-stream",
     });
     form.append(`files[${i}]`, blob, evidence.filename);
@@ -158,13 +145,13 @@ export async function sendBugReportToDiscord(
   report: TestRecord,
 ): Promise<DiscordSendResult> {
   const { content, truncatedContent } = buildContent(report);
-  const { attach, skipped } = pickEvidenceFiles(report.evidence ?? []);
+  const { attach, skipped } = await pickEvidenceFiles(report.evidence ?? []);
 
   if (isDiscordBotConfigured()) {
     const sent = await sendBugMessageViaBot({
       content,
       files: attach.map((a) => ({
-        abs: a.abs,
+        buffer: a.buffer,
         filename: a.evidence.filename,
         mimeType: a.evidence.mimeType,
       })),
