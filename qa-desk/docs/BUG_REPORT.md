@@ -1,6 +1,6 @@
 # Padrão de bug report — QA Desk
 
-Operacional (admin) + Discord + visitante. UI e envio automático ainda em fases; este doc é a fonte do padrão.
+Operacional (admin) + handoff GitHub Issue + visitante. Este doc é a fonte do padrão.
 
 ## Decisões
 
@@ -9,8 +9,9 @@ Operacional (admin) + Discord + visitante. UI e envio automático ainda em fases
 | CT falho → bug | **Não** automático enquanto o script puder falhar por flakiness/mapeamento |
 | Script apto a sugerir bug | Só com flag **`consolidated`** marcada **manualmente** pelo QA. Diferente de `readiness` (auto após 2 passes Maestro = “estável na suite”). No futuro o passo pode ser reduzido; hoje é essencial. |
 | Chamado Polygonus | Só **citação** (texto/id no registro); sem integração com Registro de Solicitações |
-| Discord | Template do gestor + **um clique** texto + print (bot; webhook fallback) · reações 👀/✅/⏸️ |
-| Gatilho Discord | **Manual** (admin); sem spam a cada falha de script |
+| Handoff ao time | **GitHub Issue** em `polygonus-br/polygonus-suporte-kb` com label **`bug`** (input para agente / gestor) |
+| Gatilho | **Manual** (admin) — botão **Abrir issue GitHub**; sem spam a cada falha de script |
+| Discord | **Fora do handoff** (código legado pode existir; UI não envia) |
 | Visitante | Métricas + cases com `showInPortfolio`; **zero PII** em qualquer hipótese |
 | Evidência Playwright | Screenshot `only-on-failure` em `test-results/`; após falha do run PW no Desk, o PNG mais recente sobe para `evidence[]` (sem criar bug). |
 
@@ -27,7 +28,7 @@ Não promover `consolidated` automaticamente. No futuro o passo manual pode ser 
 
 ```text
 Chamado (citação) ──► Ficha bug (TestRecord)
-Print / vídeo     ──► evidence[] ──► Enviar Discord (1 clique)
+Print / vídeo     ──► evidence[] ──► Abrir issue GitHub (label bug)
 CT consolidado (manual) ──► falha automação ──► sugerir bug (futuro)
 readiness ready (auto 2×) ──► suite / métricas (≠ consolidado)
 Ficha + showInPortfolio ──► portfólio visitante (sanitizado)
@@ -52,53 +53,26 @@ Espelham [`TestRecord`](../src/types/test-record.ts):
 
 **Exemplo-ouro (sanitizado):** App — eletivas ausentes no filtro de disciplina; homologado na build `6.06.13`.
 
-## Discord
+## Handoff GitHub (oficial)
 
-Formato vigente: [`formatDiscordReport`](../src/lib/discord-report.ts) (máscara PII via `maskPii`; markdown Discord: **negrito** em título e rótulos).
+Formato: [`formatBugReportMarkdown`](../src/lib/bug-report-markdown.ts) (headings estáveis + `maskPii`).
 
-- Em bugs, `description` = citação do chamado → linha `**Chamado:** …` no texto Discord (não entra como “resultado atual”).
-- **Gravidade** (`severity`): select na ficha + linha `**Gravidade:**` no report.
-- Web: campo **Navegador** (`browser`) entra em **Ambiente web:** no report; mobile continua com SO/Dispositivo.
-- **Login** (`testLogin`): conta usada no teste (ex. PHJESUS) — linha `**Login:**` no ambiente.
-- **Código do bug** (`bugCode`): público por canal — `APP-01`, `WEB-02`, `PORTAL-nn` (auto ao criar). O `id` interno `BUG-2026-xxx` permanece para storage.
-- Botões: **Copiar report Discord** (clipboard) + **Enviar Discord** (bot ou webhook).
+- Título da issue: `[APP-01] Sintoma` (`bugCode` + título).
+- Repo default: `polygonus-br/polygonus-suporte-kb` · label **`bug`** (override: `GITHUB_BUG_ISSUES_REPO`).
+- Botão **Abrir issue GitHub** → `POST .../github-issue` → sobe evidências na branch `bug-evidence` + `gh issue create` · status `enviado_gestor` · grava `githubIssueNumber` / `githubIssueUrl`.
+- Reenvio: se já vinculada, não duplica — abre o link.
+- Evidências: arquivos anexados no body (imagens embutidas via Contents API na branch `bug-evidence`).
+- Pré-requisito: `gh` autenticado com write no repo KB.
+- **Volta (webhook):** issue `closed`/`reopened` com label `bug` + autor/assignee em `GITHUB_BUG_ISSUE_ACTORS` + já vinculada no Desk → status `corrigido_gestor` / `sem_correcao` (not_planned) / `enviado_gestor`. Dependências (blocked-by) → histórico do bug. Mesmo endpoint da Curadoria; no GitHub habilitar **Issues** + **Issue dependencies**.
 
-Discord abre com `**[APP-01] Título**` quando há `bugCode`.
+**Copiar report Markdown** — clipboard com o mesmo body (opcional).
 
-### Reações do gestor (pré-colocadas na mensagem)
+Catch-up em lote (issues perdidas): ainda manual / futuro botão.
 
-O bot coloca 👀 ✅ ⏸️ na mensagem e um texto **Ações — clique na reação abaixo**. Emojis fora dessa lista são **removidos** automaticamente (nas mensagens vinculadas ao Desk).
+### Discord (legado)
 
-| Emoji | Status Desk | Significado |
-|-------|-------------|-------------|
-| 🔧 | `em_tratamento` | Gestor está tratando / em correção |
-| ✅ | `corrigido_gestor` | Corrigido do lado do gestor |
-| ⏸️ | `sem_correcao` | Sem correção no momento |
-| ❌ | `cancelado` | Cancelado (**não** apaga a mensagem no Discord) |
-| Remover a reação que segura o status | `enviado_gestor` | Volta para “enviado” |
-| 💯 (bot) | — | QA homologou no Desk — confirmação visual |
+Código do bot/webhook permanece no repo, mas **não** é o handoff oficial. Não usar na rotina Polygonus.
 
-Só **uma** reação de status humana fica ativa: ao marcar outra, o bot remove as demais (mantém as seeds do bot para clicar).
-
-`homologado` continua **só** com confirmação manual do QA na app; aí o bot adiciona **💯**.
-
-**Dica de canal:** em Permissões do canal, tire **Adicionar reações** de @everyone (mantenha Ver canal / Ler histórico). Assim o gestor só consegue clicar nas reações que o bot já deixou — não consegue inventar emoji novo.
-
-### Bot (recomendado)
-
-1. [Discord Developer Portal](https://discord.com/developers/applications) → New Application → Bot → Reset Token → `DISCORD_BOT_TOKEN`
-2. OAuth2 URL Generator: scope `bot`; permissões **Send Messages**, **Attach Files**, **Add Reactions**, **Read Message History**, **View Channels**, **Manage Messages** (para remover reações fora do mapa)
-3. Convidar o bot ao servidor; copiar ID do canal de bugs → `DISCORD_BUG_CHANNEL_ID`
-4. (Opcional) `DISCORD_GESTOR_USER_IDS=` snowflakes do gestor (só a reação deles conta)
-5. Reiniciar `npm run dev` — log `[discord-bot] online como …`
-
-Fluxo: **Enviar Discord** → mensagem + 3 reações seed + `discordMessageId` → gestor reage → status no Desk. Homologação final continua só na app.
-
-Fallback: `DISCORD_BUG_WEBHOOK_URL` envia sem bot; reações só funcionam se o bot estiver online e a mensagem tiver sido vinculada (`wait=true` no webhook grava `messageId` quando possível).
-
-**Limites Discord:** ~10 MB/arquivo; preferir PNG; vídeo opcional/compacto.
-
-**Onde o segredo mora:** só `.env` do servidor (`DISCORD_BOT_TOKEN` / webhook) — nunca `VITE_` / bundle.
 ## Playwright / evidência
 
 Na suíte Polygonus: `screenshot: "only-on-failure"` e `trace: "retain-on-failure"`. Após falha de run Playwright pelo Desk, o PNG mais recente em `test-results/` é copiado para `evidence[]` (sem criar bug). Vídeo Playwright **não** ligado por default.
@@ -125,6 +99,6 @@ Ordem quando chegar a hora: inventário auto vs manual → gaps → scripts (Mae
 
 - Integração com Registro de Solicitações Polygonus
 - Criação automática de bug a cada falha de CT
-- Spam automático no Discord
+- Spam automático de issues / Discord
 - Video Playwright ligado por default
 - Multi-tenant / cadastro público aberto

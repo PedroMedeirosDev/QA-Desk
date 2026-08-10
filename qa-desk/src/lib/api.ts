@@ -184,12 +184,43 @@ export const api = {
       channelId?: string;
     }>(`/api/projects/${project}/tests/${id}/discord-send`, { method: "POST" }),
 
+  openGithubIssue: (project: ProjectSlug, id: string) =>
+    request<{
+      ok: true;
+      alreadyLinked: boolean;
+      number: number;
+      url: string;
+      title: string;
+      repository: string;
+      evidenceUploaded: number;
+      evidenceSkipped: Array<{ filename: string; reason: string }>;
+      report: TestRecord;
+    }>(`/api/projects/${project}/tests/${id}/github-issue`, { method: "POST" }),
+
   evidenceUrl: (storageKey: string) => {
-    const path = `/api/evidence/${storageKey.replace(/^uploads\//, "")}`;
+    const rel = storageKey
+      .replace(/^uploads\//, "")
+      .replace(/^evidence\//, "");
+    const path = `/api/evidence/${rel}`;
     const token = getAccessToken();
     if (!token) return path;
     const sep = path.includes("?") ? "&" : "?";
     return `${path}${sep}access_token=${encodeURIComponent(token)}`;
+  },
+
+  uploadAvatar: async (file: File): Promise<{ avatarPath: string; avatarUrl: string | null }> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/me/avatar", {
+      method: "PUT",
+      headers: authHeaders(),
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as { error?: string }).error || "Falha no upload do avatar");
+    }
+    return res.json();
   },
 
   listFlows: (project: ProjectSlug, module?: string) => {

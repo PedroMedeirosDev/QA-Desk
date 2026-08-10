@@ -26,6 +26,8 @@ interface AuthContextValue {
   isVisitor: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Atualiza avatar no estado após upload (admin). */
+  applyAvatar: (avatarPath: string, avatarUrl: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -49,7 +51,7 @@ async function loadProfile(userId: string, email: string | undefined): Promise<U
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, display_name, role")
+    .select("id, email, display_name, role, avatar_path")
     .eq("id", userId)
     .maybeSingle();
 
@@ -62,11 +64,19 @@ async function loadProfile(userId: string, email: string | undefined): Promise<U
       role: "visitor",
       actor: displayName,
       initials: initialsFromName(displayName),
+      avatarPath: null,
+      avatarUrl: null,
     };
   }
 
   const displayName = (data.display_name as string | null)?.trim() || email?.split("@")[0] || "Usuário";
   const role = roleFromRow(data.role);
+  const avatarPath = (data.avatar_path as string | null)?.trim() || null;
+  const base = import.meta.env.VITE_SUPABASE_URL?.trim()?.replace(/\/$/, "") ?? "";
+  const avatarUrl =
+    avatarPath && base
+      ? `${base}/storage/v1/object/public/avatars/${avatarPath.replace(/^\/+/, "")}`
+      : null;
   return {
     id: data.id as string,
     email: (data.email as string | null) ?? email ?? "",
@@ -74,6 +84,8 @@ async function loadProfile(userId: string, email: string | undefined): Promise<U
     role,
     actor: role === "admin" ? CURRENT_USER.actor : displayName,
     initials: initialsFromName(displayName),
+    avatarPath,
+    avatarUrl,
   };
 }
 
@@ -142,6 +154,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
+  const applyAvatar = useCallback((avatarPath: string, avatarUrl: string | null) => {
+    setProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            avatarPath,
+            avatarUrl: avatarUrl
+              ? `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}t=${Date.now()}`
+              : null,
+          }
+        : prev,
+    );
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       ready,
@@ -152,8 +178,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isVisitor: profile?.role === "visitor",
       signIn,
       signOut,
+      applyAvatar,
     }),
-    [ready, authEnabled, session, profile, signIn, signOut],
+    [ready, authEnabled, session, profile, signIn, signOut, applyAvatar],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

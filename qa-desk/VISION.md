@@ -11,24 +11,17 @@ Ideias **ainda não implementadas** (ou só parcialmente). O que já roda está 
 - Visitante: portfólio com métricas diárias liberadas + cases `showInPortfolio` (sanitizados)
 - Maestro / Playwright one-click no PC + métricas por runner
 - Postgres (Prisma) em produção
+- Handoff de bug → GitHub Issue (KB, label `bug`)
 
 ## Backlog desejável
 
-### 1. Bot Discord + Moacir
+### 1. Handoff de bugs (GitHub)
 
-Padrão operacional (ficha, citação, evidência, gatilhos): [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md).
+Padrão: [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md).
 
-Fluxo:
+**Feito:** **Abrir issue GitHub** → `polygonus-suporte-kb` + label `bug` · body Markdown + evidências na branch `bug-evidence` · `githubIssueUrl` no Desk · status `enviado_gestor`. **Volta:** webhook fecha/reabre issue → status do bug (só `bug` + vinculado a Pedro). Discord fora do handoff oficial.
 
-1. Admin envia bug sanitizado (**Enviar Discord**) — bot preferencial; webhook como fallback
-2. Desk guarda `discordMessageId`; bot pré-coloca 👀 ✅ ⏸️
-3. Gestor reage: 🔧 `em_tratamento` · ✅ `corrigido_gestor` · ⏸️ `sem_correcao` · ❌ `cancelado` (só a última conta)
-4. Remover a reação que segura o status → `enviado_gestor`
-5. `homologado` **só** com confirmação manual do QA na app → bot reage 💯
-
-**Feito:** bot + envio + reações 👀/✅/⏸️ + gravidade no report. Clipboard permanece como fallback.
-
-Ainda desejável: notificação in-app quando o gestor reage.
+Ainda desejável: sync issue fechada → status Desk; anexar evidências na issue; notificação in-app.
 
 ### 2. Portfólio visitante (próximos refinamentos)
 
@@ -39,7 +32,7 @@ Ainda desejável:
 - Campos opcionais `portfolio.headline` / `summary`
 - View de detalhe mais rica + `visitor-ui.ts` (inputs read-only)
 - Revisar evidências antes de marcar no portfólio
-- Destaques / notificações quando gestor confirma (com bot Discord)
+- Destaques quando correção voltar (issue/PR)
 
 ### 3. Notificações na UI
 

@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bug, Copy, Loader2, Play, Plus, Send, Smartphone, Sparkles, Trash2, Upload, Video } from "lucide-react";
+import { ArrowLeft, Bug, Copy, ExternalLink, Loader2, Play, Plus, Smartphone, Sparkles, Trash2, Upload, Video } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
@@ -32,7 +32,8 @@ import {
   isBugReport,
   isTestCase,
 } from "@/types/test-record";
-import { copyDiscordReport, formatDiscordReport } from "@/lib/discord-report";
+import { copyDiscordReport } from "@/lib/discord-report";
+import { formatBugReportMarkdown } from "@/lib/bug-report-markdown";
 import { polishTestForm } from "@/lib/text-corrector";
 import {
   detailedStepsForSave,
@@ -411,39 +412,45 @@ export function TestEditorPage({
     }
   }
 
-  async function copyReportForDiscord() {
-    const text = formatDiscordReport(form, {
-      osVersion: form.osVersion,
-      deviceLabel: form.deviceLabel,
-      browser: form.browser,
-      testLogin: form.testLogin,
-      technicalEvidence: form.technicalEvidence,
-    });
+  async function copyBugReportMarkdown() {
+    const text = formatBugReportMarkdown(form);
     const ok = await copyDiscordReport(text);
-    if (ok) toast.success("Report copiado — cole no Discord");
+    if (ok) toast.success("Report Markdown copiado");
     else toast.error("Não foi possível copiar (permissão do navegador)");
   }
 
-  async function sendReportToDiscord() {
+  async function openGithubIssue() {
     if (!id || isNew) {
-      toast.error("Salve o registro antes de enviar ao Discord");
+      toast.error("Salve o bug antes de abrir a issue");
       return;
     }
     setSaving(true);
     try {
-      const res = await api.sendDiscordReport(project, id);
+      const res = await api.openGithubIssue(project, id);
       setForm(res.report);
-      const skip = res.skipped.length
-        ? ` · ${res.skipped.length} anexo(s) pulado(s)`
-        : "";
-      const via = res.via === "bot" ? "bot" : "webhook";
-      toast.success(
-        res.attached.length
-          ? `Enviado via ${via} (${res.attached.length} anexo(s))${skip}`
-          : `Enviado via ${via} (só texto)${skip}`,
-      );
+      if (res.alreadyLinked) {
+        toast.info(`Issue já vinculada: #${res.number}`);
+      } else {
+        const n = res.evidenceUploaded ?? 0;
+        const skip = res.evidenceSkipped?.length ?? 0;
+        const evHint =
+          n > 0
+            ? ` · ${n} evidência${n === 1 ? "" : "s"}`
+            : skip > 0
+              ? " · sem evidências anexadas"
+              : "";
+        toast.success(`Issue #${res.number} aberta no GitHub${evHint}`);
+        if (skip > 0) {
+          toast.info(
+            `${skip} arquivo(s) não anexado(s): ${res.evidenceSkipped
+              .map((s) => s.filename)
+              .join(", ")}`,
+          );
+        }
+      }
+      if (res.url) window.open(res.url, "_blank", "noopener,noreferrer");
     } catch (e) {
-      toast.error(toastErrorMessage(e, "Falha ao enviar Discord"));
+      toast.error(toastErrorMessage(e, "Falha ao abrir issue"));
     } finally {
       setSaving(false);
     }
@@ -1542,32 +1549,48 @@ export function TestEditorPage({
                 </button>
                 </PremiumTooltip>
               )}
-              <PremiumTooltip label="Markdown Discord (negrito nos rótulos) — cole no chat" side="left" wide>
+              <PremiumTooltip label="Copia o Markdown estruturado (mesmo body da issue)" side="left" wide>
               <button
                 type="button"
-                onClick={() => void copyReportForDiscord()}
+                onClick={() => void copyBugReportMarkdown()}
                 className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
               >
                 <Copy className="size-4" />
-                Copiar report Discord
+                Copiar report Markdown
               </button>
               </PremiumTooltip>
-              {isAdmin && !isNew && (
+              {isAdmin && !isNew && isBugReport(form) && (
                 <PremiumTooltip
-                  label="Envia via bot Discord (texto + evidências). Gestor: 🔧 · ✅ · ⏸️ · ❌ (só a última). QA homologa → 💯."
+                  label={
+                    form.githubIssueUrl
+                      ? `Já vinculada: #${form.githubIssueNumber} — abre no GitHub`
+                      : "Abre issue em polygonus-suporte-kb com label bug (handoff ao time)"
+                  }
                   side="left"
                   wide
                 >
                   <button
                     type="button"
-                    onClick={() => void sendReportToDiscord()}
+                    onClick={() => void openGithubIssue()}
                     disabled={saving}
-                    className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                    className={cn(actionBtnBase, actionBtn.create, "w-full")}
                   >
-                    <Send className="size-4" />
-                    Enviar Discord
+                    <ExternalLink className="size-4" />
+                    {form.githubIssueUrl
+                      ? `Issue #${form.githubIssueNumber}`
+                      : "Abrir issue GitHub"}
                   </button>
                 </PremiumTooltip>
+              )}
+              {form.githubIssueUrl && (
+                <a
+                  href={form.githubIssueUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  {form.githubIssueUrl}
+                </a>
               )}
               {isAdmin && (
                 <button

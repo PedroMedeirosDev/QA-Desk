@@ -39,7 +39,8 @@ function getAnonClient(): SupabaseClient | null {
   return anonClient;
 }
 
-function getServiceClient(): SupabaseClient | null {
+/** Client com service_role — Storage, updates em profiles, etc. Nunca expor ao front. */
+export function getServiceClient(): SupabaseClient | null {
   const url = process.env.SUPABASE_URL?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!url || !key) return null;

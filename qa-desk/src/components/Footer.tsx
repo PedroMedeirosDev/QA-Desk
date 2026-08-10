@@ -40,11 +40,11 @@ export function Footer({ className, variant = "default" }: FooterProps) {
     return (
       <footer
         className={cn(
-          "mt-auto hidden shrink-0 border-t border-white/5 p-6 md:block",
+          "mt-auto hidden min-w-0 shrink-0 overflow-x-hidden border-t border-white/5 px-3 py-4 md:block",
           className,
         )}
       >
-        <p className="text-center text-[0.75rem] leading-snug text-gray-500">
+        <p className="text-center text-[0.7rem] leading-snug text-gray-500 [overflow-wrap:anywhere]">
           Desenvolvido por{" "}
           <span className="font-medium text-gray-400">Pedro Medeiros</span>
           {" "}
@@ -52,7 +52,7 @@ export function Footer({ className, variant = "default" }: FooterProps) {
         </p>
         <nav
           aria-label="Redes sociais"
-          className="mt-3 flex items-center justify-center gap-2"
+          className="mt-3 flex flex-wrap items-center justify-center gap-2"
         >
           {SOCIAL_LINKS.map(({ label, href, icon: Icon, className: linkClass }) => (
             <PremiumTooltip key={label} label={label} side="top">

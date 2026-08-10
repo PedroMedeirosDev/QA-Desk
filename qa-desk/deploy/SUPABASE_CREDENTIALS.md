@@ -57,3 +57,10 @@ DIRECT_URL=postgresql://…pooler…:5432/postgres
 ```
 
 Cole em `.env` local ou na VM a partir de [`.env.production.example`](../.env.production.example). **Nunca** commitar nem colar secrets no chat.
+
+## Storage (evidências + avatares)
+
+1. SQL Editor → rode [`../supabase/migrations/004_storage_buckets.sql`](../supabase/migrations/004_storage_buckets.sql).
+2. Confirme buckets **evidence** (privado) e **avatars** (público) em Storage.
+3. `.env` com `SUPABASE_SERVICE_ROLE_KEY` → restart da API.
+4. Opcional: `npm run storage:seed-avatar` (sobe `pedro.jpg` e grava `profiles.avatar_path`).

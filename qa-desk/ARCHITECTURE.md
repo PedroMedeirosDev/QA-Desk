@@ -23,6 +23,7 @@ Pasta no repo: `qa-desk/` · package npm: `qa-desk` · remoto: [QA-Desk](https:/
 | API | Express (`server/`) — serve `dist/` em produção |
 | Dados | JSON em `data/projects/` **ou** Postgres via Prisma (prod = Postgres) |
 | Auth | Supabase Auth + tabela `profiles` (opcional; sem env = mock admin) |
+| Arquivos | Supabase Storage (`evidence` privado, `avatars` público) via `service_role`; fallback `data/uploads/` |
 | Automação | Maestro + Playwright (flows em `projects/polygonus/automation/`) |
 
 ## Rotas UI
@@ -52,7 +53,8 @@ Pasta no repo: `qa-desk/` · package npm: `qa-desk` · remoto: [QA-Desk](https:/
 | `/api/projects/:slug/automation` | Flows, device, run (admin) |
 | `/api/projects/:slug/kb-curation` | Catálogo PRs + SSE (admin; visitante → 403) |
 | `/api/projects/:slug/suite-api` | Newman (admin) |
-| `/api/evidence/...` | Arquivos em `data/uploads/` |
+| `/api/evidence/...` | Evidências: Storage (signed URL) ou `data/uploads/` legado |
+| `/api/me` | Perfil + `PUT /avatar` (admin → bucket `avatars`) |
 
 Visitante (API):
 - `rejectVisitorMutations` — só GET/HEAD/OPTIONS (403 genérico em mutação)
@@ -66,19 +68,30 @@ Visitante (API):
 ```
 data/projects/{slug}/tests.json          # seed / fallback JSON mode
 data/projects/{slug}/homologations.json
-data/uploads/{slug}/{testId}/            # evidências
+data/uploads/{slug}/{testId}/            # evidências legado (sem SERVICE_ROLE)
 prisma/ → projects, tests, homologations, test_runs, …
+supabase/migrations/004_storage_buckets.sql  # buckets evidence + avatars + profiles.avatar_path
 ```
+
+**Storage (com `SUPABASE_SERVICE_ROLE_KEY`):**
+
+| Bucket | Público | Uso |
+|--------|---------|-----|
+| `evidence` | não | Prints de bug/CT — upload via Express; serve signed URL |
+| `avatars` | sim | Foto de perfil (`profiles.avatar_path`) |
+
+`storageKey` novo: `evidence/{project}/{testId}/{file}` · legado: `uploads/...`
 
 Com `DATABASE_URL` (+ `DIRECT_URL` para migrate), a API usa Postgres. `bugs.json` é só legado de migração.
 
 ## Auth
 
 - Front: `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (+ opcional `VITE_VISITOR_EMAIL` / `VITE_VISITOR_PASSWORD`)
-- Server: `SUPABASE_*` + `SUPABASE_SERVICE_ROLE_KEY` (nunca no Vite)
-- Roles em `profiles.role`: `admin` \| `visitor`
+- Server: `SUPABASE_*` + `SUPABASE_SERVICE_ROLE_KEY` (nunca no Vite) — **obrigatório** para Storage
+- Roles em `profiles.role`: `admin` \| `visitor`; `profiles.avatar_path` opcional
 - Senha do Auth fica em `auth.users` (bcrypt) — **não** no Prisma
-- SQL: [`supabase/migrations/001_profiles.sql`](supabase/migrations/001_profiles.sql)
+- SQL: [`supabase/migrations/001_profiles.sql`](supabase/migrations/001_profiles.sql) · Storage: [`004_storage_buckets.sql`](supabase/migrations/004_storage_buckets.sql)
+- Seed avatar: `npm run storage:seed-avatar`
 
 Sem essas vars: modo mock admin (dev / Maestro local).
 
@@ -89,12 +102,10 @@ Sem essas vars: modo mock admin (dev / Maestro local).
 - Componentes: `PremiumTooltip`, `DesignCheckbox`, UserBar (menu no avatar) + status Agente/AVD
 - Global: scrollbar WebKit, `::selection` temática, `focus-visible` em controles
 
-## Discord hoje
+## Handoff de bugs (GitHub)
 
-- **Copiar report Discord** (clipboard) — [`src/lib/discord-report.ts`](src/lib/discord-report.ts) (inclui **Gravidade**)
-- **Enviar Discord** — bot preferencial ([`server/discord-bot.ts`](server/discord-bot.ts) + [`server/discord-send.ts`](server/discord-send.ts)); webhook fallback
-- Env bot: `DISCORD_BOT_TOKEN` + `DISCORD_BUG_CHANNEL_ID` (+ opcional `DISCORD_GESTOR_USER_IDS`)
-- Bugs → `enviado_gestor`; guarda `discordMessageId`; bot seed 👀 ✅ ⏸️
-- Reações: 🔧 tratamento · ✅ corrigido · ⏸️ sem correção · ❌ cancelado · (só a última humana) · remover → `enviado_gestor`
-- QA homologa no Desk → bot reage **💯** na mensagem
-- Setup: [`.env.example`](.env.example) e [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md)
+- **Abrir issue GitHub** — [`server/github/create-bug-issue.ts`](server/github/create-bug-issue.ts) via `gh` · repo `polygonus-br/polygonus-suporte-kb` · label `bug` · evidências na branch `bug-evidence`
+- Body: [`src/lib/bug-report-markdown.ts`](src/lib/bug-report-markdown.ts)
+- Bugs → `enviado_gestor`; grava `githubIssueNumber` / `githubIssueUrl`
+- **Volta issue:** webhook `issues` closed/reopened → [`sync-bug-issue.ts`](server/github/sync-bug-issue.ts); `issue_dependencies` → histórico (label `bug` + vínculo Desk)
+- Discord: legado (código no repo; **não** é o handoff oficial) — ver [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md)

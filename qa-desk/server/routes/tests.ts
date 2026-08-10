@@ -1,6 +1,5 @@
 import { Router, type Request } from "express";
 import multer from "multer";
-import path from "node:path";
 import { v4 as uuid } from "uuid";
 import {
   appendHistory,
@@ -9,9 +8,12 @@ import {
   nextBugId,
   nextBugCode,
   readCatalog,
-  uploadsDir,
   writeCatalog,
 } from "../storage.js";
+import {
+  makeStoredEvidenceFilename,
+  uploadEvidenceBuffer,
+} from "../supabase-storage.js";
 import { deriveTestKey, findByTestKey } from "../test-key.js";
 import {
   actorOf,
@@ -39,17 +41,7 @@ function param(req: Request, key: string): string {
 }
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, _file, cb) => {
-      const project = assertProject(param(req, "slug"));
-      const testId = param(req, "id");
-      cb(null, uploadsDir(project, testId));
-    },
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname) || ".png";
-      cb(null, `${uuid()}${ext}`);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ok = /^image\/(png|jpe?g|webp)$/i.test(file.mimetype);
@@ -288,10 +280,28 @@ testsRouter.post("/:id/evidence", requireAdmin, upload.single("file"), async (re
   const testId = param(req, "id");
   const idx = catalog.reports.findIndex((r) => r.id === testId);
   if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
-  if (!req.file) return res.status(400).json({ error: "Arquivo obrigatório" });
+  if (!req.file?.buffer) return res.status(400).json({ error: "Arquivo obrigatório" });
 
   const fileId = uuid();
-  const storageKey = `uploads/${project}/${testId}/${req.file.filename}`;
+  const storedFilename = makeStoredEvidenceFilename(req.file.originalname, fileId);
+  let storageKey: string;
+  try {
+    const uploaded = await uploadEvidenceBuffer({
+      project,
+      testId,
+      buffer: req.file.buffer,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      storedFilename,
+    });
+    storageKey = uploaded.storageKey;
+  } catch (err) {
+    const status = (err as { status?: number }).status ?? 500;
+    return res.status(status).json({
+      error: err instanceof Error ? err.message : "Falha no upload",
+    });
+  }
+
   const evidence: EvidenceFile = {
     fileId,
     type: "screenshot",
@@ -316,9 +326,80 @@ testsRouter.post("/:id/evidence", requireAdmin, upload.single("file"), async (re
 });
 
 /**
- * Envia report Discord (texto + evidências) via bot (preferencial) ou webhook.
- * Bugs: status → enviado_gestor. Clipboard continua como fallback na UI.
- * Com messageId salvo, reação ✅ do gestor → corrigido_gestor (bot).
+ * Abre GitHub Issue no repo KB (label bug) — handoff oficial ao time / agente.
+ * Se já existir issue vinculada, devolve a existente (não duplica).
+ */
+testsRouter.post("/:id/github-issue", requireAdmin, async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const catalog = await readCatalog(project);
+  const testId = param(req, "id");
+  const idx = catalog.reports.findIndex((r) => r.id === testId);
+  if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
+
+  const report = catalog.reports[idx];
+  const isBug =
+    (report.recordType ?? (report.campaign ? "teste" : "bug")) === "bug";
+  if (!isBug) {
+    return res.status(400).json({ error: "Só bugs podem abrir issue no GitHub" });
+  }
+
+  try {
+    const { createBugGithubIssue } = await import("../github/create-bug-issue.js");
+    const alreadyLinked = Boolean(report.githubIssueNumber && report.githubIssueUrl);
+    const result = await createBugGithubIssue(report);
+
+    if (!alreadyLinked) {
+      report.githubIssueNumber = result.number;
+      report.githubIssueUrl = result.url;
+      report.githubIssueCreatedAt = new Date().toISOString();
+      if (
+        report.status !== "enviado_gestor" &&
+        report.status !== "em_tratamento" &&
+        report.status !== "corrigido_gestor" &&
+        report.status !== "sem_correcao" &&
+        report.status !== "cancelado" &&
+        report.status !== "homologado"
+      ) {
+        report.status = "enviado_gestor";
+      }
+      appendHistory(report, {
+        actor: actorOf(req),
+        action: "github_issue_created",
+        detail: `#${result.number} · ${result.repository}`,
+        meta: {
+          githubIssueNumber: result.number,
+          githubIssueUrl: result.url,
+          repository: result.repository,
+          title: result.title,
+          evidenceUploaded: result.evidenceUploaded,
+          evidenceSkipped: result.evidenceSkipped,
+        },
+      });
+      catalog.reports[idx] = report;
+      await writeCatalog(project, catalog);
+    }
+
+    res.json({
+      ok: true,
+      alreadyLinked,
+      number: result.number,
+      url: result.url,
+      title: result.title,
+      repository: result.repository,
+      evidenceUploaded: result.evidenceUploaded,
+      evidenceSkipped: result.evidenceSkipped,
+      report,
+    });
+  } catch (e) {
+    const err = e as Error & { status?: number };
+    const status = err.status && err.status >= 400 ? err.status : 500;
+    res.status(status).json({ error: err.message || "Falha ao abrir issue" });
+  }
+});
+
+/**
+ * Envia report Discord (legado — handoff oficial é GitHub Issue).
+ * Mantido na API; UI não expõe mais o botão.
  */
 testsRouter.post("/:id/discord-send", requireAdmin, async (req, res) => {
   const project = assertProject(param(req, "slug"));

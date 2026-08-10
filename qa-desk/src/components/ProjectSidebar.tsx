@@ -216,10 +216,7 @@ export function ProjectSidebar({
       ) : (
         <>
       <nav
-        className={cn(
-          "sidebar-scroll flex min-h-0 flex-1 flex-col gap-[0.5rem] overflow-y-auto p-[0.625rem]",
-          collapsed && "overflow-visible",
-        )}
+        className="sidebar-scroll flex min-h-0 flex-1 flex-col gap-[0.5rem] overflow-x-hidden overflow-y-auto p-[0.625rem]"
         aria-label="Selecionar projeto"
       >
         {PROJECTS.map((project) => {

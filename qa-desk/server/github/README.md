@@ -32,7 +32,7 @@ No repo `polygonus-br/polygonus-suporte-kb` → **Settings → Webhooks → Add 
 | Payload URL | `https://<host-publico-do-qa-desk>/api/webhooks/github/kb-curation` |
 | Content type | `application/json` |
 | Secret | o mesmo de `GITHUB_WEBHOOK_SECRET` |
-| Events | **Pull requests** + **Pull request reviews** (ou “Send me everything”) |
+| Events | **Pull requests** + **Pull request reviews** + **Issues** + **Issue dependencies** (opcional: Issue comments) |
 
 Em desenvolvimento local, use um túnel (ex.: Cloudflare Tunnel / ngrok) apontando para a porta da API (`QA_APP_PORT`, default 3001).
 
@@ -40,6 +40,8 @@ Em desenvolvimento local, use um túnel (ex.: Cloudflare Tunnel / ngrok) apontan
 
 - `pull_request`: opened, reopened, closed, synchronize, edited, ready_for_review
 - `pull_request_review`: submitted, dismissed, edited
+- `issues`: closed, reopened — só label **`bug`**, autor/assignee em `GITHUB_BUG_ISSUE_ACTORS` (default `PedroMedeirosDev`), e bug já com `githubIssueNumber` no Desk → status `corrigido_gestor` / `sem_correcao` / `enviado_gestor`
+- `issue_dependencies`: blocked_by / blocking added|removed — só se alguma das issues estiver vinculada a bug no Desk → entrada no **histórico** do bug (sem mudar status)
 - `ping`: healthcheck do GitHub
 
 O handler valida `X-Hub-Signature-256`, responde 200 na hora e aplica o sync do PR com debounce (evita rajadas de `synchronize`).

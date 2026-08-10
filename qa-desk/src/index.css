@@ -508,11 +508,12 @@
   background: #71717a;
 }
 
-/* Sidebar: ainda mais discreta */
+/* Sidebar: só barra vertical; sem overflow-x fantasma no Chromium */
 .sidebar-nav nav,
 .sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: #64748b transparent;
+  overflow-x: hidden;
 }
 
 .dark .sidebar-nav nav,

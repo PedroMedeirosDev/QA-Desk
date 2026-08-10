@@ -45,7 +45,7 @@ Guia completo OCI (console, Security List, systemd, Caddy):
 
 Resumo:
 
-1. **Supabase** — projeto + SQL [`supabase/migrations/001_profiles.sql`](supabase/migrations/001_profiles.sql) + users admin/visitor + keys (ver guia acima).
+1. **Supabase** — projeto + SQL [`001_profiles.sql`](supabase/migrations/001_profiles.sql) + [`004_storage_buckets.sql`](supabase/migrations/004_storage_buckets.sql) + users admin/visitor + keys (ver guia acima). Inclua `SUPABASE_SERVICE_ROLE_KEY` no `.env` da VM para evidências/avatares no Storage.
 2. **OCI** — Create Instance (Ubuntu + Always Free Ampere ou E2.1.Micro) + portas 22/80/443/(3001).
 3. **SSH** — `bash deploy/oracle/setup-vm.sh` → `.env` a partir de [`.env.production.example`](.env.production.example) → `npm ci && npx prisma migrate deploy && npm run build` → systemd.
 
@@ -61,7 +61,7 @@ Se Oracle bloquear a conta: [Koyeb](https://www.koyeb.com) → 1 Web Service fre
 - Build: `npm ci && npx prisma generate && npm run build`
 - Start: `npm start`
 - Mesmas env do Supabase; `QA_AUTOMATION_RUN=0`
-- Sem volume persistente no free → uploads efêmeros
+- Sem volume persistente no free → use Supabase Storage (`SERVICE_ROLE`) para evidências; sem isso uploads somem no redeploy
 
 ---
 
@@ -72,7 +72,7 @@ Se Oracle bloquear a conta: [Koyeb](https://www.koyeb.com) → 1 Web Service fre
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | Front (build Vite) |
 | `VITE_VISITOR_EMAIL` / `VITE_VISITOR_PASSWORD` | Botão “Acessar como visitante” (bundle público — conta demo) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Server |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Só server** — nunca no Vite |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Só server** — nunca no Vite. Necessário para Storage (evidências + avatares) |
 | `DATABASE_URL` | Postgres (JSON mode se vazio) |
 | `DIRECT_URL` | Obrigatório com Prisma — local = mesma URL; Supabase = conexão direta :5432 |
 

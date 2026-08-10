@@ -5,6 +5,12 @@ import {
   writeKbCurationCatalog,
 } from "../kb-curation.js";
 import { syncSingleKbPullRequest } from "../github/kb-pull-requests.js";
+import {
+  applyBugIssueDependencyFromWebhook,
+  applyBugIssueFromWebhook,
+  type BugIssueDependencyPayload,
+  type BugIssueWebhookPayload,
+} from "../github/sync-bug-issue.js";
 import { type ProjectSlug } from "../types.js";
 
 type RequestWithRawBody = Request & { rawBody?: Buffer };
@@ -58,6 +64,17 @@ function shouldHandleEvent(event: string, action: string | undefined): boolean {
   if (event === "pull_request_review") {
     return action === "submitted" || action === "dismissed" || action === "edited";
   }
+  if (event === "issues") {
+    return action === "closed" || action === "reopened";
+  }
+  if (event === "issue_dependencies") {
+    return [
+      "blocked_by_added",
+      "blocked_by_removed",
+      "blocking_added",
+      "blocking_removed",
+    ].includes(action ?? "");
+  }
   return false;
 }
 
@@ -99,7 +116,7 @@ async function applyPrUpdate(repository: string, prNumber: number) {
 }
 
 function schedulePrUpdate(repository: string, prNumber: number) {
-  const key = `${repository}#${prNumber}`;
+  const key = `pr:${repository}#${prNumber}`;
   const previous = pending.get(key);
   if (previous) clearTimeout(previous);
 
@@ -108,6 +125,78 @@ function schedulePrUpdate(repository: string, prNumber: number) {
       pending.delete(key);
       applyPrUpdate(repository, prNumber).then(resolve).catch(reject);
     }, debounceMs);
+    pending.set(key, timer);
+  });
+}
+
+async function applyIssueUpdate(repository: string, payload: BugIssueWebhookPayload) {
+  const match = projectForRepository(repository);
+  if (!match) {
+    console.info(`[bug-issue-webhook] repo ${repository} não mapeado — ignorado`);
+    return { ok: true as const, skipped: true as const, reason: "repo não mapeado" };
+  }
+
+  const result = await applyBugIssueFromWebhook(match.project, payload);
+  if (result.changed) {
+    console.info(
+      `[bug-issue-webhook] #${result.issueNumber} → ${result.bugId} status=${result.status}`,
+    );
+  } else {
+    console.info(
+      `[bug-issue-webhook] #${result.issueNumber ?? "?"} skipped: ${result.reason ?? "n/a"}`,
+    );
+  }
+  return result;
+}
+
+function scheduleIssueUpdate(repository: string, payload: BugIssueWebhookPayload) {
+  const n = payload.issue?.number ?? 0;
+  const key = `issue:${repository}#${n}:${payload.action ?? ""}`;
+  const previous = pending.get(key);
+  if (previous) clearTimeout(previous);
+
+  return new Promise<Awaited<ReturnType<typeof applyIssueUpdate>>>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      pending.delete(key);
+      applyIssueUpdate(repository, payload).then(resolve).catch(reject);
+    }, Math.min(debounceMs, 400));
+    pending.set(key, timer);
+  });
+}
+
+async function applyDependencyUpdate(
+  repository: string,
+  payload: BugIssueDependencyPayload,
+) {
+  const match = projectForRepository(repository);
+  if (!match) {
+    console.info(`[bug-issue-webhook] repo ${repository} não mapeado — ignorado`);
+    return { ok: true as const, skipped: true as const, reason: "repo não mapeado" };
+  }
+  const result = await applyBugIssueDependencyFromWebhook(match.project, payload);
+  if (result.changed) {
+    console.info(
+      `[bug-issue-webhook] dependency ${payload.action} → bugs ${result.updatedBugIds?.join(",")}`,
+    );
+  } else {
+    console.info(`[bug-issue-webhook] dependency skipped: ${result.reason ?? "n/a"}`);
+  }
+  return result;
+}
+
+function scheduleDependencyUpdate(
+  repository: string,
+  payload: BugIssueDependencyPayload,
+) {
+  const key = `dep:${repository}#${payload.blocked_issue?.number}-${payload.blocking_issue?.number}:${payload.action}`;
+  const previous = pending.get(key);
+  if (previous) clearTimeout(previous);
+
+  return new Promise<Awaited<ReturnType<typeof applyDependencyUpdate>>>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      pending.delete(key);
+      applyDependencyUpdate(repository, payload).then(resolve).catch(reject);
+    }, Math.min(debounceMs, 400));
     pending.set(key, timer);
   });
 }
@@ -136,11 +225,10 @@ githubWebhooksRouter.post("/kb-curation", async (req: RequestWithRawBody, res: R
   }
 
   const event = req.header("x-github-event") ?? "";
-  let payload: {
-    action?: string;
-    repository?: { full_name?: string };
-    pull_request?: { number?: number };
-  };
+  let payload: BugIssueWebhookPayload &
+    BugIssueDependencyPayload & {
+      pull_request?: { number?: number };
+    };
   try {
     payload = JSON.parse(rawBody.toString("utf8")) as typeof payload;
   } catch {
@@ -155,14 +243,61 @@ githubWebhooksRouter.post("/kb-curation", async (req: RequestWithRawBody, res: R
     return res.json({ ok: true, ignored: true, event, action: payload.action });
   }
 
-  const repository = payload.repository?.full_name;
+  const repository =
+    payload.repository?.full_name ?? payload.blocking_issue_repo?.full_name;
+  if (!repository) {
+    return res.status(400).json({ error: "Payload sem repository.full_name" });
+  }
+
+  if (event === "issue_dependencies") {
+    res.json({
+      ok: true,
+      accepted: true,
+      kind: "issue_dependency",
+      repository,
+      action: payload.action,
+      blocked: payload.blocked_issue?.number,
+      blocking: payload.blocking_issue?.number,
+    });
+    void scheduleDependencyUpdate(repository, payload).catch((error) => {
+      console.error(
+        `[bug-issue-webhook] falha dependency ${repository}:`,
+        error instanceof Error ? error.message : error,
+      );
+    });
+    return;
+  }
+
+  if (event === "issues") {
+    const issueNumber = payload.issue?.number;
+    if (!issueNumber) {
+      return res.status(400).json({ error: "Payload sem issue.number" });
+    }
+    res.json({
+      ok: true,
+      accepted: true,
+      kind: "issue",
+      repository,
+      issueNumber,
+      event,
+      action: payload.action,
+    });
+    void scheduleIssueUpdate(repository, payload).catch((error) => {
+      console.error(
+        `[bug-issue-webhook] falha ${repository}#${issueNumber}:`,
+        error instanceof Error ? error.message : error,
+      );
+    });
+    return;
+  }
+
   const prNumber = payload.pull_request?.number;
-  if (!repository || !prNumber) {
+  if (!prNumber) {
     return res.status(400).json({ error: "Payload sem repository/pull_request.number" });
   }
 
   // Responde rápido (limite GitHub ~10s); o trabalho pesado (gh) roda com debounce.
-  res.json({ ok: true, accepted: true, repository, prNumber, event, action: payload.action });
+  res.json({ ok: true, accepted: true, kind: "pr", repository, prNumber, event, action: payload.action });
   void schedulePrUpdate(repository, prNumber).catch((error) => {
     console.error(
       `[kb-webhook] falha ao sincronizar ${repository}#${prNumber}:`,

@@ -80,7 +80,7 @@ npm run db:migrate-json
 npx tsx scripts/apply-mural-checklist.ts
 ```
 
-`/api/health` → `"storage":"postgres"`, `"auth":"supabase"`. Evidências em `data/uploads/`.
+`/api/health` → `"storage":"postgres"`, `"auth":"supabase"`. Evidências: Supabase Storage (`evidence`) com fallback `data/uploads/`.
 
 Em produção a fonte da verdade é o **Postgres**; o JSON em `data/` é seed / fallback local — evite commitar dumps de execução.
 

@@ -7,6 +7,10 @@ export interface UserProfile {
   role: UserRole;
   actor: string;
   initials: string;
+  /** Path no bucket avatars (ex.: uuid/avatar.jpg) */
+  avatarPath?: string | null;
+  /** URL pública do Storage, se houver */
+  avatarUrl?: string | null;
 }
 
 export function initialsFromName(name: string): string {

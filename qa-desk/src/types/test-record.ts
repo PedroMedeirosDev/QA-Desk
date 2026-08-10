@@ -130,10 +130,16 @@ export interface TestRecord {
    */
   consolidated?: boolean;
   tags?: string[];
-  /** Mensagem Discord vinculada (bot/webhook wait) — reação ✅ */
+  /** Mensagem Discord vinculada (legado — handoff oficial é GitHub Issue) */
   discordMessageId?: string;
   discordChannelId?: string;
   discordSentAt?: string;
+  /** Issue no repo KB (label bug) — handoff ao time / agente */
+  githubIssueNumber?: number;
+  githubIssueUrl?: string;
+  githubIssueCreatedAt?: string;
+  /** Quando a issue vinculada foi fechada (webhook). */
+  githubIssueClosedAt?: string;
 }
 
 export interface TestCatalog {
