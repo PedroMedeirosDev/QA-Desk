@@ -219,3 +219,44 @@ export async function runPlaywrightSpec(
     appVersion: parseWebBuildFromPlaywrightOutput(output),
   };
 }
+
+/**
+ * PNG mais recente gerado pelo Playwright em falha (`screenshot: "only-on-failure"`).
+ * Procura sob `test-results/` (nomes `test-failed*.png`).
+ */
+export function findLatestPlaywrightFailureScreenshot(
+  underRoot: string = PLAYWRIGHT_ROOT,
+): string | null {
+  const resultsDir = path.join(underRoot, "test-results");
+  if (!fs.existsSync(resultsDir)) return null;
+
+  let best: { abs: string; mtime: number } | null = null;
+
+  const walk = (dir: string) => {
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const abs = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(abs);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      const lower = entry.name.toLowerCase();
+      if (!lower.startsWith("test-failed") || !lower.endsWith(".png")) continue;
+      try {
+        const mtime = fs.statSync(abs).mtimeMs;
+        if (!best || mtime > best.mtime) best = { abs, mtime };
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  walk(resultsDir);
+  return best?.abs ?? null;
+}

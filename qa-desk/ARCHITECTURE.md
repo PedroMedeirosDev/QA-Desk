@@ -40,7 +40,7 @@ Pasta no repo: `qa-desk/` · package npm: `qa-desk` · remoto: [QA-Desk](https:/
 | `…/suite-api` | Suite Newman |
 | editor CT/bug | `TestEditorPage` |
 
-**Visitante:** qualquer rota de projeto renderiza só `VisitorWelcomePage` (sidebar sem navegação operacional).
+**Visitante:** portfólio público (`VisitorPortfolioPage`) — métricas diárias liberadas + cases `showInPortfolio` (sidebar sem nav operacional).
 
 ## API
 
@@ -59,7 +59,7 @@ Visitante (API):
 - Testes: filtro hardcoded `showInPortfolio === true` + `sanitizeVisitorData` (PII)
 - Homologações / KB / Suite API / Automação: `forbidVisitor` ou `requireAdmin`
 - Evidências: autenticadas; visitante só sob CT público
-- UI: só `VisitorWelcomePage` até o portfólio rico (`VISION.md`)
+- UI visitante: `VisitorPortfolioPage` (métricas + cases públicos sanitizados)
 
 ## Dados
 
@@ -91,5 +91,10 @@ Sem essas vars: modo mock admin (dev / Maestro local).
 
 ## Discord hoje
 
-- Existe: botão **Copiar report Discord** (clipboard)
-- Não existe: bot, reação ✅, envio automático ao Moacir — ver [`VISION.md`](VISION.md)
+- **Copiar report Discord** (clipboard) — [`src/lib/discord-report.ts`](src/lib/discord-report.ts) (inclui **Gravidade**)
+- **Enviar Discord** — bot preferencial ([`server/discord-bot.ts`](server/discord-bot.ts) + [`server/discord-send.ts`](server/discord-send.ts)); webhook fallback
+- Env bot: `DISCORD_BOT_TOKEN` + `DISCORD_BUG_CHANNEL_ID` (+ opcional `DISCORD_GESTOR_USER_IDS`)
+- Bugs → `enviado_gestor`; guarda `discordMessageId`; bot seed 👀 ✅ ⏸️
+- Reações: 🔧 tratamento · ✅ corrigido · ⏸️ sem correção · ❌ cancelado · (só a última humana) · remover → `enviado_gestor`
+- QA homologa no Desk → bot reage **💯** na mensagem
+- Setup: [`.env.example`](.env.example) e [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md)

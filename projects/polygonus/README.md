@@ -18,7 +18,9 @@ Atualizar: `.\sync.bat` na raiz.
 |----------|-----|
 | [`cases/`](cases/) | Casos de teste CT-*.md |
 | [`checklists/`](checklists/) | Checklists por módulo |
+| [`HOMOLOGACAO_INVENTARIO.md`](HOMOLOGACAO_INVENTARIO.md) | **Escopo regressão APP+WEB** (menus × perfil) + checklist smokes |
 | [`automation/`](automation/) | Maestro, Playwright, sentry-linear |
+| [`automation/maestro/flows/smoke/`](automation/maestro/flows/smoke/) | Smokes menus Responsável / Coordenador / Professor |
 | [`evidence/`](evidence/) | Evidências locais |
 | [`homologacao/`](homologacao/) | Playbook CQ, inbox GitHub → Cursor |
 | [`support/`](support/) | Sentry → registro suporte |

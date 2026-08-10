@@ -187,4 +187,21 @@ app.listen(PORT, HOST, () => {
   } else if (IS_PROD && HOST === "127.0.0.1") {
     console.log("Bind localhost — acesso público só via Caddy (80/443)");
   }
+
+  void import("./discord-bot.js")
+    .then(({ startDiscordBot, isDiscordBotConfigured }) => {
+      if (!isDiscordBotConfigured()) {
+        console.log(
+          "Discord bot: inativo (DISCORD_BOT_TOKEN + DISCORD_BUG_CHANNEL_ID) — webhook ainda funciona se configurado",
+        );
+        return;
+      }
+      return startDiscordBot();
+    })
+    .catch((err) => {
+      console.error(
+        "[discord-bot] falha ao iniciar:",
+        err instanceof Error ? err.message : err,
+      );
+    });
 });

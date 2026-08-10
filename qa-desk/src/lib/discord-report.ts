@@ -1,16 +1,19 @@
-import type { TestRecord } from "@/types/test-record";
-import { maskPii } from "@/lib/redact-pii";
+import type { TestRecord } from "../types/test-record";
+import { SEVERITY_LABELS } from "../types/test-record";
+import { maskPii } from "./redact-pii";
 
 export interface DiscordReportOptions {
   /** Substitui "Console:" no padrão web — logs, JSON, stack */
   technicalEvidence?: string;
   osVersion?: string;
   deviceLabel?: string;
+  browser?: string;
+  testLogin?: string;
 }
 
 function formatSteps(steps: string[]): string {
   const cleaned = steps.map((s) => s.trim()).filter(Boolean);
-  if (!cleaned.length) return "(nenhum passo)";
+  if (!cleaned.length) return "_(nenhum passo)_";
   return cleaned
     .map((step, i) => {
       const normalized = step.replace(/^\d+\s*[-.)]\s*/, "");
@@ -34,59 +37,111 @@ function platformLabel(platform: TestRecord["platform"]): string {
   }
 }
 
+function loginLine(record: Partial<TestRecord>, opts: DiscordReportOptions): string | null {
+  const login = opts.testLogin?.trim() || record.testLogin?.trim();
+  if (!login) return null;
+  return `**Login:** ${login}`;
+}
+
 function ambienteMobile(record: Partial<TestRecord>, opts: DiscordReportOptions): string {
   const lines: string[] = [];
-  lines.push(`Versão: ${record.build?.trim() || "(informar build / CQ)"}`);
+  lines.push(`**Versão:** ${record.build?.trim() || "(informar build / CQ)"}`);
   const so = [platformLabel(record.platform ?? "android"), opts.osVersion?.trim()]
     .filter(Boolean)
     .join(" — ");
-  lines.push(`SO: ${so}`);
-  lines.push(`Dispositivo: ${opts.deviceLabel?.trim() || "emulador"}`);
+  lines.push(`**SO:** ${so}`);
+  lines.push(`**Dispositivo:** ${opts.deviceLabel?.trim() || "emulador"}`);
+  const login = loginLine(record, opts);
+  if (login) lines.push(login);
   return lines.join("\n");
 }
 
+function ambienteWeb(record: Partial<TestRecord>, opts: DiscordReportOptions): string {
+  const lines: string[] = [];
+  if (record.build?.trim()) {
+    lines.push(`**Versão:** ${record.build.trim()}`);
+  }
+  lines.push(
+    `**Navegador:** ${opts.browser?.trim() || record.browser?.trim() || "(informar navegador)"}`,
+  );
+  const login = loginLine(record, opts);
+  if (login) lines.push(login);
+  return lines.join("\n");
+}
+
+function isMobileReport(record: Partial<TestRecord>): boolean {
+  return (
+    record.platform === "android" ||
+    record.platform === "ios" ||
+    record.channel === "app"
+  );
+}
+
+function isWebReport(record: Partial<TestRecord>): boolean {
+  return record.platform === "web" || record.channel === "web";
+}
+
 /**
- * Formato enxuto aprovado pelo gestor (Discord).
+ * Formato enxuto para Discord (markdown nativo: **negrito**, _itálico_).
  */
 export function formatDiscordReport(
   record: Partial<TestRecord>,
   opts: DiscordReportOptions = {},
 ): string {
+  const code = record.bugCode?.trim();
   const title = record.title?.trim() || "(sem título)";
+  const titleLine = code ? `**[${code}] ${title}**` : `**${title}**`;
   const steps = formatSteps(record.steps ?? []);
-  const actual = record.actualResult?.trim() || record.description?.trim() || "(descrever)";
+  /** `description` = citação do chamado (bugs); não usar como resultado atual */
+  const actual = record.actualResult?.trim() || "(descrever)";
   const expected = record.expectedResult?.trim() || "(descrever)";
+  const ticketCitation = record.description?.trim() || "";
   const evidence =
     opts.technicalEvidence?.trim() ||
     record.technicalEvidence?.trim() ||
     "";
 
-  const mobileOpts: DiscordReportOptions = {
+  const envOpts: DiscordReportOptions = {
     osVersion: opts.osVersion ?? record.osVersion,
     deviceLabel: opts.deviceLabel ?? record.deviceLabel,
+    browser: opts.browser ?? record.browser,
+    testLogin: opts.testLogin ?? record.testLogin,
     technicalEvidence: evidence,
   };
 
   const blocks = [
-    title,
+    titleLine,
+    `**Gravidade:** ${
+      record.severity
+        ? SEVERITY_LABELS[record.severity]
+        : "(informar)"
+    }`,
+    ...(ticketCitation ? ["", `**Chamado:** ${ticketCitation}`] : []),
     "",
-    "Passo a passo:",
+    "**Passo a passo:**",
     "",
     steps,
     "",
-    `resultado atual: ${actual}`,
+    `**Resultado atual:** ${actual}`,
   ];
 
-  if (record.platform === "android" || record.platform === "ios" || record.channel === "app") {
-    blocks.push("", "Ambiente mobile:", ambienteMobile(record, mobileOpts));
+  if (isMobileReport(record)) {
+    blocks.push("", "**Ambiente mobile:**", ambienteMobile(record, envOpts));
     if (evidence) {
-      blocks.push("", `Evidência técnica: ${evidence}`);
+      blocks.push("", `**Evidência técnica:** ${evidence}`);
     }
-  } else if (evidence) {
-    blocks.push("", `Console: ${evidence}`);
+  } else if (isWebReport(record)) {
+    blocks.push("", "**Ambiente web:**", ambienteWeb(record, envOpts));
+    if (evidence) {
+      blocks.push("", `**Console:** ${evidence}`);
+    }
+  } else {
+    const login = loginLine(record, envOpts);
+    if (login) blocks.push("", login);
+    if (evidence) blocks.push("", `**Console:** ${evidence}`);
   }
 
-  blocks.push("", `resultado esperado: ${expected}`);
+  blocks.push("", `**Resultado esperado:** ${expected}`);
 
   return maskPii(blocks.join("\n"));
 }

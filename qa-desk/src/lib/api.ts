@@ -1,5 +1,10 @@
 import { authHeaders, getAccessToken } from "@/lib/auth-token";
-import type { TestCatalog, TestRecord, ProjectSlug } from "@/types/test-record";
+import type {
+  EvidenceFile,
+  TestCatalog,
+  TestRecord,
+  ProjectSlug,
+} from "@/types/test-record";
 import type { Homologation, HomologationProgress, HomologationWithProgress } from "@/types/homologation";
 import type {
   KbCurationCatalog,
@@ -125,17 +130,59 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  uploadEvidence: async (project: ProjectSlug, id: string, file: File) => {
+  uploadEvidence: (
+    project: ProjectSlug,
+    id: string,
+    file: File,
+    opts?: { onProgress?: (percent: number) => void },
+  ): Promise<EvidenceFile> => {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`/api/projects/${project}/tests/${id}/evidence`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: form,
+    const url = `/api/projects/${project}/tests/${id}/evidence`;
+
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+      const headers = new Headers(authHeaders());
+      headers.forEach((value, key) => {
+        // Browser sets multipart boundary for FormData
+        if (key.toLowerCase() === "content-type") return;
+        xhr.setRequestHeader(key, value);
+      });
+
+      xhr.upload.onprogress = (ev) => {
+        if (!ev.lengthComputable || !opts?.onProgress) return;
+        opts.onProgress(Math.min(100, Math.round((ev.loaded / ev.total) * 100)));
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          opts?.onProgress?.(100);
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch {
+            reject(new Error("Resposta inválida do upload"));
+          }
+          return;
+        }
+        reject(new Error("Falha no upload"));
+      };
+      xhr.onerror = () => reject(new Error("Falha no upload"));
+      xhr.send(form);
     });
-    if (!res.ok) throw new Error("Falha no upload");
-    return res.json();
   },
+
+  sendDiscordReport: (project: ProjectSlug, id: string) =>
+    request<{
+      ok: boolean;
+      report: TestRecord;
+      via: "bot" | "webhook";
+      attached: string[];
+      skipped: Array<{ filename: string; reason: string }>;
+      truncatedContent: boolean;
+      messageId?: string;
+      channelId?: string;
+    }>(`/api/projects/${project}/tests/${id}/discord-send`, { method: "POST" }),
 
   evidenceUrl: (storageKey: string) => {
     const path = `/api/evidence/${storageKey.replace(/^uploads\//, "")}`;

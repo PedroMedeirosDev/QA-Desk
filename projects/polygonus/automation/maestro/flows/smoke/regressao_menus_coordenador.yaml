@@ -1,0 +1,54 @@
+# Smoke regressão — home Coordenador (PHJESUS + COORDENADOR).
+# Fora: Chegando. Atendimento = só versão nova (legado removido do perfil).
+#
+# cwd: projects/polygonus/automation/maestro
+# maestro test flows/smoke/regressao_menus_coordenador.yaml -e LOGIN_PHJESUS=... -e SENHA=...
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/auth/resume_phjesus_coordenador.yaml
+
+- runFlow: ../shared/nav/navegar_mural.yaml
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "CALENDÁRIO|CALENDARIO"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "NOTAS"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "CONTEÚDO E FREQUÊNCIA|CONTEUDO E FREQUENCIA"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "TAREFAS"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "OCORRÊNCIAS|OCORRENCIAS"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "MEUS ALUNOS"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
+    env:
+      CARD_ID: "home_card_chat"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "CARDÁPIO|CARDAPIO|.*CARD[AÁ]PIO.*"
+
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml

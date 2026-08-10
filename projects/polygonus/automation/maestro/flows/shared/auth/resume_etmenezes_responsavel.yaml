@@ -1,0 +1,71 @@
+# Sessão ETMENEZES (Responsável / Eliza) sem logout desnecessário.
+# Papel fixo RESPONSAVEIS — nunca garantir_perfil_*.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- launchApp
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- extendedWaitUntil:
+    visible: "PULAR|ENTRAR|FAZER LOGIN|Pedro Jesus|Pedro|Eliza|Teixeira|Ana|Bruno|Davi|Show menu|.*MURAL.*|Versão|.*Acompanhe de perto.*|Colégio Polygonus"
+    timeout: 30000
+
+- runFlow: dismiss_onboarding_primeira_instalacao.yaml
+- runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
+- runFlow:
+    when:
+      visible: "FAZER LOGIN"
+    commands:
+      - tapOn: "FAZER LOGIN"
+
+# Sai do Mural se aberto
+- runFlow:
+    when:
+      visible: "Show menu|Responder comunicado|Recebidas|Enviadas"
+      notVisible: "Eliza|Teixeira|Bruno|Davi"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
+# PHJESUS logado → logout + ETMENEZES
+- runFlow:
+    when:
+      visible: "Pedro Jesus|Pedro"
+      notVisible: "Eliza|Teixeira|ENTRAR"
+    commands:
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+      - runFlow: logout.yaml
+      - runFlow: login_etmenezes.yaml
+
+# Aluno Ana → logout + ETMENEZES
+- runFlow:
+    when:
+      visible: "Ana"
+      notVisible: "Bruno|Davi|Eliza|Teixeira|Pedro Jesus|Pedro|ENTRAR"
+    commands:
+      - runFlow: logout.yaml
+      - runFlow: login_etmenezes.yaml
+
+- runFlow:
+    when:
+      visible: "ENTRAR"
+    commands:
+      - runFlow: login_etmenezes.yaml
+
+# Gate: ainda sem Eliza/filhos → força troca
+- runFlow:
+    when:
+      notVisible: "ENTRAR|Eliza|Teixeira|Bruno|Davi"
+    commands:
+      - runFlow: logout.yaml
+      - runFlow: login_etmenezes.yaml
+
+- extendedWaitUntil:
+    visible: "Eliza|Teixeira|Bruno|Davi|.*MURAL.*"
+    timeout: 25000
+
+- runFlow: ../nav/dismiss_coachmarks_pular.yaml

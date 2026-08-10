@@ -37,6 +37,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
+    "discord.js": "^14.27.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.6.0",
     "helmet": "^8.3.0",

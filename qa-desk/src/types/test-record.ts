@@ -8,7 +8,10 @@ export type BugStatus =
   | "rascunho"
   | "reportado"
   | "enviado_gestor"
+  | "em_tratamento"
   | "corrigido_gestor"
+  | "sem_correcao"
+  | "cancelado"
   | "homologado"
   | "nao_reproduzido"
   | "arquivado";
@@ -105,6 +108,15 @@ export interface TestRecord {
   osVersion?: string;
   /** Ex.: emulador, celular físico, emulador + celular */
   deviceLabel?: string;
+  /** Ex.: Chrome, Edge, Playwright Chromium — report Web */
+  browser?: string;
+  /** Login usado no teste (ex.: PHJESUS, ETMENEZES) — report */
+  testLogin?: string;
+  /**
+   * Código público do bug por canal (APP-01, WEB-02…).
+   * Distinto do `id` interno (BUG-2026-xxx) usado em storage/uploads.
+   */
+  bugCode?: string;
   /** Logs, JSON da API, stack — substitui "Console" no report mobile */
   technicalEvidence?: string;
   evidence?: EvidenceFile[];
@@ -112,7 +124,16 @@ export interface TestRecord {
   comments?: Array<{ at: string; author: string; text: string }>;
   history: HistoryEntry[];
   showInPortfolio?: boolean;
+  /**
+   * QA marcou o script como confiável para falha ≈ bug de produto.
+   * Manual — não confundir com `automation.readiness` (auto após 2 passes).
+   */
+  consolidated?: boolean;
   tags?: string[];
+  /** Mensagem Discord vinculada (bot/webhook wait) — reação ✅ */
+  discordMessageId?: string;
+  discordChannelId?: string;
+  discordSentAt?: string;
 }
 
 export interface TestCatalog {
@@ -124,10 +145,23 @@ export const BUG_STATUS_LABELS: Record<BugStatus, string> = {
   rascunho: "Rascunho",
   reportado: "Reportado",
   enviado_gestor: "Enviado ao gestor",
+  em_tratamento: "Em tratamento",
   corrigido_gestor: "Corrigido (gestor)",
+  sem_correcao: "Sem correção agora",
+  cancelado: "Cancelado",
   homologado: "Homologado",
   nao_reproduzido: "Não reproduzido",
   arquivado: "Arquivado",
+};
+
+export const SEVERITY_LABELS: Record<
+  NonNullable<TestRecord["severity"]>,
+  string
+> = {
+  baixa: "Baixa",
+  media: "Média",
+  alta: "Alta",
+  critica: "Crítica",
 };
 
 export const HOMOLOGATION_LABELS: Record<HomologationStatus, string> = {
@@ -214,11 +248,26 @@ export function isBugReport(record: Pick<TestRecord, "recordType" | "campaign">)
 /** Exibe BUG-… para bugs e TEST-… para casos de teste */
 export function formatRecordId(
   id: string,
-  record?: Pick<TestRecord, "recordType" | "campaign">,
+  record?: Pick<TestRecord, "recordType" | "campaign" | "bugCode">,
 ): string {
+  if (record?.bugCode?.trim()) return record.bugCode.trim();
   const asBug = record ? isBugReport(record) : id.startsWith("BUG-");
   if (asBug) return id.replace(/^TEST-/, "BUG-");
   return id.replace(/^BUG-/, "TEST-");
+}
+
+/** Prefixo do código público do bug (APP / WEB / PORTAL / API). */
+export function bugCodePrefix(
+  channel?: ProductChannel,
+  platform?: TestRecord["platform"],
+): string {
+  if (channel === "app") return "APP";
+  if (channel === "web") return "WEB";
+  if (channel === "portal") return "PORTAL";
+  if (platform === "android" || platform === "ios") return "APP";
+  if (platform === "web") return "WEB";
+  if (platform === "api") return "API";
+  return "BUG";
 }
 
 export function displayStatus(
@@ -247,6 +296,10 @@ export function displayStatus(
   }
   const s = record.status;
   const tone =
-    s === "homologado" ? "ok" : s === "reportado" || s === "enviado_gestor" ? "warn" : "neutral";
+    s === "homologado" || s === "corrigido_gestor"
+      ? "ok"
+      : s === "reportado" || s === "enviado_gestor" || s === "em_tratamento"
+        ? "warn"
+        : "neutral";
   return { label: BUG_STATUS_LABELS[s], tone };
 }

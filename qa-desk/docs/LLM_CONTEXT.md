@@ -73,7 +73,7 @@ npm run build && npm start   # produção local
 | Role | UI | API |
 |------|----|-----|
 | `admin` | App completo | CRUD + automation + KB + suite |
-| `visitor` | **Só** `VisitorWelcomePage` (sidebar sem nav operacional) | GET limitado; **sem mutações** |
+| `visitor` | **Portfólio** (`VisitorPortfolioPage`: métricas + cases `showInPortfolio`) | GET limitado; **sem mutações** |
 
 Regras de backend (já implementadas — não reinventar com `/api/public` Next):
 

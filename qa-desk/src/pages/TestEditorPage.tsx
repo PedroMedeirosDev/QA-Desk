@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bug, Copy, Play, Plus, Smartphone, Sparkles, Trash2, Upload, Video } from "lucide-react";
+import { ArrowLeft, Bug, Copy, Loader2, Play, Plus, Send, Smartphone, Sparkles, Trash2, Upload, Video } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
@@ -27,6 +27,7 @@ import {
   CHANNEL_LABELS,
   HOMOLOGATION_LABELS,
   RECORD_TYPE_LABELS,
+  SEVERITY_LABELS,
   formatRecordId,
   isBugReport,
   isTestCase,
@@ -64,11 +65,15 @@ const emptyDraft = (
   module: "",
   status: kind === "bug" ? "reportado" : "rascunho",
   priority: "media",
+  severity: kind === "bug" ? "media" : undefined,
   build: "",
   osVersion: "",
   deviceLabel: "emulador",
+  browser: "",
+  testLogin: "",
   technicalEvidence: "",
   showInPortfolio: false,
+  consolidated: false,
 });
 
 export function TestEditorPage({
@@ -106,6 +111,10 @@ export function TestEditorPage({
     }
   });
   const [playwrightHeaded, setPlaywrightHeaded] = useState(readPlaywrightHeaded);
+  const [uploadProgress, setUploadProgress] = useState<{
+    filename: string;
+    percent: number;
+  } | null>(null);
   const busyRun = running || liveRunning;
 
   const isHomologation = isTestCase(form);
@@ -350,8 +359,22 @@ export function TestEditorPage({
       toast.error("Salve o teste antes de anexar print");
       return;
     }
-    await api.uploadEvidence(project, id, file);
-    setForm(await api.getTest(project, id));
+    if (uploadProgress) return;
+    setUploadProgress({ filename: file.name, percent: 0 });
+    try {
+      await api.uploadEvidence(project, id, file, {
+        onProgress: (percent) =>
+          setUploadProgress((prev) =>
+            prev ? { ...prev, percent } : { filename: file.name, percent },
+          ),
+      });
+      setForm(await api.getTest(project, id));
+      toast.success("Evidência anexada");
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Falha no upload da evidência"));
+    } finally {
+      setUploadProgress(null);
+    }
   }
 
   function applyTextPolish() {
@@ -392,6 +415,8 @@ export function TestEditorPage({
     const text = formatDiscordReport(form, {
       osVersion: form.osVersion,
       deviceLabel: form.deviceLabel,
+      browser: form.browser,
+      testLogin: form.testLogin,
       technicalEvidence: form.technicalEvidence,
     });
     const ok = await copyDiscordReport(text);
@@ -399,8 +424,41 @@ export function TestEditorPage({
     else toast.error("Não foi possível copiar (permissão do navegador)");
   }
 
+  async function sendReportToDiscord() {
+    if (!id || isNew) {
+      toast.error("Salve o registro antes de enviar ao Discord");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await api.sendDiscordReport(project, id);
+      setForm(res.report);
+      const skip = res.skipped.length
+        ? ` · ${res.skipped.length} anexo(s) pulado(s)`
+        : "";
+      const via = res.via === "bot" ? "bot" : "webhook";
+      toast.success(
+        res.attached.length
+          ? `Enviado via ${via} (${res.attached.length} anexo(s))${skip}`
+          : `Enviado via ${via} (só texto)${skip}`,
+      );
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Falha ao enviar Discord"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function reportBugFromTest() {
     if (!form.id || !isTestCase(form)) return;
+    if (!form.consolidated) {
+      const ok = window.confirm(
+        "Este caso ainda não está marcado como consolidado.\n\n" +
+          "Falhas podem ser do script (mapeamento/flakiness), não do produto.\n\n" +
+          "Continuar mesmo assim?",
+      );
+      if (!ok) return;
+    }
     const failed = activeFailedRun(form.history ?? []);
     navigate(projectNewBugPath(project, channel ?? form.channel), {
       state: {
@@ -421,8 +479,11 @@ export function TestEditorPage({
           module: form.module,
           platform: form.platform,
           build: form.build,
+          severity: form.severity ?? "media",
           osVersion: form.osVersion,
           deviceLabel: form.deviceLabel,
+          browser: form.browser,
+          testLogin: form.testLogin,
           technicalEvidence: form.technicalEvidence,
           tags: [`origem:${form.id}`],
         },
@@ -432,6 +493,8 @@ export function TestEditorPage({
 
   const isMobileChannel =
     form.channel === "app" || form.platform === "android" || form.platform === "ios";
+  const isWebChannel =
+    form.channel === "web" || form.platform === "web";
   const maestroAllowed = channelSupportsMaestro(form.channel);
   const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
 
@@ -451,9 +514,12 @@ export function TestEditorPage({
           <p className="font-mono text-xs text-muted-foreground">
             {isNew
               ? editingBug
-                ? "Novo bug"
+                ? "Novo bug · código APP/WEB-nn ao salvar"
                 : "Novo teste"
               : formatRecordId(form.id ?? "", form as TestRecord)}
+            {!isNew && editingBug && form.bugCode && form.id && (
+              <span className="ml-2 text-muted-foreground/70">({form.id})</span>
+            )}
           </p>
           {!isNew && isTestCase(form) && (
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -495,20 +561,42 @@ export function TestEditorPage({
             <Field label="Título *">
               <input
                 className="w-full rounded-md border px-3 py-2 text-sm"
+                placeholder={
+                  editingBug
+                    ? "Ex.: App — eletivas ausentes no filtro de disciplina"
+                    : undefined
+                }
                 value={form.title ?? ""}
                 onChange={(e) => update("title", e.target.value)}
               />
             </Field>
-            <Field label="Descrição">
-              <textarea
-                className="min-h-24 w-full rounded-md border px-3 py-2 text-sm"
-                value={form.description ?? ""}
-                onChange={(e) => update("description", e.target.value)}
-              />
-            </Field>
+            {editingBug ? (
+              <Field
+                label="Citação do chamado"
+                hint="Id ou trecho do chamado Polygonus. Vai no report Discord; não aparece no portfólio visitante."
+              >
+                <textarea
+                  className="min-h-24 w-full rounded-md border px-3 py-2 text-sm"
+                  placeholder="Ex.: Solicitação #12345 — aluno não vê eletivas no filtro…"
+                  value={form.description ?? ""}
+                  onChange={(e) => update("description", e.target.value)}
+                />
+              </Field>
+            ) : (
+              <Field label="Descrição">
+                <textarea
+                  className="min-h-24 w-full rounded-md border px-3 py-2 text-sm"
+                  value={form.description ?? ""}
+                  onChange={(e) => update("description", e.target.value)}
+                />
+              </Field>
+            )}
             <Field label="Pré-condições">
               <textarea
                 className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                placeholder={
+                  editingBug ? "Ex.: Aluno autenticado na amostra CQ build 6.06.x" : undefined
+                }
                 value={form.preconditions ?? ""}
                 onChange={(e) => update("preconditions", e.target.value)}
               />
@@ -781,6 +869,11 @@ export function TestEditorPage({
             <Field label="Resultado esperado">
               <textarea
                 className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                placeholder={
+                  editingBug
+                    ? "Ex.: Lista de eletivas aparece no filtro de disciplina"
+                    : undefined
+                }
                 value={form.expectedResult ?? ""}
                 onChange={(e) => update("expectedResult", e.target.value)}
               />
@@ -789,6 +882,11 @@ export function TestEditorPage({
               <Field label="Resultado observado">
                 <textarea
                   className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                  placeholder={
+                    editingBug
+                      ? "Ex.: Filtro abre sem as eletivas cadastradas"
+                      : undefined
+                  }
                   value={form.actualResult ?? ""}
                   onChange={(e) => update("actualResult", e.target.value)}
                 />
@@ -832,15 +930,52 @@ export function TestEditorPage({
                   </PremiumTooltip>
                 ))}
               </div>
-              <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm surface-brand hover:brightness-110">
-                <Upload className="size-4" />
-                Anexar print
+              {uploadProgress && (
+                <div
+                  className="mt-3 space-y-1.5 rounded-md border border-border/80 bg-muted/30 px-3 py-2"
+                  role="status"
+                  aria-live="polite"
+                  aria-label={`Enviando ${uploadProgress.filename}: ${uploadProgress.percent}%`}
+                >
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <Loader2 className="size-3.5 shrink-0 animate-spin" />
+                      <span className="truncate">{uploadProgress.filename}</span>
+                    </span>
+                    <span className="shrink-0 tabular-nums font-medium text-foreground">
+                      {uploadProgress.percent}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out"
+                      style={{ width: `${uploadProgress.percent}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              <label
+                className={cn(
+                  "mt-3 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm surface-brand",
+                  uploadProgress
+                    ? "pointer-events-none cursor-not-allowed opacity-60"
+                    : "cursor-pointer hover:brightness-110",
+                )}
+              >
+                {uploadProgress ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Upload className="size-4" />
+                )}
+                {uploadProgress ? "Enviando…" : "Anexar print"}
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   className="hidden"
+                  disabled={Boolean(uploadProgress)}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
+                    e.target.value = "";
                     if (f) void onUpload(f);
                   }}
                 />
@@ -885,6 +1020,7 @@ export function TestEditorPage({
                 </p>
               </div>
             ) : (
+              <>
               <PropSelect
                 label="Status do bug"
                 value={form.status ?? "rascunho"}
@@ -894,6 +1030,22 @@ export function TestEditorPage({
                 }))}
                 onChange={(v) => update("status", v as BugStatus)}
               />
+              <PropSelect
+                label="Gravidade"
+                value={form.severity ?? "media"}
+                options={(
+                  Object.keys(SEVERITY_LABELS) as Array<
+                    NonNullable<TestRecord["severity"]>
+                  >
+                ).map((k) => ({
+                  value: k,
+                  label: SEVERITY_LABELS[k],
+                }))}
+                onChange={(v) =>
+                  update("severity", v as NonNullable<TestRecord["severity"]>)
+                }
+              />
+              </>
             )}
 
             <PropSelect
@@ -917,11 +1069,32 @@ export function TestEditorPage({
               label={<span className="font-medium text-[var(--foreground)]">Mostrar no portfólio</span>}
               description="Visitantes autenticados só veem itens marcados aqui."
             />
+            {form.showInPortfolio && (
+              <div className="rounded-md border border-dashed border-border bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">Preview visitante</p>
+                <p className="mt-1">
+                  Vê: título, passos, esperado, evidências (PII mascarada no servidor).
+                </p>
+                <p className="mt-1">
+                  Não vê:{" "}
+                  {editingBug ? "citação do chamado, " : ""}
+                  resultado observado, automação, histórico, logs.
+                </p>
+              </div>
+            )}
             <Field label="Módulo">
               <input
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 value={form.module ?? ""}
                 onChange={(e) => update("module", e.target.value)}
+              />
+            </Field>
+            <Field label="Login (report)">
+              <input
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                value={form.testLogin ?? ""}
+                onChange={(e) => update("testLogin", e.target.value)}
+                placeholder="Ex.: PHJESUS, ETMENEZES, SUPPETER"
               />
             </Field>
             <Field
@@ -982,6 +1155,16 @@ export function TestEditorPage({
                 )}
               </>
             )}
+            {isWebChannel && (
+              <Field label="Navegador (report)">
+                <input
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  value={form.browser ?? ""}
+                  onChange={(e) => update("browser", e.target.value)}
+                  placeholder="Ex.: Chrome, Edge, Playwright Chromium"
+                />
+              </Field>
+            )}
 
             {isHomologation && isAdmin && (
             <div className="space-y-4 border-t pt-3">
@@ -998,6 +1181,16 @@ export function TestEditorPage({
                   </span>
                 )}
               </div>
+
+              <DesignCheckbox
+                className="rounded-md border border-border bg-muted/20 px-3 py-2"
+                checked={Boolean(form.consolidated)}
+                onChange={(e) => update("consolidated", e.target.checked)}
+                label={
+                  <span className="font-medium text-foreground">Script consolidado</span>
+                }
+                description="Manual: falha deste CT pode ser tratada como bug de produto. Diferente de “Estável” (ready após 2 passes na suite)."
+              />
 
               {maestroAllowed && (
               <div className="space-y-2 rounded-lg border border-border/70 p-3">
@@ -1043,7 +1236,7 @@ export function TestEditorPage({
                         }
                       >
                         <option value="draft">Rascunho (ainda mapeando)</option>
-                        <option value="ready">Estável (validado)</option>
+                        <option value="ready">Estável na suite (2 passes)</option>
                       </select>
                     </label>
                   </>
@@ -1104,7 +1297,7 @@ export function TestEditorPage({
                         }
                       >
                         <option value="draft">Rascunho</option>
-                        <option value="ready">Estável</option>
+                        <option value="ready">Estável na suite</option>
                       </select>
                     </label>
                   </>
@@ -1328,7 +1521,11 @@ export function TestEditorPage({
             <div className="flex flex-col gap-2 pt-2">
               {isAdmin && isHomologation && !isNew && (
                 <PremiumTooltip
-                  label="Abre um novo bug com dados deste caso de teste"
+                  label={
+                    form.consolidated
+                      ? "Abre um novo bug com dados deste caso de teste"
+                      : "CT não consolidado — pedirá confirmação (falha pode ser do script)"
+                  }
                   side="left"
                   wide
                 >
@@ -1339,10 +1536,13 @@ export function TestEditorPage({
                 >
                   <Bug className="size-4" />
                   Reportar bug deste teste
+                  {!form.consolidated && (
+                    <span className="text-[0.65rem] text-muted-foreground">(não consolidado)</span>
+                  )}
                 </button>
                 </PremiumTooltip>
               )}
-              <PremiumTooltip label="Formato enxuto para Discord" side="left" wide>
+              <PremiumTooltip label="Markdown Discord (negrito nos rótulos) — cole no chat" side="left" wide>
               <button
                 type="button"
                 onClick={() => void copyReportForDiscord()}
@@ -1352,6 +1552,23 @@ export function TestEditorPage({
                 Copiar report Discord
               </button>
               </PremiumTooltip>
+              {isAdmin && !isNew && (
+                <PremiumTooltip
+                  label="Envia via bot Discord (texto + evidências). Gestor: 🔧 · ✅ · ⏸️ · ❌ (só a última). QA homologa → 💯."
+                  side="left"
+                  wide
+                >
+                  <button
+                    type="button"
+                    onClick={() => void sendReportToDiscord()}
+                    disabled={saving}
+                    className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                  >
+                    <Send className="size-4" />
+                    Enviar Discord
+                  </button>
+                </PremiumTooltip>
+              )}
               {isAdmin && (
                 <button
                   type="button"
@@ -1403,11 +1620,20 @@ export function TestEditorPage({
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <label className="block space-y-1.5">
       <span className="text-sm font-medium">{label}</span>
       {children}
+      {hint ? <span className="block text-xs text-muted-foreground">{hint}</span> : null}
     </label>
   );
 }

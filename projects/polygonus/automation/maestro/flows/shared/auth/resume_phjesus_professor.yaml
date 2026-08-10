@@ -1,0 +1,118 @@
+# Sessão PHJESUS + PROFESSORES (reutiliza sessão quando possível).
+# Espelho de resume_phjesus_coordenador.yaml com garantir_perfil_professor.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- launchApp
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            visible: "Show roots|Recent|Downloads|Files|Allow|WHILE USING|While using|Open from|Abrir de"
+          commands:
+            - pressKey: Back
+            - waitForAnimationToEnd:
+                timeout: 500
+
+- extendedWaitUntil:
+    visible: "PULAR|ENTRAR|FAZER LOGIN|Pedro Jesus|Pedro|Eliza|Teixeira|Ana|Bruno|Davi|Show menu|Responder comunicado|Mural da Rotina|Selecionar|Versão|RESPONSAVEIS|.*MURAL.*|CARDÁPIO|CARDAPIO|Colégio Polygonus|.*Acompanhe de perto.*|Confira o rendimento|Comece a usar"
+    timeout: 30000
+
+- runFlow: dismiss_onboarding_primeira_instalacao.yaml
+- runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
+- runFlow:
+    when:
+      visible: "FAZER LOGIN"
+    commands:
+      - tapOn: "FAZER LOGIN"
+
+- runFlow:
+    when:
+      visible: "Show menu|Responder comunicado"
+      notVisible: "Pedro Jesus|Pedro"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
+- runFlow:
+    when:
+      visible: "RESPONSAVEIS|Eliza|Teixeira"
+      notVisible: "Pedro Jesus|Pedro|ENTRAR"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 500
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+      - runFlow: logout.yaml
+      - runFlow:
+          file: login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- runFlow:
+    when:
+      visible: "Eliza|Teixeira|Bruno|Davi"
+      notVisible: "Pedro Jesus|Pedro|ENTRAR"
+    commands:
+      - runFlow: ../nav/dismiss_coachmarks_pular.yaml
+      - runFlow: logout.yaml
+      - runFlow:
+          file: login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- runFlow:
+    when:
+      visible: "Ana"
+      notVisible: "Bruno|Davi|Eliza|Teixeira|Pedro Jesus|Pedro|ENTRAR"
+    commands:
+      - runFlow: logout.yaml
+      - runFlow:
+          file: login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- runFlow:
+    when:
+      visible: "ENTRAR"
+    commands:
+      - runFlow:
+          file: login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- runFlow:
+    when:
+      notVisible: "ENTRAR|Pedro Jesus|Pedro"
+    commands:
+      - runFlow: logout.yaml
+      - runFlow:
+          file: login_as.yaml
+          env:
+            LOGIN: ${LOGIN_PHJESUS}
+            SENHA: ${SENHA}
+            NOME_USUARIO: "Pedro Jesus|Pedro|.*MURAL.*"
+
+- extendedWaitUntil:
+    visible: "Pedro Jesus|Pedro"
+    timeout: 25000
+
+- runFlow: ../perfil/garantir_perfil_professor.yaml

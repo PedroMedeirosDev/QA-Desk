@@ -1,0 +1,81 @@
+# Smoke regressão — home Responsável (ETMENEZES).
+# Abre cada menu in-scope e volta. Fora: Aula Online, Chegando.
+#
+# cwd: projects/polygonus/automation/maestro
+# maestro test flows/smoke/regressao_menus_responsavel.yaml -e LOGIN_ETMENEZES=... -e SENHA=...
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/auth/resume_etmenezes_responsavel.yaml
+
+# Mural — usa id do card
+- runFlow: ../shared/nav/navegar_mural.yaml
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "CALENDÁRIO|CALENDARIO"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "BOLETIM ONLINE|BOLETIM"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "NOTAS PARCIAIS"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "MENSALIDADE"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "CONTEÚDO LECIONADO|CONTEUDO LECIONADO"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: ".*FREQU.*ALUNO.*"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "MEUS DOCUMENTOS|.*DOCUMENTOS.*"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "HORÁRIO|HORARIO"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
+    env:
+      CARD_ID: "home_card_chat"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "TAREFAS PARA CASA"
+
+# Truncamento UI: rótulo pode aparecer como AVALIAÇÃO DO...
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "AVALIAÇÃO DO.*|AVALIACAO DO.*"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "AVALIAÇÃO DE HABILIDADES|AVALIACAO DE HABILIDADES"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "NOTAS FISCAIS"
+
+- runFlow: ../shared/auth/teardown_estavel_sessao.yaml

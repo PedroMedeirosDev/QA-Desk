@@ -8,7 +8,7 @@ Ideias **ainda não implementadas** (ou só parcialmente). O que já roda está 
 
 - App multi-projeto com CT + bugs + homologação + dashboard + Curadoria KB + Suite API
 - Auth Supabase (JWT) em vez de bcrypt/cookie em env
-- Visitante: tela de boas-vindas dedicada (portfólio público ainda fechado)
+- Visitante: portfólio com métricas diárias liberadas + cases `showInPortfolio` (sanitizados)
 - Maestro / Playwright one-click no PC + métricas por runner
 - Postgres (Prisma) em produção
 
@@ -16,30 +16,30 @@ Ideias **ainda não implementadas** (ou só parcialmente). O que já roda está 
 
 ### 1. Bot Discord + Moacir
 
-Fluxo alvo:
+Padrão operacional (ficha, citação, evidência, gatilhos): [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md).
 
-1. Admin envia bug/CT sanitizado para canal do gestor
-2. Gestor reage com ✅ → status `corrigido_gestor` + histórico na app
-3. Remover ✅ → revoga confirmação
-4. `homologado` **só** com confirmação manual do QA na app
+Fluxo:
 
-Hoje só há **cópia de texto** para colar no Discord.
+1. Admin envia bug sanitizado (**Enviar Discord**) — bot preferencial; webhook como fallback
+2. Desk guarda `discordMessageId`; bot pré-coloca 👀 ✅ ⏸️
+3. Gestor reage: 🔧 `em_tratamento` · ✅ `corrigido_gestor` · ⏸️ `sem_correcao` · ❌ `cancelado` (só a última conta)
+4. Remover a reação que segura o status → `enviado_gestor`
+5. `homologado` **só** com confirmação manual do QA na app → bot reage 💯
 
-### 2. Portfólio visitante rico
+**Feito:** bot + envio + reações 👀/✅/⏸️ + gravidade no report. Clipboard permanece como fallback.
 
-Hoje o visitante só vê a welcome page. **API já está blindada** para o próximo passo:
+Ainda desejável: notificação in-app quando o gestor reage.
 
-- GET de testes: só `showInPortfolio === true` (hardcoded no backend) + `sanitizeVisitorData`
-- Mutações: `rejectVisitorMutations` → 403
-- Homologações / KB / Suite API / Automação: bloqueadas ao visitante
-- Evidências: autenticadas; visitante só sob CT público
+### 2. Portfólio visitante (próximos refinamentos)
 
-Próximo passo de UI:
+**Feito (Fatia 6):** visitante vê métricas diárias liberadas (`DailySummaryPanel`) + lista expansível de cases com `showInPortfolio` (API filtrada + `sanitizeVisitorTestRecord`). Sem nav operacional.
 
-- Liberar cases com `showInPortfolio=true` (payload já sanitizado)
+Ainda desejável:
+
 - Campos opcionais `portfolio.headline` / `summary`
-- View limpa (sem homologação interna / Curadoria KB) + `visitor-ui.ts` (inputs read-only)
+- View de detalhe mais rica + `visitor-ui.ts` (inputs read-only)
 - Revisar evidências antes de marcar no portfólio
+- Destaques / notificações quando gestor confirma (com bot Discord)
 
 ### 3. Notificações na UI
 

@@ -7,6 +7,7 @@ import {
   assertProject,
   nextTestId,
   nextBugId,
+  nextBugCode,
   readCatalog,
   uploadsDir,
   writeCatalog,
@@ -132,6 +133,8 @@ testsRouter.post("/", requireAdmin, async (req, res) => {
 
   const recordType = body.recordType ?? (body.campaign ? "teste" : "bug");
   const id = recordType === "bug" ? nextBugId(project, catalog) : nextTestId(project, catalog);
+  const channel = body.channel ?? (project === "polygonus" ? "app" : undefined);
+  const platform = body.platform ?? "web";
   const now = new Date().toISOString();
   const report: TestRecord = {
     id,
@@ -146,15 +149,24 @@ testsRouter.post("/", requireAdmin, async (req, res) => {
     actualResult: body.actualResult?.trim(),
     reportedAt: now.slice(0, 10),
     project,
-    channel: body.channel ?? (project === "polygonus" ? "app" : undefined),
-    platform: body.platform ?? "web",
+    channel,
+    platform,
     module: body.module?.trim(),
     status: body.status ?? "rascunho",
     homologationStatus: recordType === "teste" ? (body.homologationStatus ?? "pendente") : undefined,
     executionMode: body.automation?.flowPath ? "automated" : (body.executionMode ?? "manual"),
     priority: body.priority,
-    severity: body.severity,
+    severity: body.severity ?? (recordType === "bug" ? "media" : undefined),
     build: body.build?.trim(),
+    osVersion: body.osVersion?.trim(),
+    deviceLabel: body.deviceLabel?.trim(),
+    browser: body.browser?.trim(),
+    testLogin: body.testLogin?.trim(),
+    bugCode:
+      recordType === "bug"
+        ? body.bugCode?.trim() || nextBugCode(catalog, channel, platform)
+        : undefined,
+    technicalEvidence: body.technicalEvidence?.trim(),
     evidence: [],
     comments: [],
     history: [],
@@ -198,7 +210,18 @@ testsRouter.put("/:id", requireAdmin, async (req, res) => {
     campaign: body.campaign ?? prev.campaign,
     comments: body.comments ?? prev.comments,
     executionMode: (body.automation ?? prev.automation)?.flowPath ? "automated" : "manual",
+    bugCode: prev.bugCode, // código público imutável após criação
   };
+
+  const asBug =
+    (updated.recordType ?? (updated.campaign ? "teste" : "bug")) === "bug";
+  if (asBug && !updated.bugCode?.trim()) {
+    updated.bugCode = nextBugCode(
+      catalog,
+      updated.channel,
+      updated.platform,
+    );
+  }
 
   if (body.status && body.status !== prev.status && updated.recordType === "bug") {
     appendHistory(updated, {
@@ -237,6 +260,21 @@ testsRouter.put("/:id", requireAdmin, async (req, res) => {
       action: "homologated",
       detail: "Homologação manual confirmada (bug)",
     });
+    if (updated.discordMessageId) {
+      void import("../discord-bot.js")
+        .then(({ reactQaHomologatedOnDiscord }) =>
+          reactQaHomologatedOnDiscord({
+            messageId: updated.discordMessageId!,
+            channelId: updated.discordChannelId,
+          }),
+        )
+        .catch((err) => {
+          console.warn(
+            "[discord-bot] 💯 pós-homologação:",
+            err instanceof Error ? err.message : err,
+          );
+        });
+    }
   }
 
   catalog.reports[idx] = updated;
@@ -275,4 +313,74 @@ testsRouter.post("/:id/evidence", requireAdmin, upload.single("file"), async (re
   catalog.reports[idx] = report;
   await writeCatalog(project, catalog);
   res.status(201).json(evidence);
+});
+
+/**
+ * Envia report Discord (texto + evidências) via bot (preferencial) ou webhook.
+ * Bugs: status → enviado_gestor. Clipboard continua como fallback na UI.
+ * Com messageId salvo, reação ✅ do gestor → corrigido_gestor (bot).
+ */
+testsRouter.post("/:id/discord-send", requireAdmin, async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const catalog = await readCatalog(project);
+  const testId = param(req, "id");
+  const idx = catalog.reports.findIndex((r) => r.id === testId);
+  if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
+
+  const report = catalog.reports[idx];
+  try {
+    const { sendBugReportToDiscord } = await import("../discord-send.js");
+    const result = await sendBugReportToDiscord(report);
+
+    const isBug =
+      (report.recordType ?? (report.campaign ? "teste" : "bug")) === "bug";
+    if (
+      isBug &&
+      report.status !== "enviado_gestor" &&
+      report.status !== "em_tratamento" &&
+      report.status !== "corrigido_gestor" &&
+      report.status !== "sem_correcao" &&
+      report.status !== "cancelado" &&
+      report.status !== "homologado"
+    ) {
+      report.status = "enviado_gestor";
+    }
+    if (result.messageId) {
+      report.discordMessageId = result.messageId;
+      report.discordChannelId = result.channelId;
+      report.discordSentAt = new Date().toISOString();
+    }
+    appendHistory(report, {
+      actor: actorOf(req),
+      action: "discord_sent",
+      detail: [
+        `via ${result.via}`,
+        result.attached.length
+          ? `${result.attached.length} anexo(s)`
+          : "só texto",
+        result.skipped.length ? `${result.skipped.length} pulado(s)` : undefined,
+        result.truncatedContent ? "texto truncado" : undefined,
+        result.messageId ? `msg ${result.messageId}` : undefined,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      meta: {
+        via: result.via,
+        attached: result.attached,
+        skipped: result.skipped,
+        truncatedContent: result.truncatedContent,
+        discordMessageId: result.messageId,
+        discordChannelId: result.channelId,
+      },
+    });
+
+    catalog.reports[idx] = report;
+    await writeCatalog(project, catalog);
+    const { ok: _ok, ...payload } = result;
+    res.json({ ok: true, report, ...payload });
+  } catch (e) {
+    const err = e as Error & { status?: number };
+    const status = err.status && err.status >= 400 ? err.status : 500;
+    res.status(status).json({ error: err.message || "Falha ao enviar Discord" });
+  }
 });
