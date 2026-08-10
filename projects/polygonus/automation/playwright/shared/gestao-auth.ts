@@ -34,19 +34,34 @@ export const GESTAO_URL =
   process.env.PLAYWRIGHT_GESTAO_URL?.trim() ||
   "https://amostra.polygonus.com.br:8443/web/react/gestao";
 
-export const LOGIN =
-  process.env.PLAYWRIGHT_LOGIN?.trim() ||
-  process.env.LOGIN_SUPPETER?.trim() ||
-  "SUPPETER";
+/** Lidos na hora da chamada (permite setar LOGIN_PHJESUS no .env antes do login). */
+export function resolveGestaoLogin(): string {
+  return (
+    process.env.PLAYWRIGHT_LOGIN?.trim() ||
+    process.env.LOGIN_PHJESUS?.trim() ||
+    process.env.LOGIN_SUPPETER?.trim() ||
+    "SUPPETER"
+  );
+}
 
-export const SENHA =
-  process.env.PLAYWRIGHT_SENHA?.trim() ||
-  process.env.SENHA?.trim() ||
-  "poly1000";
+export function resolveGestaoSenha(): string {
+  return (
+    process.env.PLAYWRIGHT_SENHA?.trim() ||
+    process.env.SENHA?.trim() ||
+    "poly1000"
+  );
+}
 
-/** Nome na tela “Selecione sua unidade” (Postman amostra CQ). */
-export const UNIDADE =
-  process.env.PLAYWRIGHT_UNIDADE?.trim() || "Colégio Demonstração";
+export function resolveGestaoUnidade(): string {
+  return process.env.PLAYWRIGHT_UNIDADE?.trim() || "Colégio Demonstração";
+}
+
+/** @deprecated use resolveGestaoLogin() — valor no import pode estar stale */
+export const LOGIN = resolveGestaoLogin();
+/** @deprecated use resolveGestaoSenha() */
+export const SENHA = resolveGestaoSenha();
+/** @deprecated use resolveGestaoUnidade() */
+export const UNIDADE = resolveGestaoUnidade();
 
 /** Marcador parseado pelo Desk → campo `build` dos CTs WEB. */
 export const WEB_BUILD_MARKER = "[qa-desk] web-build:";
@@ -218,14 +233,14 @@ export async function loginGestaoSePreciso(
     const onLogin = await lerVersaoRodapeLogin(page);
     if (onLogin) logWebBuild(onLogin, logPrefix);
 
-    console.log(`${logPrefix} login amostra CQ como ${LOGIN}`);
+    console.log(`${logPrefix} login amostra CQ como ${resolveGestaoLogin()}`);
     const userInput = page
       .locator(
         'input[type="text"], input[type="email"], input[name*="login" i], input[name*="user" i], input[placeholder*="Login" i], input[placeholder*="mail" i]',
       )
       .first();
-    await userInput.fill(LOGIN);
-    await senhaInput.fill(SENHA);
+    await userInput.fill(resolveGestaoLogin());
+    await senhaInput.fill(resolveGestaoSenha());
     const entrar = page.getByRole("button", { name: /entrar|login|acessar/i });
     if (await entrar.count()) await entrar.first().click();
     else await senhaInput.press("Enter");
@@ -244,17 +259,18 @@ export async function loginGestaoSePreciso(
     (await continuar.isVisible().catch(() => false)) ||
     (await unidadeHeading.isVisible().catch(() => false))
   ) {
-    console.log(`${logPrefix} unidade "${UNIDADE}" → Continuar`);
-    const itemExact = page.getByText(UNIDADE, { exact: true }).first();
+    console.log(`${logPrefix} unidade "${resolveGestaoUnidade()}" → Continuar`);
+    const unidade = resolveGestaoUnidade();
+    const itemExact = page.getByText(unidade, { exact: true }).first();
     const itemFuzzy = page.getByText(/Col[eé]gio\s+(de\s+)?Demonstra/i).first();
     if (await itemExact.isVisible().catch(() => false)) await itemExact.click();
     else if (await itemFuzzy.isVisible().catch(() => false)) {
-      const label = (await itemFuzzy.textContent())?.trim() || UNIDADE;
+      const label = (await itemFuzzy.textContent())?.trim() || unidade;
       console.log(`${logPrefix} unidade via fuzzy: "${label}"`);
       await itemFuzzy.click();
     } else {
       throw new Error(
-        `${logPrefix} unidade "${UNIDADE}" não encontrada na tela Selecione sua unidade`,
+        `${logPrefix} unidade "${unidade}" não encontrada na tela Selecione sua unidade`,
       );
     }
     await continuar.click({ timeout: 15_000 });

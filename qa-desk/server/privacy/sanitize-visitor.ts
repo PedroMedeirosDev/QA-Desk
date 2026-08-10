@@ -114,12 +114,16 @@ function scrubActors<T>(value: T): T {
  * `showInPortfolio` é forçado a true (já filtrado no backend).
  */
 export function sanitizeVisitorTestRecord(report: TestRecord): TestRecord {
+  const isBug =
+    (report.recordType ?? (report.campaign ? "teste" : "bug")) === "bug";
+
   const base: TestRecord = {
     id: report.id,
     testKey: report.testKey,
     recordType: report.recordType,
     title: report.title,
-    description: report.description,
+    // Bugs: description = citação do chamado (operacional) — fora do portfólio
+    description: isBug ? undefined : report.description,
     preconditions: report.preconditions,
     steps: report.steps,
     stepsDetailed: report.stepsDetailed?.map((s) => ({

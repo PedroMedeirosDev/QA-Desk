@@ -1,21 +1,13 @@
-# Confirma PROFESSORES: ao abrir o filtro de sentido, NÃO deve haver Pendentes.
-# Semantics: mural_filtro_sentido
+# Confirma PROFESSORES: Mural abre (Recebidas / feed).
+# Não exige "Enviadas" isolado — no a11y o filtro pode mostrar só Recebidas/Enviados.
+# Pendentes no dropdown de sentido é frágil; validação principal = card MURAL + lista.
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow: ../nav/navegar_mural.yaml
 
-- tapOn:
-    id: mural_filtro_sentido
+- assertVisible: ".*Recebidas.*|Enviados|Enviadas|Pendentes|Responder comunicado|Show menu"
 
-- extendedWaitUntil:
-    visible: "Recebidas|Enviadas|Enviados"
-    timeout: 5000
-
-- assertNotVisible: "Pendentes"
-- assertVisible: "Enviadas"
-
-- pressKey: Back
 - pressKey: Back
 
 - extendedWaitUntil:

@@ -206,8 +206,8 @@ export function ProjectSidebar({
                 Modo visitante
               </p>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Navegação e dados do projeto ficam disponíveis quando o portfólio
-                público estiver pronto.
+                Acesso ativo. O portfólio público aparece quando houver cases ou
+                métricas liberados pelo QA.
               </p>
             </div>
           )}

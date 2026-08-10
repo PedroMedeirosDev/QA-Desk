@@ -6,7 +6,7 @@ import { readCatalogFromDb, writeCatalogToDb } from "./db/pg-catalog.js";
 import { findHomologationBySlug, readHomologationCatalog } from "./homologations.js";
 import { redactPiiDeep } from "./privacy/redact-pii.js";
 import { normalizeCatalog } from "./test-key.js";
-import type { HistoryEntry, ProjectSlug, TestCatalog, TestRecord } from "./types.js";
+import type { HistoryEntry, ProductChannel, ProjectSlug, TestCatalog, TestRecord } from "./types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_ROOT = path.join(__dirname, "../data/projects");
@@ -148,6 +148,35 @@ export function nextTestId(project: ProjectSlug, catalog: TestCatalog) {
 
 export function nextBugId(project: ProjectSlug, catalog: TestCatalog) {
   return nextRecordId(project, catalog, "bug");
+}
+
+/** Código público: APP-01, WEB-02… (por canal; independente do id BUG-YYYY-NNN). */
+export function nextBugCode(
+  catalog: TestCatalog,
+  channel?: ProductChannel,
+  platform?: TestRecord["platform"],
+): string {
+  const prefix = bugCodePrefix(channel, platform);
+  const re = new RegExp(`^${prefix}-(\\d+)$`, "i");
+  const nums = catalog.reports
+    .map((r) => r.bugCode?.trim().match(re))
+    .filter(Boolean)
+    .map((m) => parseInt(m![1], 10));
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  return `${prefix}-${String(next).padStart(2, "0")}`;
+}
+
+function bugCodePrefix(
+  channel?: ProductChannel,
+  platform?: TestRecord["platform"],
+): string {
+  if (channel === "app") return "APP";
+  if (channel === "web") return "WEB";
+  if (channel === "portal") return "PORTAL";
+  if (platform === "android" || platform === "ios") return "APP";
+  if (platform === "web") return "WEB";
+  if (platform === "api") return "API";
+  return "BUG";
 }
 
 function nextRecordId(

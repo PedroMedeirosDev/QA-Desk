@@ -7,14 +7,15 @@ Aplicação web do **QA Desk** — registro de testes e homologação multi-proj
 | Perfil | O que vê |
 |--------|----------|
 | **Admin** | Tudo — CTs, homologações, Curadoria KB, Suite API, métricas, execução |
-| **Visitante** | Só tela de boas-vindas (portfólio público ainda em configuração) |
+| **Visitante** | Portfólio: métricas diárias liberadas + cases `showInPortfolio` (sem PII / sem ops) |
 
 | Doc | Uso |
 |-----|-----|
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Como funciona hoje |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Como funciona hoje (incl. Discord) |
 | [`docs/LLM_CONTEXT.md`](docs/LLM_CONTEXT.md) | Contexto completo da stack para IAs (Gemini/Cursor) |
 | [`docs/COLORS.md`](docs/COLORS.md) | Cores: marca, projetos, claro/escuro |
-| [`VISION.md`](VISION.md) | Backlog (Discord bot, portfólio rico, etc.) |
+| [`VISION.md`](VISION.md) | Backlog (notificações in-app, portfólio rico, etc.) |
+| [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md) | Bug report + **bot Discord** (reações gestor + 💯 QA) |
 | [`DEPLOY.md`](DEPLOY.md) | Local, túnel, Oracle, Koyeb |
 | [`deploy/SUPABASE_CREDENTIALS.md`](deploy/SUPABASE_CREDENTIALS.md) | Onde achar URL/keys/pooler no painel atual |
 | [`deploy/oracle/README.md`](deploy/oracle/README.md) | VM Always Free + systemd + Caddy |
@@ -96,7 +97,15 @@ Para limpar dados já salvos:
 npx tsx server/scripts/redact-pii-catalog.ts
 ```
 
-## Homologação Mural
+## Discord (bugs)
+
+Bot roda **junto com** `npm run dev` / `npm start` (não é serviço separado no portal).
+
+- Env: `DISCORD_BOT_TOKEN` + `DISCORD_BUG_CHANNEL_ID` (ver `.env.example`)
+- Fluxo e reações: [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md) — 🔧 tratamento · ✅ corrigido · ⏸️ sem correção · ❌ cancelado · 💯 QA homologou
+- Assets: `public/logos/qa_desk-discord-bot.png` + `qa_desk-discord-banner.png`
+
+## Homologação Mural (+ regressão menus)
 
 Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 
@@ -104,9 +113,18 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
    (ou `npx tsx scripts/apply-mural-checklist.ts`)
 2. Homologação **ficha-academica-homologacao** (Ficha Acadêmica / Playwright):  
    `npx tsx scripts/seed-ficha-homologacao.ts`
-2. Emulador + `QA_AUTOMATION_RUN=1` no PC **ou** agente remoto (`npm run agent` — ver [`agent/README.md`](agent/README.md))
-3. Flows: `projects/polygonus/automation/maestro/` · Playwright: `projects/polygonus/automation/playwright/`
-4. Na UI, toggle **Maestro | Playwright** por suite — progresso e rodadas são **por runner**
+3. Emulador + `QA_AUTOMATION_RUN=1` no PC **ou** agente remoto (`npm run agent` — ver [`agent/README.md`](agent/README.md))
+4. Flows Mural: `projects/polygonus/automation/maestro/flows/mural/` · Playwright: `…/playwright/`
+5. Na UI, toggle **Maestro | Playwright** por suite — progresso e rodadas são **por runner**
+
+**Regressão de menus (APP + WEB)** — inventário e smokes (não é a suite Mural da UI):
+
+| Onde | O quê |
+|------|--------|
+| [`projects/polygonus/HOMOLOGACAO_INVENTARIO.md`](../projects/polygonus/HOMOLOGACAO_INVENTARIO.md) | Escopo por perfil (Responsável / Coordenador / Professor) + checklist |
+| [`…/maestro/flows/smoke/`](../projects/polygonus/automation/maestro/flows/smoke/) | Smokes Maestro abrir/voltar menus (`regressao_menus_*.yaml`) |
+| [`…/playwright/mural/smoke-comunicados-web.spec.ts`](../projects/polygonus/automation/playwright/mural/smoke-comunicados-web.spec.ts) | Smoke WEB (abertura Comunicados) |
+| [`…/flows/docs/SEMANTICS_SUGESTOES.md`](../projects/polygonus/automation/maestro/flows/docs/SEMANTICS_SUGESTOES.md) | Pedido de semantics aos devs |
 
 ## UI (design system)
 
@@ -124,10 +142,10 @@ Checklist canônico por suite (`CRUD-01`, `ANEXO-02`, …):
 - [x] Agente remoto (API online → PC com Maestro/emulador)
 - [x] Postgres + Prisma (`qa-desk/`)
 - [x] Auth Supabase (admin / visitor)
-- [x] Login visitante → tela de boas-vindas (sem dados operacionais)
+- [x] Login visitante → portfólio (métricas + cases `showInPortfolio`, sanitizados)
 - [x] Curadoria KB (SSE + webhook GitHub) — admin only
 - [x] Suite API na UI (Newman por projeto)
 - [x] Shell rígido + highlights CSS + polimento UI (tooltip / scrollbar / checkbox)
 - [x] Deploy Oracle — [https://qa-desk-pedro.duckdns.org](https://qa-desk-pedro.duckdns.org)
-- [ ] Portfólio visitante rico (`showInPortfolio` + cases públicos) — ver [`VISION.md`](VISION.md)
-- [ ] Bot Discord — [`VISION.md`](VISION.md)
+- [ ] Portfólio visitante rico (headline/summary, detalhe) — ver [`VISION.md`](VISION.md)
+- [ ] Discord bot ✅ — [`VISION.md`](VISION.md) / [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md)

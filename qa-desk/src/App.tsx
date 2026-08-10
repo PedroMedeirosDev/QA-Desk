@@ -19,7 +19,7 @@ import { ImplantacoesListPage } from "@/pages/ImplantacoesListPage";
 import { ImplantacaoPage } from "@/pages/ImplantacaoPage";
 import { ApiSuitePage } from "@/pages/ApiSuitePage";
 import { LoginPage } from "@/pages/LoginPage";
-import { VisitorWelcomePage } from "@/pages/VisitorWelcomePage";
+import { VisitorPortfolioPage } from "@/pages/VisitorPortfolioPage";
 import { ActiveProjectProvider, useActiveProject } from "@/lib/active-project";
 import { parseProjectRoute } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,7 @@ function ProjectShell() {
   }
 
   const headerTitle = isVisitor
-    ? "Boas-vindas"
+    ? "Portfólio"
     : route.view === "dashboard"
       ? "Dashboard"
       : route.view === "kb-curation"
@@ -56,7 +56,7 @@ function ProjectShell() {
                 : "Registro de Testes";
 
   const headerSubtitle = isVisitor
-    ? "Perfil visitante"
+    ? "Cases e métricas públicas"
     : route.view === "dashboard"
       ? "Visão geral QA"
       : route.view === "kb-curation"
@@ -139,7 +139,7 @@ function ProjectShell() {
             }}
           >
             {isVisitor ? (
-              <VisitorWelcomePage />
+              <VisitorPortfolioPage />
             ) : route.view === "dashboard" ? (
               <DashboardPage project={slug} />
             ) : route.view === "kb-curation" ? (

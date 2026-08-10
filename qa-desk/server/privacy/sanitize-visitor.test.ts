@@ -21,6 +21,7 @@ assert.equal((scrubbed as { actor: string }).actor, "Pedro M.");
 
 const record = sanitizeVisitorTestRecord({
   id: "POLY-CT-1",
+  recordType: "teste",
   title: "Login",
   description: "User mail@corp.com",
   reportedAt: "2026-01-01",
@@ -48,5 +49,23 @@ assert.equal(record.automation, undefined);
 assert.equal(record.technicalEvidence, undefined);
 assert.equal(record.comments, undefined);
 assert.match(record.description ?? "", /m\*\*\*\*@corp\.com/);
+
+const bugRecord = sanitizeVisitorTestRecord({
+  id: "BUG-1",
+  recordType: "bug",
+  title: "Eletivas ausentes",
+  description: "Solicitação #999 — chamado interno",
+  reportedAt: "2026-01-01",
+  project: "polygonus",
+  platform: "android",
+  status: "reportado",
+  history: [],
+  showInPortfolio: true,
+  steps: ["abrir filtro"],
+  actualResult: "lista vazia",
+} as TestRecord);
+
+assert.equal(bugRecord.description, undefined);
+assert.equal(bugRecord.actualResult, undefined);
 
 console.log("all sanitize-visitor tests passed");

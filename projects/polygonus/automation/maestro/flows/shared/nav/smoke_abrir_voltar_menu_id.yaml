@@ -1,0 +1,74 @@
+# Smoke: abre menu da home por resource-id e volta.
+# Env: CARD_ID — ex. home_card_chat (Atendimento novo)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: dismiss_coachmarks_pular.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "home_card_mural"
+    timeout: 15000
+
+- repeat:
+    times: 2
+    commands:
+      - swipe:
+          start: "50%, 35%"
+          end: "50%, 75%"
+          duration: 400
+      - waitForAnimationToEnd:
+          timeout: 300
+
+- scrollUntilVisible:
+    element:
+      id: ${CARD_ID}
+    direction: DOWN
+    timeout: 20000
+    speed: 60
+    visibilityPercentage: 30
+    centerElement: true
+
+- tapOn:
+    id: ${CARD_ID}
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- extendedWaitUntil:
+    notVisible:
+      id: "home_card_mural"
+    timeout: 20000
+
+- assertNotVisible: "ENTRAR"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "home_card_mural"
+    commands:
+      - repeat:
+          times: 6
+          commands:
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "home_card_mural"
+                commands:
+                  - pressKey: Back
+                  - waitForAnimationToEnd:
+                      timeout: 500
+      - runFlow:
+          when:
+            notVisible:
+              id: "home_card_mural"
+          commands:
+            - launchApp
+            - waitForAnimationToEnd:
+                timeout: 1000
+            - runFlow: dismiss_coachmarks_pular.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "home_card_mural"
+    timeout: 20000

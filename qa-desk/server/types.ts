@@ -9,7 +9,10 @@ export type BugStatus =
   | "rascunho"
   | "reportado"
   | "enviado_gestor"
+  | "em_tratamento"
   | "corrigido_gestor"
+  | "sem_correcao"
+  | "cancelado"
   | "homologado"
   | "nao_reproduzido"
   | "arquivado";
@@ -115,13 +118,31 @@ export interface TestRecord {
   build?: string;
   osVersion?: string;
   deviceLabel?: string;
+  /** Ex.: Chrome, Edge, Playwright Chromium — report Web */
+  browser?: string;
+  /** Login usado no teste (ex.: PHJESUS, ETMENEZES) — report */
+  testLogin?: string;
+  /**
+   * Código público do bug por canal (APP-01, WEB-02…).
+   * Distinto do `id` interno (BUG-2026-xxx) usado em storage/uploads.
+   */
+  bugCode?: string;
   technicalEvidence?: string;
   evidence?: EvidenceFile[];
   automation?: AutomationLink;
   comments?: Array<{ at: string; author: string; text: string }>;
   history: HistoryEntry[];
   showInPortfolio?: boolean;
+  /**
+   * QA marcou o script como confiável para falha ≈ bug de produto.
+   * Manual — não confundir com `automation.readiness` (auto após 2 passes).
+   */
+  consolidated?: boolean;
   tags?: string[];
+  /** Mensagem Discord vinculada (bot/webhook wait) — reação ✅ */
+  discordMessageId?: string;
+  discordChannelId?: string;
+  discordSentAt?: string;
 }
 
 export interface TestCatalog {

@@ -1,0 +1,75 @@
+# Abre um menu da home pelo rótulo e volta (smoke de regressão).
+#
+# Env: CARD_HOME — texto/regex do tile.
+# NÃO usar para MURAL — prefira navegar_mural.yaml.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: dismiss_coachmarks_pular.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "home_card_mural"
+    timeout: 15000
+
+# Garante grade no topo (gesto: dedo para baixo → conteúdo sobe)
+- repeat:
+    times: 2
+    commands:
+      - swipe:
+          start: "50%, 35%"
+          end: "50%, 75%"
+          duration: 400
+      - waitForAnimationToEnd:
+          timeout: 300
+
+- scrollUntilVisible:
+    element: ${CARD_HOME}
+    direction: DOWN
+    timeout: 20000
+    speed: 60
+    visibilityPercentage: 40
+    centerElement: true
+
+- tapOn: ${CARD_HOME}
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- extendedWaitUntil:
+    notVisible:
+      id: "home_card_mural"
+    timeout: 20000
+
+- assertNotVisible: "ENTRAR"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "home_card_mural"
+    commands:
+      - repeat:
+          times: 6
+          commands:
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "home_card_mural"
+                commands:
+                  - pressKey: Back
+                  - waitForAnimationToEnd:
+                      timeout: 500
+      - runFlow:
+          when:
+            notVisible:
+              id: "home_card_mural"
+          commands:
+            - launchApp
+            - waitForAnimationToEnd:
+                timeout: 1000
+            - runFlow: dismiss_coachmarks_pular.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "home_card_mural"
+    timeout: 20000

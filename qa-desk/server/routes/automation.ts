@@ -43,6 +43,7 @@ import {
 } from "../maestro-run-registry.js";
 import {
   cancelPlaywrightRun,
+  findLatestPlaywrightFailureScreenshot,
   listPlaywrightSpecs,
   runPlaywrightSpec,
 } from "../playwright-run.js";
@@ -1095,6 +1096,35 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     report.evidence = [...(report.evidence ?? []), ...videoEvidence];
   }
 
+  const screenshotEvidence: EvidenceFile[] = [];
+  if (!result.ok && !result.cancelled && failedStage === "playwright") {
+    const png = findLatestPlaywrightFailureScreenshot();
+    if (png) {
+      try {
+        const destDir = uploadsDir(project, report.id);
+        fs.mkdirSync(destDir, { recursive: true });
+        const destName = `${runId.slice(0, 8)}_pw_fail.png`;
+        const destPath = path.join(destDir, destName);
+        fs.copyFileSync(png, destPath);
+        const st = fs.statSync(destPath);
+        screenshotEvidence.push({
+          fileId: randomUUID(),
+          type: "screenshot",
+          filename: destName,
+          mimeType: "image/png",
+          sizeBytes: st.size,
+          uploadedAt: new Date().toISOString(),
+          storageKey: `uploads/${project}/${report.id}/${destName}`,
+        });
+      } catch {
+        /* ignore copy errors */
+      }
+    }
+  }
+  if (screenshotEvidence.length) {
+    report.evidence = [...(report.evidence ?? []), ...screenshotEvidence];
+  }
+
   if (!alreadyPersisted) {
     appendHistory(report, {
       at: startedAt,
@@ -1111,6 +1141,9 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
           ? videoEvidence.length
             ? `Vídeo: ${videoEvidence.length} arquivo(s)`
             : videoNote || "Vídeo solicitado"
+          : undefined,
+        screenshotEvidence.length
+          ? `Print Playwright: ${screenshotEvidence.length}`
           : undefined,
       ]
         .filter(Boolean)
@@ -1146,6 +1179,7 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
         errorSummary: failure?.errorSummary,
         recordVideo,
         videoFiles: videoEvidence.map((e) => e.storageKey),
+        screenshotFiles: screenshotEvidence.map((e) => e.storageKey),
       },
     });
     markRunSessionPersisted(runId);
@@ -1209,7 +1243,10 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
         recordVideo,
         specPath: wantPlaywrightOnly ? pwTarget?.specPath : undefined,
       },
-      evidencePaths: videoEvidence.map((e) => e.storageKey),
+      evidencePaths: [
+        ...videoEvidence.map((e) => e.storageKey),
+        ...screenshotEvidence.map((e) => e.storageKey),
+      ],
     });
   }
 

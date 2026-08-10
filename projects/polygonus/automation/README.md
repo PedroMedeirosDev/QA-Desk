@@ -15,11 +15,13 @@ Skill operacional: [`.cursor/skills/polygonus-mural-maestro/`](../../../.cursor/
 
 | Item | Notas |
 |------|--------|
-| Flows | `maestro/flows/mural/`, shared em `maestro/flows/shared/` |
+| Flows | `maestro/flows/mural/` (suite Mural) · `maestro/flows/smoke/` (regressão menus R/C/P) · shared em `maestro/flows/shared/` |
+| Inventário | [`../HOMOLOGACAO_INVENTARIO.md`](../HOMOLOGACAO_INVENTARIO.md) — escopo APP+WEB por perfil |
 | Fixtures | `maestro/fixtures/` → `adb push` / qa-desk empurra antes do Play (`Video_teste.mp4`, PDFs) |
 | ANEXO-03 | Gate = sumir **Comprimindo** (não só toast). Idle qa-desk vídeo = 15 min |
 | Filtros | `FILTRO-01…10` — Pagantes = sem gratuidade 100% (seed `PLLIMA`) |
 | Pipeline ID | Pós-envio + assert responsável — ver `maestro/flows/docs/PIPELINE_ID_MURAL.md` |
+| Semantics | Pedido aos devs: `maestro/flows/docs/SEMANTICS_SUGESTOES.md` |
 
 ```bash
 cd projects/polygonus/automation/maestro
@@ -29,20 +31,13 @@ maestro test flows/mural/01_1_comunicado_video_pequeno.yaml
 
 ## Web — Playwright
 
-Seed **Aniversariante** (FILTRO-02 / 09): [`playwright/mural/`](playwright/mural/).
+| Spec | Uso |
+|------|-----|
+| [`playwright/mural/`](playwright/mural/) | Seed DN Aniversariante (FILTRO-02/09) |
+| [`playwright/mural/smoke-comunicados-web.spec.ts`](playwright/mural/smoke-comunicados-web.spec.ts) | Smoke WEB: gestão → Comunicados → iframe Flutter |
+| [`playwright/academico/`](playwright/academico/) | Ficha acadêmica |
 
-| Campo | Valor |
-|-------|--------|
-| URL | `https://amostra.polygonus.com.br/web/react/gestao` |
-| Fluxo | Ajusta DN → Maestro envia (PHJESUS) → confirma login `ANIVERSARI` |
-| Doc | [`playwright/mural/README.md`](playwright/mural/README.md) |
-
-Na qa-desk: Play com `automation.prep` (Playwright → Maestro) nos CTs FILTRO-02/09.
-
-```bash
-cd projects/polygonus/automation/playwright
-npm run test:mural-dn
-```
+Inventário / gaps: [`../HOMOLOGACAO_INVENTARIO.md`](../HOMOLOGACAO_INVENTARIO.md). Smoke menus APP: [`maestro/flows/smoke/README.md`](maestro/flows/smoke/README.md).
 
 ## iOS
 

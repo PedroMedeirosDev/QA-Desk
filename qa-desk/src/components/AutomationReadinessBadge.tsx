@@ -22,8 +22,8 @@ export function AutomationReadinessBadge({
   const isReady = readiness === "ready";
   const tip = isReady
     ? runner === "playwright"
-      ? "Spec estável — validado no Playwright"
-      : "Flow estável — validado no Maestro / emulador"
+      ? "Spec estável na suite (≠ consolidado para bug de produto)"
+      : "Flow estável na suite — 2 passes Maestro (≠ consolidado para bug de produto)"
     : runner === "playwright"
       ? "Spec em rascunho — existe, mas ainda pode falhar"
       : "Flow em rascunho — existe, mas ainda pode falhar em seletores";
