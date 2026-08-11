@@ -1,0 +1,21 @@
+# CT-ROTINA-03: Banheiro (aba Rotina dentro do Mural)
+#
+# Semantics: mural_tab_rotina, rotina_boom_banheiro
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/rotina/setup_coordenador_rotina.yaml
+
+- runFlow:
+    file: ../shared/rotina/abrir_tipo_rotina.yaml
+    env:
+      ROTINA_BOOM_ID: "rotina_boom_banheiro"
+      ROTINA_BOOM_TEXTO: "Banheiro"
+      TITULO_ROTINA: "Banheiro|Nova"
+
+- runFlow:
+    file: ../shared/rotina/rotina_preencher_enviar.yaml
+    env:
+      TITULO_ROTINA: "Banheiro|Turma|Aluno"
+      TURMA_ROTINA: "${TURMA_ROTINA}"
+      ALUNO_ROTINA: "${ALUNO_ROTINA}"

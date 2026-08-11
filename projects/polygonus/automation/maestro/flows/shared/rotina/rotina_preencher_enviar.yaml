@@ -1,7 +1,8 @@
 # Subflow: preenche turma/aluno/termo mínimo e envia registro de rotina
-# Env esperado: TURMA_ROTINA (ou TURMA_TESTE repassado pelo flow), ALUNO_ROTINA, TITULO_ROTINA
+# Env: TURMA_ROTINA (ou TURMA_TESTE), ALUNO_ROTINA, TITULO_ROTINA
 #
-# ATENÇÃO: perguntas do Termo vêm do servidor — ajuste taps conforme sua entidade.
+# ATENÇÃO: perguntas do Termo vêm do servidor — ajuste taps conforme a entidade.
+# Assinatura nos textos livres: "Teste Maestro Emulador - …"
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -9,7 +10,7 @@ appId: br.com.polygonus.mobile.amostra
 
 # Turma
 - tapOn: "Turma"
-- tapOn: "${TURMA_TESTE}"
+- tapOn: "${TURMA_ROTINA}"
 - tapOn: "OK"
 
 # Aluno (grid)
@@ -28,7 +29,7 @@ appId: br.com.polygonus.mobile.amostra
     commands:
       - tapOn: "OK"
 
-# Respostas dinâmicas: tenta marcar primeira opção Sim/Não ou botão de confirmação
+# Respostas dinâmicas: tenta marcar primeira opção Sim/Não
 - tapOn:
     text: "Sim"
     optional: true
@@ -36,7 +37,14 @@ appId: br.com.polygonus.mobile.amostra
     text: "Não"
     optional: true
 
-- tapOn: "Enviar"
+# Preferência semantics
+- tapOn:
+    id: rotina_composer_enviar
+    optional: true
+- tapOn:
+    text: "Enviar"
+    optional: true
+
 - extendedWaitUntil:
-    visible: "Registro criado!"
-    timeout: 15000
+    visible: "Registro criado!|Rotina"
+    timeout: 20000

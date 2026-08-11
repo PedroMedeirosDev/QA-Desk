@@ -1,6 +1,9 @@
-# Subflow: home → Mural → aba Rotina
+# Subflow: home → Mural (módulo) → aba **Rotina** (não Comunicados).
 # Pré-requisito: usuário logado na home
-# Semantics: mural_tab_rotina
+# Semantics: home_card_mural → mural_tab_rotina → rotina_boom_fab
+#
+# Comunicados usam mural_tab_mural / lista Recebidas|Enviadas.
+# Rotina usa esta aba + rotina_boom_*.
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -22,4 +25,10 @@ appId: br.com.polygonus.mobile.amostra
     commands:
       - tapOn: "Rotina"
 
-- assertVisible: "Rotina"
+- extendedWaitUntil:
+    visible:
+      id: "rotina_boom_fab"
+    timeout: 10000
+
+- assertVisible:
+    id: "rotina_boom_fab"

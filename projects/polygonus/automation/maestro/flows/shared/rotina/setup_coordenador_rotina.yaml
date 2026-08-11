@@ -1,0 +1,16 @@
+# PHJESUS coordenador + aba Rotina aberta (dentro do Mural).
+# Diferente de setup_coordenador_mural.yaml (Comunicados / lista Enviadas).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../auth/resume_phjesus_coordenador.yaml
+
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_boom_fab"
+    commands:
+      - runFlow: ../nav/navegar_rotina.yaml
+
+- assertVisible:
+    id: "rotina_boom_fab"
