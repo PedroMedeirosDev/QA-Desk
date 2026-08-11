@@ -1,0 +1,26 @@
+# Abre item do BoomMenu da Rotina.
+# Env: ROTINA_BOOM_ID (ex.: rotina_boom_alimentacao) e/ou ROTINA_BOOM_TEXTO
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: abrir_boom_menu_rotina.yaml
+
+- runFlow:
+    when:
+      visible:
+        id: "${ROTINA_BOOM_ID}"
+    commands:
+      - tapOn:
+          id: "${ROTINA_BOOM_ID}"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "${ROTINA_BOOM_ID}"
+      visible: "${ROTINA_BOOM_TEXTO}"
+    commands:
+      - tapOn: "${ROTINA_BOOM_TEXTO}"
+
+- extendedWaitUntil:
+    visible: "${TITULO_ROTINA}|Turma|Aluno|Termo|Enviar"
+    timeout: 12000

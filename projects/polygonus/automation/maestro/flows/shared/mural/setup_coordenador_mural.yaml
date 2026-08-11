@@ -1,10 +1,13 @@
-# PHJESUS coordenador + Mural aberto (reutiliza sessão quando possível).
+# PHJESUS coordenador + aba **Comunicados** do Mural aberta
+# (lista Recebidas/Enviadas — NÃO é a aba Rotina).
+#
+# Para Rotina use: shared/rotina/setup_coordenador_rotina.yaml
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow: ../auth/resume_phjesus_coordenador.yaml
 
-# Já na lista do Mural — não entra de novo pelo card home
+# Já na lista do Mural (Comunicados) — não entra de novo pelo card home
 - runFlow:
     when:
       notVisible: "Show menu|Recebidas|Enviadas|Pendentes|Responder comunicado"

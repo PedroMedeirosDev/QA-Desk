@@ -1,0 +1,42 @@
+# CT-ROTINA-04: Bilhete (aba Rotina)
+# Semantics: rotina_boom_bilhete, rotina_composer_enviar
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/rotina/setup_coordenador_rotina.yaml
+
+- runFlow:
+    file: ../shared/rotina/abrir_tipo_rotina.yaml
+    env:
+      ROTINA_BOOM_ID: "rotina_boom_bilhete"
+      ROTINA_BOOM_TEXTO: "Bilhete"
+      TITULO_ROTINA: "Bilhete|Nova|Escreva"
+
+- runFlow:
+    when:
+      visible: "Escreva|Digite|mensagem|Bilhete"
+    commands:
+      - tapOn:
+          text: "Escreva.*|Digite.*|mensagem"
+          optional: true
+      - inputText: "Teste Maestro Emulador - Bilhete Rotina"
+
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_enviar"
+    commands:
+      - tapOn:
+          id: "rotina_composer_enviar"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_enviar"
+      visible: "Enviar"
+    commands:
+      - tapOn: "Enviar"
+
+- extendedWaitUntil:
+    visible: "Registro criado!|Rotina|Show menu|Bilhete"
+    timeout: 20000

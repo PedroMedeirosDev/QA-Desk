@@ -1,0 +1,23 @@
+# CT-ROTINA-01: Alimentação (aba Rotina dentro do Mural)
+# Assinatura: "Teste Maestro Emulador - …"
+#
+# Pré: PHJESUS coordenador; TURMA_ROTINA / ALUNO_ROTINA no .env
+# Semantics: mural_tab_rotina, rotina_boom_fab, rotina_boom_alimentacao
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/rotina/setup_coordenador_rotina.yaml
+
+- runFlow:
+    file: ../shared/rotina/abrir_tipo_rotina.yaml
+    env:
+      ROTINA_BOOM_ID: "rotina_boom_alimentacao"
+      ROTINA_BOOM_TEXTO: "Alimentação|Alimentacao"
+      TITULO_ROTINA: "Alimentação|Alimentacao|Nova"
+
+- runFlow:
+    file: ../shared/rotina/rotina_preencher_enviar.yaml
+    env:
+      TITULO_ROTINA: "Alimentação|Alimentacao|Turma|Aluno"
+      TURMA_ROTINA: "${TURMA_ROTINA}"
+      ALUNO_ROTINA: "${ALUNO_ROTINA}"

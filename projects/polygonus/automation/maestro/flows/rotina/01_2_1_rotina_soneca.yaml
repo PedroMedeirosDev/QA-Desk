@@ -1,0 +1,22 @@
+# CT-ROTINA-02: Soneca (aba Rotina dentro do Mural)
+# Assinatura Maestro no texto quando o fluxo tiver campo livre.
+#
+# Semantics: mural_tab_rotina, rotina_boom_soneca
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/rotina/setup_coordenador_rotina.yaml
+
+- runFlow:
+    file: ../shared/rotina/abrir_tipo_rotina.yaml
+    env:
+      ROTINA_BOOM_ID: "rotina_boom_soneca"
+      ROTINA_BOOM_TEXTO: "Soneca"
+      TITULO_ROTINA: "Soneca|Nova"
+
+- runFlow:
+    file: ../shared/rotina/rotina_preencher_enviar.yaml
+    env:
+      TITULO_ROTINA: "Soneca|Turma|Aluno"
+      TURMA_ROTINA: "${TURMA_ROTINA}"
+      ALUNO_ROTINA: "${ALUNO_ROTINA}"

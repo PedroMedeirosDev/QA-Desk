@@ -313,7 +313,7 @@ export async function ensureMaestroFixturesOnDevice(options?: {
   }
 }
 
-/** Fixa America/Sao_Paulo + relógio 24h — evita dialog BrasilTime em EVENTO-*. */
+/** Fixa America/Sao_Paulo + relógio 24h + **data/hora atuais** (evita mural em “ontem”). */
 export async function ensureEmulatorTimezoneBr(options?: {
   timezone?: string;
   onProgress?: (message: string) => void;
@@ -323,6 +323,11 @@ export async function ensureEmulatorTimezoneBr(options?: {
     await execFileAsync(
       "adb",
       ["shell", "settings", "put", "global", "auto_time_zone", "0"],
+      { timeout: 8_000, windowsHide: true },
+    );
+    await execFileAsync(
+      "adb",
+      ["shell", "settings", "put", "global", "auto_time", "0"],
       { timeout: 8_000, windowsHide: true },
     );
     await execFileAsync(
@@ -364,6 +369,9 @@ export async function ensureEmulatorTimezoneBr(options?: {
     } catch {
       /* ignore */
     }
+
+    await syncEmulatorWallClock({ onProgress: options?.onProgress });
+
     const { stdout } = await execFileAsync(
       "adb",
       ["shell", "settings", "get", "global", "time_zone"],
@@ -394,12 +402,119 @@ export async function ensureEmulatorTimezoneBr(options?: {
     const gmtOk = /-[0-9]{2}\b|BRT|America/.test(dateLine) && !/\bGMT\b/.test(dateLine);
     options?.onProgress?.(
       current === tz && gmtOk
-        ? `Timezone OK: ${tz} · clock=${clockFmt || "?"}h (${dateLine})`
-        : `Timezone settings=${current || "?"} clock=${clockFmt || "?"} date=${dateLine || "?"} — se EVENTO falhar, cold boot com -timezone ${tz}`,
+        ? `Timezone+clock OK: ${tz} · clock=${clockFmt || "?"}h (${dateLine})`
+        : `Timezone settings=${current || "?"} clock=${clockFmt || "?"} date=${dateLine || "?"} — se mural falhar por dia, reinicie o AVD`,
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    options?.onProgress?.(`Aviso: timezone não aplicado — ${msg}`);
+    options?.onProgress?.(`Aviso: timezone/clock não aplicado — ${msg}`);
+  }
+}
+
+/**
+ * Alinha o relógio do emulador ao host (UTC epoch).
+ * Builds “production” não aceitam `adb root`/`date`; usa time_detector + alarm binder.
+ */
+async function syncEmulatorWallClock(options?: {
+  onProgress?: (message: string) => void;
+}): Promise<void> {
+  let elapsedMs = 0;
+  try {
+    const { stdout } = await execFileAsync(
+      "adb",
+      ["shell", "cat", "/proc/uptime"],
+      { timeout: 5_000, windowsHide: true },
+    );
+    const sec = Number.parseFloat(String(stdout).trim().split(/\s+/)[0] ?? "");
+    if (Number.isFinite(sec) && sec >= 0) elapsedMs = Math.floor(sec * 1000);
+  } catch {
+    elapsedMs = 0;
+  }
+  const unixMs = Date.now();
+
+  try {
+    await execFileAsync(
+      "adb",
+      ["shell", "cmd", "time_detector", "set_auto_detection_enabled", "false"],
+      { timeout: 8_000, windowsHide: true },
+    );
+  } catch {
+    /* API antiga */
+  }
+
+  let applied = false;
+  try {
+    await execFileAsync(
+      "adb",
+      [
+        "shell",
+        "cmd",
+        "time_detector",
+        "set_time_state_for_tests",
+        "--elapsed_realtime",
+        String(elapsedMs),
+        "--unix_epoch_time",
+        String(unixMs),
+        "--user_should_confirm_time",
+        "false",
+      ],
+      { timeout: 8_000, windowsHide: true },
+    );
+    applied = true;
+  } catch {
+    /* fallback abaixo */
+  }
+
+  if (!applied) {
+    try {
+      await execFileAsync(
+        "adb",
+        ["shell", "service", "call", "alarm", "2", "i64", String(unixMs)],
+        { timeout: 8_000, windowsHide: true },
+      );
+      applied = true;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Acorda tela — sleep longo costuma acompanhar relógio parado
+  try {
+    await execFileAsync(
+      "adb",
+      ["shell", "input", "keyevent", "KEYCODE_WAKEUP"],
+      { timeout: 5_000, windowsHide: true },
+    );
+  } catch {
+    /* ignore */
+  }
+
+  let dateLine = "";
+  try {
+    const d = await execFileAsync("adb", ["shell", "date", "+%s"], {
+      timeout: 5_000,
+      windowsHide: true,
+    });
+    const deviceSec = Number.parseInt(String(d.stdout).trim(), 10);
+    const hostSec = Math.floor(Date.now() / 1000);
+    const drift = Number.isFinite(deviceSec) ? deviceSec - hostSec : NaN;
+    const human = await execFileAsync("adb", ["shell", "date"], {
+      timeout: 5_000,
+      windowsHide: true,
+    });
+    dateLine = String(human.stdout ?? "").trim();
+    if (!Number.isFinite(drift) || Math.abs(drift) > 120) {
+      options?.onProgress?.(
+        `Aviso: relógio do emulador desalinhado (drift=${Number.isFinite(drift) ? `${drift}s` : "?"}) — ${dateLine || "date?"} · applied=${applied}`,
+      );
+    } else {
+      options?.onProgress?.(
+        `Relógio sync OK (drift=${drift}s) — ${dateLine}`,
+      );
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    options?.onProgress?.(`Aviso: não validou date do emulador — ${msg}`);
   }
 }
 
