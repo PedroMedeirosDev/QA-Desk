@@ -1,0 +1,22 @@
+# Recusa diálogo poly (Não). Semantics: shared_dialog_nao.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible:
+        id: "shared_dialog_nao"
+    commands:
+      - tapOn:
+          id: "shared_dialog_nao"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "shared_dialog_nao"
+      visible: "Não|Nao"
+    commands:
+      - tapOn: "Não|Nao"
+
+- waitForAnimationToEnd:
+    timeout: 500

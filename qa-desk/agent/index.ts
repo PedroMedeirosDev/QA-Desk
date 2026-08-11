@@ -20,6 +20,7 @@ import {
   ensureAndroidDeviceReady,
   ensureEmulatorTimezoneBr,
   ensureMaestroFixturesOnDevice,
+  getAndroidDeviceStatus,
   isAutoEmulatorEnabled,
   startAndroidEmulator,
   waitForAndroidDevice,
@@ -41,7 +42,8 @@ const BASE = (process.env.QA_DESK_URL ?? "http://127.0.0.1:3001").replace(
 );
 const TOKEN = process.env.QA_AGENT_TOKEN?.trim() ?? "";
 const POLL_MS = Number(process.env.QA_AGENT_POLL_MS ?? 2500);
-const HEARTBEAT_MS = Number(process.env.QA_AGENT_HEARTBEAT_MS ?? 15_000);
+const HEARTBEAT_MS = Number(process.env.QA_AGENT_HEARTBEAT_MS ?? 10_000);
+const FETCH_TIMEOUT_MS = Number(process.env.QA_AGENT_FETCH_TIMEOUT_MS ?? 20_000);
 
 if (!TOKEN) {
   console.error(
@@ -78,20 +80,60 @@ async function agentFetch(
   pathname: string,
   init?: RequestInit,
 ): Promise<Response> {
-  return fetch(`${BASE}/api/agent${pathname}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${TOKEN}`,
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(`${BASE}/api/agent${pathname}`, {
+      ...init,
+      signal: ctrl.signal,
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function heartbeat(): Promise<void> {
+  let device:
+    | {
+        ready: boolean;
+        booting: boolean;
+        message: string;
+        primarySerial?: string;
+        avdName?: string;
+        devices: Array<{ serial: string; state: string; kind: "emulator" | "physical" }>;
+      }
+    | undefined;
+  try {
+    const status = await getAndroidDeviceStatus();
+    device = {
+      ready: status.ready,
+      booting: status.booting,
+      message: status.message,
+      primarySerial: status.primarySerial,
+      avdName: status.avdName,
+      devices: status.devices,
+    };
+  } catch (err) {
+    device = {
+      ready: false,
+      booting: false,
+      message: err instanceof Error ? err.message : "adb indisponível",
+      devices: [],
+    };
+  }
+
   const res = await agentFetch("/heartbeat", {
     method: "POST",
-    body: JSON.stringify({ hostname: os.hostname(), version: VERSION }),
+    body: JSON.stringify({
+      hostname: os.hostname(),
+      version: VERSION,
+      device,
+    }),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -376,14 +418,29 @@ async function main(): Promise<void> {
   console.log(`[agente] API: ${BASE}`);
   console.log(`[agente] Host: ${os.hostname()}`);
   console.log(`[agente] Root: ${path.resolve(__dirname, "..")}`);
+  console.log(
+    `[agente] Heartbeat a cada ${HEARTBEAT_MS}ms (timeout fetch ${FETCH_TIMEOUT_MS}ms)`,
+  );
 
   await heartbeat();
   console.log("[agente] Heartbeat OK — aguardando jobs…");
 
+  let heartbeatFails = 0;
   setInterval(() => {
-    void heartbeat().catch((err) => {
-      console.error("[agente] heartbeat falhou:", err instanceof Error ? err.message : err);
-    });
+    void heartbeat()
+      .then(() => {
+        if (heartbeatFails > 0) {
+          console.log("[agente] Heartbeat recuperado");
+        }
+        heartbeatFails = 0;
+      })
+      .catch((err) => {
+        heartbeatFails += 1;
+        console.error(
+          `[agente] heartbeat falhou (#${heartbeatFails}):`,
+          err instanceof Error ? err.message : err,
+        );
+      });
   }, HEARTBEAT_MS);
 
   for (;;) {

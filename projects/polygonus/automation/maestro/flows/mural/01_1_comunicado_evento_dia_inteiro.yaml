@@ -10,7 +10,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/composer_novo_evento.yaml
     env:
-      TEXTO_COMUNICADO: "Evento Dia Inteiro"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Evento Dia Inteiro"
       TITULO_EVENTO: "Evento Dia Inteiro"
       DIA_INTEIRO: "1"
 

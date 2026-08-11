@@ -1,6 +1,6 @@
 # Smoke regressão — home Professor (PHJESUS + PROFESSORES).
 # Críticos de lançamento (próxima leva): Notas, Conteúdo e Frequência, Tarefas.
-# Fora: Aula Online, Chegando.
+# Fora: Aula Online, Chegando. Requer APK ≥ 6.06.14.
 #
 # cwd: projects/polygonus/automation/maestro
 # maestro test flows/smoke/regressao_menus_professor.yaml -e LOGIN_PHJESUS=... -e SENHA=...
@@ -13,34 +13,34 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow: ../shared/auth/teardown_estavel_sessao.yaml
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "CALENDÁRIO|CALENDARIO"
+      CARD_ID: "home_card_calendario"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "NOTAS"
+      CARD_ID: "home_card_notas"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "CONTEÚDO E FREQUÊNCIA|CONTEUDO E FREQUENCIA"
+      CARD_ID: "home_card_conteudo_frequencia"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "TAREFAS"
+      CARD_ID: "home_card_tarefas"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "OCORRÊNCIAS|OCORRENCIAS"
+      CARD_ID: "home_card_ocorrencias"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "MEUS ALUNOS"
+      CARD_ID: "home_card_meus_alunos"
 
 - runFlow:
     file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml

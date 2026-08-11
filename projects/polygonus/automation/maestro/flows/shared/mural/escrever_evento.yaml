@@ -13,8 +13,40 @@ appId: br.com.polygonus.mobile.amostra
     timeout: 10000
 
 # Título do evento (campo acima do toggle Dia inteiro)
+# Semantics: mural_evento_titulo
 - runFlow:
     when:
+      visible:
+        id: "mural_evento_titulo"
+    commands:
+      - tapOn:
+          id: "mural_evento_titulo"
+      - eraseText
+      - evalScript: |
+          ${(() => {
+            var t = "";
+            try {
+              if (typeof TITULO_EVENTO !== "undefined" && TITULO_EVENTO && String(TITULO_EVENTO) !== "undefined") {
+                t = String(TITULO_EVENTO).trim();
+              }
+            } catch (e) {}
+            if (!t) {
+              try {
+                if (typeof TEXTO_COMUNICADO !== "undefined" && TEXTO_COMUNICADO) {
+                  t = String(TEXTO_COMUNICADO).trim();
+                }
+              } catch (e) {}
+            }
+            output.tituloEvento = t || "Evento";
+          })()}
+      - inputText: ${output.tituloEvento}
+      - waitForAnimationToEnd:
+          timeout: 500
+
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_evento_titulo"
       visible: "Título do evento|Titulo do evento"
     commands:
       - tapOn: "Título do evento|Titulo do evento"

@@ -35,10 +35,33 @@ function requireAgentAuth(
 agentRouter.use(requireAgentAuth);
 
 agentRouter.post("/heartbeat", (req, res) => {
-  const body = (req.body ?? {}) as { hostname?: string; version?: string };
+  const body = (req.body ?? {}) as {
+    hostname?: string;
+    version?: string;
+    device?: {
+      ready?: boolean;
+      booting?: boolean;
+      message?: string;
+      primarySerial?: string;
+      avdName?: string;
+      devices?: Array<{ serial: string; state: string; kind: "emulator" | "physical" }>;
+    };
+  };
+  const device =
+    body.device && typeof body.device.message === "string"
+      ? {
+          ready: Boolean(body.device.ready),
+          booting: Boolean(body.device.booting),
+          message: body.device.message,
+          primarySerial: body.device.primarySerial,
+          avdName: body.device.avdName,
+          devices: Array.isArray(body.device.devices) ? body.device.devices : [],
+        }
+      : undefined;
   touchAgent({
     hostname: body.hostname?.trim() || os.hostname(),
     version: body.version?.trim(),
+    device,
   });
   res.json({
     ok: true,

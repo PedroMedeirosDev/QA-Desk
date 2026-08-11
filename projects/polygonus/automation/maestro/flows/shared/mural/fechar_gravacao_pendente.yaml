@@ -1,5 +1,6 @@
 # Descarta rascunho ao sair do composer (diálogo "Gravação Pendente").
 # Só o título do dialog — textos genéricos geram falso "Sim" na lista.
+# Semantics: shared_dialog_sim
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -7,6 +8,4 @@ appId: br.com.polygonus.mobile.amostra
     when:
       visible: "Gravação Pendente"
     commands:
-      - tapOn: "Sim"
-      - waitForAnimationToEnd:
-          timeout: 500
+      - runFlow: ../helpers/tap_dialog_sim.yaml

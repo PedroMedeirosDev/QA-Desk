@@ -7,4 +7,4 @@ appId: br.com.polygonus.mobile.amostra
     file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
     env:
       FILTRO_EXTRAS: "Sexo"
-      TEXTO_COMUNICADO: "Teste filtro Sexo"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste filtro Sexo"

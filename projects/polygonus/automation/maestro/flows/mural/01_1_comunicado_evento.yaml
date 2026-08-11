@@ -10,7 +10,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/composer_novo_evento.yaml
     env:
-      TEXTO_COMUNICADO: "Evento Padrao"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Evento Padrao"
       TITULO_EVENTO: "Evento Padrao"
       DIA_INTEIRO: "0"
 

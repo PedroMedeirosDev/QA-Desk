@@ -153,9 +153,9 @@ Grade bem próxima da do Coordenador (sem o segundo Atendimento). Críticos de r
 
 Lista canônica + ids sugeridos + **bloco copiar/colar**: [`automation/maestro/flows/docs/SEMANTICS_SUGESTOES.md`](automation/maestro/flows/docs/SEMANTICS_SUGESTOES.md).
 
-Resumo: só `home_card_mural` e `home_card_chat` estáveis na home (APP); restante dos tiles da regressão ainda sem id.
+Resumo: home `home_card_*` mapeados no tip `2125500d` (v6.06.14) — smokes `regressao_menus_*.yaml` usam `CARD_ID`. Cardápio custom ainda pode ser slug/`texto`.
 
-**WEB:** smoke Playwright confirma Flutter via iframe, mas CanvasKit não expõe DOM/a11y utilizável (probe: `semantics≈1`, `body=""`). Pedido aos devs: Semantics no Flutter web **+** completar `home_card_*` (mesma tabela do doc).
+**WEB:** revalidar a11y no iframe após `ensureSemantics()`; espelho Playwright ainda pendente de prova na amostra.
 
 ---
 

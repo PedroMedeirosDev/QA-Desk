@@ -6,4 +6,4 @@ appId: br.com.polygonus.mobile.amostra
     file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
     env:
       FILTRO_EXTRAS: "Situação|Situacao"
-      TEXTO_COMUNICADO: "Teste filtro Situação Transferido"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste filtro Situação Transferido"

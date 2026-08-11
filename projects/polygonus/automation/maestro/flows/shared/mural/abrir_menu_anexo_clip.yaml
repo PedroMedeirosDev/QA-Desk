@@ -8,9 +8,7 @@ appId: br.com.polygonus.mobile.amostra
     when:
       visible: "Gravação Pendente|As últimas alterações"
     commands:
-      - tapOn: "Não|Nao"
-      - waitForAnimationToEnd:
-          timeout: 500
+      - runFlow: ../helpers/tap_dialog_nao.yaml
 - tapOn:
     id: mural_composer_anexo
 

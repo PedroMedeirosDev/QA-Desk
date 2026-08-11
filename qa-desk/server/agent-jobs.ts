@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ProjectSlug } from "./types.js";
 import type { AutomationRunner } from "./automation-runners.js";
 
@@ -49,30 +52,80 @@ export type AgentJob = {
   appVersion?: string;
 };
 
+/** Snapshot de device enviado no heartbeat do agente (adb no PC). */
+export type AgentDeviceSnapshot = {
+  ready: boolean;
+  booting: boolean;
+  message: string;
+  primarySerial?: string;
+  avdName?: string;
+  devices?: Array<{ serial: string; state: string; kind: "emulator" | "physical" }>;
+};
+
 export type AgentPresence = {
   lastSeenAt: number;
   hostname?: string;
   version?: string;
+  device?: AgentDeviceSnapshot;
 };
 
-const AGENT_ONLINE_MS = 45_000;
+/** TTL folgado: heartbeat ~10–15s; blips de rede / job longo não pintam offline. */
+const AGENT_ONLINE_MS = 120_000;
 const MAX_LOG_CHARS = 512_000;
 
 const jobs = new Map<string, AgentJob>();
 const queue: string[] = [];
 let presence: AgentPresence | null = null;
 
+const PRESENCE_FILE = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../data/agent-presence.json",
+);
+
 function clipLog(text: string): string {
   if (text.length <= MAX_LOG_CHARS) return text;
   return text.slice(-MAX_LOG_CHARS);
 }
 
-export function touchAgent(meta?: { hostname?: string; version?: string }): void {
+function persistPresence(): void {
+  if (!presence) return;
+  try {
+    fs.mkdirSync(path.dirname(PRESENCE_FILE), { recursive: true });
+    fs.writeFileSync(PRESENCE_FILE, JSON.stringify(presence), "utf8");
+  } catch {
+    /* disco cheio / permissão — presença em memória segue */
+  }
+}
+
+function loadPersistedPresence(): void {
+  try {
+    if (!fs.existsSync(PRESENCE_FILE)) return;
+    const raw = JSON.parse(fs.readFileSync(PRESENCE_FILE, "utf8")) as AgentPresence;
+    if (
+      typeof raw?.lastSeenAt === "number" &&
+      Date.now() - raw.lastSeenAt < AGENT_ONLINE_MS
+    ) {
+      presence = raw;
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+loadPersistedPresence();
+
+export function touchAgent(meta?: {
+  hostname?: string;
+  version?: string;
+  device?: AgentDeviceSnapshot;
+}): void {
   presence = {
     lastSeenAt: Date.now(),
     hostname: meta?.hostname ?? presence?.hostname,
     version: meta?.version ?? presence?.version,
+    device: meta?.device ?? presence?.device,
   };
+  persistPresence();
 }
 
 export function isAgentOnline(): boolean {
@@ -85,6 +138,7 @@ export function getAgentPresence(): {
   hostname?: string;
   version?: string;
   lastSeenAt?: string;
+  device?: AgentDeviceSnapshot;
 } {
   if (!presence) return { online: false };
   return {
@@ -92,6 +146,7 @@ export function getAgentPresence(): {
     hostname: presence.hostname,
     version: presence.version,
     lastSeenAt: new Date(presence.lastSeenAt).toISOString(),
+    device: presence.device,
   };
 }
 

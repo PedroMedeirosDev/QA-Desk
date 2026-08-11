@@ -90,7 +90,22 @@ appId: br.com.polygonus.mobile.amostra
     visible: "Compartilhar anexos|Salvar anexos"
     timeout: 8000
 
-- tapOn: "Compartilhar anexos"
+- runFlow:
+    when:
+      visible:
+        id: "mural_card_compartilhar_anexos"
+    commands:
+      - tapOn:
+          id: "mural_card_compartilhar_anexos"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_card_compartilhar_anexos"
+      visible: "Compartilhar anexos"
+    commands:
+      - tapOn: "Compartilhar anexos"
+
 - waitForAnimationToEnd:
     timeout: 500
 - runFlow:

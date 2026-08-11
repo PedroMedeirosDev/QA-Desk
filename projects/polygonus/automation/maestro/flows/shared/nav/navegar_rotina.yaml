@@ -1,10 +1,25 @@
 # Subflow: home → Mural → aba Rotina
 # Pré-requisito: usuário logado na home
+# Semantics: mural_tab_rotina
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow:
     file: navegar_mural.yaml
 
-- tapOn: "Rotina"
+- runFlow:
+    when:
+      visible:
+        id: "mural_tab_rotina"
+    commands:
+      - tapOn:
+          id: "mural_tab_rotina"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_tab_rotina"
+    commands:
+      - tapOn: "Rotina"
+
 - assertVisible: "Rotina"

@@ -15,7 +15,19 @@ appId: br.com.polygonus.mobile.amostra
       FILTRO_EXTRAS: "Pagantes|Pagante"
 
 - runFlow: ../shared/mural/abrir_filtro_extras_composer.yaml
-- tapOn: "Limpar filtro|Limpar"
+- runFlow:
+    when:
+      visible:
+        id: "mural_composer_filtro_limpar"
+    commands:
+      - tapOn:
+          id: "mural_composer_filtro_limpar"
+- runFlow:
+    when:
+      notVisible:
+        id: "mural_composer_filtro_limpar"
+    commands:
+      - tapOn: "Limpar filtro|Limpar"
 - waitForAnimationToEnd:
     timeout: 500
 - extendedWaitUntil:
@@ -25,7 +37,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/escrever_comunicado.yaml
     env:
-      TEXTO_COMUNICADO: "Teste filtro Limpar filtro"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste filtro Limpar filtro"
 
 - runFlow: ../shared/mural/enviar_comunicado.yaml
 

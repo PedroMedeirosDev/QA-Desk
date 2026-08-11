@@ -129,16 +129,22 @@ automationRouter.get("/specs", (req, res) => {
 automationRouter.get("/device", async (_req, res) => {
   if (!localAutomationEnabled()) {
     const agent = getAgentPresence();
+    const snap = agent.device;
     return res.json({
-      ready: false,
-      devices: [],
-      avdName: process.env.QA_AVD_NAME?.trim() || "Medium_Phone",
-      booting: false,
-      message: agent.online
-        ? `Agente online${agent.hostname ? ` (${agent.hostname})` : ""} — use Ligar emulador`
-        : agentTokenConfigured()
-          ? "Agente offline — inicie npm run agent no PC"
-          : "Sem execução local nem agente (QA_AGENT_TOKEN)",
+      ready: Boolean(agent.online && snap?.ready),
+      devices: snap?.devices ?? [],
+      primarySerial: snap?.primarySerial,
+      avdName:
+        snap?.avdName?.trim() ||
+        process.env.QA_AVD_NAME?.trim() ||
+        "Medium_Phone",
+      booting: Boolean(agent.online && snap?.booting),
+      message: !agent.online
+        ? agentTokenConfigured()
+          ? `Agente offline${agent.hostname ? ` (último: ${agent.hostname})` : ""} — confira a janela do agente / npm run agent`
+          : "Sem execução local nem agente (QA_AGENT_TOKEN)"
+        : snap?.message ||
+          `Agente online${agent.hostname ? ` (${agent.hostname})` : ""} — aguardando status do emulador…`,
       agentOnline: agent.online,
       agentHostname: agent.hostname,
     });

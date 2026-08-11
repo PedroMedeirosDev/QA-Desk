@@ -5,6 +5,8 @@
     "test": "playwright test",
     "test:mural-dn": "playwright test mural/ajustar-dn-aniversariante.spec.ts --headed --timeout=180000",
     "test:mural-dn:headed": "playwright test mural/ajustar-dn-aniversariante.spec.ts --headed --timeout=180000",
+    "test:comunicados-smoke": "playwright test mural/smoke-comunicados-web.spec.ts --timeout=180000",
+    "test:comunicados-enviar": "playwright test mural/01-enviar-comunicado.spec.ts --timeout=240000",
     "test:ficha": "playwright test academico/ui/ficha-abrir-novo.spec.ts --headed --timeout=240000",
     "test:ficha:dados": "playwright test academico/ui/ficha-dados-principais.spec.ts --headed --timeout=300000",
     "test:ficha:matricula": "playwright test academico/ui/ficha-matricula-cascata.spec.ts --headed --timeout=420000",

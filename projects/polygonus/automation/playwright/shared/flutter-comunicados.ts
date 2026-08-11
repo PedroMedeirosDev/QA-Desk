@@ -1,18 +1,20 @@
 /**
- * Abre o app Flutter web via gestão: Comunicação → Comunicados.
+ * Flutter web via gestão: Comunicação → Comunicados.
+ * Preferir [flt-semantics-identifier] no iframe; fallback texto/clique geométrico.
  */
-import type { Frame, Page } from "@playwright/test";
+import type { FrameLocator, Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 
 const LOG = "[comunicados-web]";
 
-const FLUTTER_IFRAME =
+export const FLUTTER_IFRAME =
   'iframe[title="Flutter"], iframe[src*="/acropoly/web/flutter/"], iframe[src*="/web/flutter/"], iframe[src*="flutter"]';
 
 async function clickDom(locator: ReturnType<Page["locator"]>) {
   await locator.first().evaluate((el: HTMLElement) => el.click());
 }
 
-export function flutterFrameLocator(page: Page) {
+export function flutterFrameLocator(page: Page): FrameLocator {
   return page.frameLocator(FLUTTER_IFRAME);
 }
 
@@ -23,7 +25,6 @@ export async function abrirComunicadosNaGestao(page: Page) {
     .first()
     .waitFor({ state: "visible", timeout: 45_000 });
 
-  // Atalho: busca no menu (evita expandir árvore / overlays)
   const search = page.getByPlaceholder(/Pesquisar no menu/i).first();
   if (await search.isVisible().catch(() => false)) {
     console.log(`${LOG} buscando Comunicados no menu…`);
@@ -64,53 +65,251 @@ export async function abrirComunicadosNaGestao(page: Page) {
   await page.waitForTimeout(2_500);
 }
 
-/**
- * Tenta achar tile MURAL (ou home) no Flutter web.
- * Retorna "a11y" | "text" | "none".
- */
-export async function probeHomeFlutter(
+/** Deep search flt-semantics-identifier (incl. shadow DOM). */
+async function collectSemanticsIds(frame: FrameLocator): Promise<string[]> {
+  return frame.locator("body").evaluate((body) => {
+    const out: string[] = [];
+    const walk = (node: Node | null | undefined) => {
+      if (!node) return;
+      if (node instanceof Element) {
+        const id = node.getAttribute("flt-semantics-identifier");
+        if (id) out.push(id);
+        if (node.shadowRoot) walk(node.shadowRoot);
+        for (const child of Array.from(node.children)) walk(child);
+      }
+    };
+    walk(body);
+    const doc = body.ownerDocument;
+    if (doc?.documentElement) walk(doc.documentElement);
+    return [...new Set(out)];
+  });
+}
+
+/** Fecha modal "Continuar" (notificações) — só com texto/role visível (sem clique cego). */
+export async function dismissContinuarOverlay(
   page: Page,
-): Promise<{ mode: "a11y" | "text" | "none"; detail: string }> {
-  const frameEl = page.locator(FLUTTER_IFRAME).first();
-  const handle = await frameEl.elementHandle();
-  const frame: Frame | null = handle ? await handle.contentFrame() : null;
-  if (!frame) {
-    return { mode: "none", detail: "iframe sem contentFrame" };
+  frame?: FrameLocator,
+): Promise<void> {
+  const app = frame ?? flutterFrameLocator(page);
+  const candidates = [
+    app.getByRole("button", { name: /continuar/i }),
+    app.getByText(/^Continuar$/i),
+    page.getByRole("button", { name: /continuar/i }),
+    page.getByText(/^Continuar$/i),
+  ];
+  for (const loc of candidates) {
+    if (await loc.first().isVisible({ timeout: 1_200 }).catch(() => false)) {
+      await loc.first().click({ force: true, timeout: 5_000 }).catch(() => undefined);
+      await page.waitForTimeout(600);
+      return;
+    }
+  }
+}
+
+/** Fecha overlay de comunicado / viewer (X) que tapa a home. */
+export async function dismissFlutterCloseOverlay(
+  page: Page,
+  frame?: FrameLocator,
+  opts?: { geometric?: boolean },
+): Promise<void> {
+  const app = frame ?? flutterFrameLocator(page);
+  const closers = [
+    app.locator('[flt-semantics-identifier*="fechar"]'),
+    app.locator('[aria-label*="Fechar" i]'),
+    app.getByRole("button", { name: /fechar|close/i }),
+  ];
+  for (const loc of closers) {
+    if (await loc.first().isVisible({ timeout: 600 }).catch(() => false)) {
+      await loc.first().click({ force: true }).catch(() => undefined);
+      await page.waitForTimeout(500);
+      return;
+    }
+  }
+  if (!opts?.geometric) return;
+  // X do viewer costuma ficar no canto superior esquerdo do iframe
+  const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + 28, box.y + 28);
+    await page.waitForTimeout(500);
+  }
+}
+
+export async function tapFlutterSemId(
+  page: Page,
+  identifier: string,
+): Promise<boolean> {
+  const frame = flutterFrameLocator(page);
+  const selectors = [
+    `[flt-semantics-identifier="${identifier}"]`,
+    `flt-semantics-host [flt-semantics-identifier="${identifier}"]`,
+  ];
+  for (const sel of selectors) {
+    const loc = frame.locator(sel).first();
+    if (await loc.isVisible({ timeout: 1_200 }).catch(() => false)) {
+      await loc.click({ force: true, timeout: 8_000 });
+      return true;
+    }
+  }
+  return frame.locator("body").evaluate((body, id) => {
+    const find = (node: Node | null | undefined): Element | null => {
+      if (!node) return null;
+      if (node instanceof Element) {
+        if (node.getAttribute("flt-semantics-identifier") === id) return node;
+        if (node.shadowRoot) {
+          const inShadow = find(node.shadowRoot);
+          if (inShadow) return inShadow;
+        }
+        for (const child of Array.from(node.children)) {
+          const found = find(child);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    const el = find(body) || find(body.ownerDocument?.documentElement);
+    if (!el) return false;
+    (el as HTMLElement).click();
+    return true;
+  }, identifier);
+}
+
+export async function openMuralFromHome(page: Page): Promise<void> {
+  const frame = flutterFrameLocator(page);
+  if (await tapFlutterSemId(page, "home_card_mural")) {
+    await page.waitForTimeout(1_000);
+    return;
+  }
+  const byText = frame.getByText(/^MURAL$/i).first();
+  if (await byText.isVisible({ timeout: 2_500 }).catch(() => false)) {
+    await byText.click({ force: true });
+    await page.waitForTimeout(1_200);
+    return;
+  }
+  const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+  if (box) {
+    // 1º card da grade (MURAL) — canto superior esquerdo da área útil
+    await page.mouse.click(box.x + box.width * 0.18, box.y + box.height * 0.42);
+    await page.waitForTimeout(1_200);
+  }
+}
+
+export type MuralProbe = {
+  mode: "semantics" | "text" | "shell" | "none";
+  detail: string;
+  sampleIds: string[];
+};
+
+/**
+ * Probe: espera flt-semantics-identifier no iframe (como no DevTools).
+ * Não faz clique cego no centro (abria comunicado e zerava a home).
+ */
+export async function probeMuralFlutter(page: Page): Promise<MuralProbe> {
+  const frame = flutterFrameLocator(page);
+  await expect(page.locator(FLUTTER_IFRAME).first()).toBeAttached({
+    timeout: 90_000,
+  });
+
+  await page.waitForTimeout(2_500);
+  await dismissContinuarOverlay(page, frame);
+  await dismissFlutterCloseOverlay(page, frame);
+
+  let sampleIds: string[] = [];
+  let triedGeometricClose = false;
+
+  await expect
+    .poll(
+      async () => {
+        await dismissContinuarOverlay(page, frame);
+        const viaLocator = await frame
+          .locator("[flt-semantics-identifier]")
+          .count()
+          .catch(() => 0);
+        try {
+          sampleIds = await collectSemanticsIds(frame);
+        } catch {
+          sampleIds = [];
+        }
+        if (viaLocator > 0) {
+          sampleIds = await frame
+            .locator("[flt-semantics-identifier]")
+            .evaluateAll((els) =>
+              els
+                .map((el) => el.getAttribute("flt-semantics-identifier") || "")
+                .filter(Boolean),
+            )
+            .catch(() => sampleIds);
+        }
+        if (sampleIds.length === 0 && !triedGeometricClose) {
+          triedGeometricClose = true;
+          await dismissFlutterCloseOverlay(page, frame, { geometric: true });
+        }
+        return sampleIds.length;
+      },
+      {
+        timeout: 45_000,
+        intervals: [1_000, 2_000, 3_000],
+        message: "flt-semantics-identifier não apareceu no iframe Flutter",
+      },
+    )
+    .toBeGreaterThan(0)
+    .catch(() => undefined);
+
+  if (sampleIds.length > 0) {
+    const useful = sampleIds.some(
+      (id) =>
+        id.startsWith("mural_") ||
+        id.startsWith("home_card_") ||
+        id.startsWith("home_menu_"),
+    );
+    return {
+      mode: "semantics",
+      detail: `ids(${sampleIds.length})=${sampleIds.slice(0, 12).join(",")}${useful ? "" : " (sem home/mural)"}`,
+      sampleIds,
+    };
   }
 
-  // Aguarda engine
-  await frame.waitForTimeout(4_000);
-
-  const semantics = frame.locator(
-    "flt-semantics, [flt-semantics-identifier], [aria-label]",
-  );
-  const semCount = await semantics.count().catch(() => 0);
-
-  const byRole = frame.getByRole("button", { name: /MURAL/i });
-  if (await byRole.first().isVisible({ timeout: 8_000 }).catch(() => false)) {
-    return { mode: "a11y", detail: `role button MURAL (semantics~${semCount})` };
+  const byText = frame.getByText(/MURAL|COMUNICADO|Escrever|Selecionar aluno/i).first();
+  if (await byText.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    return {
+      mode: "text",
+      detail: `texto visível (semantics=0)`,
+      sampleIds,
+    };
   }
 
-  const byLabel = frame.getByLabel(/MURAL/i);
-  if (await byLabel.first().isVisible({ timeout: 3_000 }).catch(() => false)) {
-    return { mode: "a11y", detail: `label MURAL (semantics~${semCount})` };
+  const hasShell =
+    (await frame.locator("flutter-view, flt-glass-pane, canvas").count().catch(() => 0)) >
+    0;
+  const bodyLen = await frame
+    .locator("body")
+    .innerText()
+    .then((t) => t.trim().length)
+    .catch(() => 0);
+
+  if (hasShell) {
+    return {
+      mode: "shell",
+      detail: `Flutter canvas ok, sem a11y/texto (semantics=0; bodyLen=${bodyLen})`,
+      sampleIds,
+    };
   }
 
-  const byText = frame.getByText(/MURAL/i);
-  if (await byText.first().isVisible({ timeout: 3_000 }).catch(() => false)) {
-    return { mode: "text", detail: `texto MURAL (semantics~${semCount})` };
-  }
-
-  const bodyText = await frame.locator("body").innerText().catch(() => "");
-  const snap = bodyText.slice(0, 200).replace(/\s+/g, " ");
-  const canvases = await frame.locator("canvas, flt-glass-pane, flutter-view").count().catch(() => 0);
   return {
     mode: "none",
-    detail: `sem MURAL no DOM (semantics=${semCount}; canvases/flt=${canvases}; body="${snap}")`,
+    detail: `iframe sem Flutter útil (semantics=0; bodyLen=${bodyLen})`,
+    sampleIds,
   };
 }
 
-/** Clica um menu da home Flutter por nome (se a11y permitir). */
+/** @deprecated alias — smoke antigo */
+export async function probeHomeFlutter(page: Page) {
+  const p = await probeMuralFlutter(page);
+  return {
+    mode: p.mode === "shell" ? ("none" as const) : p.mode === "semantics" ? ("a11y" as const) : p.mode,
+    detail: p.detail,
+  };
+}
+
 export async function tapMenuFlutterSeVisivel(
   page: Page,
   nome: RegExp,
@@ -127,4 +326,42 @@ export async function tapMenuFlutterSeVisivel(
   await tile.click();
   await page.waitForTimeout(1_500);
   return true;
+}
+
+/**
+ * Smoke action: filtro / FAB escrever no Mural.
+ * Retorna o id tocado ou "fallback" / null.
+ */
+export async function tapMuralAcaoSmoke(page: Page): Promise<string | null> {
+  const frame = flutterFrameLocator(page);
+  await dismissContinuarOverlay(page, frame);
+  await dismissFlutterCloseOverlay(page, frame);
+
+  // Home → Mural se ainda não estiver no feed
+  const idsHome = await collectSemanticsIds(frame).catch(() => [] as string[]);
+  if (
+    idsHome.some((id) => id.startsWith("home_card_") || id.startsWith("home_menu_")) &&
+    !idsHome.some((id) => id.startsWith("mural_"))
+  ) {
+    await openMuralFromHome(page);
+    await page.waitForTimeout(1_000);
+  }
+
+  const ids = [
+    "mural_acao_escrever_comunicado",
+    "mural_boom_fab",
+    "mural_filtro_sentido",
+    "home_card_mural",
+  ];
+  for (const id of ids) {
+    if (await tapFlutterSemId(page, id)) return id;
+  }
+
+  const byText = frame.getByText(/Escrever|Novo comunicado|\+/i).first();
+  if (await byText.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await byText.click({ force: true });
+    return "text";
+  }
+
+  return null;
 }

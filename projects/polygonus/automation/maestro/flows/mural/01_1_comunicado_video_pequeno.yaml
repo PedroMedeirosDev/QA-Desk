@@ -12,7 +12,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/composer_novo_comunicado.yaml
     env:
-      TEXTO_COMUNICADO: "Teste Comunicado video"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste Comunicado video"
 
 - runFlow:
     file: ../shared/mural/anexar_arquivo_por_nome.yaml

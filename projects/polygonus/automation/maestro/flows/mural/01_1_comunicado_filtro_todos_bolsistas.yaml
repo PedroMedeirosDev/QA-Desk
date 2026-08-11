@@ -7,4 +7,4 @@ appId: br.com.polygonus.mobile.amostra
     file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
     env:
       FILTRO_EXTRAS: "Bolsistas todos|Todos os bolsistas|Bolsistas Todos"
-      TEXTO_COMUNICADO: "Teste filtro Bolsistas todos"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste filtro Bolsistas todos"

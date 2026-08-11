@@ -14,7 +14,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/composer_novo_comunicado.yaml
     env:
-      TEXTO_COMUNICADO: "Teste Comunicado foto"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste Comunicado foto"
 
 - runFlow: ../shared/mural/adicionar_foto_galeria.yaml
 - runFlow: ../shared/mural/enviar_comunicado.yaml
