@@ -123,7 +123,7 @@ export function sanitizeVisitorTestRecord(report: TestRecord): TestRecord {
     recordType: report.recordType,
     title: report.title,
     // Bugs: description = citação do chamado (operacional) — fora do portfólio
-    description: isBug ? undefined : report.description,
+    description: isBug ? "" : (report.description ?? ""),
     preconditions: report.preconditions,
     steps: report.steps,
     stepsDetailed: report.stepsDetailed?.map((s) => ({

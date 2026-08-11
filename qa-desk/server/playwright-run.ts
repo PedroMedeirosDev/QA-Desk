@@ -230,7 +230,8 @@ export function findLatestPlaywrightFailureScreenshot(
   const resultsDir = path.join(underRoot, "test-results");
   if (!fs.existsSync(resultsDir)) return null;
 
-  let best: { abs: string; mtime: number } | null = null;
+  let bestAbs: string | null = null;
+  let bestMtime = -1;
 
   const walk = (dir: string) => {
     let entries: fs.Dirent[];
@@ -240,17 +241,20 @@ export function findLatestPlaywrightFailureScreenshot(
       return;
     }
     for (const entry of entries) {
-      const abs = path.join(dir, entry.name);
+      const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        walk(abs);
+        walk(full);
         continue;
       }
       if (!entry.isFile()) continue;
       const lower = entry.name.toLowerCase();
       if (!lower.startsWith("test-failed") || !lower.endsWith(".png")) continue;
       try {
-        const mtime = fs.statSync(abs).mtimeMs;
-        if (!best || mtime > best.mtime) best = { abs, mtime };
+        const mtime = fs.statSync(full).mtimeMs;
+        if (mtime > bestMtime) {
+          bestMtime = mtime;
+          bestAbs = full;
+        }
       } catch {
         /* ignore */
       }
@@ -258,5 +262,5 @@ export function findLatestPlaywrightFailureScreenshot(
   };
 
   walk(resultsDir);
-  return best?.abs ?? null;
+  return bestAbs;
 }

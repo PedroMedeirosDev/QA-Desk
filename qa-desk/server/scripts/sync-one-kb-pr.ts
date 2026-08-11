@@ -18,8 +18,12 @@ if (!Number.isFinite(prNumber) || prNumber <= 0) {
 }
 
 const catalog = await readKbCurationCatalog(project);
+const repository =
+  catalog.meta.repository?.trim() ||
+  process.env.KB_GITHUB_REPO?.trim() ||
+  "polygonus-br/polygonus-suporte-kb";
 const result = await syncSingleKbPullRequest(
-  catalog.meta.repository,
+  repository,
   catalog.pullRequests,
   prNumber,
   { actor: "sync-one-kb-pr", project },

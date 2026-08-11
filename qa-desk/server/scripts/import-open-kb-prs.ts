@@ -13,8 +13,12 @@ const project = "polygonus" as const;
 
 const catalog = await readKbCurationCatalog(project);
 const before = catalog.pullRequests.length;
+const repository =
+  catalog.meta.repository?.trim() ||
+  process.env.KB_GITHUB_REPO?.trim() ||
+  "polygonus-br/polygonus-suporte-kb";
 const result = await syncTrackedKbPullRequests(
-  catalog.meta.repository,
+  repository,
   catalog.pullRequests,
   { importOpen: true },
 );

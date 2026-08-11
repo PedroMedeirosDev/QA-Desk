@@ -14,10 +14,15 @@ apiSuiteRouter.use(attachUser);
 apiSuiteRouter.use(rejectVisitorMutations);
 apiSuiteRouter.use(requireAdmin);
 
+function projectSlugFrom(req: { params: Record<string, string | string[] | undefined> }) {
+  const raw = req.params.slug;
+  return assertProject(String(Array.isArray(raw) ? raw[0] : (raw ?? "")));
+}
+
 /** Suites disponíveis só para o projeto da rota. */
 apiSuiteRouter.get("/", (req, res) => {
   try {
-    const slug = assertProject(req.params.slug);
+    const slug = projectSlugFrom(req);
     const suites = suitesForProject(slug).map((m) => getSuiteStatus(m.id));
     res.json({ suites });
   } catch (e) {
@@ -27,9 +32,9 @@ apiSuiteRouter.get("/", (req, res) => {
 
 apiSuiteRouter.get("/:suiteId", (req, res) => {
   try {
-    assertProject(req.params.slug);
+    const slug = projectSlugFrom(req);
     const suiteId = String(req.params.suiteId);
-    const allowed = suitesForProject(String(req.params.slug)).some((s) => s.id === suiteId);
+    const allowed = suitesForProject(slug).some((s) => s.id === suiteId);
     if (!allowed) {
       res.status(404).json({ error: "Suite não disponível neste projeto" });
       return;
@@ -42,9 +47,9 @@ apiSuiteRouter.get("/:suiteId", (req, res) => {
 
 apiSuiteRouter.post("/:suiteId/run", async (req, res) => {
   try {
-    assertProject(req.params.slug);
+    const slug = projectSlugFrom(req);
     const suiteId = String(req.params.suiteId);
-    const allowed = suitesForProject(String(req.params.slug)).some((s) => s.id === suiteId);
+    const allowed = suitesForProject(slug).some((s) => s.id === suiteId);
     if (!allowed) {
       res.status(404).json({ error: "Suite não disponível neste projeto" });
       return;

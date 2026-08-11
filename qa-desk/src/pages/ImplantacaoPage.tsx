@@ -214,7 +214,7 @@ export function ImplantacaoPage({
                 <button
                   type="button"
                   disabled={savingMeta || !metaTitle.trim()}
-                  className={cn(actionBtnBase, actionBtn.primary)}
+                  className={cn(actionBtnBase, actionBtn.save)}
                   onClick={() => void saveMeta()}
                 >
                   Salvar
@@ -260,7 +260,7 @@ export function ImplantacaoPage({
         </div>
         <button
           type="button"
-          className={cn(actionBtnBase, actionBtn.primary)}
+          className={cn(actionBtnBase, actionBtn.save)}
           onClick={() => setShowAdd((v) => !v)}
         >
           <Plus className="size-4" />
@@ -387,7 +387,7 @@ export function ImplantacaoPage({
             <button
               type="button"
               disabled={saving}
-              className={cn(actionBtnBase, actionBtn.primary)}
+              className={cn(actionBtnBase, actionBtn.save)}
               onClick={() => void addRequisito()}
             >
               Salvar requisito

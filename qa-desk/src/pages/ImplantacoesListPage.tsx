@@ -68,7 +68,7 @@ export function ImplantacoesListPage({ project }: { project: ProjectSlug }) {
         </div>
         <button
           type="button"
-          className={cn(actionBtnBase, actionBtn.primary)}
+          className={cn(actionBtnBase, actionBtn.save)}
           onClick={() => setShowCreate((v) => !v)}
         >
           <Plus className="size-4" />
@@ -109,7 +109,7 @@ export function ImplantacoesListPage({ project }: { project: ProjectSlug }) {
             <button
               type="button"
               disabled={creating || !title.trim()}
-              className={cn(actionBtnBase, actionBtn.primary)}
+              className={cn(actionBtnBase, actionBtn.save)}
               onClick={() => void createTipo()}
             >
               Criar
