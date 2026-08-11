@@ -56,7 +56,8 @@ export interface KbCurationCatalog {
     version: string;
     updatedAt: string;
     project: ProjectSlug;
-    repository: string;
+    /** Presente no catálogo Polygonus; omitido em desk/anihype. */
+    repository?: string;
   };
   pullRequests: KbCurationRecord[];
 }

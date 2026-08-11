@@ -1,4 +1,4 @@
-import type { DetailedStep } from "@/lib/detailed-steps";
+import type { DetailedStep } from "../lib/detailed-steps";
 
 export type ProjectSlug = "polygonus" | "anihype" | "desk";
 

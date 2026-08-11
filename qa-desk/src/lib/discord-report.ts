@@ -148,7 +148,12 @@ export function formatDiscordReport(
 
 export async function copyDiscordReport(text: string): Promise<boolean> {
   try {
-    await navigator.clipboard.writeText(text);
+    const nav = globalThis as typeof globalThis & {
+      navigator?: { clipboard?: { writeText: (value: string) => Promise<void> } };
+    };
+    const clip = nav.navigator?.clipboard;
+    if (!clip?.writeText) return false;
+    await clip.writeText(text);
     return true;
   } catch {
     return false;

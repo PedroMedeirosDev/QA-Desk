@@ -144,7 +144,10 @@ kbCurationRouter.get("/stream", (req, res) => {
 kbCurationRouter.post("/sync", requireAdmin, async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const catalog = await readKbCurationCatalog(project);
-  const repository = catalog.meta.repository;
+  const repository =
+    catalog.meta.repository?.trim() ||
+    process.env.KB_GITHUB_REPO?.trim() ||
+    "polygonus-br/polygonus-suporte-kb";
   try {
     const result = await syncTrackedKbPullRequests(
       repository,

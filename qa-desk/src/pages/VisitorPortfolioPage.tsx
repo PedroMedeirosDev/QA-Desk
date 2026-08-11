@@ -17,6 +17,7 @@ import {
   displayStatus,
   formatRecordId,
   inferChannel,
+  type ProjectSlug,
   type TestRecord,
 } from "@/types/test-record";
 
@@ -25,18 +26,25 @@ import {
  * de perfil ativo em preparação. Com conteúdo, lista o que está marcado.
  */
 export function VisitorPortfolioPage() {
-  const { project } = useActiveProject();
+  const { project, activeProject } = useActiveProject();
+  const slug = (activeProject ?? project?.slug) as ProjectSlug | undefined;
   const [reports, setReports] = useState<TestRecord[]>([]);
   const [portfolioCardCount, setPortfolioCardCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!slug) {
+      setReports([]);
+      setPortfolioCardCount(0);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     Promise.all([
-      api.listTests(project).catch(() => ({ reports: [] as TestRecord[] })),
-      api.listPortfolioDailySummaries(project).catch(() => ({ cards: [] })),
+      api.listTests(slug).catch(() => ({ reports: [] as TestRecord[] })),
+      api.listPortfolioDailySummaries(slug).catch(() => ({ cards: [] })),
     ])
       .then(([catalog, portfolio]) => {
         if (cancelled) return;
@@ -49,7 +57,7 @@ export function VisitorPortfolioPage() {
     return () => {
       cancelled = true;
     };
-  }, [project]);
+  }, [slug]);
 
   const hasPublicContent = reports.length > 0 || portfolioCardCount > 0;
 
@@ -117,7 +125,7 @@ export function VisitorPortfolioPage() {
         <BrandLogo size="sm" className="text-foreground opacity-80" />
       </div>
 
-      {portfolioCardCount > 0 && <DailySummaryPanel project={project} />}
+      {slug && portfolioCardCount > 0 && <DailySummaryPanel project={slug} />}
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
