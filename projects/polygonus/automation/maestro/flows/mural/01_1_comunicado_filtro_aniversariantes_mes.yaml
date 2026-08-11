@@ -8,4 +8,4 @@ appId: br.com.polygonus.mobile.amostra
     file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
     env:
       FILTRO_EXTRAS: "Aniversariantes do mês|Aniversariantes do mes|Aniversariante do mês"
-      TEXTO_COMUNICADO: "Teste filtro Aniversariantes do mês"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste filtro Aniversariantes do mês"

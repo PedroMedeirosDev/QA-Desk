@@ -24,7 +24,7 @@ appId: br.com.polygonus.mobile.amostra
 - assertVisible: "FAZER LOGIN"
 - assertVisible: "RECUPERAR ACESSO POR EMAIL"
 
-- tapOn: "FAZER LOGIN"
+- runFlow: ../shared/helpers/tap_fazer_login.yaml
 
 - assertVisible: "ENTRAR"
 - assertVisible: "E-mail ou Login"

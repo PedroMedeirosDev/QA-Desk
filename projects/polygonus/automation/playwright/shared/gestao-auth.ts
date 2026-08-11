@@ -30,9 +30,16 @@ export function loadPlaywrightDotEnv(fromDir: string) {
   }
 }
 
-export const GESTAO_URL =
-  process.env.PLAYWRIGHT_GESTAO_URL?.trim() ||
-  "https://amostra.polygonus.com.br:8443/web/react/gestao";
+/** Default Acadêmico/Ficha = amostra CQ (:8443). App Flutter WEB usa URL sem porta. */
+export function resolveGestaoUrl(): string {
+  return (
+    process.env.PLAYWRIGHT_GESTAO_URL?.trim() ||
+    "https://amostra.polygonus.com.br:8443/web/react/gestao"
+  );
+}
+
+/** Snapshot no import — preferir resolveGestaoUrl() se o .env for carregado depois. */
+export const GESTAO_URL = resolveGestaoUrl();
 
 /** Lidos na hora da chamada (permite setar LOGIN_PHJESUS no .env antes do login). */
 export function resolveGestaoLogin(): string {
@@ -67,11 +74,11 @@ export const UNIDADE = resolveGestaoUnidade();
 export const WEB_BUILD_MARKER = "[qa-desk] web-build:";
 
 /** basePath Next = /web/react → ficha em /web/react/academico/alunos/novo */
-export function fichaNovoAlunoUrl(gestaoUrl = GESTAO_URL): string {
+export function fichaNovoAlunoUrl(gestaoUrl = resolveGestaoUrl()): string {
   return gestaoUrl.replace(/\/gestao\/?$/, "/academico/alunos/novo");
 }
 
-export function gestaoLoginUrl(gestaoUrl = GESTAO_URL): string {
+export function gestaoLoginUrl(gestaoUrl = resolveGestaoUrl()): string {
   const base = gestaoUrl.replace(/\/+$/, "");
   if (/\/gestao\/login$/i.test(base)) return base;
   if (/\/gestao$/i.test(base)) return `${base}/login`;

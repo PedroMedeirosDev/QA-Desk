@@ -8,4 +8,4 @@ appId: br.com.polygonus.mobile.amostra
     file: ../shared/mural/publicar_comunicado_filtro_extras.yaml
     env:
       FILTRO_EXTRAS: "Pagantes|Pagante"
-      TEXTO_COMUNICADO: "Teste filtro Pagantes"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste filtro Pagantes"

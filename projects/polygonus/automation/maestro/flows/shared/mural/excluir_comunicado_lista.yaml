@@ -25,6 +25,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: tap_acao_menu_card.yaml
     env:
+      MENU_ACAO_ID: "mural_card_excluir"
       MENU_ACAO: "Excluir"
 
 - runFlow: confirmar_exclusao_comunicado.yaml

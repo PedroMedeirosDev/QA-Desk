@@ -84,7 +84,7 @@ appId: br.com.polygonus.mobile.amostra
                   - waitForAnimationToEnd:
                       timeout: 500
             - extendedWaitUntil:
-                visible: "Sair"
+                visible: "Sair|home_menu_sair"
                 timeout: 8000
             # Item Sair (Semantics home_menu_sair; fallback texto)
             - runFlow:
@@ -101,8 +101,18 @@ appId: br.com.polygonus.mobile.amostra
                   visible: "Sair"
                 commands:
                   - tapOn: "Sair"
+            # Diálogo confirmar sair
             - runFlow:
                 when:
+                  visible:
+                    id: "home_dialog_sair_confirmar"
+                commands:
+                  - tapOn:
+                      id: "home_dialog_sair_confirmar"
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "home_dialog_sair_confirmar"
                   visible: "Tem certeza que deseja sair do aplicativo?"
                 commands:
                   - tapOn: "Sair"

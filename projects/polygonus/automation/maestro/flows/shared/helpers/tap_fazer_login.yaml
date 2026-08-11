@@ -1,0 +1,22 @@
+# Toca FAZER LOGIN (semantics auth_login_fazer_login; fallback texto).
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible:
+        id: "auth_login_fazer_login"
+    commands:
+      - tapOn:
+          id: "auth_login_fazer_login"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "auth_login_fazer_login"
+      visible: "FAZER LOGIN"
+    commands:
+      - tapOn: "FAZER LOGIN"
+
+- waitForAnimationToEnd:
+    timeout: 500

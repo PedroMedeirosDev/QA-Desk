@@ -1,4 +1,5 @@
 # Confirma dialog de exclusão (polyConfirmDialog → Sim / Não).
+# Semantics: shared_dialog_sim
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -6,6 +7,4 @@ appId: br.com.polygonus.mobile.amostra
     visible: "Sim|Tem certeza|deseja excluir"
     timeout: 8000
 
-- tapOn: "Sim"
-- waitForAnimationToEnd:
-    timeout: 500
+- runFlow: ../helpers/tap_dialog_sim.yaml

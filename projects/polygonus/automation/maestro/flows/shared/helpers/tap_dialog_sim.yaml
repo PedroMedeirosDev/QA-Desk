@@ -1,0 +1,22 @@
+# Confirma diálogo poly (Sim). Semantics: shared_dialog_sim.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible:
+        id: "shared_dialog_sim"
+    commands:
+      - tapOn:
+          id: "shared_dialog_sim"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "shared_dialog_sim"
+      visible: "Sim"
+    commands:
+      - tapOn: "Sim"
+
+- waitForAnimationToEnd:
+    timeout: 500

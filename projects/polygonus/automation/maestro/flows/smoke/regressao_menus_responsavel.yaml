@@ -1,5 +1,6 @@
 # Smoke regressão — home Responsável (ETMENEZES).
 # Abre cada menu in-scope e volta. Fora: Aula Online, Chegando.
+# Requer APK ≥ 6.06.14 (semantics home_card_*).
 #
 # cwd: projects/polygonus/automation/maestro
 # maestro test flows/smoke/regressao_menus_responsavel.yaml -e LOGIN_ETMENEZES=... -e SENHA=...
@@ -8,49 +9,48 @@ appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow: ../shared/auth/resume_etmenezes_responsavel.yaml
 
-# Mural — usa id do card
 - runFlow: ../shared/nav/navegar_mural.yaml
 - runFlow: ../shared/auth/teardown_estavel_sessao.yaml
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "CALENDÁRIO|CALENDARIO"
+      CARD_ID: "home_card_calendario"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "BOLETIM ONLINE|BOLETIM"
+      CARD_ID: "home_card_boletim"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "NOTAS PARCIAIS"
+      CARD_ID: "home_card_notas_parciais"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "MENSALIDADE"
+      CARD_ID: "home_card_mensalidade"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "CONTEÚDO LECIONADO|CONTEUDO LECIONADO"
+      CARD_ID: "home_card_conteudo_lecionado"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: ".*FREQU.*ALUNO.*"
+      CARD_ID: "home_card_frequencia_aluno"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "MEUS DOCUMENTOS|.*DOCUMENTOS.*"
+      CARD_ID: "home_card_meus_documentos"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "HORÁRIO|HORARIO"
+      CARD_ID: "home_card_horario"
 
 - runFlow:
     file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
@@ -58,24 +58,23 @@ appId: br.com.polygonus.mobile.amostra
       CARD_ID: "home_card_chat"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "TAREFAS PARA CASA"
-
-# Truncamento UI: rótulo pode aparecer como AVALIAÇÃO DO...
-- runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
-    env:
-      CARD_HOME: "AVALIAÇÃO DO.*|AVALIACAO DO.*"
+      CARD_ID: "home_card_tarefas_casa"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "AVALIAÇÃO DE HABILIDADES|AVALIACAO DE HABILIDADES"
+      CARD_ID: "home_card_avaliacao_conhecimento"
 
 - runFlow:
-    file: ../shared/nav/smoke_abrir_voltar_menu.yaml
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
     env:
-      CARD_HOME: "NOTAS FISCAIS"
+      CARD_ID: "home_card_avaliacao_habilidades"
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
+    env:
+      CARD_ID: "home_card_notas_fiscais"
 
 - runFlow: ../shared/auth/teardown_estavel_sessao.yaml

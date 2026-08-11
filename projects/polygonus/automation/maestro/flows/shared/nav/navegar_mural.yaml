@@ -33,6 +33,14 @@ appId: br.com.polygonus.mobile.amostra
       - runFlow: dismiss_coachmarks_pular.yaml
 
 # Aba Mural (bottom) — evita ficar na aba Rotina com cards Vestimenta/Humor
+- runFlow:
+    when:
+      visible:
+        id: "mural_tab_mural"
+    commands:
+      - tapOn:
+          id: "mural_tab_mural"
+          optional: true
 - tapOn:
     text: "Mural | Tab 1 of 2"
     optional: true

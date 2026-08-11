@@ -67,7 +67,21 @@ appId: br.com.polygonus.mobile.amostra
     visible: "Perfil"
     timeout: 8000
 
-- tapOn: "Perfil"
+- runFlow:
+    when:
+      visible:
+        id: "home_menu_perfil"
+    commands:
+      - tapOn:
+          id: "home_menu_perfil"
+
+- runFlow:
+    when:
+      notVisible:
+        id: "home_menu_perfil"
+      visible: "Perfil"
+    commands:
+      - tapOn: "Perfil"
 
 - extendedWaitUntil:
     visible: ".*Unidade.*|SUPORTE|COORDENADOR|PROFESSORES|Versão.*"

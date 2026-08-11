@@ -29,7 +29,7 @@ appId: br.com.polygonus.mobile.amostra
     when:
       visible: "FAZER LOGIN"
     commands:
-      - tapOn: "FAZER LOGIN"
+      - runFlow: ../helpers/tap_fazer_login.yaml
 
 - runFlow:
     when:

@@ -10,7 +10,7 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/composer_novo_comunicado.yaml
     env:
-      TEXTO_COMUNICADO: "Teste Comunicado enquete"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste Comunicado enquete"
 
 - runFlow: ../shared/mural/adicionar_enquete_nova.yaml
 - runFlow: ../shared/mural/enviar_comunicado.yaml

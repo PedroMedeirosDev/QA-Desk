@@ -1,24 +1,53 @@
 # Subflow: toca card na home.
-# Env: CARD_HOME — texto do card (ex.: CONTEÚDO E FREQUÊNCIA) ou .*MURAL.*
 #
-# Semantics: home_card_mural quando o destino é o Mural.
+# Env (preferência):
+#   CARD_ID — semantics (ex. home_card_calendario)
+# Fallback:
+#   CARD_HOME — texto/regex (ex. CONTEÚDO E FREQUÊNCIA)
+#
+# Sem CARD_ID e sem CARD_HOME: tenta home_card_mural.
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - runFlow:
     when:
-      visible:
-        id: "home_card_mural"
+      true: ${(CARD_ID || "").length > 0}
     commands:
+      - scrollUntilVisible:
+          element:
+            id: ${CARD_ID}
+          direction: DOWN
+          timeout: 15000
+          speed: 60
+          visibilityPercentage: 30
+          centerElement: true
+          optional: true
       - tapOn:
-          id: "home_card_mural"
+          id: ${CARD_ID}
 
 - runFlow:
     when:
-      notVisible:
-        id: "home_card_mural"
+      true: ${((CARD_ID || "").length == 0) && ((CARD_HOME || "").length > 0)}
     commands:
       - tapOn: ${CARD_HOME}
+
+- runFlow:
+    when:
+      true: ${((CARD_ID || "").length == 0) && ((CARD_HOME || "").length == 0)}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "home_card_mural"
+          commands:
+            - tapOn:
+                id: "home_card_mural"
+      - runFlow:
+          when:
+            notVisible:
+              id: "home_card_mural"
+          commands:
+            - tapOn: ".*MURAL.*"
 
 - waitForAnimationToEnd:
     timeout: 500

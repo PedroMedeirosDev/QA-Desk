@@ -13,6 +13,6 @@ appId: br.com.polygonus.mobile.amostra
 - runFlow:
     file: ../shared/mural/publicar_comunicado_texto.yaml
     env:
-      TEXTO_COMUNICADO: "Teste Comunicado"
+      TEXTO_COMUNICADO: "Teste Maestro Emulador - Teste Comunicado"
 
 - runFlow: ../shared/mural/filtrar_enviadas.yaml
