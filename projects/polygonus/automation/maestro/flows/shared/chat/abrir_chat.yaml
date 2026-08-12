@@ -1,0 +1,61 @@
+# Abre Atendimento novo e permanece na tela (não volta).
+# Env opcional: nenhum — usa home_card_chat
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../nav/dismiss_coachmarks_pular.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "home_card_mural"
+    timeout: 15000
+
+- repeat:
+    times: 2
+    commands:
+      - swipe:
+          start: "50%, 35%"
+          end: "50%, 75%"
+          duration: 400
+      - waitForAnimationToEnd:
+          timeout: 300
+
+- scrollUntilVisible:
+    element:
+      id: "home_card_chat"
+    direction: DOWN
+    timeout: 20000
+    speed: 60
+    visibilityPercentage: 30
+    centerElement: true
+
+- tapOn:
+    id: "home_card_chat"
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- extendedWaitUntil:
+    notVisible:
+      id: "home_card_mural"
+    timeout: 20000
+
+# Build ≥ 6.06.23 — lista ou composer do chat novo
+- runFlow:
+    when:
+      visible:
+        id: "chat_lista_fab_nova"
+    commands:
+      - assertVisible:
+          id: "chat_lista_fab_nova"
+- runFlow:
+    when:
+      notVisible:
+        id: "chat_lista_fab_nova"
+      visible:
+        id: "chat_input_texto"
+    commands:
+      - assertVisible:
+          id: "chat_input_texto"
+
+- assertNotVisible: "ENTRAR"

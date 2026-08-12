@@ -11,11 +11,11 @@ appId: br.com.polygonus.mobile.amostra
     env:
       ROTINA_BOOM_ID: "rotina_boom_banheiro"
       ROTINA_BOOM_TEXTO: "Banheiro"
-      TITULO_ROTINA: "Banheiro|Nova"
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
 
 - runFlow:
     file: ../shared/rotina/rotina_preencher_enviar.yaml
     env:
-      TITULO_ROTINA: "Banheiro|Turma|Aluno"
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
       TURMA_ROTINA: "${TURMA_ROTINA}"
       ALUNO_ROTINA: "${ALUNO_ROTINA}"

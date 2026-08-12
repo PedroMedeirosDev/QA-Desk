@@ -1,0 +1,38 @@
+# CT-CHAT-05 · Vídeo/galeria — Atendimento novo
+# Build ≥ 6.06.23: chat_anexo_galeria (camera = chat_anexo_camera, só !kIsWeb)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/chat/setup_coordenador_chat.yaml
+
+- runFlow:
+    when:
+      visible:
+        id: "chat_input_anexo"
+    commands:
+      - tapOn:
+          id: "chat_input_anexo"
+      - waitForAnimationToEnd:
+          timeout: 1500
+
+- runFlow:
+    when:
+      visible:
+        id: "chat_anexo_galeria"
+    commands:
+      - tapOn:
+          id: "chat_anexo_galeria"
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+- runFlow:
+    when:
+      notVisible:
+        id: "chat_anexo_galeria"
+      visible:
+        id: "chat_input_camera"
+    commands:
+      - tapOn:
+          id: "chat_input_camera"
+      - waitForAnimationToEnd:
+          timeout: 3000

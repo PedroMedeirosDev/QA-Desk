@@ -2,7 +2,8 @@
 # Assinatura: "Teste Maestro Emulador - …"
 #
 # Pré: PHJESUS coordenador; TURMA_ROTINA / ALUNO_ROTINA no .env
-# Semantics: mural_tab_rotina, rotina_boom_fab, rotina_boom_alimentacao
+# Build ≥ 6.06.23: rotina_boom_* + rotina_composer_turma/aluno/termo/ok/enviar
+# Filtro aba Rotina: rotina_filtro_sentido (não mural_filtro_sentido)
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -12,12 +13,12 @@ appId: br.com.polygonus.mobile.amostra
     file: ../shared/rotina/abrir_tipo_rotina.yaml
     env:
       ROTINA_BOOM_ID: "rotina_boom_alimentacao"
-      ROTINA_BOOM_TEXTO: "Alimentação|Alimentacao"
-      TITULO_ROTINA: "Alimentação|Alimentacao|Nova"
+      ROTINA_BOOM_TEXTO: "Alimentacao|Registre"
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
 
 - runFlow:
     file: ../shared/rotina/rotina_preencher_enviar.yaml
     env:
-      TITULO_ROTINA: "Alimentação|Alimentacao|Turma|Aluno"
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
       TURMA_ROTINA: "${TURMA_ROTINA}"
       ALUNO_ROTINA: "${ALUNO_ROTINA}"

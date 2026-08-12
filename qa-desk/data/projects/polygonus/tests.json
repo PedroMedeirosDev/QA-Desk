@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-08-05",
+    "updatedAt": "2026-08-11",
     "project": "polygonus"
   },
   "reports": [
@@ -34,7 +34,7 @@
         "playwright": {
           "specPath": "projects/polygonus/automation/playwright/academico/ui/ficha-e2e-novo-aluno.spec.ts",
           "headed": true,
-        "readiness": "draft"
+          "readiness": "draft"
         }
       },
       "tags": [
@@ -92,7 +92,7 @@
         "playwright": {
           "specPath": "projects/polygonus/automation/playwright/academico/ui/ficha-matricula-cascata.spec.ts",
           "headed": true,
-        "readiness": "draft"
+          "readiness": "draft"
         }
       },
       "tags": [
@@ -199,7 +199,7 @@
         "playwright": {
           "specPath": "projects/polygonus/automation/playwright/academico/ui/ficha-dados-principais.spec.ts",
           "headed": true,
-        "readiness": "draft"
+          "readiness": "draft"
         }
       },
       "tags": [
@@ -244,7 +244,7 @@
         "Voltar à lista e ler o carimbo “há …” no card"
       ],
       "title": "Comunicado exibe horário errado no Mural (“há 3h”)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "homologado",
       "channel": "app",
       "history": [
@@ -295,7 +295,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:CRUD",
         "ct:CRUD-01"
       ],
@@ -307,7 +307,7 @@
         "Teardown estável (home autenticada)"
       ],
       "title": "CRUD-01 · Enviar comunicado (texto)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -582,7 +582,7 @@
           "meta": {
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)"
@@ -592,7 +592,7 @@
           "meta": {
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)"
@@ -602,7 +602,7 @@
           "meta": {
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)"
@@ -856,7 +856,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Filtro Enviadas → confirmar na lista (visão coordenador)",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Filtro Enviadas → confirmar na lista (visão coordenador) · Ação: Recebidos\" is visible · Flow: filtrar_enviadas.yaml"
@@ -920,7 +920,7 @@
             "failedStepIndex": 1,
             "failedStepLabel": "Abrir o Mural e enviar: Teste Comunicado",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Abrir o Mural e enviar: Teste Comunicado"
@@ -942,7 +942,7 @@
             "failedStepIndex": 0,
             "failedStepLabel": "Retomar sessão PHJESUS → Perfil → garantir função Coordenador",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Retomar sessão PHJESUS → Perfil → garantir função Coordenador · Ação: Assert that \"Perfil\" is visible · Flow: setup_coordenador_mural.yaml"
@@ -1371,7 +1371,7 @@
             "appVersion": "6.06.03 (60603)",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603)"
@@ -1402,7 +1402,7 @@
           "at": "2026-07-25T02:08:51.295Z",
           "meta": {
             "testKey": "mural/crud-01",
-      "homologationId": "HOM-2026-001",
+            "homologationId": "HOM-2026-001",
             "previousTestKey": "mural/crud-01",
             "homologationSlug": "mural-backend-homologacao"
           },
@@ -1466,7 +1466,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:CRUD",
         "ct:CRUD-02"
       ],
@@ -1479,7 +1479,7 @@
         "Teardown estável (home autenticada)"
       ],
       "title": "CRUD-02 · Editar comunicado",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -1510,7 +1510,7 @@
           "meta": {
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)"
@@ -1520,7 +1520,7 @@
           "meta": {
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)"
@@ -1530,7 +1530,7 @@
           "meta": {
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — vinculado à Homologação Mural (backend)"
@@ -1562,7 +1562,7 @@
             "failedStepIndex": 3,
             "failedStepLabel": "Localizar Teste Comunicado",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601) · Passo: Localizar Teste Comunicado · Ação: Assert that \"Recebidas|Enviados|Enviadas|Pendentes|Aprovadas\" is visible · Flow: editar_comunicado_lista.yaml"
@@ -1578,7 +1578,7 @@
             "runNumber": 3,
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend)"
@@ -1600,7 +1600,7 @@
             "failedStepIndex": 3,
             "failedStepLabel": "Localizar Teste Comunicado",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601) · Passo: Localizar Teste Comunicado · Ação: Assert that \"${TEXTO}\" is visible · Flow: editar_comunicado_lista.yaml"
@@ -1622,7 +1622,7 @@
             "failedStepIndex": 3,
             "failedStepLabel": "Localizar Teste Comunicado",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601) · Passo: Localizar Teste Comunicado · Ação: Assert that \"${TEXTO}\" is visible · Flow: editar_comunicado_lista.yaml"
@@ -1639,7 +1639,7 @@
             "appVersion": "6.06.01 (60601)",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)"
@@ -1656,7 +1656,7 @@
             "appVersion": "6.06.01 (60601)",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)"
@@ -1677,7 +1677,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Abrir o Mural e o filtro Enviadas",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Abrir o Mural e o filtro Enviadas"
@@ -1700,7 +1700,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Capturar o ID do comunicado mais recente",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Capturar o ID do comunicado mais recente · Ação: Copy text from element with \"ID [0-9]+\", Index: 0 · Flow: editar_comunicado_lista.yaml"
@@ -1723,7 +1723,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Capturar o ID do comunicado mais recente",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Capturar o ID do comunicado mais recente · Ação: Assert that ${output.idComunicado.length > 3} is true · Flow: editar_comunicado_lista.yaml"
@@ -1746,7 +1746,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Capturar o ID do comunicado mais recente",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Capturar o ID do comunicado mais recente · Ação: Assert that ${output.idComunicado.length > 3} is true · Flow: editar_comunicado_lista.yaml"
@@ -1769,7 +1769,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Capturar o ID do comunicado mais recente",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Capturar o ID do comunicado mais recente · Ação: Assert that ${output.idComunicado.length > 3} is true · Flow: editar_comunicado_lista.yaml"
@@ -1817,7 +1817,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Capturar o ID do comunicado mais recente",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Capturar o ID do comunicado mais recente"
@@ -1839,7 +1839,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Capturar o ID do comunicado mais recente",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Capturar o ID do comunicado mais recente · Ação: Assert that ${(output.idComunicado || \"\").length > 3} is true"
@@ -1861,7 +1861,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "Capturar o ID do comunicado mais recente",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: Capturar o ID do comunicado mais recente · Ação: Assert that ${(output.idComunicado || \"\").length > 3} is true"
@@ -1911,7 +1911,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "3 - Capturar o ID do comunicado mais recente.",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: 3 - Capturar o ID do comunicado mais recente. · Ação: Assert that ${(output.idComunicado || \"\").length > 3} is true"
@@ -1933,7 +1933,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "3 - Capturar o ID do comunicado mais recente.",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: 3 - Capturar o ID do comunicado mais recente. · Ação: Assert that ${(output.idComunicado || \"\").length > 3} is true"
@@ -1955,7 +1955,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "3 - Capturar o ID do comunicado mais recente.",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: 3 - Capturar o ID do comunicado mais recente. · Ação: Assert that ${(output.idComunicado || \"\").length > 3} is true"
@@ -1973,7 +1973,7 @@
             "appVersion": "6.06.03 (60603)",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603)"
@@ -1992,7 +1992,7 @@
             "errorSummary": "Flow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\Jesus",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603)"
@@ -2011,7 +2011,7 @@
             "errorSummary": "Flow path does not exist: C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\projects\\polygonus\\automation\\maestro\\flows\\9083330",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603)"
@@ -2034,7 +2034,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "3 - Capturar o ID do comunicado mais recente.",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: 3 - Capturar o ID do comunicado mais recente. · Ação: Assert that \"${output.idAssert}\" is visible · Flow: editar_comunicado_lista.yaml"
@@ -2057,7 +2057,7 @@
             "failedStepIndex": 0,
             "failedStepLabel": "1 - Retomar sessão PHJESUS → Perfil → garantir função Coordenador.",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: 1 - Retomar sessão PHJESUS → Perfil → garantir função Coordenador. · Ação: Assert that \"Perfil\" is visible · Flow: setup_coordenador_mural.yaml"
@@ -2080,7 +2080,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "3 - Capturar o ID do comunicado mais recente.",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: 3 - Capturar o ID do comunicado mais recente. · Ação: Assert that \"${TEXTO}\" is visible · Flow: editar_comunicado_lista.yaml"
@@ -2103,7 +2103,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "3 - Capturar o ID do comunicado mais recente.",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: 3 - Capturar o ID do comunicado mais recente. · Ação: assertTopCardMatches · Flow: _run_editar (adb post-check)"
@@ -2126,7 +2126,7 @@
             "failedStepIndex": 2,
             "failedStepLabel": "3 - Capturar o ID do comunicado mais recente.",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.03 (60603) · Passo: 3 - Capturar o ID do comunicado mais recente. · Ação: Tap on \"Selecionar tudo|Select all|Select All\" · Flow: editar_comunicado_lista.yaml"
@@ -2174,8 +2174,8 @@
         {
           "at": "2026-07-25T02:08:51.295Z",
           "meta": {
-      "testKey": "mural/crud-02",
-      "homologationId": "HOM-2026-001",
+            "testKey": "mural/crud-02",
+            "homologationId": "HOM-2026-001",
             "previousTestKey": "mural/crud-02",
             "homologationSlug": "mural-backend-homologacao"
           },
@@ -2239,7 +2239,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:CRUD",
         "ct:CRUD-03"
       ],
@@ -2253,7 +2253,7 @@
         "Teardown estável (home autenticada)"
       ],
       "title": "CRUD-03 · Excluir comunicado",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -2556,7 +2556,7 @@
             "appVersion": "6.06.01 (60601)",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)"
@@ -2572,7 +2572,7 @@
           "meta": {
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — campos do CT atualizados (Homologação Mural (backend))"
@@ -2584,7 +2584,7 @@
             "homologationId": "HOM-2026-001",
             "previousTestKey": "mural/crud-03",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — campos do CT atualizados (Homologação Mural (backend))"
@@ -2657,7 +2657,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Enquete",
         "ct:ENQUETE-01"
       ],
@@ -2668,7 +2668,7 @@
         "qa-desk: adb captura ID → assert por ID → teardown"
       ],
       "title": "ENQUETE-01 · Comunicado com enquete Nova",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -2799,7 +2799,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Anexos",
         "ct:ANEXO-01"
       ],
@@ -2810,7 +2810,7 @@
         "Menu ⋮ → Compartilhar anexos → Back se sheet abrir → teardown"
       ],
       "title": "ANEXO-01 · Foto da galeria",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -2826,7 +2826,7 @@
             "appVersion": "6.06.01 (60601)",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)"
@@ -2843,7 +2843,7 @@
             "appVersion": "6.06.01 (60601)",
             "homologationId": "HOM-2026-001",
             "homologationSlug": "mural-backend-homologacao"
-        },
+          },
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Homologação: Homologação Mural (backend) · App 6.06.01 (60601)"
@@ -2948,7 +2948,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Anexos",
         "ct:ANEXO-02"
       ],
@@ -2957,7 +2957,7 @@
         "qa-desk: adb ID → assert → ETMENEZES → assert mesmo ID → teardown"
       ],
       "title": "ANEXO-02 · PDF",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -3089,7 +3089,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Anexos",
         "ct:ANEXO-03"
       ],
@@ -3098,7 +3098,7 @@
         "qa-desk: adb ID → assert → ETMENEZES → assert mesmo ID → teardown"
       ],
       "title": "ANEXO-03 · Vídeo pequeno",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -3230,7 +3230,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Eventos",
         "ct:EVENTO-01"
       ],
@@ -3240,7 +3240,7 @@
         "Título/texto: Evento Padrao → enviar → Enviadas"
       ],
       "title": "EVENTO-01 · Padrão (com horário)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -3372,7 +3372,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Lista",
         "ct:LISTA-01"
       ],
@@ -3381,7 +3381,7 @@
         "Tocar em Enviadas e confirmar o filtro ativo"
       ],
       "title": "LISTA-01 · Filtro Enviadas (rascunho)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -3513,7 +3513,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:E2E",
         "ct:E2E-99",
         "deferred:batch"
@@ -3524,7 +3524,7 @@
         "Editar → Excluir → teardown"
       ],
       "title": "E2E-99 · Mural completo (adiado)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -3626,7 +3626,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Boleto",
         "ct:BOLETO-01"
       ],
@@ -3636,7 +3636,7 @@
         "qa-desk: adb ID → assert em Enviadas → teardown"
       ],
       "title": "BOLETO-01 · Inadimplentes / mês corrente",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -3728,7 +3728,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Boleto",
         "ct:BOLETO-02"
       ],
@@ -3738,7 +3738,7 @@
         "qa-desk: adb ID → assert em Enviadas → teardown"
       ],
       "title": "BOLETO-02 · Inadimplentes / competência 01",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -3830,7 +3830,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Correspondencia",
         "ct:CORRESP-01"
       ],
@@ -3839,7 +3839,7 @@
         "qa-desk: adb ID → assert → ETMENEZES → assert mesmo ID → teardown"
       ],
       "title": "CORRESP-01 · Declaração IR",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -3931,7 +3931,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Eventos",
         "ct:EVENTO-02"
       ],
@@ -3941,7 +3941,7 @@
         "Título/texto: Evento Dia Inteiro → enviar → Enviadas"
       ],
       "title": "EVENTO-02 · Dia inteiro",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4033,7 +4033,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-01"
       ],
@@ -4042,7 +4042,7 @@
         "Texto → enviar → Enviadas → adb ID → ETMENEZES → assert ID"
       ],
       "title": "FILTRO-01 · Inadimplentes (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4134,7 +4134,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-02"
       ],
@@ -4144,7 +4144,7 @@
         "Logout → ANIVERSARI → assert ID"
       ],
       "title": "FILTRO-02 · Aniversariantes do dia (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4241,7 +4241,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-03"
       ],
@@ -4250,7 +4250,7 @@
         "Logout → RBBARBOSA → assert ID"
       ],
       "title": "FILTRO-03 · Bolsistas 100% (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4342,7 +4342,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-04"
       ],
@@ -4351,7 +4351,7 @@
         "Logout → PLLIMA → assert ID"
       ],
       "title": "FILTRO-04 · Bolsistas 50% (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4443,7 +4443,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-05"
       ],
@@ -4452,7 +4452,7 @@
         "Assert ID em RBBARBOSA e PLLIMA"
       ],
       "title": "FILTRO-05 · Bolsistas todos (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4544,7 +4544,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-06"
       ],
@@ -4553,7 +4553,7 @@
         "Logout → PLLIMA → assert ID (RBBARBOSA não deve ver)"
       ],
       "title": "FILTRO-06 · Pagantes (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4645,7 +4645,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-07"
       ],
@@ -4653,7 +4653,7 @@
         "Funil → Situação → Transferido → enviar → Enviadas"
       ],
       "title": "FILTRO-07 · Situação Transferido (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4745,7 +4745,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-08"
       ],
@@ -4754,7 +4754,7 @@
         "Repetir Feminino com os mesmos logins invertidos"
       ],
       "title": "FILTRO-08 · Sexo (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4846,7 +4846,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-09"
       ],
@@ -4856,7 +4856,7 @@
         "Logout → ANIVERSARI → assert ID"
       ],
       "title": "FILTRO-09 · Aniversariantes do mês (envio)",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [
@@ -4953,7 +4953,7 @@
         "homologacao",
         "mural",
         "mural-backend-homologacao",
-        "module:Mural",
+        "module:Comunicados",
         "suite:Filtros",
         "ct:FILTRO-10"
       ],
@@ -4961,7 +4961,7 @@
         "Funil → Pagantes → funil → Limpar filtro → enviar → Enviadas"
       ],
       "title": "FILTRO-10 · Limpar filtro",
-      "module": "Mural",
+      "module": "Comunicados",
       "status": "rascunho",
       "channel": "app",
       "history": [

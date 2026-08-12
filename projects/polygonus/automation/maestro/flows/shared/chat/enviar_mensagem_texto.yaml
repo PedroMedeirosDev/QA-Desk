@@ -1,0 +1,48 @@
+# Stub → happy path texto (Atendimento novo).
+# Build ≥ 6.06.22: chat_input_texto; enviar = chat_input_enviar_ou_mic
+# (mantido — decisão do time). Anexos: chat_anexo_documento | _galeria | _camera
+# (camera só !kIsWeb no bottom-sheet).
+#
+# Env: CHAT_TEXTO
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible:
+        id: "chat_input_texto"
+    commands:
+      - tapOn:
+          id: "chat_input_texto"
+      - inputText: "${CHAT_TEXTO}"
+      - runFlow:
+          when:
+            visible:
+              id: "chat_input_enviar_ou_mic"
+          commands:
+            - tapOn:
+                id: "chat_input_enviar_ou_mic"
+      - runFlow:
+          when:
+            notVisible:
+              id: "chat_input_enviar_ou_mic"
+            visible:
+              id: "chat_input_enviar"
+          commands:
+            - tapOn:
+                id: "chat_input_enviar"
+      - waitForAnimationToEnd:
+          timeout: 2000
+
+# Fallback texto (flaky) — só se o id ainda não existir
+- runFlow:
+    when:
+      notVisible:
+        id: "chat_input_texto"
+      visible: "Escreva|Digite|Mensagem|Enviar"
+    commands:
+      - tapOn: "Escreva|Digite|Mensagem"
+      - inputText: "${CHAT_TEXTO}"
+      - tapOn: "Enviar"
+      - waitForAnimationToEnd:
+          timeout: 2000

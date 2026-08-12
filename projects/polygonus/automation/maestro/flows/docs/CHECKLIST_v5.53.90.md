@@ -18,14 +18,15 @@ Legenda automação: ✅ Maestro · 🟡 parcial · 📱 manual · ⬜ falta flo
 | **3.1–3.3** | Conteúdo e frequência                                             | 🟡   | `conteudo/03_1_*.yaml`                                            |
 | **4.1**     | Tarefas (não fez)                                                 | ⬜   | `tarefas/` backlog                                                |
 | **5.1**     | Mensalidades / boleto                                             | ⬜   | `financeiro/` backlog                                             |
-| **6.1–6.2** | Fale Conosco (texto, áudio, vídeo, pdf)                           | 🟡   | `atendimento/06_1_*.yaml` — módulo `/atendimento` (não Chat novo) |
+| **6.1–6.2** | Atendimento novo / Chat (texto, áudio, vídeo, pdf)                | 🟡   | `chat/06_*.yaml` — `home_card_chat` / `lib/chat/` (não legado) |
 
 ## Ordem sugerida de implementação
 
 1. Rotina 1.2.x (subflows prontos)
 2. Conteúdo e frequência (3.x)
-3. Fale Conosco (6.x)
+3. Atendimento novo / Chat (6.x) — `chat/`
 4. Notas / Tarefas / Boletos / Diário
+5. Fale Conosco legado — fora de automação priorizada
 
 ## Rodar suíte mural + rotina
 

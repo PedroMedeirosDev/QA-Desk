@@ -1,0 +1,7 @@
+# PHJESUS coordenador + Atendimento novo aberto (home_card_chat).
+# Build ≥ 6.06.23: chat_input_* / chat_lista_* / chat_anexo_*
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../auth/resume_phjesus_coordenador.yaml
+- runFlow: abrir_chat.yaml

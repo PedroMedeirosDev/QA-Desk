@@ -1,0 +1,47 @@
+# CT-CHAT-04 · PDF / documento — Atendimento novo
+# Build ≥ 6.06.23: chat_input_anexo → chat_anexo_documento
+# DocumentsUI: picker nativo (sem Semantics)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/chat/setup_coordenador_chat.yaml
+
+- runFlow:
+    when:
+      visible:
+        id: "chat_input_anexo"
+    commands:
+      - tapOn:
+          id: "chat_input_anexo"
+      - waitForAnimationToEnd:
+          timeout: 1500
+
+- runFlow:
+    when:
+      visible:
+        id: "chat_anexo_documento"
+    commands:
+      - tapOn:
+          id: "chat_anexo_documento"
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Sem chat_input_anexo: tenta abrir via menu se já visível
+- runFlow:
+    when:
+      notVisible:
+        id: "chat_anexo_documento"
+      visible:
+        id: "chat_lista_fab_nova"
+    commands:
+      - tapOn:
+          id: "chat_lista_item_0"
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - tapOn:
+          id: "chat_input_anexo"
+          optional: true
+      - tapOn:
+          id: "chat_anexo_documento"
+          optional: true

@@ -1,0 +1,11 @@
+# SMOKE-CARDAPIO — smoke abrir/voltar menu (APK ≥ 6.06.14)
+# Fora de escopo global: Aula Online, Chegando.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../../shared/auth/resume_phjesus_coordenador.yaml
+
+- runFlow:
+    file: ../../shared/nav/smoke_abrir_voltar_menu.yaml
+    env:
+      CARD_HOME: "CARDÁPIO|CARDAPIO|.*CARD[AÁ]PIO.*"

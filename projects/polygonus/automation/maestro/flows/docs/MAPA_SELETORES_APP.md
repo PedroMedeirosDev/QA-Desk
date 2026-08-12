@@ -162,7 +162,7 @@ Módulo: `lib/agenda/` — **sem flows Maestro ainda**.
 | Grupo — integrantes | tooltip | `"Adicionar integrantes"` | ✅ |
 | Cancelar resposta | tooltip | `"Cancelar resposta"` | ✅ |
 
-Módulo: `lib/chat/` — **sem flows Maestro ainda**.
+Módulo: `lib/chat/` — flows draft em `flows/chat/` + `shared/chat/` (CTs CHAT-00…04).
 
 ---
 

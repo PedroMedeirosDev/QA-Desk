@@ -6,6 +6,7 @@ const storageState =
 export default defineConfig({
   testDir: ".",
   testMatch: ["**/*.spec.ts"],
+  testIgnore: ["**/_*.spec.ts"],
   timeout: 120_000,
   expect: { timeout: 30_000 },
   fullyParallel: false,

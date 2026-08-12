@@ -1,0 +1,11 @@
+# SMOKE-HORARIO — smoke abrir/voltar menu (APK ≥ 6.06.14)
+# Fora de escopo global: Aula Online, Chegando.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../../shared/auth/resume_etmenezes_responsavel.yaml
+
+- runFlow:
+    file: ../../shared/nav/smoke_abrir_voltar_menu_id.yaml
+    env:
+      CARD_ID: "home_card_horario"

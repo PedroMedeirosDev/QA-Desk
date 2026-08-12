@@ -7,7 +7,7 @@
  *   cd projects/polygonus/automation/playwright
  *   npx playwright test mural/01-enviar-comunicado.spec.ts
  */
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
 import path from "node:path";
 import { textoComunicadoPlaywright } from "../shared/assinatura-teste";
 import { openComunicadosSession } from "../shared/comunicados-session";
@@ -25,14 +25,14 @@ test.describe.configure({ mode: "serial", timeout: 240_000 });
 
 test("CT-MURAL-01 WEB: enviar comunicado (assinatura Playwright)", async () => {
   const { context, page } = await openComunicadosSession(ROOT, LOG);
-  const texto = textoComunicadoPlaywright("CT-MURAL-01 enviar");
+  const runId = Date.now().toString(36).slice(-6);
+  const texto = textoComunicadoPlaywright("CT-MURAL-01 enviar", { runId });
 
   try {
     console.log(`${LOG} publicando: ${texto}`);
     await publicarComunicadoTexto(page, texto);
     await filtrarEnviadas(page);
-    // Assinatura deve aparecer no card (Recebidas ou Enviadas)
-    await assertTextoNaLista(page, "Teste Playwright Chrome");
+    await assertTextoNaLista(page, `#${runId}`);
     console.log(`${LOG} ok — comunicado na lista com assinatura Playwright`);
   } finally {
     await context.close();
