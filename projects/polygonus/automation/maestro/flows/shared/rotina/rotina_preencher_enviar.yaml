@@ -1,43 +1,133 @@
 # Subflow: preenche turma/aluno/termo mínimo e envia registro de rotina
 # Env: TURMA_ROTINA (ou TURMA_TESTE), ALUNO_ROTINA, TITULO_ROTINA
+#       TERMO_ROTINA (opcional — texto do termo), OPCAO_ROTINA_ID (opcional —
+#       ex. rotina_composer_opcao_nao | rotina_composer_opcao_0)
 #
-# ATENÇÃO: perguntas do Termo vêm do servidor — ajuste taps conforme a entidade.
-# Assinatura nos textos livres: "Teste Maestro Emulador - …"
+# Build ≥ 6.06.22 — Semantics:
+#   rotina_composer_turma | _aluno | _termo | _ok (só picker Aluno) |
+#   _cancelar | _limpar | rotina_composer_opcao_<slug> | rotina_composer_enviar
+# Turma/Termo fecham no toque da opção (sem OK). Aluno multi-select → OK.
+# Opções do termo: slug do nome da escola (Não→_nao); sem nome → _opcao_0.
+# Assinatura: "Teste Maestro Emulador - …"
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - assertVisible: ${TITULO_ROTINA}
 
-# Turma
-- tapOn: "Turma"
-- tapOn: "${TURMA_ROTINA}"
-- tapOn: "OK"
-
-# Aluno (grid)
-- tapOn: "Aluno"
-- tapOn: "${ALUNO_ROTINA}"
-- tapOn: "OK"
-
-# Termo — abre lista; toca no primeiro termo visível (ajuste se necessário)
-- tapOn: "Termo"
-- tapOn:
-    index: 0
-    optional: true
+# —— Turma ——
 - runFlow:
     when:
-      visible: "OK"
+      visible:
+        id: "rotina_composer_turma"
     commands:
-      - tapOn: "OK"
+      - tapOn:
+          id: "rotina_composer_turma"
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_turma"
+    commands:
+      - tapOn: "Turma"
+- tapOn: "${TURMA_ROTINA}"
+# Sem OK em Turma (≥6.06.22) — fecha no toque; fallback OK em builds antigos
+- runFlow:
+    when:
+      visible: "OK|Ok"
+      notVisible:
+        id: "rotina_composer_ok"
+    commands:
+      - tapOn: "OK|Ok"
 
-# Respostas dinâmicas: tenta marcar primeira opção Sim/Não
-- tapOn:
-    text: "Sim"
-    optional: true
-- tapOn:
-    text: "Não"
-    optional: true
+# —— Aluno (multi-select → rotina_composer_ok) ——
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_aluno"
+    commands:
+      - tapOn:
+          id: "rotina_composer_aluno"
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_aluno"
+    commands:
+      - tapOn: "Aluno"
+- tapOn: "${ALUNO_ROTINA}"
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_ok"
+    commands:
+      - tapOn:
+          id: "rotina_composer_ok"
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_ok"
+      visible: "OK|Ok"
+    commands:
+      - tapOn: "OK|Ok"
 
-# Preferência semantics
+# —— Termo ——
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_termo"
+    commands:
+      - tapOn:
+          id: "rotina_composer_termo"
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_termo"
+    commands:
+      - tapOn: "Termo"
+- runFlow:
+    when:
+      true: ${TERMO_ROTINA != null && TERMO_ROTINA != ""}
+    commands:
+      - tapOn: "${TERMO_ROTINA}"
+- runFlow:
+    when:
+      true: ${TERMO_ROTINA == null || TERMO_ROTINA == ""}
+    commands:
+      - tapOn:
+          index: 0
+          optional: true
+- runFlow:
+    when:
+      visible: "OK|Ok"
+      notVisible:
+        id: "rotina_composer_ok"
+    commands:
+      - tapOn: "OK|Ok"
+
+# —— Opção do termo (slug escola; default tenta nao / 0 / texto) ——
+- runFlow:
+    when:
+      true: ${OPCAO_ROTINA_ID != null && OPCAO_ROTINA_ID != ""}
+    commands:
+      - tapOn:
+          id: "${OPCAO_ROTINA_ID}"
+          optional: true
+- runFlow:
+    when:
+      true: ${OPCAO_ROTINA_ID == null || OPCAO_ROTINA_ID == ""}
+    commands:
+      - tapOn:
+          id: "rotina_composer_opcao_nao"
+          optional: true
+      - tapOn:
+          id: "rotina_composer_opcao_0"
+          optional: true
+      - tapOn:
+          text: "Sim"
+          optional: true
+      - tapOn:
+          text: "Não"
+          optional: true
+
+# —— Enviar (AgendaBottomBar — todos os tipos) ——
 - tapOn:
     id: rotina_composer_enviar
     optional: true
@@ -46,5 +136,5 @@ appId: br.com.polygonus.mobile.amostra
     optional: true
 
 - extendedWaitUntil:
-    visible: "Registro criado!|Rotina"
+    visible: "Registro criado!|Rotina|rotina_lista_vazia"
     timeout: 20000

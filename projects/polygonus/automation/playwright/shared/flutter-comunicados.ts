@@ -173,6 +173,108 @@ export async function tapFlutterSemId(
   }, identifier);
 }
 
+/** Clique no menor nó com o id (evita hit-target enorme tipo card/FAB). */
+export async function tapFlutterSemIdCompact(
+  page: Page,
+  identifier: string,
+): Promise<boolean> {
+  const frame = flutterFrameLocator(page);
+  const hit = await frame.locator("body").evaluate((body, id) => {
+    let best: { x: number; y: number; w: number; h: number; area: number } | null =
+      null;
+    const walk = (node: Node | null) => {
+      if (!node) return;
+      if (node instanceof Element) {
+        if (node.getAttribute("flt-semantics-identifier") === id) {
+          const r = node.getBoundingClientRect();
+          const area = r.width * r.height;
+          if (r.width >= 16 && r.height >= 16 && area < 220_000) {
+            if (!best || area < best.area) {
+              best = { x: r.x, y: r.y, w: r.width, h: r.height, area };
+            }
+          }
+        }
+        if (node.shadowRoot) walk(node.shadowRoot);
+        for (const c of Array.from(node.children)) walk(c);
+      }
+    };
+    walk(body);
+    return best;
+  }, identifier);
+  if (!hit) return false;
+  const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+  if (!box) return false;
+  await page.mouse.click(box.x + hit.x + hit.w / 2, box.y + hit.y + hit.h / 2);
+  return true;
+}
+
+/**
+ * Tap por aria-label / texto / id no light+shadow DOM do iframe.
+ * Necessário quando o canvas Flutter pinta o rótulo sem nó getByText.
+ */
+export async function tapFlutterByAccessibleName(
+  page: Page,
+  namePattern: RegExp,
+): Promise<boolean> {
+  const iframe = page.locator(FLUTTER_IFRAME).first();
+  const handle = await iframe.elementHandle();
+  const content = handle ? await handle.contentFrame() : null;
+  if (!content) return false;
+
+  const rect = await content.evaluate(
+    ({ source, flags }) => {
+      const re = new RegExp(source, flags);
+      const walk = (node: Node | null): DOMRect | null => {
+        if (!node) return null;
+        if (node instanceof Element) {
+          const label =
+            node.getAttribute("aria-label") ||
+            node.getAttribute("flt-semantics-label") ||
+            "";
+          const id = node.getAttribute("flt-semantics-identifier") || "";
+          const text = (node as HTMLElement).innerText || node.textContent || "";
+          if (re.test(label) || re.test(id) || re.test(text)) {
+            const r = node.getBoundingClientRect();
+            if (r.width >= 4 && r.height >= 4) {
+              return {
+                x: r.x,
+                y: r.y,
+                width: r.width,
+                height: r.height,
+                top: r.top,
+                left: r.left,
+                bottom: r.bottom,
+                right: r.right,
+                toJSON: () => ({}),
+              } as DOMRect;
+            }
+          }
+          if (node.shadowRoot) {
+            const s = walk(node.shadowRoot);
+            if (s) return s;
+          }
+          for (const child of Array.from(node.children)) {
+            const f = walk(child);
+            if (f) return f;
+          }
+        }
+        return null;
+      };
+      return walk(document.body);
+    },
+    { source: namePattern.source, flags: namePattern.flags },
+  );
+
+  if (!rect) return false;
+  const box = await iframe.boundingBox();
+  if (!box) return false;
+  await page.mouse.click(
+    box.x + rect.x + rect.width / 2,
+    box.y + rect.y + rect.height / 2,
+  );
+  return true;
+}
+
 export async function openMuralFromHome(page: Page): Promise<void> {
   const frame = flutterFrameLocator(page);
   if (await tapFlutterSemId(page, "home_card_mural")) {

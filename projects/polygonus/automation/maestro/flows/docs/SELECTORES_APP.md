@@ -44,7 +44,8 @@ Exceção documentada: **`mural_composer_texto`** — hint `Escreva seu texto aq
 
 |--------------------|--------|---------|
 
-| Dropdown abaixo do nome | `TipoSentidoDropdown` | **`id: mural_filtro_sentido`** |
+| Dropdown abaixo do nome (aba **Comunicados**) | `TipoSentidoDropdown` | **`id: mural_filtro_sentido`** |
+| Dropdown sentido (aba **Rotina**, ≥ 6.06.22) | mesmo widget | **`id: rotina_filtro_sentido`** (não reusar mural_*) |
 
 | Labels | `types.dart` | `Recebidas`, `Enviadas`, `Pendentes`, … |
 

@@ -2,6 +2,7 @@
  * Bootstrap sessão WEB Comunicados (amostra produção, sem :8443).
  */
 import { expect, chromium, type BrowserContext, type Page } from "@playwright/test";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import {
   loadPlaywrightDotEnv,
@@ -15,6 +16,7 @@ import {
   abrirComunicadosNaGestao,
   probeMuralFlutter,
 } from "./flutter-comunicados";
+import { garantirPerfilCoordenador } from "./garantir-perfil-coordenador";
 
 export type ComunicadosSession = {
   context: BrowserContext;
@@ -36,6 +38,25 @@ export function prepareComunicadosEnv(playwrightRoot: string) {
   }
 }
 
+/** Windows: perfil persistente fica preso se o Chrome headed não fechou. */
+function killChromeUsingProfile(profileDir: string) {
+  if (process.platform !== "win32") return;
+  const marker = path.basename(profileDir) || "pw-comunicados";
+  const ps = `
+Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" |
+  Where-Object { $_.CommandLine -match '${marker}' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+`;
+  try {
+    execFileSync("powershell.exe", ["-NoProfile", "-Command", ps], {
+      stdio: "ignore",
+      timeout: 20_000,
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
 export function comunicadosProfileDir(playwrightRoot: string) {
   return (
     process.env.PLAYWRIGHT_CHROME_PROFILE_COMUNICADOS?.trim() ||
@@ -49,16 +70,29 @@ export async function openComunicadosSession(
 ): Promise<ComunicadosSession> {
   prepareComunicadosEnv(playwrightRoot);
   const headed = process.env.PLAYWRIGHT_HEADED !== "0";
-  const context = await chromium.launchPersistentContext(
-    comunicadosProfileDir(playwrightRoot),
-    {
-      channel: "chrome",
-      headless: !headed,
-      locale: "pt-BR",
-      viewport: { width: 1400, height: 900 },
-      args: ["--disable-blink-features=AutomationControlled"],
-    },
-  );
+  const launchOpts = {
+    channel: "chrome" as const,
+    headless: !headed,
+    locale: "pt-BR",
+    viewport: { width: 1400, height: 900 },
+    args: ["--disable-blink-features=AutomationControlled"],
+  };
+  const profile = comunicadosProfileDir(playwrightRoot);
+  let context: BrowserContext | undefined;
+  let lastErr: unknown;
+  for (let i = 0; i < 4; i++) {
+    killChromeUsingProfile(profile);
+    await new Promise((r) => setTimeout(r, 1_200));
+    try {
+      context = await chromium.launchPersistentContext(profile, launchOpts);
+      break;
+    } catch (e) {
+      lastErr = e;
+      console.log(`${log} launch retry ${i + 1}/4`);
+      await new Promise((r) => setTimeout(r, 1_500 + i * 1_000));
+    }
+  }
+  if (!context) throw lastErr;
   const page = context.pages()[0] || (await context.newPage());
   const gestaoUrl = resolveGestaoUrl();
   console.log(`${log} url=${gestaoUrl} login=${resolveGestaoLogin()} headed=${headed}`);
@@ -87,6 +121,9 @@ export async function openComunicadosSession(
     ),
     `Esperado home_card_mural ou mural_*; veio: ${probe.sampleIds.join(",")}`,
   ).toBeTruthy();
+
+  // Envio sem Coordenador cai em Pendentes (não Enviadas) — quebra CRUD WEB
+  await garantirPerfilCoordenador(page);
 
   return { context, page, log };
 }

@@ -1,10 +1,17 @@
 # Semantics — app Polygonus (Maestro / Playwright / QA)
 
-> **Sync 2026-08-10:** `polygonus-mobile` `cq` → `2125500d` (v**6.06.14**) — lote QA Semantics (Moacir).  
-> Home: mapa `cod_menuitem` → `home_card_*` (não só mural/chat). Badge separado (`*_badge` + `excludeSemantics`).  
-> Também: auth, mural (tabs/⋮/composer/evento), rotina, diário/notas, chat/atendimento, calendário, boleto, diálogos.  
+> **Sync 2026-08-11 (noite):** Playwright Comunicados WEB — perfil **COORDENADOR** obrigatório; filtro Enviadas via chip compacto; ⋮ via label **"Show menu"** (ver gap abaixo). CT-02 editar / CT-03 excluir verdes após isso.  
+>  
+> **Sync 2026-08-11 (tarde):** `polygonus-mobile` **`master`** `85e9384d` — **v6.06.23**  
+> Lote Semantics Rotina composer + filtro + Chat (ids canônicos no app; APK amostra já em 6.06.23).  
+> **Breaking:** aba Rotina usa `rotina_filtro_sentido` (não mais `mural_filtro_sentido`). Mural permanece `mural_filtro_sentido`.  
+> Flows atualizados: `selecionar_filtro_sentido` (`FILTRO_SENTIDO_ID`), `rotina_preencher_enviar`, `enviar_mensagem_texto`.  
+>  
+> **APP-02 / `BUG-2026-003`:** hit-target FAB Rotina APP WEB — **homologado**.  
+>  
+> **Sync 2026-08-10:** `cq` → `2125500d` (v**6.06.14**) — lote home `home_card_*` + mural.  
 > `SemanticsBinding.instance.ensureSemantics()` no `main.dart` — revalidar WEB.  
-> **Flows:** smokes de regressão de menu usam `smoke_abrir_voltar_menu_id.yaml` + `CARD_ID` (build ≥ 6.06.14).
+> **Flows:** smokes de menu usam `smoke_abrir_voltar_menu_id.yaml` + `CARD_ID` (build ≥ 6.06.14).
 
 ```dart
 Semantics(
@@ -17,7 +24,8 @@ Semantics(
 Maestro: `tapOn: id: "modulo_contexto_acao"`  
 Playwright (Flutter web + a11y): mesmo `identifier` / aria.
 
-**Convenção:** `{modulo}_{tela_ou_contexto}_{acao}` · snake_case · ASCII.
+**Convenção:** canônico = o que está no app (`master`). Sugestões QA antigas só como histórico.  
+**Pedido bloqueado antes:** inventar *novos* nomes de id fora do padrão do time — não o caso do ⋮ (id já existe).
 
 **Padrão nos subflows QA:** `id:` primeiro → fallback texto/coordenada só se o id não existir.
 
@@ -25,140 +33,147 @@ Playwright (Flutter web + a11y): mesmo `identifier` / aria.
 
 ---
 
-## Pedido restante aos desenvolvedores
+## Inventário entregue — Rotina + Chat (6.06.23)
 
-### Ainda aberto
+### Rotina — filtro e lista
 
-1. **WEB:** confirmar árvore a11y no iframe Flutter (amostra) — smoke Playwright `COMUNICADOS_REQUIRE_A11Y=1`.
-2. Cardápio custom da escola: hoje cai em slug (`home_card_02_15` etc.) — ideal alias estável `home_card_cardapio` se o menu for padrão.
-3. Rótulo visível completo nos tiles (ref. `BUG-2026-002` — Avaliação do Conhecimento truncada) — UI, não só semantics.
+| `identifier` | Uso |
+|--------------|-----|
+| `rotina_filtro_sentido` | Dropdown Recebidas/Enviadas na **aba Rotina** |
+| `mural_filtro_sentido` | Mesmo dropdown na **aba Comunicados** (Mural) |
+| `rotina_lista_vazia` | Estado vazio — **só assertVisible**, não tapOn |
 
-### Critério de aceite (QA)
+### Rotina — composer (`NovaRotinaPage` / legado)
 
-- Maestro: `tapOn: id: "home_card_…"` nos menus in-scope (sem depender só de texto/badge).
-- Playwright no Comunicados: localizar o mesmo tile e abrir → voltar.
-- Fora de escopo de smoke de menu: Aula Online, Chegando (ids existem, mas não priorizar na regressão).
+| `identifier` | Uso / pegadinha |
+|--------------|-----------------|
+| `rotina_composer_turma` | Abre picker Turma — fecha no toque da opção (sem OK) |
+| `rotina_composer_aluno` | Abre picker Aluno (multi-select) |
+| `rotina_composer_termo` | Abre picker Termo — fecha no toque |
+| `rotina_composer_ok` | **Só** no picker de Aluno |
+| `rotina_composer_cancelar` | Rodapé Turma/Termo |
+| `rotina_composer_limpar` | LIMPAR FILTRO no picker |
+| `rotina_composer_opcao_<slug>` | Slug do nome da escola (`Não` → `_nao`); sem nome → `_opcao_0` |
+| `rotina_composer_enviar` | Enviar — **todos** os tipos (alimentação, soneca, …) |
+| `rotina_composer_galeria` / `_camera` / `_enquete` | Bottom bar |
+
+### Rotina — boom (já existia; hit-target FAB ≥ fix APP-02)
+
+`rotina_boom_fab`, `rotina_boom_alimentacao`, `rotina_boom_soneca`, … (manter)
+
+### Chat / Atendimento novo
+
+| `identifier` | Uso |
+|--------------|-----|
+| `chat_input_texto` | Campo mensagem |
+| `chat_input_enviar_ou_mic` | Enviar / mic (mantido) |
+| `chat_input_anexo` / `chat_input_camera` | Atalhos na barra (além do menu) |
+| `chat_anexo_documento` | Menu anexo |
+| `chat_anexo_galeria` | Menu anexo |
+| `chat_anexo_camera` | Só mobile `!kIsWeb` no bottom-sheet; no popover WEB os três aparecem |
+| `chat_lista_item_<i>` | Índice 0-based; spinner “carregando mais” sem id |
+| `chat_lista_fab_nova` | FAB nova conversa |
+
+**Fora deste lote:** timeline de Ocorrências ainda pode expor `mural_filtro_sentido`; Fale Conosco legado.
 
 ---
 
-## Implementados no app (~130 estáveis + dinâmicos)
+## Pedido restante (se ainda fizer sentido)
 
-Fonte: tip `2125500d` em `polygonus-mobile` / `cq`.
+### 🟠 Mural card ⋮ — hit-target WEB (mesmo padrão APP-02)
+
+**Não é id novo.** `mural_card_menu` já existe no app (`mensagem_widget.dart` / `PopupMenuButton`).
+
+| Onde | O que a a11y mostra |
+|------|---------------------|
+| Mobile (Maestro) | `id: mural_card_menu` costuma acertar o ⋮ |
+| **WEB (Playwright)** | `mural_card_menu` ≈ **card inteiro** (~1000×153); o ⋮ real é botão **40×40** só com label Material **`Show menu`** (sem `flt-semantics-identifier`) |
+
+**Pedido aos devs (no padrão deles):** colocar `Semantics(identifier: 'mural_card_menu')` no **mesmo** widget clicável do ⋮ (`PopupMenuButton` / ícone), sem fundir no container do card — espelho da regra APP-02.
+
+**QA hoje:** Playwright usa fallback `Show menu` (ignora o do app bar, y>120). Maestro mantém `id:` + fallback texto.
+
+Opcional (já esperado nos flows): garantir `mural_card_editar` / `mural_card_excluir` nos itens do popup (Maestro já tenta `MENU_ACAO_ID`).
+
+### Rotina nova (`lib/rotina/` / timeline unificada)
+
+FAB/menu dinâmico — confirmar no dump com unidade `ind_ocor_go` se ainda falta id próprio.
+
+### Chat — completar happy path
+
+Com ids acima: ligar CTs `flows/chat/` (texto + anexo) no build 6.06.23+.
+
+**Regra de ouro:** `Semantics(identifier: …)` no **mesmo** widget clicável (APP-02).
+
+### Estratégia QA
+
+| Faça | Evite |
+|------|--------|
+| Dump/PR do app como fonte | Hardcodar sugestão antiga se o app não tiver |
+| `FILTRO_SENTIDO_ID=rotina_filtro_sentido` na aba Rotina | Tap em `mural_filtro_sentido` com as duas abas montadas |
+| Assert `rotina_lista_vazia` | `tapOn` nesse id |
+| Pedir **ajuste de hit-target** em id já canônico | Inventar nome novo tipo `mural_card_kebab` |
+
+### Critério de aceite
+
+- Maestro Rotina: `rotina_boom_fab` → tipo → `rotina_composer_*` → `rotina_composer_enviar`
+- Maestro filtro Rotina: `id: rotina_filtro_sentido`
+- Maestro Chat: `chat_input_texto` + `chat_input_enviar_ou_mic`
+- Mural Comunicados: continua `mural_filtro_sentido` / `mural_*`
+- **WEB:** `tapOn` / Playwright em `mural_card_menu` abre o popup (Editar\|Excluir) sem fallback `Show menu`
+
+---
+
+## Implementados no app
+
+Fonte tip: `master` `85e9384d` / APK amostra **6.06.23**.
 
 ### Home — `home_card_*` (por `cod_menuitem`)
 
-Mapeamento em `home_page.dart` → `_semanticsIdCard`. Item fora do mapa → `home_card_<slug>` (ex. `02.15` → `home_card_02_15`).
+Mapeamento em `home_page.dart` → `_semanticsIdCard`. Item fora do mapa → `home_card_<slug>`.
 
 | Código (ex.) | `identifier` |
 |--------------|--------------|
 | `00.02` | `home_card_mural` |
 | `00.03` | `home_card_calendario` |
-| `00.01` | `home_card_mensagens` |
-| `00.04` / `00.05` | `home_card_aula_online` / `home_card_chegando` |
-| `01.01`–`01.04`, `01.10` | `home_card_notas`, `conteudo_frequencia`, `tarefas`, `ocorrencias`, `meus_alunos` |
 | `02.10` / `02.43` | `home_card_chat` |
 | `02.08` / `02.42` | `home_card_atendimento` |
-| Resp (mapa A/B) | `boletim`, `notas_parciais`, `mensalidade`, `conteudo_lecionado`, `frequencia_aluno`, `meus_documentos`, `horario`, `tarefas_casa`, `avaliacao_conhecimento`, `avaliacao_habilidades`, `notas_fiscais`, … |
-| Badge | `${home_card_*}_badge` (nó aparte; card com `excludeSemantics`) |
 
-### Auth / header / filtros / sair
+### Mural / Rotina / Chat
 
-| `identifier` | Onde |
-|--------------|------|
-| `auth_login_usuario` / `senha` / `entrar` / `toggle_senha` / `esqueci` / `fazer_login` | login |
-| `auth_onboarding_avancar` | onboarding |
-| `home_menu_usuario` / `perfil` / `tutorial` / `sair` | header |
-| `home_dialog_sair_confirmar` / `cancelar` | diálogo sair |
-| `home_coach_pular` | coachmark |
-| `home_filtro_aplicar` / `limpar` | filtros |
-| `home_selecionar_aluno_*` / `todos` | seletor aluno |
-| `perfil_dropdown_funcao` | perfil |
+| Área | Ids |
+|------|-----|
+| Boom / tabs | `mural_boom_*`, `mural_tab_*`, `mural_filtro_sentido` |
+| Card ⋮ | `mural_card_menu` (+ `mural_card_editar` / `_excluir` quando o popup expõe) |
+| Composer mural | `mural_composer_*` |
+| Rotina boom | `rotina_boom_*` |
+| Rotina composer + filtro | `rotina_composer_*`, `rotina_filtro_sentido`, `rotina_lista_vazia` |
+| Chat | `chat_input_*`, `chat_anexo_*`, `chat_lista_*` |
 
-### Mural / composer / evento / rotina
+⚠️ `mural_composer_texto` pode colidir com enquete — preferir hint se necessário.
 
-| Grupo | IDs |
-|-------|-----|
-| Boom / tabs | `mural_boom_*`, `mural_tab_mural` / `diario` / `rotina`, `mural_bilhete_fab`, `mural_filtro_sentido` |
-| Card ⋮ | `mural_card_menu`, `editar`, `excluir`, `encaminhar`, `estatisticas`, `aprovar`, `rejeitar`, anexos, marcador… |
-| Composer | `mural_composer_*` (texto, turma, alvo, filtro, limpar, marcador, opções, galeria, camera, enquete, anexo, enviar, preview) |
-| Evento | `mural_evento_titulo`, `dia_inteiro`, `data_*`, `hora_*` |
-| Rotina boom/composer | `rotina_boom_*`, `rotina_composer_galeria` / `camera` / `enquete` / `enviar` |
-| Diálogos | `shared_dialog_sim` / `nao` |
+### Ainda aberto
 
-⚠️ Emulador antigo: `mural_composer_texto` pode colidir com enquete — preferir hint se necessário.
-
-### Chat / atendimento / diário / portal / calendário / ocorrência
-
-| Grupo | IDs (amostra) |
-|-------|----------------|
-| Chat | `chat_lista_*`, `chat_conversa_*`, `chat_selecao_*`, `chat_input_*` |
-| Atendimento | `atendimento_novo`, `atendimento_input_anexo` / `enviar` |
-| Diário / notas / conteúdo | `diario_*`, `notas_*`, `conteudo_*` (+ dinâmicos `notas_aluno_*`, `${idPre}_turma`…) |
-| Boleto | `portal_boleto_*` |
-| Calendário | `calendario_menu`, `calendario_item_*` |
-| Ocorrência | `ocorrencia_enviar` / `data` |
-
-### Flows QA
-
-| Flow | Estado |
-|------|--------|
-| `smoke/regressao_menus_*.yaml` | `CARD_ID` + `smoke_abrir_voltar_menu_id.yaml` |
-| `navegar_home_card.yaml` | Preferência `CARD_ID` → fallback `CARD_HOME` |
-| `navegar_mural` / `navegar_rotina` | `home_card_mural` + `mural_tab_*` |
-| logout / perfil / coach PULAR | `home_menu_*`, `home_dialog_sair_*`, `home_coach_pular` |
-| `tap_fazer_login` / `tap_dialog_sim` / `nao` | Helpers em `shared/helpers/` |
-| Composer mural (enviar, galeria, enquete, anexo, alvo, turma, filtro, dia inteiro, data) | Já `id:` com fallback |
-| `tap_acao_menu_card` / editar / excluir | `MENU_ACAO_ID` (`mural_card_editar` / `excluir`) |
-| `escrever_evento` | `mural_evento_titulo` |
-| `abrir_menu_compartilhar_anexos` | `mural_card_compartilhar_anexos` |
-| `01_1_comunicado_filtro_limpar` | `mural_composer_filtro_limpar` |
-| `escrever_comunicado` | Hint texto (id colide enquete no emulador) |
-| Pickers Android / DocumentsUI | Texto nativo (sem Semantics) |
-| Playwright WEB | Revalidar a11y após build amostra ≥ 6.06.14 |
-
----
-
-## Home — regressão (ids canônicos)
-
-| Perfil | Menu | `CARD_ID` | Nota |
-|--------|------|-----------|------|
-| Coord/Prof/Resp | Mural | `home_card_mural` | `navegar_mural.yaml` |
-| Coord/Prof/Resp | Atendimento (novo) | `home_card_chat` | |
-| Coord/Prof/Resp | Calendário | `home_card_calendario` | |
-| Coord/Prof | Notas | `home_card_notas` | |
-| Coord/Prof | Conteúdo e Frequência | `home_card_conteudo_frequencia` | |
-| Coord/Prof | Tarefas | `home_card_tarefas` | |
-| Coord/Prof | Ocorrências | `home_card_ocorrencias` | |
-| Coord/Prof | Meus Alunos | `home_card_meus_alunos` | |
-| Coord/Prof/Resp | Cardápio | texto ou `home_card_02_15` | Custom por escola |
-| Resp | Boletim Online | `home_card_boletim` | |
-| Resp | Notas Parciais | `home_card_notas_parciais` | |
-| Resp | Mensalidade | `home_card_mensalidade` | Conferir mapa A/B (`02.03` vs `02.31`) |
-| Resp | Conteúdo Lecionado | `home_card_conteudo_lecionado` | |
-| Resp | Frequência do Aluno | `home_card_frequencia_aluno` | |
-| Resp | Meus Documentos | `home_card_meus_documentos` | |
-| Resp | Horário | `home_card_horario` | |
-| Resp | Tarefas para Casa | `home_card_tarefas_casa` | |
-| Resp | Avaliação do Conhecimento | `home_card_avaliacao_conhecimento` | + bug truncamento UI |
-| Resp | Avaliação de Habilidades | `home_card_avaliacao_habilidades` | |
-| Resp | Notas Fiscais | `home_card_notas_fiscais` | |
-
----
+1. **WEB hit-target** `mural_card_menu` (tabela acima) — fallback `Show menu` no Playwright
+2. Rotina **nova** (timeline): confirmar Semantics no dump pós-6.06.23
+3. WEB: árvore a11y no iframe — smoke `COMUNICADOS_REQUIRE_A11Y=1` quando útil
 
 ## WEB / Playwright
 
 | Item | Estado |
 |------|--------|
-| Gestão → Comunicação → Comunicados → iframe | Smoke abertura OK |
-| `ensureSemantics()` no APP | Presente no tip — **reprobe** amostra |
-| Espelho smoke menus no WEB | Pendente validação |
-| Coordenada / visual | Não usar como regressão oficial |
-
----
+| Gestão → Comunicados → iframe | Smoke + enviar + **editar/excluir** (após COORDENADOR + `Show menu`) |
+| Perfil | `garantir-perfil-coordenador` na sessão — sem isso o envio cai em **Pendentes** |
+| Filtro sentido | Chip compacto Recebidas/Enviadas (nó `mural_filtro_sentido` é largo demais) |
+| ⋮ card | Fallback **`Show menu`** até hit-target do id no WEB |
+| Rotina composer WEB | Só `rotina_composer_enviar` na árvore; turma/aluno/termo/opção **sem id** (picker + cards canvas). CT-01 alimentação verde via label + Selecionar |
+| Chat lista WEB | Só `chat_lista_fab_nova` + switch; **sem** `chat_lista_item_0` |
+| `ensureSemantics()` | Presente — amostra 6.06.23 |
 
 ## Notas
 
-1. Build amostra / emulador: **≥ 6.06.14** (`2125500d`) para este inventário.
-2. Após instalar APK novo: rodar `regressao_menus_{coordenador,professor,responsavel}.yaml`.
-3. Pickers Android continuam por texto/DocumentsUI.
-4. Hierarchy dump se algum tile não aparecer: confirmar `cod_menuitem` da escola (mapa A vs B no responsável).
+1. Emulador / amostra: **≥ 6.06.23** para o lote Rotina/Chat. APK grande: `adb install --no-incremental -r -t …`
+2. Após APK novo: smokes menus + CTs Rotina com composer por id.
+3. Pickers Android: texto/DocumentsUI.
+4. Rotina filtro sentido: **id diferente por aba** (`rotina_*` vs `mural_*`).
+5. Pedido de Semantics: **corrigir hit-target de id existente** ≠ inventar id novo (o que foi barrado antes).

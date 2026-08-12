@@ -1,5 +1,5 @@
 # Abre item do BoomMenu da Rotina.
-# Env: ROTINA_BOOM_ID (ex.: rotina_boom_alimentacao) e/ou ROTINA_BOOM_TEXTO
+# Env: ROTINA_BOOM_ID (ex.: rotina_boom_alimentacao) e/ou ROTINA_BOOM_TEXTO (ASCII preferível)
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -22,5 +22,5 @@ appId: br.com.polygonus.mobile.amostra
       - tapOn: "${ROTINA_BOOM_TEXTO}"
 
 - extendedWaitUntil:
-    visible: "${TITULO_ROTINA}|Turma|Aluno|Termo|Enviar"
+    visible: "Turma|Aluno|Termo|Enviar|Escreva|Digite|Soneca|Banheiro|Bilhete"
     timeout: 12000

@@ -1,23 +1,64 @@
-# Seleciona filtro TipoSentido (dropdown no header do Mural).
+# Seleciona filtro TipoSentido no header.
 #
 # Env:
 #   FILTRO     — regex do valor no header (ex.: Enviadas|Enviados)
 #   FILTRO_TAP — regex do item no menu (ex.: Enviadas|Enviados)
+#   FILTRO_SENTIDO_ID — default mural_filtro_sentido
+#     Na aba Rotina (≥ 6.06.22): rotina_filtro_sentido
+#     (TabBarView monta as duas abas — ids iguais quebravam o tap no Maestro)
+#
+# Antes do tap: garante aba Mural se o id for o do mural (evita nó da Rotina).
 
 appId: br.com.polygonus.mobile.amostra
 ---
+- evalScript: |
+    ${(() => {
+      if (!output.filtroSentidoId || String(output.filtroSentidoId).length < 3) {
+        var fromEnv = "";
+        try {
+          if (typeof FILTRO_SENTIDO_ID !== "undefined" && FILTRO_SENTIDO_ID) {
+            fromEnv = String(FILTRO_SENTIDO_ID).trim();
+          }
+        } catch (e) {}
+        output.filtroSentidoId = fromEnv.length > 0 ? fromEnv : "mural_filtro_sentido";
+      }
+    })()}
+
 - waitForAnimationToEnd:
     timeout: 500
 - extendedWaitUntil:
     visible: "Back"
     timeout: 8000
 
+# Se vamos usar o id do Mural, ancora a aba Comunicados (não Rotina)
+- runFlow:
+    when:
+      true: ${output.filtroSentidoId == "mural_filtro_sentido"}
+      visible:
+        id: "mural_tab_mural"
+    commands:
+      - tapOn:
+          id: "mural_tab_mural"
+      - waitForAnimationToEnd:
+          timeout: 400
+
+- runFlow:
+    when:
+      true: ${output.filtroSentidoId == "rotina_filtro_sentido"}
+      visible:
+        id: "mural_tab_rotina"
+    commands:
+      - tapOn:
+          id: "mural_tab_rotina"
+      - waitForAnimationToEnd:
+          timeout: 400
+
 - extendedWaitUntil:
     visible:
-      id: "mural_filtro_sentido"
+      id: ${output.filtroSentidoId}
     timeout: 8000
 
-# Já no filtro certo (comum após enviar → Enviadas ou Enviados)
+# Já no filtro certo
 - runFlow:
     when:
       visible: "${FILTRO}"
@@ -40,7 +81,7 @@ appId: br.com.polygonus.mobile.amostra
             notVisible: "${FILTRO_TAP}"
           commands:
             - tapOn:
-                id: mural_filtro_sentido
+                id: ${output.filtroSentidoId}
             - waitForAnimationToEnd:
                 timeout: 500
       - extendedWaitUntil:

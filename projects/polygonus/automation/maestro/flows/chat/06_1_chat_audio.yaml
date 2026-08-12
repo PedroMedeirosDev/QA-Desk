@@ -1,0 +1,26 @@
+# CT-CHAT-02 · Áudio — Atendimento novo
+# Draft: abrir chat; anexar áudio quando chat_input_audio existir.
+#
+# TODO Semantics: chat_input_audio (+ picker nativo sem Semantics)
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/chat/setup_coordenador_chat.yaml
+
+- runFlow:
+    when:
+      visible:
+        id: "chat_input_audio"
+    commands:
+      - tapOn:
+          id: "chat_input_audio"
+      - waitForAnimationToEnd:
+          timeout: 2000
+      # Gravação / confirmação: ajustar após dump real
+      - runFlow:
+          when:
+            visible:
+              id: "chat_input_enviar"
+          commands:
+            - tapOn:
+                id: "chat_input_enviar"

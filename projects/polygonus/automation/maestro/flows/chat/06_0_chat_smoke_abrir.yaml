@@ -1,0 +1,11 @@
+# CT-CHAT-00 · Smoke — abrir Atendimento novo e voltar (já coberto em regressao_menus_*)
+# Mantido como CT de módulo para a suite Lista / smoke no Desk.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../auth/resume_phjesus_coordenador.yaml
+
+- runFlow:
+    file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml
+    env:
+      CARD_ID: "home_card_chat"

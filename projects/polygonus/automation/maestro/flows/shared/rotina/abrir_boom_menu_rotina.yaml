@@ -1,19 +1,32 @@
 # Subflow: abre o BoomMenu FAB na aba Rotina.
-# Semantics: rotina_boom_fab
+#
+# Build ≥ 6.06.22/23: hit-target do `rotina_boom_fab` corrigido (APP-02) —
+# preferir tap no id. Fallback coordenada se id não responder.
+# Asserts: preferir ids / ASCII (evitar "Alimentação" no YAML — encoding Windows).
 
 appId: br.com.polygonus.mobile.amostra
 ---
+- assertVisible:
+    id: rotina_boom_fab
+
 - tapOn:
     id: rotina_boom_fab
-    optional: true
 
+- waitForAnimationToEnd:
+    timeout: 1000
+
+# Menu aberto?
 - runFlow:
     when:
       notVisible:
-        id: "rotina_boom_fab"
+        id: "rotina_boom_alimentacao"
     commands:
       - tapOn:
-          point: "92%, 88%"
+          point: "90%,86%"
+      - waitForAnimationToEnd:
+          timeout: 800
 
-- waitForAnimationToEnd:
-    timeout: 500
+- extendedWaitUntil:
+    visible:
+      id: "rotina_boom_alimentacao"
+    timeout: 8000

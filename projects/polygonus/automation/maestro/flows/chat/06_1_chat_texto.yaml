@@ -1,0 +1,13 @@
+# CT-CHAT-01 · Texto — Atendimento novo (home_card_chat / lib/chat)
+# Build ≥ 6.06.23: chat_input_texto + chat_input_enviar_ou_mic
+#
+# Pré: PHJESUS coordenador; amostra com Atendimento novo no menu
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/chat/setup_coordenador_chat.yaml
+
+- runFlow:
+    file: ../shared/chat/enviar_mensagem_texto.yaml
+    env:
+      CHAT_TEXTO: "Teste Maestro Emulador - Chat Texto"
