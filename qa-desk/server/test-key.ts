@@ -24,7 +24,8 @@ function inferExecutionMode(report: TestRecord): ExecutionMode {
 function inferChannel(report: TestRecord): ProductChannel | undefined {
   if (report.channel) return report.channel;
   if (report.project !== "polygonus") return undefined;
-  if (report.platform === "android" || report.platform === "ios") return "app";
+  if (report.platform === "android" || report.platform === "ios" || report.platform === "app_web")
+    return "app";
   if (report.platform === "web") return "web";
   return "app";
 }

@@ -224,16 +224,25 @@ export const api = {
       report: TestRecord;
     }>(`/api/projects/${project}/tests/${id}/github-issue/sync`, { method: "POST" }),
 
-  /** Fecha a issue no GitHub e alinha status no Desk. */
-  closeGithubIssue: (project: ProjectSlug, id: string) =>
+  /** Fecha a issue no GitHub (comentário opcional) e alinha status no Desk. */
+  closeGithubIssue: (
+    project: ProjectSlug,
+    id: string,
+    body?: { comment?: string },
+  ) =>
     request<{
       ok: true;
       number: number;
       url: string;
       repository: string;
       alreadyClosed: boolean;
+      commentPosted: boolean;
       report: TestRecord;
-    }>(`/api/projects/${project}/tests/${id}/github-issue/close`, { method: "POST" }),
+    }>(`/api/projects/${project}/tests/${id}/github-issue/close`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body ?? {}),
+    }),
 
   evidenceUrl: (storageKey: string) => {
     const rel = storageKey

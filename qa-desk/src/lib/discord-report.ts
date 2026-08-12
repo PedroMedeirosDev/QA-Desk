@@ -30,6 +30,8 @@ function platformLabel(platform: TestRecord["platform"]): string {
       return "iOS";
     case "web":
       return "Web";
+    case "app_web":
+      return "APP + WEB";
     case "api":
       return "API";
     default:
@@ -73,12 +75,17 @@ function isMobileReport(record: Partial<TestRecord>): boolean {
   return (
     record.platform === "android" ||
     record.platform === "ios" ||
+    record.platform === "app_web" ||
     record.channel === "app"
   );
 }
 
 function isWebReport(record: Partial<TestRecord>): boolean {
-  return record.platform === "web" || record.channel === "web";
+  return (
+    record.platform === "web" ||
+    record.platform === "app_web" ||
+    record.channel === "web"
+  );
 }
 
 /**

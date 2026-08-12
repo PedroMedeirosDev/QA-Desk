@@ -94,7 +94,7 @@ export interface TestRecord {
   homologatedAt?: string;
   project: ProjectSlug;
   channel?: ProductChannel;
-  platform: "web" | "android" | "ios" | "api" | "outro";
+  platform: "web" | "android" | "ios" | "app_web" | "api" | "outro";
   module?: string;
   campaign?: string;
   status: BugStatus;
@@ -193,6 +193,15 @@ export const CHANNEL_LABELS: Record<ProductChannel, string> = {
   portal: "PORTAL",
 };
 
+export const PLATFORM_LABELS: Record<TestRecord["platform"], string> = {
+  android: "Android",
+  ios: "iOS",
+  web: "Web",
+  app_web: "APP + WEB",
+  api: "API",
+  outro: "Outro",
+};
+
 export const EXECUTION_MODE_LABELS: Record<ExecutionMode, string> = {
   manual: "Manual",
   automated: "Automatizado",
@@ -243,7 +252,8 @@ export function inferChannel(
 ): ProductChannel | undefined {
   if (report.channel) return report.channel;
   if (report.project !== "polygonus") return undefined;
-  if (report.platform === "android" || report.platform === "ios") return "app";
+  if (report.platform === "android" || report.platform === "ios" || report.platform === "app_web")
+    return "app";
   if (report.platform === "web") return "web";
   return "app";
 }
@@ -275,7 +285,7 @@ export function bugCodePrefix(
   if (channel === "app") return "APP";
   if (channel === "web") return "WEB";
   if (channel === "portal") return "PORTAL";
-  if (platform === "android" || platform === "ios") return "APP";
+  if (platform === "android" || platform === "ios" || platform === "app_web") return "APP";
   if (platform === "web") return "WEB";
   if (platform === "api") return "API";
   return "BUG";

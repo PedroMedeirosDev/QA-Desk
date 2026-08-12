@@ -8,6 +8,7 @@ import { DesignCheckbox } from "@/components/DesignCheckbox";
 import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { api, type AutomationFlow, type AutomationSpec, type AndroidDeviceStatus } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
+import { useConfirm } from "@/lib/confirm";
 import { useRunProgress, QA_RUN_FINISHED_EVENT, type LiveRunState } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { HistoryTimeline } from "@/components/HistoryTimeline";
@@ -25,6 +26,7 @@ import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
 import {
   BUG_STATUS_LABELS,
   CHANNEL_LABELS,
+  PLATFORM_LABELS,
   HOMOLOGATION_LABELS,
   RECORD_TYPE_LABELS,
   SEVERITY_LABELS,
@@ -93,6 +95,7 @@ export function TestEditorPage({
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const confirm = useConfirm();
   const { isAdmin } = useAuth();
   const { runAutomation, running: liveRunning } = useRunProgress();
   const [tab, setTab] = useState<"detalhes" | "historico">("detalhes");
@@ -526,21 +529,43 @@ export function TestEditorPage({
       toast.info("Issue já marcada como fechada no Desk");
       return;
     }
-    const ok = window.confirm(
-      `Fechar a issue #${form.githubIssueNumber} no GitHub?\n\n` +
-        "O status do bug no Desk passa para Corrigido (gestor), salvo se já estiver homologado/arquivado.",
-    );
-    if (!ok) return;
+
+    const build = (form.build ?? "").trim();
+    const draftComment = [
+      "Homologado.",
+      "",
+      build ? `Build: ${build}` : "Build: (informar)",
+    ].join("\n");
+
+    const comment = await confirm({
+      title: `Fechar issue #${form.githubIssueNumber}?`,
+      description:
+        "O status do bug no Desk passa para Corrigido (gestor), salvo se já estiver homologado/arquivado.\n\n" +
+        "Edite o comentário abaixo (ou apague para fechar sem comentar).",
+      confirmLabel: "Fechar issue",
+      cancelLabel: "Cancelar",
+      tone: "default",
+      input: {
+        label: "Comentário na issue",
+        defaultValue: draftComment,
+        rows: 5,
+      },
+    });
+    if (comment === null) return;
 
     setSaving(true);
     try {
-      const res = await api.closeGithubIssue(project, id);
+      const res = await api.closeGithubIssue(project, id, {
+        comment: comment.trim() || undefined,
+      });
       setForm(res.report);
-      toast.success(
+      const parts = [
         res.alreadyClosed
           ? `Issue #${res.number} já estava fechada — Desk alinhado`
           : `Issue #${res.number} fechada no GitHub`,
-      );
+      ];
+      if (res.commentPosted) parts.push("comentário publicado");
+      toast.success(parts.join(" · "));
     } catch (e) {
       toast.error(toastErrorMessage(e, "Falha ao fechar issue"));
     } finally {
@@ -591,9 +616,12 @@ export function TestEditorPage({
   }
 
   const isMobileChannel =
-    form.channel === "app" || form.platform === "android" || form.platform === "ios";
+    form.channel === "app" ||
+    form.platform === "android" ||
+    form.platform === "ios" ||
+    form.platform === "app_web";
   const isWebChannel =
-    form.channel === "web" || form.platform === "web";
+    form.channel === "web" || form.platform === "web" || form.platform === "app_web";
   const maestroAllowed = channelSupportsMaestro(form.channel);
   const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
 
@@ -1158,13 +1186,12 @@ export function TestEditorPage({
             <PropSelect
               label="Plataforma"
               value={form.platform ?? "web"}
-              options={[
-                { value: "web", label: "Web" },
-                { value: "android", label: "Android" },
-                { value: "ios", label: "iOS" },
-                { value: "api", label: "API" },
-                { value: "outro", label: "Outro" },
-              ]}
+              options={(Object.keys(PLATFORM_LABELS) as Array<TestRecord["platform"]>).map(
+                (k) => ({
+                  value: k,
+                  label: PLATFORM_LABELS[k],
+                }),
+              )}
               onChange={(v) => update("platform", v as TestRecord["platform"])}
               disabled={!isAdmin}
             />
@@ -1699,7 +1726,7 @@ export function TestEditorPage({
                 form.githubIssueUrl &&
                 !form.githubIssueClosedAt && (
                   <PremiumTooltip
-                    label={`Fecha a issue #${form.githubIssueNumber} no GitHub (gh issue close) e alinha o status no Desk`}
+                    label={`Fecha a issue #${form.githubIssueNumber} no GitHub, com comentário editável de homologação/build, e alinha o status no Desk`}
                     side="left"
                     wide
                   >

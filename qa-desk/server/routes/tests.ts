@@ -531,6 +531,7 @@ testsRouter.post("/:id/github-issue/sync", requireAdmin, async (req, res) => {
 
 /**
  * Fecha a issue GitHub vinculada (gh issue close) e alinha status no Desk.
+ * Body opcional: `{ comment?: string }` — comentário de homologação na issue.
  */
 testsRouter.post("/:id/github-issue/close", requireAdmin, async (req, res) => {
   const project = assertProject(param(req, "slug"));
@@ -553,7 +554,9 @@ testsRouter.post("/:id/github-issue/close", requireAdmin, async (req, res) => {
 
   try {
     const { closeBugGithubIssue } = await import("../github/close-bug-issue.js");
-    const result = await closeBugGithubIssue(report);
+    const comment =
+      typeof req.body?.comment === "string" ? req.body.comment : "";
+    const result = await closeBugGithubIssue(report, { comment });
 
     report.githubIssueClosedAt = new Date().toISOString();
     const prev = report.status;
@@ -566,17 +569,19 @@ testsRouter.post("/:id/github-issue/close", requireAdmin, async (req, res) => {
       report.status = "corrigido_gestor";
     }
 
+    const commentNote = result.commentPosted ? " · comentário na issue" : "";
     appendHistory(report, {
       actor: actorOf(req),
       action: "github_issue_closed_from_desk",
       detail: result.alreadyClosed
-        ? `#${result.number} já estava fechada no GH · Desk → ${report.status}`
-        : `#${result.number} fechada no GH · Desk → ${report.status}`,
+        ? `#${result.number} já estava fechada no GH · Desk → ${report.status}${commentNote}`
+        : `#${result.number} fechada no GH · Desk → ${report.status}${commentNote}`,
       meta: {
         githubIssueNumber: result.number,
         githubIssueUrl: result.url,
         repository: result.repository,
         alreadyClosed: result.alreadyClosed,
+        commentPosted: result.commentPosted,
         fromStatus: prev,
         toStatus: report.status,
       },
@@ -591,6 +596,7 @@ testsRouter.post("/:id/github-issue/close", requireAdmin, async (req, res) => {
       url: result.url,
       repository: result.repository,
       alreadyClosed: result.alreadyClosed,
+      commentPosted: result.commentPosted,
       report,
     });
   } catch (e) {

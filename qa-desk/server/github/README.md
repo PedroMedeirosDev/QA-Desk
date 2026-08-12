@@ -77,7 +77,7 @@ Na ficha do bug (editor):
 |---|---|---|
 | **Abrir issue GitHub** | POST /api/projects/:slug/tests/:id/github-issue | Cria issue ug na KB + nviado_gestor |
 | **Sync issue GitHub** | POST .../github-issue/sync | Atualiza título/body/evidências **e** puxa comentários do gestor (gh api) se o webhook falhou |
-| **Fechar issue GitHub** | POST .../github-issue/close | gh issue close + status Desk corrigido_gestor + githubIssueClosedAt |
+| **Fechar issue GitHub** | POST .../github-issue/close `{ comment? }` | gh issue close + comentário opcional (homologação/build) + corrigido_gestor + githubIssueClosedAt |
 
 Implementação: create-bug-issue.ts, sync-bug-issue.ts (pullGestorCommentsIntoReport), close-bug-issue.ts.
 
