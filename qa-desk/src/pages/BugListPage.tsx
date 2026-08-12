@@ -107,15 +107,15 @@ export function BugListPage({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40 text-left text-muted-foreground">
               <th className="px-4 py-3 font-medium">Título</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Prioridade</th>
-              <th className="px-4 py-3 font-medium">Reportado</th>
-              <th className="px-4 py-3 font-medium w-16">Ações</th>
+              <th className="w-[1%] whitespace-nowrap px-4 py-3 font-medium">Status</th>
+              <th className="w-[1%] whitespace-nowrap px-4 py-3 font-medium">Prioridade</th>
+              <th className="w-[1%] whitespace-nowrap px-4 py-3 font-medium">Reportado</th>
+              <th className="w-[1%] whitespace-nowrap px-4 py-3 font-medium">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -145,19 +145,27 @@ export function BugListPage({
                     )}
                     onClick={() => openDetail(r.id, r)}
                   >
-                    <td className="px-4 py-3">
-                      <p className="font-medium">{r.title}</p>
+                    <td className="min-w-0 px-4 py-3">
+                      <p className="font-medium leading-snug">{r.title}</p>
                       <p className="font-mono text-xs text-muted-foreground">
                         {formatRecordId(r.id, r)}
                       </p>
                       {r.module && (
                         <p className="text-xs text-muted-foreground">{r.module}</p>
                       )}
+                      {r.githubIssueLastCommentAt && (
+                        <p className="mt-1 text-[0.65rem] text-amber-300/90">
+                          Gestor respondeu
+                          {r.githubIssueLastCommentBy
+                            ? ` · @${r.githubIssueLastCommentBy}`
+                            : ""}
+                        </p>
+                      )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="whitespace-nowrap px-4 py-3 align-middle">
                       <span
                         className={cn(
-                          "rounded-full border px-2 py-0.5 text-xs",
+                          "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium leading-5",
                           tone === "ok" && "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
                           tone === "warn" && "border-amber-500/40 bg-amber-500/15 text-amber-300",
                           tone === "neutral" && "border-border bg-muted text-muted-foreground",
@@ -166,15 +174,15 @@ export function BugListPage({
                         {label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 capitalize text-muted-foreground">
+                    <td className="whitespace-nowrap px-4 py-3 align-middle capitalize text-muted-foreground">
                       {r.priority ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                    <td className="whitespace-nowrap px-4 py-3 align-middle text-xs tabular-nums text-muted-foreground">
                       {r.reportedAt
                         ? new Date(r.reportedAt).toLocaleDateString("pt-BR")
                         : "—"}
                     </td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="whitespace-nowrap px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
                       <PremiumTooltip label="Abrir" align="end">
                         <button
                           type="button"
