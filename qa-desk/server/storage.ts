@@ -173,7 +173,7 @@ function bugCodePrefix(
   if (channel === "app") return "APP";
   if (channel === "web") return "WEB";
   if (channel === "portal") return "PORTAL";
-  if (platform === "android" || platform === "ios") return "APP";
+  if (platform === "android" || platform === "ios" || platform === "app_web") return "APP";
   if (platform === "web") return "WEB";
   if (platform === "api") return "API";
   return "BUG";

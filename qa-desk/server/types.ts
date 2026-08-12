@@ -103,7 +103,7 @@ export interface TestRecord {
   homologatedAt?: string;
   project: ProjectSlug;
   channel?: ProductChannel;
-  platform: "web" | "android" | "ios" | "api" | "outro";
+  platform: "web" | "android" | "ios" | "app_web" | "api" | "outro";
   module?: string;
   campaign?: string;
   /** Status do fluxo de bug (só relevante quando recordType = bug) */

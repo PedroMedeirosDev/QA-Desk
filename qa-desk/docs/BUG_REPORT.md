@@ -71,7 +71,7 @@ Ordem do body (scan do gestor/dev):
 - Repo default: `polygonus-br/polygonus-suporte-kb` · label **`bug`** (override: `GITHUB_BUG_ISSUES_REPO`).
 - Botão **Abrir issue GitHub** → `POST .../github-issue` → sobe evidências na branch `bug-evidence` + `gh issue create` · status `enviado_gestor` · grava `githubIssueNumber` / `githubIssueUrl`.
 - Botão **Sync issue GitHub** (quando já vinculada) → POST .../github-issue/sync → gh issue edit (título + body) + reenvia evidências · histórico github_issue_synced · **catch-up de comentários** via gh api (pullGestorCommentsIntoReport) se o webhook issue_comment não tiver chegado (ex.: secret local inativo).
-- Botão **Fechar issue GitHub** → POST .../github-issue/close → gh issue close · Desk → corrigido_gestor + githubIssueClosedAt (confirmação no UI).
+- Botão **Fechar issue GitHub** → POST .../github-issue/close `{ comment? }` → gh issue close (+ comentário de homologação/build editável no confirm) · Desk → corrigido_gestor + githubIssueClosedAt.
 - Reenvio antigo: se chamar create com issue já vinculada, não duplica.
 - Evidências: arquivos anexados no body (imagens/vídeos via Contents API na branch `bug-evidence`).
 - Pré-requisito: `gh` autenticado com write no repo KB.

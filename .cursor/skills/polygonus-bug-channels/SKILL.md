@@ -18,6 +18,7 @@ Evita misturar **App nativo**, **APP versão WEB** (Flutter Web do mesmo produto
 |-----------------|------------------------|-------------------------|----------------|--------------|
 | App no celular / emulador (Maestro, APK) | `app` | `android` ou `ios` | `APP-NN` | **APP** |
 | **APP versão WEB** — mesmo app Polygonus no **browser** (Flutter Web, iframe `flt-*`) | `app` | `web` | `APP-NN` | **APP** (não WEB) |
+| **App nativo e APP WEB** (mesmo sintoma nos dois) | `app` | `app_web` (label **APP + WEB**) | `APP-NN` | **APP** |
 | Produto web de gestão / portal escolar (não é o shell Flutter do app) | `web` ou `portal` | `web` | `WEB-NN` / `PORTAL-NN` | **WEB** / **PORTAL** |
 
 Se o usuário disser **“APP versão WEB”**, **“app no Chrome”**, **“Flutter Web”**, **“iframe do mural”** → **APP WEB**: `channel: app` + `platform: web`. Fica no menu **APP**.
