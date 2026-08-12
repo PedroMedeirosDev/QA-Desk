@@ -1,5 +1,5 @@
 /**
- * Abre GitHub Issue no repo KB (label `bug`) a partir de um bug do Desk.
+ * Abre / atualiza GitHub Issue no repo KB (label `bug`) a partir de um bug do Desk.
  * Requer `gh` autenticado (mesmo setup da Curadoria KB).
  * Evidências sobem na branch `bug-evidence` e entram no body da issue.
  */
@@ -24,7 +24,7 @@ export function bugIssuesRepo(): string {
   return process.env.GITHUB_BUG_ISSUES_REPO?.trim() || DEFAULT_REPO;
 }
 
-export type CreateBugIssueResult = {
+export type BugIssueResult = {
   number: number;
   url: string;
   title: string;
@@ -33,32 +33,15 @@ export type CreateBugIssueResult = {
   evidenceSkipped: Array<{ filename: string; reason: string }>;
 };
 
-function parseIssueCreateOutput(stdout: string): { number: number; url: string } {
-  const url = stdout.trim().split(/\r?\n/).filter(Boolean).pop()?.trim() ?? "";
-  const m = url.match(/\/issues\/(\d+)\s*$/);
-  if (!url || !m) {
-    throw Object.assign(
-      new Error(`gh issue create: URL inesperada: ${stdout.slice(0, 200)}`),
-      { status: 502 },
-    );
-  }
-  return { number: Number(m[1]), url };
-}
+/** @deprecated use BugIssueResult */
+export type CreateBugIssueResult = BugIssueResult;
 
-export async function createBugGithubIssue(
-  report: TestRecord,
-): Promise<CreateBugIssueResult> {
-  if (report.githubIssueNumber && report.githubIssueUrl) {
-    return {
-      number: report.githubIssueNumber,
-      url: report.githubIssueUrl,
-      title: formatBugIssueTitle(report),
-      repository: bugIssuesRepo(),
-      evidenceUploaded: 0,
-      evidenceSkipped: [],
-    };
-  }
-
+async function buildIssueMarkdown(report: TestRecord): Promise<{
+  title: string;
+  body: string;
+  evidenceUploaded: number;
+  evidenceSkipped: Array<{ filename: string; reason: string }>;
+}> {
   const repository = bugIssuesRepo();
   const title = formatBugIssueTitle(report);
   const folderKey = report.bugCode?.trim() || report.id;
@@ -79,13 +62,77 @@ export async function createBugGithubIssue(
       `### Não anexados\n${skipLines}`;
   }
 
-  const body = formatBugReportMarkdown(report, { evidenceMarkdown });
+  return {
+    title,
+    body: formatBugReportMarkdown(report, { evidenceMarkdown }),
+    evidenceUploaded: evidenceResult.uploaded.length,
+    evidenceSkipped: evidenceResult.skipped,
+  };
+}
 
+async function withBodyFile<T>(
+  body: string,
+  run: (bodyFile: string) => Promise<T>,
+): Promise<T> {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "qa-desk-issue-"));
   const bodyFile = path.join(tmpDir, "body.md");
   try {
     fs.writeFileSync(bodyFile, body, "utf8");
+    return await run(bodyFile);
+  } finally {
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+}
 
+function mapGhError(err: unknown, action: "criar" | "atualizar"): never {
+  const e = err as Error & { stderr?: string; code?: string };
+  const detail = [e.stderr?.trim(), e.message].filter(Boolean).join(" — ");
+  if (e.code === "ENOENT") {
+    throw Object.assign(
+      new Error("gh não encontrado no PATH — instale o GitHub CLI e autentique"),
+      { status: 503 },
+    );
+  }
+  throw Object.assign(
+    new Error(`Falha ao ${action} issue: ${detail || "erro desconhecido"}`),
+    { status: 502 },
+  );
+}
+
+function parseIssueCreateOutput(stdout: string): { number: number; url: string } {
+  const url = stdout.trim().split(/\r?\n/).filter(Boolean).pop()?.trim() ?? "";
+  const m = url.match(/\/issues\/(\d+)\s*$/);
+  if (!url || !m) {
+    throw Object.assign(
+      new Error(`gh issue create: URL inesperada: ${stdout.slice(0, 200)}`),
+      { status: 502 },
+    );
+  }
+  return { number: Number(m[1]), url };
+}
+
+export async function createBugGithubIssue(
+  report: TestRecord,
+): Promise<BugIssueResult> {
+  if (report.githubIssueNumber && report.githubIssueUrl) {
+    return {
+      number: report.githubIssueNumber,
+      url: report.githubIssueUrl,
+      title: formatBugIssueTitle(report),
+      repository: bugIssuesRepo(),
+      evidenceUploaded: 0,
+      evidenceSkipped: [],
+    };
+  }
+
+  const repository = bugIssuesRepo();
+  const built = await buildIssueMarkdown(report);
+
+  return withBodyFile(built.body, async (bodyFile) => {
     let stdout: string;
     try {
       const result = await execFileAsync(
@@ -98,45 +145,83 @@ export async function createBugGithubIssue(
           "--label",
           DEFAULT_LABEL,
           "--title",
-          title,
+          built.title,
           "--body-file",
           bodyFile,
         ],
         {
           windowsHide: true,
           maxBuffer: 2 * 1024 * 1024,
-          timeout: 60_000,
+          timeout: 120_000,
         },
       );
       stdout = result.stdout;
     } catch (err) {
-      const e = err as Error & { stderr?: string; code?: string };
-      const detail = [e.stderr?.trim(), e.message].filter(Boolean).join(" — ");
-      if (e.code === "ENOENT") {
-        throw Object.assign(
-          new Error("gh não encontrado no PATH — instale o GitHub CLI e autentique"),
-          { status: 503 },
-        );
-      }
-      throw Object.assign(new Error(`Falha ao criar issue: ${detail || "erro desconhecido"}`), {
-        status: 502,
-      });
+      mapGhError(err, "criar");
     }
 
     const { number, url } = parseIssueCreateOutput(stdout);
     return {
       number,
       url,
-      title,
+      title: built.title,
       repository,
-      evidenceUploaded: evidenceResult.uploaded.length,
-      evidenceSkipped: evidenceResult.skipped,
+      evidenceUploaded: built.evidenceUploaded,
+      evidenceSkipped: built.evidenceSkipped,
     };
-  } finally {
-    try {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    } catch {
-      /* ignore */
-    }
+  });
+}
+
+/**
+ * Atualiza título + body da issue já vinculada (e reenvia evidências para bug-evidence/).
+ */
+export async function updateBugGithubIssue(
+  report: TestRecord,
+): Promise<BugIssueResult> {
+  const number = report.githubIssueNumber;
+  const url = report.githubIssueUrl?.trim();
+  if (!number || !url) {
+    throw Object.assign(
+      new Error("Bug sem issue GitHub vinculada — abra a issue antes de sincronizar"),
+      { status: 400 },
+    );
   }
+
+  const repository = bugIssuesRepo();
+  const built = await buildIssueMarkdown(report);
+
+  return withBodyFile(built.body, async (bodyFile) => {
+    try {
+      await execFileAsync(
+        "gh",
+        [
+          "issue",
+          "edit",
+          String(number),
+          "--repo",
+          repository,
+          "--title",
+          built.title,
+          "--body-file",
+          bodyFile,
+        ],
+        {
+          windowsHide: true,
+          maxBuffer: 2 * 1024 * 1024,
+          timeout: 120_000,
+        },
+      );
+    } catch (err) {
+      mapGhError(err, "atualizar");
+    }
+
+    return {
+      number,
+      url,
+      title: built.title,
+      repository,
+      evidenceUploaded: built.evidenceUploaded,
+      evidenceSkipped: built.evidenceSkipped,
+    };
+  });
 }

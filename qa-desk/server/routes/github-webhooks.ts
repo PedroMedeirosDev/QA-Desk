@@ -8,6 +8,8 @@ import { syncSingleKbPullRequest } from "../github/kb-pull-requests.js";
 import {
   applyBugIssueDependencyFromWebhook,
   applyBugIssueFromWebhook,
+  applyBugIssueCommentFromWebhook,
+  type BugIssueCommentWebhookPayload,
   type BugIssueDependencyPayload,
   type BugIssueWebhookPayload,
 } from "../github/sync-bug-issue.js";
@@ -66,6 +68,9 @@ function shouldHandleEvent(event: string, action: string | undefined): boolean {
   }
   if (event === "issues") {
     return action === "closed" || action === "reopened";
+  }
+  if (event === "issue_comment") {
+    return action === "created" || action === "edited";
   }
   if (event === "issue_dependencies") {
     return [
@@ -201,6 +206,48 @@ function scheduleDependencyUpdate(
   });
 }
 
+async function applyIssueCommentUpdate(
+  repository: string,
+  payload: BugIssueCommentWebhookPayload,
+) {
+  const match = projectForRepository(repository);
+  if (!match) {
+    console.info(`[bug-issue-webhook] repo ${repository} não mapeado — ignorado`);
+    return { ok: true as const, skipped: true as const, reason: "repo não mapeado" };
+  }
+
+  const result = await applyBugIssueCommentFromWebhook(match.project, payload);
+  if (result.changed) {
+    console.info(
+      `[bug-issue-webhook] comment #${result.issueNumber} → ${result.bugId} status=${result.status}`,
+    );
+  } else {
+    console.info(
+      `[bug-issue-webhook] comment #${result.issueNumber ?? "?"} skipped: ${result.reason ?? "n/a"}`,
+    );
+  }
+  return result;
+}
+
+function scheduleIssueCommentUpdate(
+  repository: string,
+  payload: BugIssueCommentWebhookPayload,
+) {
+  const n = payload.issue?.number ?? 0;
+  const c = payload.comment?.id ?? 0;
+  const key = `issue-comment:${repository}#${n}:${c}:${payload.action ?? ""}`;
+  const previous = pending.get(key);
+  if (previous) clearTimeout(previous);
+
+  return new Promise<Awaited<ReturnType<typeof applyIssueCommentUpdate>>>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      pending.delete(key);
+      applyIssueCommentUpdate(repository, payload).then(resolve).catch(reject);
+    }, Math.min(debounceMs, 400));
+    pending.set(key, timer);
+  });
+}
+
 export const githubWebhooksRouter = Router();
 
 /**
@@ -226,6 +273,7 @@ githubWebhooksRouter.post("/kb-curation", async (req: RequestWithRawBody, res: R
 
   const event = req.header("x-github-event") ?? "";
   let payload: BugIssueWebhookPayload &
+    BugIssueCommentWebhookPayload &
     BugIssueDependencyPayload & {
       pull_request?: { number?: number };
     };
@@ -285,6 +333,29 @@ githubWebhooksRouter.post("/kb-curation", async (req: RequestWithRawBody, res: R
     void scheduleIssueUpdate(repository, payload).catch((error) => {
       console.error(
         `[bug-issue-webhook] falha ${repository}#${issueNumber}:`,
+        error instanceof Error ? error.message : error,
+      );
+    });
+    return;
+  }
+
+  if (event === "issue_comment") {
+    const issueNumber = payload.issue?.number;
+    if (!issueNumber) {
+      return res.status(400).json({ error: "Payload sem issue.number" });
+    }
+    res.json({
+      ok: true,
+      accepted: true,
+      kind: "issue_comment",
+      repository,
+      issueNumber,
+      event,
+      action: payload.action,
+    });
+    void scheduleIssueCommentUpdate(repository, payload).catch((error) => {
+      console.error(
+        `[bug-issue-webhook] falha comment ${repository}#${issueNumber}:`,
         error instanceof Error ? error.message : error,
       );
     });

@@ -140,6 +140,11 @@ export interface TestRecord {
   githubIssueCreatedAt?: string;
   /** Quando a issue vinculada foi fechada (webhook). */
   githubIssueClosedAt?: string;
+  /** Último comentário do gestor na issue (webhook issue_comment). */
+  githubIssueLastCommentAt?: string;
+  githubIssueLastCommentBy?: string;
+  githubIssueLastCommentBody?: string;
+  githubIssueLastCommentUrl?: string;
 }
 
 export interface TestCatalog {
