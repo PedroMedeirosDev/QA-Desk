@@ -165,7 +165,14 @@ export const api = {
           }
           return;
         }
-        reject(new Error("Falha no upload"));
+        let message = "Falha no upload";
+        try {
+          const body = JSON.parse(xhr.responseText) as { error?: string };
+          if (body.error?.trim()) message = body.error.trim();
+        } catch {
+          /* ignore */
+        }
+        reject(new Error(message));
       };
       xhr.onerror = () => reject(new Error("Falha no upload"));
       xhr.send(form);
@@ -196,6 +203,37 @@ export const api = {
       evidenceSkipped: Array<{ filename: string; reason: string }>;
       report: TestRecord;
     }>(`/api/projects/${project}/tests/${id}/github-issue`, { method: "POST" }),
+
+  /** Atualiza título/body/evidências da issue já vinculada. */
+  syncGithubIssue: (project: ProjectSlug, id: string) =>
+    request<{
+      ok: true;
+      number: number;
+      url: string;
+      title: string;
+      repository: string;
+      evidenceUploaded: number;
+      evidenceSkipped: Array<{ filename: string; reason: string }>;
+      commentCatchup?: {
+        applied: boolean;
+        statusChanged: boolean;
+        commentAuthor?: string;
+        snippet?: string;
+        reason?: string;
+      };
+      report: TestRecord;
+    }>(`/api/projects/${project}/tests/${id}/github-issue/sync`, { method: "POST" }),
+
+  /** Fecha a issue no GitHub e alinha status no Desk. */
+  closeGithubIssue: (project: ProjectSlug, id: string) =>
+    request<{
+      ok: true;
+      number: number;
+      url: string;
+      repository: string;
+      alreadyClosed: boolean;
+      report: TestRecord;
+    }>(`/api/projects/${project}/tests/${id}/github-issue/close`, { method: "POST" }),
 
   evidenceUrl: (storageKey: string) => {
     const rel = storageKey

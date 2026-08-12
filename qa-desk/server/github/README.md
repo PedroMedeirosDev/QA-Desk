@@ -32,7 +32,7 @@ No repo `polygonus-br/polygonus-suporte-kb` → **Settings → Webhooks → Add 
 | Payload URL | `https://<host-publico-do-qa-desk>/api/webhooks/github/kb-curation` |
 | Content type | `application/json` |
 | Secret | o mesmo de `GITHUB_WEBHOOK_SECRET` |
-| Events | **Pull requests** + **Pull request reviews** + **Issues** + **Issue dependencies** (opcional: Issue comments) |
+| Events | **Pull requests** + **Pull request reviews** + **Issues** + **Issue comments** + **Issue dependencies** |
 
 Em desenvolvimento local, use um túnel (ex.: Cloudflare Tunnel / ngrok) apontando para a porta da API (`QA_APP_PORT`, default 3001).
 
@@ -41,6 +41,7 @@ Em desenvolvimento local, use um túnel (ex.: Cloudflare Tunnel / ngrok) apontan
 - `pull_request`: opened, reopened, closed, synchronize, edited, ready_for_review
 - `pull_request_review`: submitted, dismissed, edited
 - `issues`: closed, reopened — só label **`bug`**, autor/assignee em `GITHUB_BUG_ISSUE_ACTORS` (default `PedroMedeirosDev`), e bug já com `githubIssueNumber` no Desk → status `corrigido_gestor` / `sem_correcao` / `enviado_gestor`
+- `issue_comment`: created/edited — label **`bug`**, issue vinculada no Desk, autor **não** bot e (se `GITHUB_BUG_COMMENT_ACTORS` vazio) **fora** dos atores QA → histórico + `em_tratamento` (quando estava `enviado_gestor`/`reportado`) + campos `githubIssueLastComment*`
 - `issue_dependencies`: blocked_by / blocking added|removed — só se alguma das issues estiver vinculada a bug no Desk → entrada no **histórico** do bug (sem mudar status)
 - `ping`: healthcheck do GitHub
 
@@ -67,6 +68,21 @@ Sem `gh` no PATH: o UI mostra `spawn gh ENOENT`; o webhook ainda responde 200 no
 ### Fallback
 
 O botão **Sincronizar GitHub** na Curadoria continua válido (catch-up / importar abertas / se o webhook falhar).
+
+## Bugs ↔ GitHub Issue (Desk)
+
+Na ficha do bug (editor):
+
+| Ação UI | Rota | Efeito |
+|---|---|---|
+| **Abrir issue GitHub** | POST /api/projects/:slug/tests/:id/github-issue | Cria issue ug na KB + nviado_gestor |
+| **Sync issue GitHub** | POST .../github-issue/sync | Atualiza título/body/evidências **e** puxa comentários do gestor (gh api) se o webhook falhou |
+| **Fechar issue GitHub** | POST .../github-issue/close | gh issue close + status Desk corrigido_gestor + githubIssueClosedAt |
+
+Implementação: create-bug-issue.ts, sync-bug-issue.ts (pullGestorCommentsIntoReport), close-bug-issue.ts.
+
+Se GITHUB_WEBHOOK_SECRET estiver inativo no ambiente local, comentários do gestor **não** chegam sozinhos — use **Sync** no bug.
+
 
 ## SSE (UI em tempo quase real)
 

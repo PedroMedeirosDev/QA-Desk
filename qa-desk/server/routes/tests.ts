@@ -1,5 +1,6 @@
 import { Router, type Request } from "express";
 import multer from "multer";
+import path from "node:path";
 import { v4 as uuid } from "uuid";
 import {
   appendHistory,
@@ -40,13 +41,52 @@ function param(req: Request, key: string): string {
   return Array.isArray(v) ? v[0] : (v ?? "");
 }
 
+/** Prints + vídeos de tela (gravidade / repro). */
+const EVIDENCE_MAX_BYTES = 50 * 1024 * 1024;
+const EVIDENCE_IMAGE_MIME = /^image\/(png|jpe?g|webp)$/i;
+const EVIDENCE_VIDEO_MIME =
+  /^video\/(mp4|webm|quicktime|x-msvideo|x-matroska|3gpp)$/i;
+const EVIDENCE_EXTS = new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".mp4",
+  ".webm",
+  ".mov",
+  ".mkv",
+  ".avi",
+  ".3gp",
+]);
+
+function isAllowedEvidenceFile(file: Express.Multer.File): boolean {
+  if (EVIDENCE_IMAGE_MIME.test(file.mimetype)) return true;
+  if (EVIDENCE_VIDEO_MIME.test(file.mimetype)) return true;
+  const ext = path.extname(file.originalname || "").toLowerCase();
+  return EVIDENCE_EXTS.has(ext);
+}
+
+function evidenceTypeFromUpload(
+  mimeType: string,
+  originalName: string,
+): EvidenceFile["type"] {
+  if (EVIDENCE_VIDEO_MIME.test(mimeType)) return "video";
+  const ext = path.extname(originalName || "").toLowerCase();
+  if ([".mp4", ".webm", ".mov", ".mkv", ".avi", ".3gp"].includes(ext)) {
+    return "video";
+  }
+  if (EVIDENCE_IMAGE_MIME.test(mimeType) || [".png", ".jpg", ".jpeg", ".webp"].includes(ext)) {
+    return "screenshot";
+  }
+  return "log";
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: EVIDENCE_MAX_BYTES },
   fileFilter: (_req, file, cb) => {
-    const ok = /^image\/(png|jpe?g|webp)$/i.test(file.mimetype);
-    if (ok) cb(null, true);
-    else cb(new Error("Apenas PNG, JPG ou WebP"));
+    if (isAllowedEvidenceFile(file)) cb(null, true);
+    else cb(new Error("Apenas PNG, JPG, WebP ou vídeo (MP4, WebM, MOV…)"));
   },
 });
 
@@ -274,7 +314,28 @@ testsRouter.put("/:id", requireAdmin, async (req, res) => {
   res.json(updated);
 });
 
-testsRouter.post("/:id/evidence", requireAdmin, upload.single("file"), async (req, res) => {
+testsRouter.post(
+  "/:id/evidence",
+  requireAdmin,
+  (req, res, next) => {
+    upload.single("file")(req, res, (err: unknown) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({
+            error: `Arquivo acima de ${Math.round(EVIDENCE_MAX_BYTES / (1024 * 1024))} MB`,
+          });
+        }
+        return res.status(400).json({ error: err.message });
+      }
+      if (err) {
+        return res.status(400).json({
+          error: err instanceof Error ? err.message : "Arquivo inválido",
+        });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const catalog = await readCatalog(project);
   const testId = param(req, "id");
@@ -304,7 +365,7 @@ testsRouter.post("/:id/evidence", requireAdmin, upload.single("file"), async (re
 
   const evidence: EvidenceFile = {
     fileId,
-    type: "screenshot",
+    type: evidenceTypeFromUpload(req.file.mimetype, req.file.originalname),
     filename: req.file.originalname,
     mimeType: req.file.mimetype,
     sizeBytes: req.file.size,
@@ -323,7 +384,8 @@ testsRouter.post("/:id/evidence", requireAdmin, upload.single("file"), async (re
   catalog.reports[idx] = report;
   await writeCatalog(project, catalog);
   res.status(201).json(evidence);
-});
+  },
+);
 
 /**
  * Abre GitHub Issue no repo KB (label bug) — handoff oficial ao time / agente.
@@ -394,6 +456,147 @@ testsRouter.post("/:id/github-issue", requireAdmin, async (req, res) => {
     const err = e as Error & { status?: number };
     const status = err.status && err.status >= 400 ? err.status : 500;
     res.status(status).json({ error: err.message || "Falha ao abrir issue" });
+  }
+});
+
+/**
+ * Sincroniza issue GitHub já vinculada (título + body + evidências).
+ * Use após editar o bug no Desk — não cria issue nova.
+ */
+testsRouter.post("/:id/github-issue/sync", requireAdmin, async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const catalog = await readCatalog(project);
+  const testId = param(req, "id");
+  const idx = catalog.reports.findIndex((r) => r.id === testId);
+  if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
+
+  const report = catalog.reports[idx];
+  const isBug =
+    (report.recordType ?? (report.campaign ? "teste" : "bug")) === "bug";
+  if (!isBug) {
+    return res.status(400).json({ error: "Só bugs podem sincronizar issue no GitHub" });
+  }
+  if (!report.githubIssueNumber || !report.githubIssueUrl) {
+    return res.status(400).json({
+      error: "Bug sem issue vinculada — use Abrir issue GitHub primeiro",
+    });
+  }
+
+  try {
+    const { updateBugGithubIssue } = await import("../github/create-bug-issue.js");
+    const { pullGestorCommentsIntoReport } = await import(
+      "../github/sync-bug-issue.js"
+    );
+    const result = await updateBugGithubIssue(report);
+
+    const catchup = await pullGestorCommentsIntoReport(report, {
+      actor: actorOf(req),
+    });
+
+    appendHistory(report, {
+      actor: actorOf(req),
+      action: "github_issue_synced",
+      detail: `#${result.number} · ${result.repository}`,
+      meta: {
+        githubIssueNumber: result.number,
+        githubIssueUrl: result.url,
+        repository: result.repository,
+        title: result.title,
+        evidenceUploaded: result.evidenceUploaded,
+        evidenceSkipped: result.evidenceSkipped,
+        commentCatchup: catchup.applied,
+        commentAuthor: catchup.commentAuthor ?? null,
+      },
+    });
+    catalog.reports[idx] = report;
+    await writeCatalog(project, catalog);
+
+    res.json({
+      ok: true,
+      number: result.number,
+      url: result.url,
+      title: result.title,
+      repository: result.repository,
+      evidenceUploaded: result.evidenceUploaded,
+      evidenceSkipped: result.evidenceSkipped,
+      commentCatchup: catchup,
+      report,
+    });
+  } catch (e) {
+    const err = e as Error & { status?: number };
+    const status = err.status && err.status >= 400 ? err.status : 500;
+    res.status(status).json({ error: err.message || "Falha ao sincronizar issue" });
+  }
+});
+
+/**
+ * Fecha a issue GitHub vinculada (gh issue close) e alinha status no Desk.
+ */
+testsRouter.post("/:id/github-issue/close", requireAdmin, async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const catalog = await readCatalog(project);
+  const testId = param(req, "id");
+  const idx = catalog.reports.findIndex((r) => r.id === testId);
+  if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
+
+  const report = catalog.reports[idx];
+  const isBug =
+    (report.recordType ?? (report.campaign ? "teste" : "bug")) === "bug";
+  if (!isBug) {
+    return res.status(400).json({ error: "Só bugs podem fechar issue no GitHub" });
+  }
+  if (!report.githubIssueNumber || !report.githubIssueUrl) {
+    return res.status(400).json({
+      error: "Bug sem issue vinculada — use Abrir issue GitHub primeiro",
+    });
+  }
+
+  try {
+    const { closeBugGithubIssue } = await import("../github/close-bug-issue.js");
+    const result = await closeBugGithubIssue(report);
+
+    report.githubIssueClosedAt = new Date().toISOString();
+    const prev = report.status;
+    const protectedStatus = new Set([
+      "homologado",
+      "arquivado",
+      "nao_reproduzido",
+    ]);
+    if (!protectedStatus.has(prev)) {
+      report.status = "corrigido_gestor";
+    }
+
+    appendHistory(report, {
+      actor: actorOf(req),
+      action: "github_issue_closed_from_desk",
+      detail: result.alreadyClosed
+        ? `#${result.number} já estava fechada no GH · Desk → ${report.status}`
+        : `#${result.number} fechada no GH · Desk → ${report.status}`,
+      meta: {
+        githubIssueNumber: result.number,
+        githubIssueUrl: result.url,
+        repository: result.repository,
+        alreadyClosed: result.alreadyClosed,
+        fromStatus: prev,
+        toStatus: report.status,
+      },
+    });
+
+    catalog.reports[idx] = report;
+    await writeCatalog(project, catalog);
+
+    res.json({
+      ok: true,
+      number: result.number,
+      url: result.url,
+      repository: result.repository,
+      alreadyClosed: result.alreadyClosed,
+      report,
+    });
+  } catch (e) {
+    const err = e as Error & { status?: number };
+    const status = err.status && err.status >= 400 ? err.status : 500;
+    res.status(status).json({ error: err.message || "Falha ao fechar issue" });
   }
 });
 

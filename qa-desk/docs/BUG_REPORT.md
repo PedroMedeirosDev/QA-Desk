@@ -57,17 +57,34 @@ Espelham [`TestRecord`](../src/types/test-record.ts):
 
 Formato: [`formatBugReportMarkdown`](../src/lib/bug-report-markdown.ts) (headings estáveis + `maskPii`).
 
+Ordem do body (scan do gestor/dev):
+
+1. **Sintoma** — narrativa (`description`; não repetir o título)
+2. **Gravidade** + **Ambiente** (linha compacta: código · canal · plataforma · build · browser/device · login)
+3. **Evidências** — prints/vídeo cedo
+4. **Passos**
+5. **Resultado atual** → **Resultado esperado**
+6. **Notas técnicas** (opcional)
+7. **Referências** — `bugCode` + id interno
+
 - Título da issue: `[APP-01] Sintoma` (`bugCode` + título).
 - Repo default: `polygonus-br/polygonus-suporte-kb` · label **`bug`** (override: `GITHUB_BUG_ISSUES_REPO`).
 - Botão **Abrir issue GitHub** → `POST .../github-issue` → sobe evidências na branch `bug-evidence` + `gh issue create` · status `enviado_gestor` · grava `githubIssueNumber` / `githubIssueUrl`.
-- Reenvio: se já vinculada, não duplica — abre o link.
-- Evidências: arquivos anexados no body (imagens embutidas via Contents API na branch `bug-evidence`).
+- Botão **Sync issue GitHub** (quando já vinculada) → POST .../github-issue/sync → gh issue edit (título + body) + reenvia evidências · histórico github_issue_synced · **catch-up de comentários** via gh api (pullGestorCommentsIntoReport) se o webhook issue_comment não tiver chegado (ex.: secret local inativo).
+- Botão **Fechar issue GitHub** → POST .../github-issue/close → gh issue close · Desk → corrigido_gestor + githubIssueClosedAt (confirmação no UI).
+- Reenvio antigo: se chamar create com issue já vinculada, não duplica.
+- Evidências: arquivos anexados no body (imagens/vídeos via Contents API na branch `bug-evidence`).
 - Pré-requisito: `gh` autenticado com write no repo KB.
-- **Volta (webhook):** issue `closed`/`reopened` com label `bug` + autor/assignee em `GITHUB_BUG_ISSUE_ACTORS` + já vinculada no Desk → status `corrigido_gestor` / `sem_correcao` (not_planned) / `enviado_gestor`. Dependências (blocked-by) → histórico do bug. Mesmo endpoint da Curadoria; no GitHub habilitar **Issues** + **Issue dependencies**.
+- **Volta (webhook):**
+  - issue `closed`/`reopened` → `corrigido_gestor` / `sem_correcao` / `enviado_gestor`
+  - **`issue_comment`** (gestor) → histórico + status `em_tratamento` (você fecha a issue depois de homologar)
+  - Dependências (blocked-by) → histórico
+  - Mesmo endpoint da Curadoria; no GitHub: **Issues** + **Issue comments** + **Issue dependencies**
+  - Ator QA (`GITHUB_BUG_ISSUE_ACTORS`) não dispara “gestor respondeu”; opcional `GITHUB_BUG_COMMENT_ACTORS` para allowlist do gestor.
 
 **Copiar report Markdown** — clipboard com o mesmo body (opcional).
 
-Catch-up em lote (issues perdidas): ainda manual / futuro botão.
+Catch-up de comentário perdido: use **Sync issue GitHub** no bug (não depende do webhook).
 
 ### Discord (legado)
 

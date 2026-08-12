@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bug, Copy, ExternalLink, Loader2, Play, Plus, Smartphone, Sparkles, Trash2, Upload, Video } from "lucide-react";
+import { ArrowLeft, Bug, CheckCircle2, Copy, ExternalLink, Loader2, Play, Plus, RefreshCw, Smartphone, Sparkles, Trash2, Upload, Video } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
@@ -357,7 +357,7 @@ export function TestEditorPage({
 
   async function onUpload(file: File) {
     if (!id || isNew) {
-      toast.error("Salve o teste antes de anexar print");
+      toast.error("Salve o registro antes de anexar evidência");
       return;
     }
     if (uploadProgress) return;
@@ -451,6 +451,98 @@ export function TestEditorPage({
       if (res.url) window.open(res.url, "_blank", "noopener,noreferrer");
     } catch (e) {
       toast.error(toastErrorMessage(e, "Falha ao abrir issue"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function syncGithubIssue() {
+    if (!id || isNew) {
+      toast.error("Salve o bug antes de sincronizar a issue");
+      return;
+    }
+    if (!form.githubIssueNumber || !form.githubIssueUrl) {
+      toast.error("Bug sem issue vinculada — abra a issue primeiro");
+      return;
+    }
+    setSaving(true);
+    try {
+      // Garante que o que está na tela vai para o GitHub (não só o último save)
+      const payload: Partial<TestRecord> = {
+        ...form,
+        recordType: editorKind,
+        stepsDetailed: detailedStepsForSave(
+          detailedStepsFromRecord(form).length
+            ? detailedStepsFromRecord(form)
+            : form.stepsDetailed ?? [],
+        ),
+        stepsManual: undefined,
+      };
+      const saved = await api.updateTest(project, id, payload);
+      setForm(saved);
+
+      const res = await api.syncGithubIssue(project, id);
+      setForm(res.report);
+      const n = res.evidenceUploaded ?? 0;
+      const skip = res.evidenceSkipped?.length ?? 0;
+      const evHint =
+        n > 0
+          ? ` · ${n} evidência${n === 1 ? "" : "s"}`
+          : "";
+      toast.success(`Issue #${res.number} sincronizada${evHint}`);
+      if (res.commentCatchup?.applied) {
+        toast.info(
+          `Comentário do gestor capturado${
+            res.commentCatchup.commentAuthor
+              ? ` · @${res.commentCatchup.commentAuthor}`
+              : ""
+          }`,
+        );
+      }
+      if (skip > 0) {
+        toast.info(
+          `${skip} arquivo(s) não anexado(s): ${res.evidenceSkipped
+            .map((s) => s.filename)
+            .join(", ")}`,
+        );
+      }
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Falha ao sincronizar issue"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function closeGithubIssue() {
+    if (!id || isNew) {
+      toast.error("Salve o bug antes de fechar a issue");
+      return;
+    }
+    if (!form.githubIssueNumber || !form.githubIssueUrl) {
+      toast.error("Bug sem issue vinculada");
+      return;
+    }
+    if (form.githubIssueClosedAt) {
+      toast.info("Issue já marcada como fechada no Desk");
+      return;
+    }
+    const ok = window.confirm(
+      `Fechar a issue #${form.githubIssueNumber} no GitHub?\n\n` +
+        "O status do bug no Desk passa para Corrigido (gestor), salvo se já estiver homologado/arquivado.",
+    );
+    if (!ok) return;
+
+    setSaving(true);
+    try {
+      const res = await api.closeGithubIssue(project, id);
+      setForm(res.report);
+      toast.success(
+        res.alreadyClosed
+          ? `Issue #${res.number} já estava fechada — Desk alinhado`
+          : `Issue #${res.number} fechada no GitHub`,
+      );
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Falha ao fechar issue"));
     } finally {
       setSaving(false);
     }
@@ -580,7 +672,7 @@ export function TestEditorPage({
             {editingBug ? (
               <Field
                 label="Citação do chamado"
-                hint="Id ou trecho do chamado Polygonus. Vai no report Discord; não aparece no portfólio visitante."
+                hint="Id ou trecho do chamado Polygonus. Não aparece no portfólio visitante."
               >
                 <textarea
                   className="min-h-24 w-full rounded-md border px-3 py-2 text-sm"
@@ -922,9 +1014,17 @@ export function TestEditorPage({
                       className="block overflow-hidden rounded-md border"
                     >
                       {ev.type === "video" ? (
-                        <span className="flex h-24 w-36 flex-col items-center justify-center gap-1 bg-muted/40 text-xs text-muted-foreground">
-                          <Video className="size-6" />
-                          Vídeo
+                        <span className="relative block h-24 w-36 overflow-hidden bg-muted/40">
+                          <video
+                            src={api.evidenceUrl(ev.storageKey)}
+                            className="h-full w-full object-cover"
+                            muted
+                            preload="metadata"
+                          />
+                          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-black/55 py-1 text-[0.65rem] text-white">
+                            <Video className="size-3.5" />
+                            Vídeo
+                          </span>
                         </span>
                       ) : (
                         <img
@@ -974,10 +1074,10 @@ export function TestEditorPage({
                 ) : (
                   <Upload className="size-4" />
                 )}
-                {uploadProgress ? "Enviando…" : "Anexar print"}
+                {uploadProgress ? "Enviando…" : "Anexar print / vídeo"}
                 <input
                   type="file"
-                  accept="image/png,image/jpeg,image/webp"
+                  accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.mkv"
                   className="hidden"
                   disabled={Boolean(uploadProgress)}
                   onChange={(e) => {
@@ -1559,13 +1659,9 @@ export function TestEditorPage({
                 Copiar report Markdown
               </button>
               </PremiumTooltip>
-              {isAdmin && !isNew && isBugReport(form) && (
+              {isAdmin && !isNew && isBugReport(form) && !form.githubIssueUrl && (
                 <PremiumTooltip
-                  label={
-                    form.githubIssueUrl
-                      ? `Já vinculada: #${form.githubIssueNumber} — abre no GitHub`
-                      : "Abre issue em polygonus-suporte-kb com label bug (handoff ao time)"
-                  }
+                  label="Abre issue em polygonus-suporte-kb com label bug (handoff ao time)"
                   side="left"
                   wide
                 >
@@ -1576,12 +1672,48 @@ export function TestEditorPage({
                     className={cn(actionBtnBase, actionBtn.create, "w-full")}
                   >
                     <ExternalLink className="size-4" />
-                    {form.githubIssueUrl
-                      ? `Issue #${form.githubIssueNumber}`
-                      : "Abrir issue GitHub"}
+                    Abrir issue GitHub
                   </button>
                 </PremiumTooltip>
               )}
+              {isAdmin && !isNew && isBugReport(form) && form.githubIssueUrl && (
+                <PremiumTooltip
+                  label={`Envia título, body e evidências do Desk para a issue #${form.githubIssueNumber} (não cria issue nova). Também busca comentários do gestor perdidos pelo webhook.`}
+                  side="left"
+                  wide
+                >
+                  <button
+                    type="button"
+                    onClick={() => void syncGithubIssue()}
+                    disabled={saving}
+                    className={cn(actionBtnBase, actionBtn.checklist, "w-full")}
+                  >
+                    <RefreshCw className="size-4" />
+                    Sync issue GitHub
+                  </button>
+                </PremiumTooltip>
+              )}
+              {isAdmin &&
+                !isNew &&
+                isBugReport(form) &&
+                form.githubIssueUrl &&
+                !form.githubIssueClosedAt && (
+                  <PremiumTooltip
+                    label={`Fecha a issue #${form.githubIssueNumber} no GitHub (gh issue close) e alinha o status no Desk`}
+                    side="left"
+                    wide
+                  >
+                    <button
+                      type="button"
+                      onClick={() => void closeGithubIssue()}
+                      disabled={saving}
+                      className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                    >
+                      <CheckCircle2 className="size-4" />
+                      Fechar issue GitHub
+                    </button>
+                  </PremiumTooltip>
+                )}
               {form.githubIssueUrl && (
                 <a
                   href={form.githubIssueUrl}
@@ -1589,8 +1721,33 @@ export function TestEditorPage({
                   rel="noopener noreferrer"
                   className="text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
                 >
-                  {form.githubIssueUrl}
+                  Issue #{form.githubIssueNumber} · abrir no GitHub
                 </a>
+              )}
+              {form.githubIssueLastCommentAt && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-left text-xs">
+                  <p className="font-medium text-amber-200">
+                    Gestor respondeu
+                    {form.githubIssueLastCommentBy
+                      ? ` · @${form.githubIssueLastCommentBy}`
+                      : ""}
+                  </p>
+                  {form.githubIssueLastCommentBody && (
+                    <p className="mt-1 text-muted-foreground">
+                      {form.githubIssueLastCommentBody}
+                    </p>
+                  )}
+                  {form.githubIssueLastCommentUrl && (
+                    <a
+                      href={form.githubIssueLastCommentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-block text-amber-300/90 underline-offset-2 hover:underline"
+                    >
+                      Ver comentário
+                    </a>
+                  )}
+                </div>
               )}
               {isAdmin && (
                 <button
