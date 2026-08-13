@@ -14,6 +14,7 @@ import {
 import {
   makeStoredEvidenceFilename,
   uploadEvidenceBuffer,
+  deleteEvidenceObject,
 } from "../supabase-storage.js";
 import { deriveTestKey, findByTestKey } from "../test-key.js";
 import {
@@ -29,6 +30,7 @@ import {
   sanitizeVisitorTestRecord,
 } from "../privacy/sanitize-visitor.js";
 import type { EvidenceFile, TestRecord } from "../types.js";
+import { emitGestorReplyFromReport } from "../gestor-replies-sse.js";
 import {
   CT_DRAFT_EXAMPLE,
   CT_FIELDS_LLM_SYSTEM_PROMPT,
@@ -141,6 +143,28 @@ testsRouter.get("/:id", async (req, res) => {
   res.json(test);
 });
 
+/** Marca o último comentário do gestor como lido (some o “não lido”). */
+testsRouter.post("/:id/gestor-comment/seen", requireAdmin, async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const catalog = await readCatalog(project);
+  const testId = param(req, "id");
+  const idx = catalog.reports.findIndex((r) => r.id === testId);
+  if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
+
+  const report = catalog.reports[idx];
+  if (!report.githubIssueLastCommentAt) {
+    return res.json(report);
+  }
+  if (report.githubIssueLastCommentSeenAt === report.githubIssueLastCommentAt) {
+    return res.json(report);
+  }
+
+  report.githubIssueLastCommentSeenAt = report.githubIssueLastCommentAt;
+  catalog.reports[idx] = report;
+  await writeCatalog(project, catalog);
+  res.json(report);
+});
+
 testsRouter.post("/", requireAdmin, async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const catalog = await readCatalog(project);
@@ -243,6 +267,11 @@ testsRouter.put("/:id", requireAdmin, async (req, res) => {
     comments: body.comments ?? prev.comments,
     executionMode: (body.automation ?? prev.automation)?.flowPath ? "automated" : "manual",
     bugCode: prev.bugCode, // código público imutável após criação
+    githubIssueLastCommentAt: prev.githubIssueLastCommentAt,
+    githubIssueLastCommentBy: prev.githubIssueLastCommentBy,
+    githubIssueLastCommentBody: prev.githubIssueLastCommentBody,
+    githubIssueLastCommentUrl: prev.githubIssueLastCommentUrl,
+    githubIssueLastCommentSeenAt: prev.githubIssueLastCommentSeenAt,
   };
 
   const asBug =
@@ -387,6 +416,40 @@ testsRouter.post(
   },
 );
 
+testsRouter.delete("/:id/evidence/:fileId", requireAdmin, async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const catalog = await readCatalog(project);
+  const testId = param(req, "id");
+  const fileId = param(req, "fileId");
+  const idx = catalog.reports.findIndex((r) => r.id === testId);
+  if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
+
+  const report = catalog.reports[idx];
+  const current = report.evidence ?? [];
+  const ev = current.find((e) => e.fileId === fileId);
+  if (!ev) return res.status(404).json({ error: "Evidência não encontrada" });
+
+  report.evidence = current.filter((e) => e.fileId !== fileId);
+  appendHistory(report, {
+    actor: actorOf(req),
+    action: "evidence_removed",
+    detail: ev.filename,
+  });
+  catalog.reports[idx] = report;
+  await writeCatalog(project, catalog);
+
+  try {
+    await deleteEvidenceObject(ev.storageKey);
+  } catch (err) {
+    console.warn(
+      "[evidence] catálogo atualizado, arquivo residual:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  res.json(report);
+});
+
 /**
  * Abre GitHub Issue no repo KB (label bug) — handoff oficial ao time / agente.
  * Se já existir issue vinculada, devolve a existente (não duplica).
@@ -510,6 +573,9 @@ testsRouter.post("/:id/github-issue/sync", requireAdmin, async (req, res) => {
     });
     catalog.reports[idx] = report;
     await writeCatalog(project, catalog);
+    if (catchup.applied) {
+      emitGestorReplyFromReport(project, report, "catchup");
+    }
 
     res.json({
       ok: true,

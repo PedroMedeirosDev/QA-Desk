@@ -11,14 +11,17 @@ import {
   projectNewBugPath,
 } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
+import { QA_GESTOR_REPLY_EVENT } from "@/lib/gestor-replies-stream";
 import { CHANNEL_LABELS, getProjectChannels, type ProductChannel } from "@/config/channels";
 import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
 import {
   BUG_STATUS_LABELS,
+  PRIORITY_LABELS,
   displayStatus,
   formatRecordId,
   inferChannel,
   isBugReport,
+  isGestorReplyUnread,
 } from "@/types/test-record";
 
 export function BugListPage({
@@ -40,6 +43,24 @@ export function BugListPage({
       .listTests(project)
       .then((catalog) => setReports(catalog.reports))
       .finally(() => setLoading(false));
+  }, [project]);
+
+  useEffect(() => {
+    function reload() {
+      void api.listTests(project).then((catalog) => setReports(catalog.reports));
+    }
+    function onReply() {
+      reload();
+    }
+    window.addEventListener(QA_GESTOR_REPLY_EVENT, onReply);
+    function onVisible() {
+      if (document.visibilityState === "visible") reload();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener(QA_GESTOR_REPLY_EVENT, onReply);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [project]);
 
   const filtered = useMemo(() => {
@@ -153,9 +174,9 @@ export function BugListPage({
                       {r.module && (
                         <p className="text-xs text-muted-foreground">{r.module}</p>
                       )}
-                      {r.githubIssueLastCommentAt && (
-                        <p className="mt-1 text-[0.65rem] text-amber-300/90">
-                          Gestor respondeu
+                      {isGestorReplyUnread(r) && (
+                        <p className="mt-1 text-[0.65rem] font-medium text-amber-300">
+                          Não lido
                           {r.githubIssueLastCommentBy
                             ? ` · @${r.githubIssueLastCommentBy}`
                             : ""}
@@ -174,8 +195,8 @@ export function BugListPage({
                         {label}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 align-middle capitalize text-muted-foreground">
-                      {r.priority ?? "—"}
+                    <td className="whitespace-nowrap px-4 py-3 align-middle text-muted-foreground">
+                      {r.priority ? PRIORITY_LABELS[r.priority] : "—"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 align-middle text-xs tabular-nums text-muted-foreground">
                       {r.reportedAt

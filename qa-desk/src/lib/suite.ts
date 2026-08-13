@@ -8,31 +8,198 @@ import {
 
 /**
  * Hierarquia na UI:
- *   módulo (Mural | Atendimento | …)
- *     → suite (CRUD | Anexos | …)
- *       → CT
+ *   área (Mural | Atendimento | …)
+ *     → aba/módulo (Comunicados | Rotina | Diário | …)
+ *       → suite (CRUD | Anexos | …)
+ *         → CT
+ *
+ * Produto: Mural = tela com abas Comunicados, Rotina, Diário (pais/alunos).
+ * No app a aba de comunicados ainda pode aparecer como texto "Mural";
+ * no Desk o módulo canônico é Comunicados.
  */
 
-/** Ordem canônica dos módulos (desconhecidos vão ao final, alfabético). */
-export const MODULE_ORDER = ["Mural", "Atendimento", "Rotina"] as const;
+/** Ordem canônica das abas/módulos (desconhecidos vão ao final, alfabético). */
+export const MODULE_ORDER = [
+  "Comunicados",
+  "Rotina",
+  "Diario",
+  "Atendimento",
+  "Calendario",
+  "Notas",
+  "ConteudoFrequencia",
+  "Tarefas",
+  "Ocorrencias",
+  "MeusAlunos",
+  "Cardapio",
+  "Boletim",
+  "NotasParciais",
+  "Mensalidade",
+  "ConteudoLecionado",
+  "FrequenciaAluno",
+  "MeusDocumentos",
+  "Horario",
+  "TarefasCasa",
+  "AvaliacaoConhecimento",
+  "AvaliacaoHabilidades",
+  "NotasFiscais",
+] as const;
 
 export const MODULE_LABELS: Record<string, string> = {
-  Mural: "Mural",
-  Atendimento: "Atendimento",
+  Comunicados: "Comunicados",
   Rotina: "Rotina",
+  Diario: "Diário (pais/alunos)",
+  Atendimento: "Atendimento (novo)",
+  Calendario: "Calendário",
+  Notas: "Notas",
+  ConteudoFrequencia: "Conteúdo e Frequência",
+  Tarefas: "Tarefas",
+  Ocorrencias: "Ocorrências",
+  MeusAlunos: "Meus Alunos",
+  Cardapio: "Cardápio",
+  Boletim: "Boletim Online",
+  NotasParciais: "Notas Parciais",
+  Mensalidade: "Mensalidade",
+  ConteudoLecionado: "Conteúdo Lecionado",
+  FrequenciaAluno: "Frequência do Aluno",
+  MeusDocumentos: "Meus Documentos",
+  Horario: "Horário",
+  TarefasCasa: "Tarefas para Casa",
+  AvaliacaoConhecimento: "Avaliação do Conhecimento",
+  AvaliacaoHabilidades: "Avaliação de Habilidades",
+  NotasFiscais: "Notas Fiscais",
+  /** Legacy — normalizado para Comunicados via alias */
+  Mural: "Comunicados",
   Outros: "Outros",
 };
 
 const MODULE_ALIASES: Record<string, string> = {
-  mural: "Mural",
+  mural: "Comunicados",
+  comunicados: "Comunicados",
+  comunicado: "Comunicados",
   atendimento: "Atendimento",
   "fale-conosco": "Atendimento",
   faleconosco: "Atendimento",
+  chat: "Atendimento",
   rotina: "Rotina",
+  diario: "Diario",
+  "diário": "Diario",
+  calendario: "Calendario",
+  "calendário": "Calendario",
+  notas: "Notas",
+  "conteudo-frequencia": "ConteudoFrequencia",
+  "conteúdo-e-frequência": "ConteudoFrequencia",
+  tarefas: "Tarefas",
+  ocorrencias: "Ocorrencias",
+  "ocorrências": "Ocorrencias",
+  "meus-alunos": "MeusAlunos",
+  cardapio: "Cardapio",
+  "cardápio": "Cardapio",
+  boletim: "Boletim",
+  "notas-parciais": "NotasParciais",
+  mensalidade: "Mensalidade",
+  "conteudo-lecionado": "ConteudoLecionado",
+  "frequencia-aluno": "FrequenciaAluno",
+  "meus-documentos": "MeusDocumentos",
+  horario: "Horario",
+  "horário": "Horario",
+  "tarefas-casa": "TarefasCasa",
+  "avaliacao-conhecimento": "AvaliacaoConhecimento",
+  "avaliacao-habilidades": "AvaliacaoHabilidades",
+  "notas-fiscais": "NotasFiscais",
 };
+
+/** Área de produto que agrupa abas (ex.: Mural → Comunicados/Rotina/Diário). */
+export const AREA_ORDER = [
+  "Mural",
+  "Atendimento",
+  "Calendario",
+  "Notas",
+  "ConteudoFrequencia",
+  "Tarefas",
+  "Ocorrencias",
+  "MeusAlunos",
+  "Cardapio",
+  "Boletim",
+  "NotasParciais",
+  "Mensalidade",
+  "ConteudoLecionado",
+  "FrequenciaAluno",
+  "MeusDocumentos",
+  "Horario",
+  "TarefasCasa",
+  "AvaliacaoConhecimento",
+  "AvaliacaoHabilidades",
+  "NotasFiscais",
+] as const;
+
+export const AREA_LABELS: Record<string, string> = {
+  Mural: "Mural",
+  Atendimento: "Atendimento",
+  Calendario: "Calendário",
+  Notas: "Notas",
+  ConteudoFrequencia: "Conteúdo e Frequência",
+  Tarefas: "Tarefas",
+  Ocorrencias: "Ocorrências",
+  MeusAlunos: "Meus Alunos",
+  Cardapio: "Cardápio",
+  Boletim: "Boletim Online",
+  NotasParciais: "Notas Parciais",
+  Mensalidade: "Mensalidade",
+  ConteudoLecionado: "Conteúdo Lecionado",
+  FrequenciaAluno: "Frequência do Aluno",
+  MeusDocumentos: "Meus Documentos",
+  Horario: "Horário",
+  TarefasCasa: "Tarefas para Casa",
+  AvaliacaoConhecimento: "Avaliação do Conhecimento",
+  AvaliacaoHabilidades: "Avaliação de Habilidades",
+  NotasFiscais: "Notas Fiscais",
+  Outros: "Outros",
+};
+
+/** Aba/módulo → área. Módulos fora do mapa viram área = próprio nome. */
+export const AREA_BY_MODULE: Record<string, string> = {
+  Comunicados: "Mural",
+  Rotina: "Mural",
+  Diario: "Mural",
+  /** Legacy pré-migração */
+  Mural: "Mural",
+  Atendimento: "Atendimento",
+  Calendario: "Calendario",
+  Notas: "Notas",
+  ConteudoFrequencia: "ConteudoFrequencia",
+  Tarefas: "Tarefas",
+  Ocorrencias: "Ocorrencias",
+  MeusAlunos: "MeusAlunos",
+  Cardapio: "Cardapio",
+  Boletim: "Boletim",
+  NotasParciais: "NotasParciais",
+  Mensalidade: "Mensalidade",
+  ConteudoLecionado: "ConteudoLecionado",
+  FrequenciaAluno: "FrequenciaAluno",
+  MeusDocumentos: "MeusDocumentos",
+  Horario: "Horario",
+  TarefasCasa: "TarefasCasa",
+  AvaliacaoConhecimento: "AvaliacaoConhecimento",
+  AvaliacaoHabilidades: "AvaliacaoHabilidades",
+  NotasFiscais: "NotasFiscais",
+};
+
+export function areaFromModule(module: string): string {
+  return AREA_BY_MODULE[module] ?? module;
+}
+
+export function areaOrderIndex(area: string): number {
+  const i = AREA_ORDER.indexOf(area as (typeof AREA_ORDER)[number]);
+  return i >= 0 ? i : AREA_ORDER.length;
+}
+
+export function areaCollapseKey(area: string): string {
+  return `a:${area}`;
+}
 
 /** Ordem canônica das suites na UI. */
 export const SUITE_ORDER = [
+  "Smoke",
   "CRUD",
   "Enquete",
   "Anexos",
@@ -41,12 +208,21 @@ export const SUITE_ORDER = [
   "Eventos",
   "Lista",
   "Filtros",
+  "Texto",
+  "Audio",
+  "Video",
+  "Pdf",
+  "Alimentacao",
+  "Soneca",
+  "Banheiro",
+  "Bilhete",
   "E2E",
 ] as const;
 
 export type KnownSuite = (typeof SUITE_ORDER)[number];
 
 export const SUITE_LABELS: Record<string, string> = {
+  Smoke: "Smoke",
   CRUD: "CRUD",
   Enquete: "Enquete",
   Anexos: "Anexos",
@@ -55,11 +231,20 @@ export const SUITE_LABELS: Record<string, string> = {
   Eventos: "Eventos",
   Lista: "Lista",
   Filtros: "Filtros especiais",
+  Texto: "Texto",
+  Audio: "Áudio",
+  Video: "Vídeo",
+  Pdf: "PDF",
+  Alimentacao: "Alimentação",
+  Soneca: "Soneca",
+  Banheiro: "Banheiro",
+  Bilhete: "Bilhete",
   E2E: "E2E",
   Outros: "Outros",
 };
 
 const SUITE_FROM_PREFIX: Record<string, string> = {
+  smoke: "Smoke",
   crud: "CRUD",
   enquete: "Enquete",
   anexo: "Anexos",
@@ -68,6 +253,14 @@ const SUITE_FROM_PREFIX: Record<string, string> = {
   evento: "Eventos",
   lista: "Lista",
   filtro: "Filtros",
+  texto: "Texto",
+  audio: "Audio",
+  video: "Video",
+  pdf: "Pdf",
+  alimentacao: "Alimentacao",
+  soneca: "Soneca",
+  banheiro: "Banheiro",
+  bilhete: "Bilhete",
   e2e: "E2E",
 };
 
@@ -110,6 +303,14 @@ function suiteFromSlug(slug: string): string | null {
   if (/evento/.test(s)) return "Eventos";
   if (/boleto/.test(s)) return "Boleto";
   if (/corresp/.test(s)) return "Correspondencia";
+  if (/chat_?audio|atendimento_?audio|\baudio\b/.test(s)) return "Audio";
+  if (/chat_?video|atendimento_?video|\bvideo\b/.test(s)) return "Video";
+  if (/chat_?pdf|atendimento_?pdf|\bpdf\b/.test(s)) return "Pdf";
+  if (/chat_?texto|atendimento_?texto/.test(s)) return "Texto";
+  if (/alimentacao|alimentação/.test(s)) return "Alimentacao";
+  if (/soneca/.test(s)) return "Soneca";
+  if (/banheiro/.test(s)) return "Banheiro";
+  if (/bilhete/.test(s)) return "Bilhete";
   if (/pdf|foto|video|galeria|anexo/.test(s)) return "Anexos";
   if (/enviar|editar|excluir/.test(s)) return "CRUD";
   return null;
@@ -172,6 +373,12 @@ export type ModuleGroup<T> = {
   suites: SuiteGroup<T>[];
 };
 
+export type AreaGroup<T> = {
+  area: string;
+  items: T[];
+  modules: ModuleGroup<T>[];
+};
+
 type Groupable = Pick<TestRecord, "module" | "tags" | "testKey" | "title">;
 
 /** Agrupa suites; ordena pela ordem canônica. */
@@ -189,7 +396,7 @@ export function groupBySuite<T extends Groupable>(list: T[]): SuiteGroup<T>[] {
     .map(([suite, items]) => ({ suite, items }));
 }
 
-/** Módulo → suites → CTs (preparado para vários módulos no mesmo canal). */
+/** Aba/módulo → suites → CTs. */
 export function groupByModuleThenSuite<T extends Groupable>(list: T[]): ModuleGroup<T>[] {
   const map = new Map<string, T[]>();
   for (const item of list) {
@@ -210,6 +417,33 @@ export function groupByModuleThenSuite<T extends Groupable>(list: T[]): ModuleGr
       module,
       items,
       suites: groupBySuite(items),
+    }));
+}
+
+/** Área → aba/módulo → suites → CTs. */
+export function groupByAreaThenModuleThenSuite<T extends Groupable>(
+  list: T[],
+): AreaGroup<T>[] {
+  const moduleGroups = groupByModuleThenSuite(list);
+  const map = new Map<string, ModuleGroup<T>[]>();
+  for (const mod of moduleGroups) {
+    const area = areaFromModule(mod.module);
+    const bucket = map.get(area);
+    if (bucket) bucket.push(mod);
+    else map.set(area, [mod]);
+  }
+
+  return [...map.entries()]
+    .sort(([a], [b]) => {
+      const oa = areaOrderIndex(a);
+      const ob = areaOrderIndex(b);
+      if (oa !== ob) return oa - ob;
+      return a.localeCompare(b, "pt-BR");
+    })
+    .map(([area, modules]) => ({
+      area,
+      modules,
+      items: modules.flatMap((m) => m.items),
     }));
 }
 
@@ -427,4 +661,11 @@ export function allGreenModuleKeys(moduleGroups: ModuleGroup<TestRecord>[]): str
   return moduleGroups
     .filter((g) => summarizeSuite(g.items).tone === "ok")
     .map((g) => g.module);
+}
+
+/** Áreas 100% verdes (para auto-recolher). */
+export function allGreenAreaKeys(areaGroups: AreaGroup<TestRecord>[]): string[] {
+  return areaGroups
+    .filter((g) => summarizeSuite(g.items).tone === "ok")
+    .map((g) => g.area);
 }

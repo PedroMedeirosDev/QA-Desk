@@ -6,7 +6,7 @@ import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
 import { DesignCheckbox } from "@/components/DesignCheckbox";
 import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
-import { ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
+import { AreaHeaderRow, ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
 import { SuiteListControls } from "@/components/SuiteListControls";
 import { api } from "@/lib/api";
 import { useConfirm } from "@/lib/confirm";
@@ -43,9 +43,12 @@ import {
 } from "@/types/test-record";
 import { sortTestRecords } from "@/lib/test-sort";
 import {
+  allGreenAreaKeys,
   allGreenModuleKeys,
   allGreenSuiteKeys,
-  groupByModuleThenSuite,
+  AREA_LABELS,
+  areaCollapseKey,
+  groupByAreaThenModuleThenSuite,
   isDeferredFromBatchRun,
   MODULE_LABELS,
   suiteCollapseKey,
@@ -67,9 +70,12 @@ import {
 } from "@/lib/automation-runners";
 import type { HomologationWithProgress } from "@/types/homologation";
 
-/** v2: chaves `m:Mural` e `s:Mural::CRUD` */
+/** v2: chaves `a:Mural`, `m:Comunicados` e `s:Comunicados::CRUD` */
 const COLLAPSE_KEY = "qa-group-collapsed-v2";
 
+function areaKey(area: string) {
+  return areaCollapseKey(area);
+}
 function modKey(module: string) {
   return `m:${module}`;
 }
@@ -189,7 +195,14 @@ export function TestListPage({
     return sortTestRecords(list, channelHomologations);
   }, [reports, routeChannel, campaignOnly, channelHomologations]);
 
-  const moduleGroups = useMemo(() => groupByModuleThenSuite(filtered), [filtered]);
+  const areaGroups = useMemo(
+    () => groupByAreaThenModuleThenSuite(filtered),
+    [filtered],
+  );
+  const moduleGroups = useMemo(
+    () => areaGroups.flatMap((a) => a.modules),
+    [areaGroups],
+  );
 
   const maestroAllowed = channelSupportsMaestro(routeChannel);
   const channelDefaultRunner = defaultRunnerForChannel(routeChannel);
@@ -245,13 +258,14 @@ export function TestListPage({
       const next = new Set([
         ...allGreenSuiteKeys(moduleGroups).map((k) => `s:${k}`),
         ...allGreenModuleKeys(moduleGroups).map(modKey),
+        ...allGreenAreaKeys(areaGroups).map(areaKey),
       ]);
       setCollapsed(next);
       saveCollapsed(project, routeChannel, next);
     } else {
       setCollapsed(new Set(stored));
     }
-  }, [loading, collapsed, moduleGroups, project, routeChannel]);
+  }, [loading, collapsed, moduleGroups, areaGroups, project, routeChannel]);
 
   const homologationCount = channelHomologations.length;
 
@@ -466,10 +480,13 @@ export function TestListPage({
 
   function collapseAllSuites() {
     const next = new Set<string>();
-    for (const mod of moduleGroups) {
-      next.add(modKey(mod.module));
-      for (const suite of mod.suites) {
-        next.add(suiteKey(mod.module, suite.suite));
+    for (const area of areaGroups) {
+      next.add(areaKey(area.area));
+      for (const mod of area.modules) {
+        next.add(modKey(mod.module));
+        for (const suite of mod.suites) {
+          next.add(suiteKey(mod.module, suite.suite));
+        }
       }
     }
     applyCollapsed(next);
@@ -480,6 +497,7 @@ export function TestListPage({
       new Set([
         ...allGreenSuiteKeys(moduleGroups).map((k) => `s:${k}`),
         ...allGreenModuleKeys(moduleGroups).map(modKey),
+        ...allGreenAreaKeys(areaGroups).map(areaKey),
       ]),
     );
   }
@@ -520,7 +538,7 @@ export function TestListPage({
             {filtered.length} teste(s)
             {routeChannel && hasChannels ? ` · ${CHANNEL_LABELS[routeChannel]}` : ""}
             {moduleGroups.length > 0
-              ? ` · ${moduleGroups.length} módulo(s) · ${moduleGroups.reduce((n, m) => n + m.suites.length, 0)} suites`
+              ? ` · ${areaGroups.length} área(s) · ${moduleGroups.length} aba(s) · ${moduleGroups.reduce((n, m) => n + m.suites.length, 0)} suites`
               : ""}
           </span>
           <button
@@ -599,206 +617,233 @@ export function TestListPage({
                 </td>
               </tr>
             ) : (
-              moduleGroups.map((mod) => {
+              areaGroups.map((area) => {
                 const collapsedSet = collapsed ?? new Set<string>();
-                const modExpanded = !collapsedSet.has(modKey(mod.module));
-                const modStats = summarizeSuite(mod.items, "maestro");
-                const modLabel = MODULE_LABELS[mod.module] ?? mod.module;
+                const areaExpanded = !collapsedSet.has(areaKey(area.area));
+                const areaStats = summarizeSuite(area.items, "maestro");
+                const areaLabel = AREA_LABELS[area.area] ?? area.area;
                 return (
-                  <Fragment key={`mod-${mod.module}`}>
-                    <ModuleHeaderRow
+                  <Fragment key={`area-${area.area}`}>
+                    <AreaHeaderRow
                       variant="tests"
-                      module={mod.module}
-                      suiteCount={mod.suites.length}
-                      stats={modStats}
-                      expanded={modExpanded}
-                      onToggle={() => toggleCollapsedKey(modKey(mod.module))}
-                      onRunModule={() =>
-                        void runGroup("module", modLabel, modKey(mod.module), mod.items)
+                      area={area.area}
+                      moduleCount={area.modules.length}
+                      stats={areaStats}
+                      expanded={areaExpanded}
+                      onToggle={() => toggleCollapsedKey(areaKey(area.area))}
+                      onRunArea={() =>
+                        void runGroup(
+                          "module",
+                          areaLabel,
+                          areaKey(area.area),
+                          area.items,
+                        )
                       }
                       runDisabled={busy}
-                      running={runningGroup === modKey(mod.module)}
+                      running={runningGroup === areaKey(area.area)}
                     />
-                    {modExpanded &&
-                      mod.suites.map((group) => {
-                        const sk = suiteKey(mod.module, group.suite);
-                        const runner = suiteRunnerFor(mod.module, group.suite);
-                        const stats = summarizeSuite(group.items, runner);
-                        const expanded = !collapsedSet.has(sk);
-                        const suiteLabel = SUITE_LABELS[group.suite] ?? group.suite;
+                    {areaExpanded &&
+                      area.modules.map((mod) => {
+                        const modExpanded = !collapsedSet.has(modKey(mod.module));
+                        const modStats = summarizeSuite(mod.items, "maestro");
+                        const modLabel = MODULE_LABELS[mod.module] ?? mod.module;
                         return (
-                          <Fragment key={sk}>
-                            <SuiteHeaderRow
+                          <Fragment key={`mod-${mod.module}`}>
+                            <ModuleHeaderRow
                               variant="tests"
-                              suite={group.suite}
-                              stats={stats}
-                              expanded={expanded}
-                              onToggle={() => toggleCollapsedKey(sk)}
-                              onRunSuite={() =>
+                              module={mod.module}
+                              suiteCount={mod.suites.length}
+                              stats={modStats}
+                              expanded={modExpanded}
+                              onToggle={() => toggleCollapsedKey(modKey(mod.module))}
+                              onRunModule={() =>
                                 void runGroup(
-                                  "suite",
-                                  suiteLabel,
-                                  sk,
-                                  group.items,
-                                  runner,
+                                  "module",
+                                  modLabel,
+                                  modKey(mod.module),
+                                  mod.items,
                                 )
                               }
                               runDisabled={busy}
-                              running={runningGroup === sk}
-                              runner={runner}
-                              onRunnerChange={
-                                maestroAllowed
-                                  ? (next) =>
-                                      setSuiteRunner(
-                                        mod.module,
-                                        group.suite,
-                                        next,
-                                      )
-                                  : undefined
-                              }
+                              running={runningGroup === modKey(mod.module)}
                             />
-                            {expanded &&
-                              group.items.map((r, rowIdx) => {
-                                const { label, tone } = displayStatus(r, runner);
-                                const canRun = supportsRunner(r.automation, runner);
-                                const hasAny =
-                                  hasMaestroAutomation(r.automation) ||
-                                  hasPlaywrightAutomation(r.automation);
+                            {modExpanded &&
+                              mod.suites.map((group) => {
+                                const sk = suiteKey(mod.module, group.suite);
+                                const runner = suiteRunnerFor(mod.module, group.suite);
+                                const stats = summarizeSuite(group.items, runner);
+                                const expanded = !collapsedSet.has(sk);
+                                const suiteLabel =
+                                  SUITE_LABELS[group.suite] ?? group.suite;
                                 return (
-                                  <tr
-                                    key={r.id}
-                                    className={cn(
-                                      "test-row cursor-pointer select-none",
-                                      tableRowHoverClass,
-                                      rowIdx % 2 === 1 && "bg-muted/25",
-                                    )}
-                                    onClick={() => openDetail(r.id)}
-                                  >
-                                    <td className="px-4 py-2 pl-8">
-                                      <p className="font-medium leading-snug">{r.title}</p>
-                                      <p className="font-mono text-[0.6875rem] tabular-nums text-muted-foreground">
-                                        {r.testKey ?? formatRecordId(r.id, r)}
-                                      </p>
-                                      {hasAny && !canRun && (
-                                        <p className="mt-0.5 text-[0.65rem] text-amber-400/90">
-                                          {AUTOMATION_RUNNER_SHORT[runner]} não configurado
-                                        </p>
-                                      )}
-                                    </td>
-                                    <td className="px-4 py-2">
-                                      <div className="flex flex-wrap items-center gap-1.5">
-                                        <ExecutionModeBadge record={r} />
-                                        <AutomationReadinessBadge record={r} runner={runner} />
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-2">
-                                      <span
-                                        className={cn(
-                                          "rounded-full px-2 py-0.5 text-xs font-medium",
-                                          tone === "ok" &&
-                                            "bg-emerald-600 text-white",
-                                          tone === "fail" &&
-                                            "bg-red-600 text-white",
-                                          tone === "warn" &&
-                                            "border border-amber-400/20 bg-[#1a1a1a] text-amber-300",
-                                          tone === "neutral" &&
-                                            "border border-gray-700 bg-[#1a1a1a] text-gray-400",
-                                        )}
-                                      >
-                                        {label}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-2 text-center tabular-nums">
-                                      {countTestRunsForRunner(r.history ?? [], runner)}
-                                    </td>
-                                    <td className="px-4 py-2 text-xs tabular-nums text-muted-foreground">
-                                      {(() => {
-                                        const lastAt =
-                                          runner === "playwright"
-                                            ? r.automation?.playwright?.lastRunAt
-                                            : r.automation?.lastRunAt;
-                                        return lastAt
-                                          ? new Date(lastAt).toLocaleString("pt-BR", {
-                                              day: "2-digit",
-                                              month: "2-digit",
-                                              year: "numeric",
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                            })
-                                          : "—";
-                                      })()}
-                                    </td>
-                                    <td
-                                      className="px-4 py-2"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <div className="flex items-center gap-1">
-                                        <PremiumTooltip label="Abrir" align="end">
-                                          <button
-                                            type="button"
-                                            aria-label="Abrir"
+                                  <Fragment key={sk}>
+                                    <SuiteHeaderRow
+                                      variant="tests"
+                                      suite={group.suite}
+                                      stats={stats}
+                                      expanded={expanded}
+                                      onToggle={() => toggleCollapsedKey(sk)}
+                                      onRunSuite={() =>
+                                        void runGroup(
+                                          "suite",
+                                          suiteLabel,
+                                          sk,
+                                          group.items,
+                                          runner,
+                                        )
+                                      }
+                                      runDisabled={busy}
+                                      running={runningGroup === sk}
+                                      runner={runner}
+                                      onRunnerChange={
+                                        maestroAllowed
+                                          ? (next) =>
+                                              setSuiteRunner(
+                                                mod.module,
+                                                group.suite,
+                                                next,
+                                              )
+                                          : undefined
+                                      }
+                                    />
+                                    {expanded &&
+                                      group.items.map((r, rowIdx) => {
+                                        const { label, tone } = displayStatus(r, runner);
+                                        const canRun = supportsRunner(r.automation, runner);
+                                        const hasAny =
+                                          hasMaestroAutomation(r.automation) ||
+                                          hasPlaywrightAutomation(r.automation);
+                                        return (
+                                          <tr
+                                            key={r.id}
+                                            className={cn(
+                                              "test-row cursor-pointer select-none",
+                                              tableRowHoverClass,
+                                              rowIdx % 2 === 1 && "bg-muted/25",
+                                            )}
                                             onClick={() => openDetail(r.id)}
-                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                           >
-                                            <ExternalLink className="size-4" />
-                                          </button>
-                                        </PremiumTooltip>
-                                        {isAdmin && hasAny && (
-                                          <PremiumTooltip
-                                            align="end"
-                                            label={
-                                              canRun
-                                                ? runner === "playwright"
-                                                  ? playwrightHeaded
-                                                    ? "Executar Playwright (Chrome visível)"
-                                                    : "Executar Playwright (headless — preferência)"
-                                                  : `Executar (${AUTOMATION_RUNNER_SHORT[runner]})`
-                                                : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
-                                            }
-                                          >
-                                            <button
-                                              type="button"
-                                              aria-label={
-                                                canRun
-                                                  ? `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
-                                                  : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
-                                              }
-                                              disabled={busy || !canRun}
-                                              onClick={(e) => void quickRun(e, r.id)}
-                                              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
-                                            >
-                                              <Play className="size-4" />
-                                            </button>
-                                          </PremiumTooltip>
-                                        )}
-                                        {isAdmin &&
-                                          hasPlaywrightAutomation(r.automation) &&
-                                          (runner === "playwright" ||
-                                            !maestroAllowed) && (
-                                            <PremiumTooltip
-                                              align="end"
-                                              label="Executar Playwright headless (sem janela)"
-                                              wide
-                                            >
-                                              <button
-                                                type="button"
-                                                aria-label="Executar Playwright headless"
-                                                disabled={busy}
-                                                onClick={(e) =>
-                                                  void quickRun(e, r.id, {
-                                                    runner: "playwright",
-                                                    headed: false,
-                                                  })
-                                                }
-                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-sky-500/15 hover:text-sky-400 disabled:opacity-50"
+                                            <td className="px-4 py-2 pl-10">
+                                              <p className="font-medium leading-snug">{r.title}</p>
+                                              <p className="font-mono text-[0.6875rem] tabular-nums text-muted-foreground">
+                                                {r.testKey ?? formatRecordId(r.id, r)}
+                                              </p>
+                                              {hasAny && !canRun && (
+                                                <p className="mt-0.5 text-[0.65rem] text-amber-400/90">
+                                                  {AUTOMATION_RUNNER_SHORT[runner]} não configurado
+                                                </p>
+                                              )}
+                                            </td>
+                                            <td className="px-4 py-2">
+                                              <div className="flex flex-wrap items-center gap-1.5">
+                                                <ExecutionModeBadge record={r} />
+                                                <AutomationReadinessBadge record={r} runner={runner} />
+                                              </div>
+                                            </td>
+                                            <td className="px-4 py-2">
+                                              <span
+                                                className={cn(
+                                                  "rounded-full px-2 py-0.5 text-xs font-medium",
+                                                  tone === "ok" && "bg-emerald-600 text-white",
+                                                  tone === "fail" && "bg-red-600 text-white",
+                                                  tone === "warn" &&
+                                                    "border border-amber-400/20 bg-[#1a1a1a] text-amber-300",
+                                                  tone === "neutral" &&
+                                                    "border border-gray-700 bg-[#1a1a1a] text-gray-400",
+                                                )}
                                               >
-                                                <MonitorOff className="size-4" />
-                                              </button>
-                                            </PremiumTooltip>
-                                          )}
-                                      </div>
-                                    </td>
-                                  </tr>
+                                                {label}
+                                              </span>
+                                            </td>
+                                            <td className="px-4 py-2 text-center tabular-nums">
+                                              {countTestRunsForRunner(r.history ?? [], runner)}
+                                            </td>
+                                            <td className="px-4 py-2 text-xs tabular-nums text-muted-foreground">
+                                              {(() => {
+                                                const lastAt =
+                                                  runner === "playwright"
+                                                    ? r.automation?.playwright?.lastRunAt
+                                                    : r.automation?.lastRunAt;
+                                                return lastAt
+                                                  ? new Date(lastAt).toLocaleString("pt-BR", {
+                                                      day: "2-digit",
+                                                      month: "2-digit",
+                                                      year: "numeric",
+                                                      hour: "2-digit",
+                                                      minute: "2-digit",
+                                                    })
+                                                  : "—";
+                                              })()}
+                                            </td>
+                                            <td
+                                              className="px-4 py-2"
+                                              onClick={(e) => e.stopPropagation()}
+                                            >
+                                              <div className="flex items-center gap-1">
+                                                <PremiumTooltip label="Abrir" align="end">
+                                                  <button
+                                                    type="button"
+                                                    aria-label="Abrir"
+                                                    onClick={() => openDetail(r.id)}
+                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                  >
+                                                    <ExternalLink className="size-4" />
+                                                  </button>
+                                                </PremiumTooltip>
+                                                {isAdmin && hasAny && (
+                                                  <PremiumTooltip
+                                                    align="end"
+                                                    label={
+                                                      canRun
+                                                        ? `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
+                                                        : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
+                                                    }
+                                                  >
+                                                    <button
+                                                      type="button"
+                                                      aria-label={
+                                                        canRun
+                                                          ? `Executar ${AUTOMATION_RUNNER_SHORT[runner]}`
+                                                          : `${AUTOMATION_RUNNER_SHORT[runner]} não configurado`
+                                                      }
+                                                      disabled={busy || !canRun}
+                                                      onClick={(e) => void quickRun(e, r.id)}
+                                                      className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emerald-500/15 hover:text-emerald-500 disabled:opacity-50"
+                                                    >
+                                                      <Play className="size-4" />
+                                                    </button>
+                                                  </PremiumTooltip>
+                                                )}
+                                                {isAdmin &&
+                                                  hasPlaywrightAutomation(r.automation) &&
+                                                  (runner === "playwright" || !maestroAllowed) && (
+                                                    <PremiumTooltip
+                                                      align="end"
+                                                      label="Executar Playwright headless (sem janela)"
+                                                      wide
+                                                    >
+                                                      <button
+                                                        type="button"
+                                                        aria-label="Executar Playwright headless"
+                                                        disabled={busy}
+                                                        onClick={(e) =>
+                                                          void quickRun(e, r.id, {
+                                                            runner: "playwright",
+                                                            headed: false,
+                                                          })
+                                                        }
+                                                        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-sky-500/15 hover:text-sky-400 disabled:opacity-50"
+                                                      >
+                                                        <MonitorOff className="size-4" />
+                                                      </button>
+                                                    </PremiumTooltip>
+                                                  )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                  </Fragment>
                                 );
                               })}
                           </Fragment>

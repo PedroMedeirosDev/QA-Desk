@@ -22,6 +22,7 @@ import { dailySummaryRouter } from "./routes/daily-summary.js";
 import { apiSuiteRouter } from "./routes/api-suite.js";
 import { evidenceRouter } from "./routes/evidence.js";
 import { meRouter } from "./routes/me.js";
+import { gestorRepliesRouter } from "./routes/gestor-replies.js";
 import {
   githubWebhooksRouter,
   isKbGithubWebhookConfigured,
@@ -145,6 +146,7 @@ app.use("/api/agent", agentRouter);
 
 app.use("/api/evidence", evidenceRouter);
 app.use("/api/me", meRouter);
+app.use("/api/bugs/gestor-replies", gestorRepliesRouter);
 
 if (IS_PROD && fs.existsSync(DIST)) {
   app.use(express.static(DIST));

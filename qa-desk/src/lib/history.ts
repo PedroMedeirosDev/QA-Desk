@@ -27,26 +27,115 @@ export function countTestRunsForRunner(
   }).length;
 }
 
+export type HistoryEventKind =
+  | "github"
+  | "status"
+  | "attachment"
+  | "run"
+  | "discord"
+  | "system";
+
+/** Chave = `HistoryEntry.action` (snake_case). Não mapear título já traduzido. */
+const ACTION_LABELS: Record<string, string> = {
+  test_created: "Registro criado",
+  test_run: "Execução do teste",
+  checklist_synced: "Checklist sincronizado",
+  records_merged: "Duplicata unificada",
+  homologation_checklist_created: "Checklist criado",
+  homologation_changed: "Homologação atualizada",
+  homologation_created: "Homologação criada",
+  homologation_synced: "Homologação sincronizada",
+  homologation_status_changed: "Status da homologação alterado",
+  homologation_scope_updated: "Escopo da homologação atualizado",
+  created: "Registro criado",
+  updated: "Campos atualizados",
+  status_changed: "Status alterado",
+  homologated: "Homologado",
+  evidence_uploaded: "Evidência anexada",
+  evidence_removed: "Evidência removida",
+  github_issue_created: "Issue aberta no GitHub",
+  github_issue_synced: "Issue sincronizada do GitHub",
+  github_issue_closed: "Issue fechada no GitHub",
+  github_issue_closed_from_desk: "Issue fechada via Desk",
+  github_issue_reopened: "Issue reaberta no GitHub",
+  github_issue_comment: "Comentário na issue",
+  github_issue_comment_edited: "Comentário da issue editado",
+  github_issue_comment_catchup: "Comentário sincronizado do GitHub",
+  github_issue_dependency: "Dependência da issue atualizada",
+  discord_sent: "Enviado ao Discord",
+  discord_gestor_reaction: "Reação do gestor no Discord",
+  discord_gestor_revoke: "Reação do gestor removida",
+  automation_started: "Automação iniciada",
+  automation_passed: "Automação passou",
+  automation_failed: "Automação falhou",
+  "Na fila": "Na fila de execução",
+};
+
 export function historyActionLabel(action: string): string {
-  const labels: Record<string, string> = {
-    test_created: "Teste criado",
-    test_run: "Execução do teste",
-    checklist_synced: "Checklist sincronizado",
-    records_merged: "Duplicata unificada",
-    homologation_checklist_created: "Checklist criado",
-    homologation_changed: "Homologação atualizada",
-    created: "Registro criado",
-    updated: "Atualizado",
-    status_changed: "Status alterado",
-    homologated: "Homologado",
-    evidence_uploaded: "Print anexado",
-    github_issue_created: "Issue GitHub aberta",
-    discord_sent: "Enviado ao Discord",
-    automation_started: "Automação iniciada",
-    automation_passed: "Automação passou",
-    automation_failed: "Automação falhou",
-  };
-  return labels[action] ?? action;
+  return ACTION_LABELS[action] ?? action;
+}
+
+export function historyEventKind(action: string): HistoryEventKind {
+  if (action.startsWith("github_")) return "github";
+  if (action.startsWith("discord_")) return "discord";
+  if (action === "evidence_uploaded" || action === "evidence_removed") return "attachment";
+  if (RUN_ACTIONS.has(action) || action.startsWith("automation_")) return "run";
+  if (
+    action === "status_changed" ||
+    action === "homologated" ||
+    action.startsWith("homologation_")
+  ) {
+    return "status";
+  }
+  return "system";
+}
+
+function startOfLocalDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+export function formatHistoryDay(iso: string, now = new Date()): string {
+  const d = new Date(iso);
+  const diffDays = Math.round(
+    (startOfLocalDay(now) - startOfLocalDay(d)) / 86_400_000,
+  );
+  if (diffDays === 0) return "Hoje";
+  if (diffDays === 1) return "Ontem";
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function formatHistoryTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function groupHistoryByDay(
+  entries: HistoryEntry[],
+): { dayKey: string; dayLabel: string; items: HistoryEntry[] }[] {
+  const ordered = [...entries].reverse();
+  const groups: { dayKey: string; dayLabel: string; items: HistoryEntry[] }[] =
+    [];
+  for (const entry of ordered) {
+    const d = new Date(entry.at);
+    const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const last = groups[groups.length - 1];
+    if (last?.dayKey === dayKey) {
+      last.items.push(entry);
+    } else {
+      groups.push({
+        dayKey,
+        dayLabel: formatHistoryDay(entry.at),
+        items: [entry],
+      });
+    }
+  }
+  return groups;
 }
 
 export function historyEntryTitle(entry: HistoryEntry): string {

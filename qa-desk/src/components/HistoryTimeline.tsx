@@ -1,14 +1,28 @@
 import { useState } from "react";
-import { Check, ChevronDown, Copy } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  CircleDot,
+  Copy,
+  Github,
+  MessageCircle,
+  Paperclip,
+  Pencil,
+  Play,
+} from "lucide-react";
 import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { formatActor } from "@/lib/actor";
 import {
+  formatHistoryTime,
   formatMaestroLog,
+  groupHistoryByDay,
   historyEntrySubtitle,
   historyEntryTitle,
+  historyEventKind,
   historyRunFailure,
   historyRunOutput,
   historyRunResult,
+  type HistoryEventKind,
 } from "@/lib/history";
 import { maskPii } from "@/lib/redact-pii";
 import type { HistoryEntry } from "@/types/test-record";
@@ -118,27 +132,68 @@ function CancelledCallout({ entry }: { entry: HistoryEntry }) {
   );
 }
 
+const KIND_ICON: Record<HistoryEventKind, typeof Pencil> = {
+  github: Github,
+  status: CircleDot,
+  attachment: Paperclip,
+  run: Play,
+  discord: MessageCircle,
+  system: Pencil,
+};
+
+function nodeClass(entry: HistoryEntry): string {
+  const result = historyRunResult(entry);
+  if (result === "success") return "border-emerald-500 bg-emerald-500";
+  if (result === "failed") return "border-red-500 bg-red-500";
+  if (result === "cancelled") return "border-amber-500 bg-amber-400";
+  const kind = historyEventKind(entry.action);
+  if (kind === "github") return "border-zinc-400 bg-zinc-600";
+  if (kind === "status") {
+    return entry.action === "homologated"
+      ? "border-emerald-500/70 bg-emerald-500/40"
+      : "border-amber-400/60 bg-amber-400/30";
+  }
+  if (kind === "attachment") return "border-zinc-400 bg-zinc-500";
+  if (kind === "discord") return "border-zinc-400 bg-zinc-600";
+  return "border-border bg-muted-foreground/50";
+}
+
 function HistoryItem({ entry }: { entry: HistoryEntry }) {
   const result = historyRunResult(entry);
   const subtitle = historyEntrySubtitle(entry);
   const rawOutput = historyRunOutput(entry);
   const log = rawOutput ? formatMaestroLog(maskPii(rawOutput)) : null;
+  const kind = historyEventKind(entry.action);
+  const Icon = KIND_ICON[kind];
 
   return (
-    <li className="border-b border-border/60 py-4 last:border-0">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <li className="relative pb-6 pl-6 last:pb-0">
+      <span
+        className={cn(
+          "absolute top-1.5 -left-1.5 size-3 rounded-full border-2 border-background",
+          nodeClass(entry),
+        )}
+        aria-hidden
+      />
+      <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="font-medium">{historyEntryTitle(entry)}</span>
+          <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="font-medium leading-snug">{historyEntryTitle(entry)}</span>
           {result && <ResultBadge result={result} />}
         </div>
-        <span className="shrink-0 text-xs text-muted-foreground">
-          {new Date(entry.at).toLocaleString("pt-BR")} · {formatActor(entry.actor)}
-        </span>
+        <time
+          dateTime={entry.at}
+          className="shrink-0 tabular-nums text-xs text-muted-foreground"
+        >
+          {formatHistoryTime(entry.at)}
+        </time>
       </div>
 
       {subtitle && result !== "cancelled" && (
-        <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
       )}
+
+      <p className="mt-1 text-xs text-muted-foreground/80">Por {formatActor(entry.actor)}</p>
 
       {result === "failed" && <FailureCallout entry={entry} />}
       {result === "cancelled" && <CancelledCallout entry={entry} />}
@@ -191,17 +246,30 @@ function HistoryItem({ entry }: { entry: HistoryEntry }) {
 }
 
 export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
-  const ordered = [...entries].reverse();
+  const groups = groupHistoryByDay(entries);
 
-  if (ordered.length === 0) {
-    return <p className="text-sm text-muted-foreground">Sem eventos ainda.</p>;
+  if (groups.length === 0) {
+    return (
+      <p className="animate-fade-in-up-soft text-sm text-muted-foreground opacity-0">
+        Sem eventos ainda.
+      </p>
+    );
   }
 
   return (
-    <ol className="divide-y divide-border/60">
-      {ordered.map((entry, i) => (
-        <HistoryItem key={`${entry.at}-${entry.action}-${i}`} entry={entry} />
+    <div className="space-y-6">
+      {groups.map((group) => (
+        <section key={group.dayKey}>
+          <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground tabular-nums">
+            {group.dayLabel}
+          </h3>
+          <ol className="relative ml-1.5 border-l border-border">
+            {group.items.map((entry, i) => (
+              <HistoryItem key={`${entry.at}-${entry.action}-${i}`} entry={entry} />
+            ))}
+          </ol>
+        </section>
       ))}
-    </ol>
+    </div>
   );
 }

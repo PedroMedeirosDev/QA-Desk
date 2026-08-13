@@ -130,6 +130,11 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  markGestorCommentSeen: (project: ProjectSlug, id: string) =>
+    request<TestRecord>(`/api/projects/${project}/bugs/${id}/gestor-comment/seen`, {
+      method: "POST",
+    }),
+
   uploadEvidence: (
     project: ProjectSlug,
     id: string,
@@ -178,6 +183,12 @@ export const api = {
       xhr.send(form);
     });
   },
+
+  deleteEvidence: (project: ProjectSlug, id: string, fileId: string) =>
+    request<TestRecord>(
+      `/api/projects/${project}/tests/${id}/evidence/${fileId}`,
+      { method: "DELETE" },
+    ),
 
   sendDiscordReport: (project: ProjectSlug, id: string) =>
     request<{

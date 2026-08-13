@@ -21,6 +21,7 @@ import {
   projectNewBugPath,
 } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
+import { QA_GESTOR_REPLY_EVENT, type GestorReplyEvent } from "@/lib/gestor-replies-stream";
 import { channelSupportsMaestro, getProjectChannels, type ProductChannel } from "@/config/channels";
 import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
 import {
@@ -28,10 +29,12 @@ import {
   CHANNEL_LABELS,
   PLATFORM_LABELS,
   HOMOLOGATION_LABELS,
+  PRIORITY_LABELS,
   RECORD_TYPE_LABELS,
-  SEVERITY_LABELS,
+  displayStatus,
   formatRecordId,
   isBugReport,
+  isGestorReplyUnread,
   isTestCase,
 } from "@/types/test-record";
 import { copyDiscordReport } from "@/lib/discord-report";
@@ -46,6 +49,9 @@ import {
   readPlaywrightHeaded,
   writePlaywrightHeaded,
 } from "@/lib/automation-runners";
+
+const QUIET_INPUT =
+  "w-full rounded-md border border-border/50 bg-muted/25 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-border focus:bg-muted/40";
 
 const emptyDraft = (
   project: ProjectSlug,
@@ -119,9 +125,15 @@ export function TestEditorPage({
     filename: string;
     percent: number;
   } | null>(null);
+  const [removingEvidenceId, setRemovingEvidenceId] = useState<string | null>(null);
   const busyRun = running || liveRunning;
 
   const isHomologation = isTestCase(form);
+  const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
+
+  useEffect(() => {
+    if (editingBug) setStepsMode("resumo");
+  }, [editingBug]);
 
   useEffect(() => {
     if (project === "polygonus") {
@@ -179,12 +191,35 @@ export function TestEditorPage({
 
   useEffect(() => {
     if (!isNew && id) {
-      api.getTest(project, id).then(setForm).catch(() => toast.error("Registro não encontrado"));
+      api
+        .getTest(project, id)
+        .then(async (record) => {
+          setForm(record);
+          if (editorKind === "bug" && isAdmin && isGestorReplyUnread(record)) {
+            try {
+              setForm(await api.markGestorCommentSeen(project, id));
+            } catch {
+              /* lista ainda mostra não lido; o card continua */
+            }
+          }
+        })
+        .catch(() => toast.error("Registro não encontrado"));
     } else {
       const fromTest = (location.state as { draft?: Partial<TestRecord> } | null)?.draft;
       setForm(fromTest ?? emptyDraft(project, channel, editorKind));
     }
-  }, [project, id, isNew, channel, editorKind, location.state]);
+  }, [project, id, isNew, channel, editorKind, location.state, isAdmin]);
+
+  useEffect(() => {
+    if (isNew || !id || editorKind !== "bug") return;
+    const onReply = (event: Event) => {
+      const detail = (event as CustomEvent<GestorReplyEvent>).detail;
+      if (detail.bugId !== id) return;
+      void api.getTest(project, id).then(setForm);
+    };
+    window.addEventListener(QA_GESTOR_REPLY_EVENT, onReply);
+    return () => window.removeEventListener(QA_GESTOR_REPLY_EVENT, onReply);
+  }, [project, id, isNew, editorKind]);
 
   useEffect(() => {
     if (isNew || !id) return;
@@ -378,6 +413,36 @@ export function TestEditorPage({
       toast.error(toastErrorMessage(e, "Falha no upload da evidência"));
     } finally {
       setUploadProgress(null);
+    }
+  }
+
+  async function onRemoveEvidence(ev: { fileId: string; filename: string }) {
+    if (!id || isNew) return;
+    const ok = await confirm({
+      title: "Remover evidência?",
+      description: `Tira “${ev.filename}” deste registro. O arquivo some do Storage.`,
+      confirmLabel: "Remover",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setRemovingEvidenceId(ev.fileId);
+    try {
+      const updated = await api.deleteEvidence(project, id, ev.fileId);
+      setForm(updated);
+      toast.success("Evidência removida");
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Não foi possível remover a evidência"));
+    } finally {
+      setRemovingEvidenceId(null);
+    }
+  }
+
+  async function markGestorSeen() {
+    if (!id || isNew) return;
+    try {
+      setForm(await api.markGestorCommentSeen(project, id));
+    } catch {
+      /* ignore */
     }
   }
 
@@ -623,7 +688,6 @@ export function TestEditorPage({
   const isWebChannel =
     form.channel === "web" || form.platform === "web" || form.platform === "app_web";
   const maestroAllowed = channelSupportsMaestro(form.channel);
-  const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
 
   return (
     <div className="space-y-4">
@@ -662,6 +726,46 @@ export function TestEditorPage({
               )}
             </div>
           )}
+          {!isNew && editingBug && (
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {(() => {
+                const { label, tone } = displayStatus(form as TestRecord);
+                return (
+                  <span
+                    className={cn(
+                      "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                      tone === "ok" &&
+                        "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
+                      tone === "warn" &&
+                        "border-amber-500/40 bg-amber-500/15 text-amber-300",
+                      tone === "neutral" &&
+                        "border-border bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {label}
+                  </span>
+                );
+              })()}
+              {(form.priority ?? form.severity) && (
+                <span className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground">
+                  {PRIORITY_LABELS[(form.priority ?? form.severity)!]}
+                </span>
+              )}
+              {form.platform && (
+                <span className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground">
+                  {PLATFORM_LABELS[form.platform]}
+                </span>
+              )}
+              {isGestorReplyUnread(form as TestRecord) && (
+                <span className="rounded-full border border-amber-400/20 bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-amber-300">
+                  Não lido
+                  {form.githubIssueLastCommentBy
+                    ? ` · @${form.githubIssueLastCommentBy}`
+                    : ""}
+                </span>
+              )}
+            </div>
+          )}
           <h2 className="text-lg font-semibold">{form.title || "Sem título"}</h2>
         </div>
       </div>
@@ -684,10 +788,11 @@ export function TestEditorPage({
 
       {tab === "detalhes" ? (
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
-          <div className="min-w-0 space-y-4 rounded-xl border bg-card p-6">
+          <div className="min-w-0 space-y-6 rounded-xl border bg-card p-6">
+            <FormSection title={editingBug ? "Chamado" : "Caso"}>
             <Field label="Título *">
               <input
-                className="w-full rounded-md border px-3 py-2 text-sm"
+                className={QUIET_INPUT}
                 placeholder={
                   editingBug
                     ? "Ex.: App — eletivas ausentes no filtro de disciplina"
@@ -703,7 +808,7 @@ export function TestEditorPage({
                 hint="Id ou trecho do chamado Polygonus. Não aparece no portfólio visitante."
               >
                 <textarea
-                  className="min-h-24 w-full rounded-md border px-3 py-2 text-sm"
+                  className={cn(QUIET_INPUT, "min-h-24")}
                   placeholder="Ex.: Solicitação #12345 — aluno não vê eletivas no filtro…"
                   value={form.description ?? ""}
                   onChange={(e) => update("description", e.target.value)}
@@ -712,7 +817,7 @@ export function TestEditorPage({
             ) : (
               <Field label="Descrição">
                 <textarea
-                  className="min-h-24 w-full rounded-md border px-3 py-2 text-sm"
+                  className={cn(QUIET_INPUT, "min-h-24")}
                   value={form.description ?? ""}
                   onChange={(e) => update("description", e.target.value)}
                 />
@@ -720,7 +825,7 @@ export function TestEditorPage({
             )}
             <Field label="Pré-condições">
               <textarea
-                className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                className={cn(QUIET_INPUT, "min-h-16")}
                 placeholder={
                   editingBug ? "Ex.: Aluno autenticado na amostra CQ build 6.06.x" : undefined
                 }
@@ -728,10 +833,12 @@ export function TestEditorPage({
                 onChange={(e) => update("preconditions", e.target.value)}
               />
             </Field>
+            </FormSection>
+            <FormSection title={editingBug ? "Reprodução" : "Passos"}>
             <div>
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium">Passos do teste</span>
+                  {!editingBug ? (
                   <div className="inline-flex rounded-md border p-0.5 text-xs">
                     <PremiumTooltip label="Atalho QA / Discord" side="bottom">
                       <button
@@ -762,6 +869,11 @@ export function TestEditorPage({
                       </button>
                     </PremiumTooltip>
                   </div>
+                  ) : (
+                    <span className="text-[0.7rem] text-muted-foreground">
+                      O que o gestor precisa repetir, na ordem.
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <PremiumTooltip label="Normaliza numeração, espaços e unicode" side="bottom" wide>
@@ -792,11 +904,13 @@ export function TestEditorPage({
                   </button>
                 </div>
               </div>
+              {!editingBug && (
               <p className="mb-2 text-[0.7rem] text-muted-foreground">
                 {stepsMode === "resumo"
                   ? "Enxuto — atalho para você e reports curtos."
                   : "1 toque por linha. Âncoras Maestro (flow/ação) ligam a falha da automação a este passo."}
               </p>
+              )}
               {stepsMode === "resumo" ? (
                 (() => {
                   const failed = activeFailedRun(form.history ?? []);
@@ -831,8 +945,8 @@ export function TestEditorPage({
                             <div className="min-w-0 flex-1">
                               <input
                                 className={cn(
-                                  "w-full rounded-md border px-3 py-2 text-sm",
-                                  isFailedStep && "border-red-500/50",
+                                  QUIET_INPUT,
+                                  isFailedStep && "border-red-500/50 bg-red-500/10",
                                 )}
                                 value={step}
                                 onChange={(e) => {
@@ -911,8 +1025,8 @@ export function TestEditorPage({
                               <div className="min-w-0 flex-1 space-y-1.5">
                                 <input
                                   className={cn(
-                                    "w-full rounded-md border px-3 py-2 text-sm",
-                                    isFailedStep && "border-red-500/50",
+                                    QUIET_INPUT,
+                                    isFailedStep && "border-red-500/50 bg-red-500/10",
                                   )}
                                   value={step.text}
                                   placeholder="Ex.: Toque no ícone de funil na barra do composer"
@@ -993,9 +1107,11 @@ export function TestEditorPage({
                 })()
               )}
             </div>
+            </FormSection>
+            <FormSection title="Resultado">
             <Field label="Resultado esperado">
               <textarea
-                className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                className={cn(QUIET_INPUT, "min-h-16")}
                 placeholder={
                   editingBug
                     ? "Ex.: Lista de eletivas aparece no filtro de disciplina"
@@ -1008,7 +1124,7 @@ export function TestEditorPage({
             {!isHomologation && (
               <Field label="Resultado observado">
                 <textarea
-                  className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                  className={cn(QUIET_INPUT, "min-h-16")}
                   placeholder={
                     editingBug
                       ? "Ex.: Filtro abre sem as eletivas cadastradas"
@@ -1022,47 +1138,70 @@ export function TestEditorPage({
             {isHomologation && form.homologationStatus === "falhou" && (
               <Field label="Observações (falha / bug encontrado)">
                 <textarea
-                  className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                  className={cn(QUIET_INPUT, "min-h-16")}
                   placeholder="Descreva o que falhou ou converta para Bug encontrado no painel lateral"
                   value={form.actualResult ?? ""}
                   onChange={(e) => update("actualResult", e.target.value)}
                 />
               </Field>
             )}
+            </FormSection>
 
+            <FormSection title="Evidências">
             <div>
-              <span className="text-sm font-medium">Evidência (prints / vídeos)</span>
-              <div className="mt-2 flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3">
+                {(form.evidence ?? []).length === 0 && (
+                  <p className="text-sm text-muted-foreground">Nenhum print ainda.</p>
+                )}
                 {(form.evidence ?? []).map((ev) => (
-                  <PremiumTooltip key={ev.fileId} label={ev.filename} side="top">
-                    <a
-                      href={api.evidenceUrl(ev.storageKey)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block overflow-hidden rounded-md border"
-                    >
-                      {ev.type === "video" ? (
-                        <span className="relative block h-24 w-36 overflow-hidden bg-muted/40">
-                          <video
-                            src={api.evidenceUrl(ev.storageKey)}
-                            className="h-full w-full object-cover"
-                            muted
-                            preload="metadata"
-                          />
-                          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-black/55 py-1 text-[0.65rem] text-white">
-                            <Video className="size-3.5" />
-                            Vídeo
+                  <div key={ev.fileId} className="group relative">
+                    <PremiumTooltip label={ev.filename} side="top">
+                      <a
+                        href={api.evidenceUrl(ev.storageKey)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block overflow-hidden rounded-md border"
+                      >
+                        {ev.type === "video" ? (
+                          <span className="relative block h-24 w-36 overflow-hidden bg-muted/40">
+                            <video
+                              src={api.evidenceUrl(ev.storageKey)}
+                              className="h-full w-full object-cover"
+                              muted
+                              preload="metadata"
+                            />
+                            <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-black/55 py-1 text-[0.65rem] text-white">
+                              <Video className="size-3.5" />
+                              Vídeo
+                            </span>
                           </span>
-                        </span>
-                      ) : (
-                        <img
-                          src={api.evidenceUrl(ev.storageKey)}
-                          alt={ev.filename}
-                          className="h-24 w-auto object-cover"
-                        />
-                      )}
-                    </a>
-                  </PremiumTooltip>
+                        ) : (
+                          <img
+                            src={api.evidenceUrl(ev.storageKey)}
+                            alt={ev.filename}
+                            className="h-24 w-auto object-cover"
+                          />
+                        )}
+                      </a>
+                    </PremiumTooltip>
+                    {isAdmin && !isNew && (
+                      <PremiumTooltip label="Remover evidência" side="top" align="end">
+                        <button
+                          type="button"
+                          aria-label={`Remover ${ev.filename}`}
+                          disabled={removingEvidenceId === ev.fileId}
+                          onClick={() => void onRemoveEvidence(ev)}
+                          className="absolute top-1 right-1 rounded bg-black/70 p-1 text-white opacity-90 transition-opacity hover:bg-red-600 hover:opacity-100 disabled:opacity-50"
+                        >
+                          {removingEvidenceId === ev.fileId ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-3.5" />
+                          )}
+                        </button>
+                      </PremiumTooltip>
+                    )}
+                  </div>
                 ))}
               </div>
               {uploadProgress && (
@@ -1116,9 +1255,163 @@ export function TestEditorPage({
                 />
               </label>
             </div>
+            </FormSection>
           </div>
 
-          <aside className="sticky top-8 max-h-[calc(100vh-4rem)] space-y-4 self-start overflow-y-auto rounded-xl border bg-card p-4">
+          <aside className="sticky top-8 max-h-[calc(100vh-4rem)] min-w-0 space-y-4 self-start overflow-y-auto rounded-xl border bg-card p-4 scrollbar-thin">
+            {editingBug && isAdmin && (
+              <div className="flex min-w-0 flex-col gap-2 border-b border-border/60 pb-4">
+                <button
+                  type="button"
+                  onClick={() => void save()}
+                  disabled={saving}
+                  className={cn(actionBtnBase, actionBtn.save, "w-full")}
+                >
+                  {saving ? "Salvando…" : "Salvar"}
+                </button>
+                <PremiumTooltip
+                  label="Copia o Markdown estruturado (mesmo body da issue)"
+                  side="left"
+                  wide
+                >
+                  <button
+                    type="button"
+                    onClick={() => void copyBugReportMarkdown()}
+                    className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                  >
+                    <Copy className="size-4" />
+                    Copiar report Markdown
+                  </button>
+                </PremiumTooltip>
+                {!isNew && !form.githubIssueUrl && (
+                  <PremiumTooltip
+                    label="Abre issue em polygonus-suporte-kb com label bug (handoff ao time)"
+                    side="left"
+                    wide
+                  >
+                    <button
+                      type="button"
+                      onClick={() => void openGithubIssue()}
+                      disabled={saving}
+                      className={cn(actionBtnBase, actionBtn.create, "w-full")}
+                    >
+                      <ExternalLink className="size-4" />
+                      Abrir issue GitHub
+                    </button>
+                  </PremiumTooltip>
+                )}
+                {!isNew && form.githubIssueUrl && (
+                  <PremiumTooltip
+                    label={`Envia título, body e evidências do Desk para a issue #${form.githubIssueNumber} (não cria issue nova). Também busca comentários do gestor perdidos pelo webhook.`}
+                    side="left"
+                    wide
+                  >
+                    <button
+                      type="button"
+                      onClick={() => void syncGithubIssue()}
+                      disabled={saving}
+                      className={cn(actionBtnBase, actionBtn.checklist, "w-full")}
+                    >
+                      <RefreshCw className="size-4" />
+                      Sync issue GitHub
+                    </button>
+                  </PremiumTooltip>
+                )}
+                {!isNew && form.githubIssueUrl && !form.githubIssueClosedAt && (
+                  <PremiumTooltip
+                    label={`Fecha a issue #${form.githubIssueNumber} no GitHub, com comentário editável de homologação/build, e alinha o status no Desk`}
+                    side="left"
+                    wide
+                  >
+                    <button
+                      type="button"
+                      onClick={() => void closeGithubIssue()}
+                      disabled={saving}
+                      className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                    >
+                      <CheckCircle2 className="size-4" />
+                      Fechar issue GitHub
+                    </button>
+                  </PremiumTooltip>
+                )}
+                {form.githubIssueUrl && (
+                  <a
+                    href={form.githubIssueUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  >
+                    Issue #{form.githubIssueNumber} · abrir no GitHub
+                  </a>
+                )}
+                {form.githubIssueLastCommentAt && (
+                  <div
+                    className={cn(
+                      "min-w-0 overflow-hidden rounded-md border px-3 py-2 text-left text-xs",
+                      isGestorReplyUnread(form as TestRecord)
+                        ? "border-amber-500/30 bg-amber-500/10"
+                        : "border-border/70 bg-muted/20",
+                    )}
+                  >
+                    <p
+                      className={cn(
+                        "font-medium",
+                        isGestorReplyUnread(form as TestRecord)
+                          ? "text-amber-200"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {isGestorReplyUnread(form as TestRecord)
+                        ? "Não lido"
+                        : "Última resposta"}
+                      {form.githubIssueLastCommentBy
+                        ? ` · @${form.githubIssueLastCommentBy}`
+                        : ""}
+                    </p>
+                    {form.githubIssueLastCommentBody && (
+                      <p className="mt-1 max-h-32 overflow-y-auto wrap-anywhere text-muted-foreground">
+                        {form.githubIssueLastCommentBody}
+                      </p>
+                    )}
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      {form.githubIssueLastCommentUrl && (
+                        <a
+                          href={form.githubIssueLastCommentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-amber-300/90 underline-offset-2 hover:underline"
+                        >
+                          Ver comentário
+                        </a>
+                      )}
+                      {isGestorReplyUnread(form as TestRecord) && (
+                        <button
+                          type="button"
+                          className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                          onClick={() => void markGestorSeen()}
+                        >
+                          Marcar como lido
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {form.status === "corrigido_gestor" && !isNew && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void api
+                        .updateTest(project, id!, { ...form, status: "homologado" })
+                        .then(setForm)
+                    }
+                    disabled={saving}
+                    className={cn(actionBtnBase, actionBtn.homologate, "w-full")}
+                  >
+                    Confirmar homologação (bug)
+                  </button>
+                )}
+              </div>
+            )}
             {getProjectChannels(project).length > 0 && (
               <PropSelect
                 label="Canal"
@@ -1130,6 +1423,7 @@ export function TestEditorPage({
                 onChange={(v) => update("channel", v as ProductChannel)}
               />
             )}
+            {!editingBug && (
             <PropSelect
               label="Natureza"
               value={form.recordType ?? editorKind}
@@ -1143,6 +1437,7 @@ export function TestEditorPage({
               }}
               disabled={editorKind === "bug" || (!isNew && isTestCase(form))}
             />
+            )}
 
             {isHomologation ? (
               <div className="rounded-md border bg-muted/30 px-3 py-2">
@@ -1166,19 +1461,20 @@ export function TestEditorPage({
                 onChange={(v) => update("status", v as BugStatus)}
               />
               <PropSelect
-                label="Gravidade"
-                value={form.severity ?? "media"}
+                label="Prioridade"
+                value={form.priority ?? form.severity ?? "media"}
                 options={(
-                  Object.keys(SEVERITY_LABELS) as Array<
-                    NonNullable<TestRecord["severity"]>
+                  Object.keys(PRIORITY_LABELS) as Array<
+                    NonNullable<TestRecord["priority"]>
                   >
                 ).map((k) => ({
                   value: k,
-                  label: SEVERITY_LABELS[k],
+                  label: PRIORITY_LABELS[k],
                 }))}
-                onChange={(v) =>
-                  update("severity", v as NonNullable<TestRecord["severity"]>)
-                }
+                onChange={(v) => {
+                  const level = v as NonNullable<TestRecord["priority"]>;
+                  setForm((f) => ({ ...f, priority: level, severity: level }));
+                }}
               />
               </>
             )}
@@ -1216,16 +1512,36 @@ export function TestEditorPage({
                 </p>
               </div>
             )}
+            <details
+              className={
+                editingBug ? "rounded-md border border-border/70" : "contents"
+              }
+            >
+              <summary
+                className={cn(
+                  "cursor-pointer px-3 py-2 text-sm font-medium text-muted-foreground",
+                  !editingBug && "hidden",
+                )}
+              >
+                Ambiente / report
+              </summary>
+              <div
+                className={
+                  editingBug
+                    ? "space-y-4 border-t border-border/60 px-3 py-3"
+                    : "contents"
+                }
+              >
             <Field label="Módulo">
               <input
-                className="w-full rounded-md border px-3 py-2 text-sm"
+                className={QUIET_INPUT}
                 value={form.module ?? ""}
                 onChange={(e) => update("module", e.target.value)}
               />
             </Field>
             <Field label="Login (report)">
               <input
-                className="w-full rounded-md border px-3 py-2 text-sm"
+                className={QUIET_INPUT}
                 value={form.testLogin ?? ""}
                 onChange={(e) => update("testLogin", e.target.value)}
                 placeholder="Ex.: PHJESUS, ETMENEZES, SUPPETER"
@@ -1248,7 +1564,7 @@ export function TestEditorPage({
                 wide
               >
                 <input
-                  className="w-full rounded-md border px-3 py-2 font-mono text-sm"
+                  className={cn(QUIET_INPUT, "font-mono")}
                   value={form.build ?? ""}
                   onChange={(e) => update("build", e.target.value)}
                   placeholder={
@@ -1263,7 +1579,7 @@ export function TestEditorPage({
               <>
                 <Field label="SO / API (report)">
                   <input
-                    className="w-full rounded-md border px-3 py-2 text-sm"
+                    className={QUIET_INPUT}
                     value={form.osVersion ?? ""}
                     onChange={(e) => update("osVersion", e.target.value)}
                     placeholder="Ex.: Android API 33 — Medium_Phone"
@@ -1271,7 +1587,7 @@ export function TestEditorPage({
                 </Field>
                 <Field label="Dispositivo (report)">
                   <input
-                    className="w-full rounded-md border px-3 py-2 text-sm"
+                    className={QUIET_INPUT}
                     value={form.deviceLabel ?? ""}
                     onChange={(e) => update("deviceLabel", e.target.value)}
                     placeholder="emulador, celular, emulador + celular"
@@ -1280,7 +1596,7 @@ export function TestEditorPage({
                 {!isHomologation && (
                   <Field label="Evidência técnica (report)">
                     <textarea
-                      className="min-h-16 w-full rounded-md border px-3 py-2 text-sm"
+                      className={cn(QUIET_INPUT, "min-h-16")}
                       value={form.technicalEvidence ?? ""}
                       onChange={(e) => update("technicalEvidence", e.target.value)}
                       placeholder="JSON datEnvio, log Maestro, stack…"
@@ -1292,13 +1608,15 @@ export function TestEditorPage({
             {isWebChannel && (
               <Field label="Navegador (report)">
                 <input
-                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  className={QUIET_INPUT}
                   value={form.browser ?? ""}
                   onChange={(e) => update("browser", e.target.value)}
                   placeholder="Ex.: Chrome, Edge, Playwright Chromium"
                 />
               </Field>
             )}
+              </div>
+            </details>
 
             {isHomologation && isAdmin && (
             <div className="space-y-4 border-t pt-3">
@@ -1676,6 +1994,8 @@ export function TestEditorPage({
                 </button>
                 </PremiumTooltip>
               )}
+              {!editingBug && (
+              <>
               <PremiumTooltip label="Copia o Markdown estruturado (mesmo body da issue)" side="left" wide>
               <button
                 type="button"
@@ -1752,28 +2072,55 @@ export function TestEditorPage({
                 </a>
               )}
               {form.githubIssueLastCommentAt && (
-                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-left text-xs">
-                  <p className="font-medium text-amber-200">
-                    Gestor respondeu
+                <div
+                  className={cn(
+                    "min-w-0 overflow-hidden rounded-md border px-3 py-2 text-left text-xs",
+                    isGestorReplyUnread(form as TestRecord)
+                      ? "border-amber-500/30 bg-amber-500/10"
+                      : "border-border/70 bg-muted/20",
+                  )}
+                >
+                  <p
+                    className={cn(
+                      "font-medium",
+                      isGestorReplyUnread(form as TestRecord)
+                        ? "text-amber-200"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {isGestorReplyUnread(form as TestRecord)
+                      ? "Não lido"
+                      : "Última resposta"}
                     {form.githubIssueLastCommentBy
                       ? ` · @${form.githubIssueLastCommentBy}`
                       : ""}
                   </p>
                   {form.githubIssueLastCommentBody && (
-                    <p className="mt-1 text-muted-foreground">
+                    <p className="mt-1 max-h-32 overflow-y-auto wrap-anywhere text-muted-foreground">
                       {form.githubIssueLastCommentBody}
                     </p>
                   )}
-                  {form.githubIssueLastCommentUrl && (
-                    <a
-                      href={form.githubIssueLastCommentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 inline-block text-amber-300/90 underline-offset-2 hover:underline"
-                    >
-                      Ver comentário
-                    </a>
-                  )}
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    {form.githubIssueLastCommentUrl && (
+                      <a
+                        href={form.githubIssueLastCommentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-amber-300/90 underline-offset-2 hover:underline"
+                      >
+                        Ver comentário
+                      </a>
+                    )}
+                    {isGestorReplyUnread(form as TestRecord) && (
+                      <button
+                        type="button"
+                        className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                        onClick={() => void markGestorSeen()}
+                      >
+                        Marcar como lido
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
               {isAdmin && (
@@ -1810,6 +2157,8 @@ export function TestEditorPage({
                   Confirmar homologação (bug)
                 </button>
               )}
+              </>
+              )}
               {!isAdmin && (
                 <p className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
                   Modo visitante: somente leitura do portfólio.
@@ -1827,6 +2176,23 @@ export function TestEditorPage({
   );
 }
 
+function FormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-4 border-t border-border/40 pt-6 first:border-t-0 first:pt-0">
+      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
 function Field({
   label,
   hint,
@@ -1838,9 +2204,9 @@ function Field({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       {children}
-      {hint ? <span className="block text-xs text-muted-foreground">{hint}</span> : null}
+      {hint ? <span className="block text-xs text-muted-foreground/80">{hint}</span> : null}
     </label>
   );
 }
@@ -1862,7 +2228,7 @@ function PropSelect({
     <label className="block space-y-1.5">
       <span className="text-sm font-medium">{label}</span>
       <select
-        className="w-full rounded-md border px-3 py-2 text-sm disabled:opacity-60"
+        className={cn(QUIET_INPUT, "disabled:opacity-60")}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}

@@ -23,7 +23,7 @@ export default defineConfig({
         target: apiTarget,
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq, req) => {
-            if (req.url?.includes("stream=1")) {
+            if (req.url?.includes("stream")) {
               proxyReq.setHeader("Accept-Encoding", "identity");
             }
           });

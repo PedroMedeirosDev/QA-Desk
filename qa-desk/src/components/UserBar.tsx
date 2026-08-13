@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, LogOut, Moon, Sun } from "lucide-react";
+import { ChevronDown, LogOut, Moon, Sun, Bell, BellOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { OpsStatusPanel, useOpsStatus } from "@/components/OpsStatusCluster";
@@ -7,6 +7,13 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { api } from "@/lib/api";
 import { useColorScheme } from "@/lib/color-scheme";
 import { cn } from "@/lib/utils";
+import {
+  ensureGestorNotifyPermission,
+  readGestorNotifyPref,
+  writeGestorNotifyPref,
+  type GestorNotifyPref,
+} from "@/lib/gestor-notify";
+import { useToast } from "@/lib/toast";
 
 const menuActionClass =
   "flex w-full cursor-pointer items-center gap-[0.625rem] rounded-[0.375rem] px-[0.625rem] py-[0.5rem] text-[0.8125rem] font-medium text-slate-100 transition-colors duration-150 hover:bg-white/10";
@@ -25,13 +32,23 @@ export function UserBar({ className }: { className?: string }) {
   const { profile, isAdmin, isVisitor, authEnabled, signOut, applyAvatar } = useAuth();
   const { scheme, toggleScheme } = useColorScheme();
   const navigate = useNavigate();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [gestorNotify, setGestorNotify] = useState<GestorNotifyPref>("off");
+  const [gestorNotifyBlocked, setGestorNotifyBlocked] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuId = useId();
   const { items, summaryTone } = useOpsStatus();
+
+  useEffect(() => {
+    setGestorNotify(readGestorNotifyPref());
+    setGestorNotifyBlocked(
+      typeof Notification !== "undefined" && Notification.permission === "denied",
+    );
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -73,6 +90,28 @@ export function UserBar({ className }: { className?: string }) {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  }
+
+  async function toggleGestorNotify() {
+    if (gestorNotify === "on") {
+      writeGestorNotifyPref("off");
+      setGestorNotify("off");
+      return;
+    }
+    const granted = await ensureGestorNotifyPermission();
+    if (!granted) {
+      setGestorNotifyBlocked(typeof Notification !== "undefined" && Notification.permission === "denied");
+      toast.info(
+        Notification.permission === "denied"
+          ? "O Chrome bloqueou avisos deste site. Libere em Configurações → Privacidade → Notificações."
+          : "Sem permissão do navegador, o aviso fica só no toast do Desk.",
+        { title: "Notificação do gestor" },
+      );
+      return;
+    }
+    writeGestorNotifyPref("on");
+    setGestorNotify("on");
+    setGestorNotifyBlocked(false);
   }
 
   const name = profile?.displayName ?? "Usuário";
@@ -178,6 +217,27 @@ export function UserBar({ className }: { className?: string }) {
           <div className="my-[0.75rem] border-t border-[var(--border)] opacity-60" />
 
           <div className="flex flex-col gap-[0.125rem]">
+            {isAdmin && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void toggleGestorNotify()}
+                className={menuActionClass}
+              >
+                {gestorNotify === "on" ? (
+                  <Bell className="size-[1rem] text-amber-300" strokeWidth={1.75} />
+                ) : (
+                  <BellOff className="size-[1rem] text-slate-400" strokeWidth={1.75} />
+                )}
+                <span className="min-w-0 flex-1 text-left">
+                  {gestorNotifyBlocked
+                    ? "Avisos bloqueados no Chrome"
+                    : gestorNotify === "on"
+                      ? "Avisos do gestor ligados"
+                      : "Avisar respostas do gestor"}
+                </span>
+              </button>
+            )}
             <button
               type="button"
               role="menuitem"
