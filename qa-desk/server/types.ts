@@ -154,6 +154,7 @@ export interface TestRecord {
   githubIssueLastCommentBy?: string;
   githubIssueLastCommentBody?: string;
   githubIssueLastCommentUrl?: string;
+  githubIssueLastCommentSeenAt?: string;
 }
 
 export interface TestCatalog {

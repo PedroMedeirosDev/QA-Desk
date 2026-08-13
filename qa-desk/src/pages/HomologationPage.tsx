@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
 import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
-import { ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
+import { AreaHeaderRow, ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
 import { SuiteListControls } from "@/components/SuiteListControls";
 import { api } from "@/lib/api";
 import { useConfirm } from "@/lib/confirm";
@@ -22,7 +22,9 @@ import { cn } from "@/lib/utils";
 import { CHANNEL_LABELS, channelSupportsMaestro } from "@/config/channels";
 import { MURAL_HOMOLOGATION_SLUG } from "@/config/homologations";
 import {
-  groupByModuleThenSuite,
+  AREA_LABELS,
+  areaCollapseKey,
+  groupByAreaThenModuleThenSuite,
   MODULE_LABELS,
   suiteCollapseKey,
   summarizeSuiteProgress,
@@ -452,7 +454,7 @@ export function HomologationPage({
     });
   }
 
-  const moduleGroups = useMemo(() => {
+  const areaGroups = useMemo(() => {
     const enriched = (progress?.items ?? []).map((item) => {
       const fromCatalog = catalogTests.find((t) => t.testKey === item.testKey);
       const tags = [
@@ -468,8 +470,13 @@ export function HomologationPage({
         testKey: item.testKey,
       };
     });
-    return groupByModuleThenSuite(enriched);
+    return groupByAreaThenModuleThenSuite(enriched);
   }, [progress?.items, catalogTests]);
+
+  const moduleGroups = useMemo(
+    () => areaGroups.flatMap((a) => a.modules),
+    [areaGroups],
+  );
 
   useEffect(() => {
     if (!homologation || moduleGroups.length === 0) return;
@@ -491,18 +498,23 @@ export function HomologationPage({
   }, [homologation, moduleGroups, maestroAllowed, channelDefaultRunner]);
 
   useEffect(() => {
-    if (collapsed !== null || moduleGroups.length === 0) return;
+    if (collapsed !== null || areaGroups.length === 0) return;
     try {
       const raw = sessionStorage.getItem(`qa-group-collapsed-hom-v2:${homSlug}`);
       if (raw === null) {
         const next = new Set<string>();
-        for (const mod of moduleGroups) {
-          if (summarizeSuiteProgress(mod.items).tone === "ok") {
-            next.add(`m:${mod.module}`);
+        for (const area of areaGroups) {
+          if (summarizeSuiteProgress(area.items).tone === "ok") {
+            next.add(areaCollapseKey(area.area));
           }
-          for (const suite of mod.suites) {
-            if (summarizeSuiteProgress(suite.items).tone === "ok") {
-              next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+          for (const mod of area.modules) {
+            if (summarizeSuiteProgress(mod.items).tone === "ok") {
+              next.add(`m:${mod.module}`);
+            }
+            for (const suite of mod.suites) {
+              if (summarizeSuiteProgress(suite.items).tone === "ok") {
+                next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+              }
             }
           }
         }
@@ -514,7 +526,7 @@ export function HomologationPage({
     } catch {
       persistCollapsed(new Set());
     }
-  }, [collapsed, moduleGroups, homSlug]);
+  }, [collapsed, areaGroups, homSlug]);
 
   if (loading && !homologation) {
     return <p className="text-muted-foreground">Carregando homologação…</p>;
@@ -717,30 +729,38 @@ export function HomologationPage({
           <div>
             <p className="text-sm font-medium">Escopo ({progress.total} teste(s))</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Módulo → suite · chave <code className="text-[11px]">módulo/ct-id</code>
+              Área → aba → suite · chave <code className="text-[11px]">módulo/ct-id</code>
             </p>
           </div>
           <SuiteListControls
             onExpandAll={() => persistCollapsed(new Set())}
             onCollapseAll={() => {
               const next = new Set<string>();
-              for (const mod of moduleGroups) {
-                next.add(`m:${mod.module}`);
-                for (const suite of mod.suites) {
-                  next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+              for (const area of areaGroups) {
+                next.add(areaCollapseKey(area.area));
+                for (const mod of area.modules) {
+                  next.add(`m:${mod.module}`);
+                  for (const suite of mod.suites) {
+                    next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+                  }
                 }
               }
               persistCollapsed(next);
             }}
             onCollapseGreens={() => {
               const next = new Set<string>();
-              for (const mod of moduleGroups) {
-                if (summarizeSuiteProgress(mod.items).tone === "ok") {
-                  next.add(`m:${mod.module}`);
+              for (const area of areaGroups) {
+                if (summarizeSuiteProgress(area.items).tone === "ok") {
+                  next.add(areaCollapseKey(area.area));
                 }
-                for (const suite of mod.suites) {
-                  if (summarizeSuiteProgress(suite.items).tone === "ok") {
-                    next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+                for (const mod of area.modules) {
+                  if (summarizeSuiteProgress(mod.items).tone === "ok") {
+                    next.add(`m:${mod.module}`);
+                  }
+                  for (const suite of mod.suites) {
+                    if (summarizeSuiteProgress(suite.items).tone === "ok") {
+                      next.add(`s:${suiteCollapseKey(mod.module, suite.suite)}`);
+                    }
                   }
                 }
               }
@@ -764,8 +784,53 @@ export function HomologationPage({
             </tr>
           </thead>
           <tbody>
-            {moduleGroups.map((mod) => {
+            {areaGroups.map((area) => {
               const collapsedSet = collapsed ?? new Set<string>();
+              const aKey = areaCollapseKey(area.area);
+              const areaExpanded = !collapsedSet.has(aKey);
+              const areaStats = summarizeSuiteProgress(area.items, "maestro");
+              const areaLabel = AREA_LABELS[area.area] ?? area.area;
+              return (
+                <Fragment key={aKey}>
+                  <AreaHeaderRow
+                    variant="homologation"
+                    area={area.area}
+                    moduleCount={area.modules.length}
+                    stats={areaStats}
+                    expanded={areaExpanded}
+                    onToggle={() => toggleCollapsedKey(aKey)}
+                    onRunArea={() => {
+                      const queue = area.items
+                        .filter((i) => {
+                          const suite = i.suite ?? "Outros";
+                          const mod = i.module?.trim()
+                            ? i.module
+                            : "Outros";
+                          const runner = suiteRunnerFor(mod, suite);
+                          return i.testId && itemSupportsRunner(i, runner);
+                        })
+                        .map((i) => {
+                          const mod = i.module?.trim() ? i.module : "Outros";
+                          return {
+                            ...i,
+                            runner: suiteRunnerFor(mod, i.suite ?? "Outros"),
+                          };
+                        });
+                      if (queue.length === 0) {
+                        toast.info(`Nenhuma automação elegível na área ${areaLabel}.`);
+                        return;
+                      }
+                      void runQueue(queue, {
+                        title: `Rodar área ${areaLabel}`,
+                        description: `${queue.length} teste(s) em sequência.\nSe um falhar, continua nos próximos.`,
+                        batchTitle: `Área ${areaLabel}`,
+                      });
+                    }}
+                    runDisabled={runningAll || liveRunning || Boolean(runningId)}
+                    running={runningAll}
+                  />
+                  {areaExpanded &&
+                    area.modules.map((mod) => {
               const modKey = `m:${mod.module}`;
               const modExpanded = !collapsedSet.has(modKey);
               const modStats = summarizeSuiteProgress(mod.items, "maestro");
@@ -791,13 +856,13 @@ export function HomologationPage({
                           runner: suiteRunnerFor(mod.module, i.suite ?? "Outros"),
                         }));
                       if (queue.length === 0) {
-                        toast.info(`Nenhuma automação elegível no módulo ${modLabel}.`);
+                        toast.info(`Nenhuma automação elegível na aba ${modLabel}.`);
                         return;
                       }
                       void runQueue(queue, {
-                        title: `Rodar módulo ${modLabel}`,
+                        title: `Rodar aba ${modLabel}`,
                         description: `${queue.length} teste(s) em sequência.\nSe um falhar, continua nos próximos.`,
-                        batchTitle: `Módulo ${modLabel}`,
+                        batchTitle: `Aba ${modLabel}`,
                       });
                     }}
                     runDisabled={runningAll || liveRunning || Boolean(runningId)}
@@ -843,7 +908,7 @@ export function HomologationPage({
                         key={item.testKey}
                         className={cn("border-b last:border-0", tableRowHoverClass)}
                       >
-                        <td className="px-4 py-3 pl-8">
+                        <td className="px-4 py-3 pl-10">
                           <p className="font-medium">{item.title}</p>
                           <p className="font-mono text-xs text-muted-foreground">
                             {item.testKey}
@@ -1010,6 +1075,9 @@ export function HomologationPage({
                     })}
                 </Fragment>
                       );
+                    })}
+                </Fragment>
+              );
                     })}
                 </Fragment>
               );

@@ -211,3 +211,20 @@ export function makeStoredEvidenceFilename(originalName: string, id: string): st
   const hint = safe.replace(/\.[^.]+$/, "").slice(0, 40);
   return `${id}-${hint}${ext}`.replace(/--+/g, "-");
 }
+
+/** Best-effort: remove do Storage ou do disco. Falha não deve bloquear o catálogo. */
+export async function deleteEvidenceObject(storageKey: string): Promise<void> {
+  const client = getServiceClient();
+  const objectPath = parseEvidenceObjectPath(storageKey);
+  if (client && objectPath) {
+    const { error } = await client.storage.from(EVIDENCE_BUCKET).remove([objectPath]);
+    if (error) {
+      console.warn("[evidence] falha ao apagar no Storage:", error.message);
+    }
+    return;
+  }
+  const abs = localEvidenceAbsPath(storageKey);
+  if (abs && fs.existsSync(abs)) {
+    fs.unlinkSync(abs);
+  }
+}

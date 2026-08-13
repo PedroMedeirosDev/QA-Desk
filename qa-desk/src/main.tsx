@@ -5,6 +5,7 @@ import { Toaster } from "@/components/Toaster";
 import { ColorSchemeProvider } from "@/lib/color-scheme";
 import { RunProgressProvider } from "@/lib/run-progress";
 import { RunCompleteListener } from "@/lib/run-complete-listener";
+import { GestorReplyListener } from "@/components/GestorReplyListener";
 import { ConfirmProvider } from "@/lib/confirm";
 import { ToastProvider } from "@/lib/toast";
 import App from "./App";
@@ -19,6 +20,7 @@ createRoot(document.getElementById("root")!).render(
             <RunProgressProvider>
               <App />
               <RunCompleteListener />
+              <GestorReplyListener />
               <Toaster />
             </RunProgressProvider>
           </ConfirmProvider>

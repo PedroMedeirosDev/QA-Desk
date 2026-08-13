@@ -145,6 +145,8 @@ export interface TestRecord {
   githubIssueLastCommentBy?: string;
   githubIssueLastCommentBody?: string;
   githubIssueLastCommentUrl?: string;
+  /** Quando o QA abriu o bug depois desse comentário. Ausente = legado (não gritar). */
+  githubIssueLastCommentSeenAt?: string;
 }
 
 export interface TestCatalog {
@@ -174,6 +176,11 @@ export const SEVERITY_LABELS: Record<
   alta: "Alta",
   critica: "Crítica",
 };
+
+export const PRIORITY_LABELS: Record<
+  NonNullable<TestRecord["priority"]>,
+  string
+> = SEVERITY_LABELS;
 
 export const HOMOLOGATION_LABELS: Record<HomologationStatus, string> = {
   pendente: "Pendente",
@@ -264,6 +271,17 @@ export function isTestCase(record: Pick<TestRecord, "recordType" | "campaign">):
 
 export function isBugReport(record: Pick<TestRecord, "recordType" | "campaign">): boolean {
   return !isTestCase(record);
+}
+
+/** Comentário novo do gestor ainda não aberto no Desk. */
+export function isGestorReplyUnread(
+  r: Pick<TestRecord, "githubIssueLastCommentAt" | "githubIssueLastCommentSeenAt">,
+): boolean {
+  const at = r.githubIssueLastCommentAt;
+  if (!at) return false;
+  const seen = r.githubIssueLastCommentSeenAt;
+  if (!seen) return false;
+  return seen < at;
 }
 
 /** Exibe BUG-… para bugs e TEST-… para casos de teste */

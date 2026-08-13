@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, Hammer, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MODULE_LABELS, SUITE_LABELS, type SuiteStats } from "@/lib/suite";
+import { MODULE_LABELS, AREA_LABELS, SUITE_LABELS, type SuiteStats } from "@/lib/suite";
 import {
   SuiteRunnerBadge,
   SuiteRunnerToggle,
@@ -114,7 +114,7 @@ function RunGroupButton({
 }
 
 type HeaderVariant = "tests" | "homologation";
-type HeaderLevel = "module" | "suite";
+type HeaderLevel = "area" | "module" | "suite";
 
 function GroupHeaderRow({
   name,
@@ -145,16 +145,21 @@ function GroupHeaderRow({
   onRunnerChange?: (runner: AutomationRunner) => void;
 }) {
   const Chevron = expanded ? ChevronDown : ChevronRight;
-  const actionLabel = level === "module" ? "Módulo" : "Suite";
+  const actionLabel =
+    level === "area" ? "Área" : level === "module" ? "Aba" : "Suite";
   const rowBg =
-    level === "module"
-      ? "bg-zinc-100/90 dark:bg-zinc-900/60"
-      : "bg-zinc-50 dark:bg-zinc-900/35";
+    level === "area"
+      ? "bg-zinc-200/90 dark:bg-zinc-800/70"
+      : level === "module"
+        ? "bg-zinc-100/90 dark:bg-zinc-900/60"
+        : "bg-zinc-50 dark:bg-zinc-900/35";
   const titleClass =
-    level === "module"
-      ? "text-sm font-bold tracking-wide text-zinc-800 dark:text-zinc-100"
-      : "text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-200";
-  const indent = level === "suite" ? "pl-2" : "";
+    level === "area"
+      ? "text-sm font-extrabold uppercase tracking-wider text-zinc-900 dark:text-zinc-50"
+      : level === "module"
+        ? "text-sm font-bold tracking-wide text-zinc-800 dark:text-zinc-100"
+        : "text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-200";
+  const indent = level === "suite" ? "pl-4" : level === "module" ? "pl-2" : "";
   const flowLabel =
     runner === "playwright" ? "com Playwright" : "com flow";
 
@@ -340,6 +345,43 @@ export function ModuleHeaderRow({
       running={running}
       variant={variant}
       meta={`${suiteCount} suite${suiteCount === 1 ? "" : "s"}`}
+    />
+  );
+}
+
+export function AreaHeaderRow({
+  area,
+  moduleCount,
+  stats,
+  expanded,
+  onToggle,
+  onRunArea,
+  runDisabled,
+  running,
+  variant = "tests",
+}: {
+  area: string;
+  moduleCount: number;
+  stats: SuiteStats;
+  expanded: boolean;
+  onToggle: () => void;
+  onRunArea?: () => void;
+  runDisabled?: boolean;
+  running?: boolean;
+  variant?: HeaderVariant;
+}) {
+  return (
+    <GroupHeaderRow
+      name={AREA_LABELS[area] ?? area}
+      level="area"
+      stats={stats}
+      expanded={expanded}
+      onToggle={onToggle}
+      onRun={onRunArea}
+      runDisabled={runDisabled}
+      running={running}
+      variant={variant}
+      meta={`${moduleCount} aba${moduleCount === 1 ? "" : "s"}`}
     />
   );
 }

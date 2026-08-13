@@ -4,9 +4,33 @@
  * - issue_comment: comentário do gestor (não QA/bot) → histórico + em_tratamento
  */
 import { appendHistory, readCatalog, writeCatalog } from "../storage.js";
+import { emitGestorReplyFromReport } from "../gestor-replies-sse.js";
 import type { BugStatus, ProjectSlug, TestRecord } from "../types.js";
 
 const DEFAULT_ACTORS = ["PedroMedeirosDev"];
+
+const UNSEEN_SENTINEL = "1970-01-01T00:00:00.000Z";
+
+/** Comentários já no Desk (sem seenAt) não viram “não lido”; o próximo sim. */
+function prepareGestorCommentUnread(report: TestRecord) {
+  if (!report.githubIssueLastCommentSeenAt) {
+    report.githubIssueLastCommentSeenAt =
+      report.githubIssueLastCommentAt ?? UNSEEN_SENTINEL;
+  }
+}
+
+function sameStoredGestorComment(
+  report: TestRecord,
+  snippet: string,
+  author: string,
+  at: string,
+) {
+  return (
+    report.githubIssueLastCommentBody === snippet &&
+    report.githubIssueLastCommentBy === author &&
+    report.githubIssueLastCommentAt === at
+  );
+}
 
 export type BugIssueWebhookPayload = {
   action?: string;
@@ -232,14 +256,13 @@ export async function pullGestorCommentsIntoReport(
   const at = latest.created_at?.trim() || new Date().toISOString();
   const commentUrl = latest.html_url?.trim() || report.githubIssueUrl;
 
-  const sameAsStored =
-    report.githubIssueLastCommentBody === snippet &&
-    report.githubIssueLastCommentBy === author &&
-    report.githubIssueLastCommentAt === at;
+  const sameAsStored = sameStoredGestorComment(report, snippet, author, at);
 
   if (sameAsStored) {
     return { applied: false, statusChanged: false, reason: "já sincronizado", commentAuthor: author, snippet };
   }
+
+  prepareGestorCommentUnread(report);
 
   report.githubIssueLastCommentAt = at;
   report.githubIssueLastCommentBy = author;
@@ -451,6 +474,19 @@ export async function applyBugIssueCommentFromWebhook(
   const at = comment.created_at?.trim() || new Date().toISOString();
   const snippet = truncateComment(body);
 
+  if (sameStoredGestorComment(report, snippet, author, at)) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: "comentário já gravado",
+      project,
+      issueNumber,
+      bugId: report.id,
+    };
+  }
+
+  prepareGestorCommentUnread(report);
+
   report.githubIssueLastCommentAt = at;
   report.githubIssueLastCommentBy = author;
   report.githubIssueLastCommentBody = snippet;
@@ -489,6 +525,7 @@ export async function applyBugIssueCommentFromWebhook(
 
   catalog.reports[idx] = report;
   await writeCatalog(project, catalog);
+  emitGestorReplyFromReport(project, report, "webhook");
 
   return {
     ok: true,
