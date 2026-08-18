@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle2,
+  Download,
   ExternalLink,
   MonitorOff,
   Play,
@@ -17,6 +18,13 @@ import { useConfirm } from "@/lib/confirm";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { useRunProgress, RUN_CANCELLED_MESSAGE, clearBatchStop, isBatchStopRequested } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
+import { buildHomologationScopeHtml, downloadHtmlReport } from "@/lib/html-report";
+import { CURRENT_USER } from "@/config/user";
+import { PROJECTS } from "@/config/projects";
+import {
+  DIARIO_CQ_HOMOLOGATION_SLUG,
+  DIARIO_CQ_SCOPE,
+} from "@/config/homologation-scopes";
 import { projectDetailPath, projectHomologationsListPath } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
 import { CHANNEL_LABELS, channelSupportsMaestro } from "@/config/channels";
@@ -558,6 +566,23 @@ export function HomologationPage({
       (!homologation.channel || inferChannel(t) === homologation.channel),
   );
 
+  const campanha = homologation;
+  const progresso = progress;
+  const briefing =
+    campanha.scope?.trim() ||
+    (homSlug === DIARIO_CQ_HOMOLOGATION_SLUG ? DIARIO_CQ_SCOPE : "");
+
+  function exportScopeHtml() {
+    const html = buildHomologationScopeHtml(campanha, progresso, {
+      projectLabel: PROJECTS.find((p) => p.slug === project)?.label ?? project,
+      author: CURRENT_USER.actor,
+      briefing,
+    });
+    const day = new Date().toISOString().slice(0, 10);
+    downloadHtmlReport(html, `escopo-${campanha.slug}-${day}.html`);
+    toast.success("HTML do escopo baixado");
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
@@ -576,8 +601,21 @@ export function HomologationPage({
             andamento&quot; e vai para <strong>Concluídas</strong> na lista.
           </li>
           <li>Nova campanha: botão <strong>Nova homologação</strong> na lista de testes.</li>
+          <li>
+            <strong>Exportar escopo HTML</strong> gera um arquivo para enviar ao gestor (briefing +
+            checklist).
+          </li>
         </ul>
       </div>
+
+      {briefing ? (
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-sm font-medium text-foreground">Escopo desta campanha</p>
+          <pre className="mt-3 max-h-[28rem] overflow-auto whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
+            {briefing}
+          </pre>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -619,6 +657,22 @@ export function HomologationPage({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {briefing ? (
+            <PremiumTooltip
+              label="Gera HTML com o briefing e o checklist (para enviar ao gestor)"
+              side="bottom"
+              wide
+            >
+              <button
+                type="button"
+                onClick={exportScopeHtml}
+                className={cn(actionBtnBase, actionBtn.ghost, "px-3")}
+              >
+                <Download className="size-4" />
+                Exportar escopo HTML
+              </button>
+            </PremiumTooltip>
+          ) : null}
           {homologation.status !== "concluida" && (
             <PremiumTooltip
               label="Executa todos os testes Maestro desta campanha, um após o outro"

@@ -7,7 +7,7 @@ Documento de **arquitetura atual**. Backlog futuro: [`VISION.md`](VISION.md). De
 App web multi-projeto (`polygonus`, `anihype`, `desk`, …) para:
 
 - Casos de teste (CT) e bugs
-- Campanhas de homologação (ex.: Mural)
+- Campanhas de homologação (ex.: Mural; CQ diário WEB). Detalhe da campanha: briefing + export HTML do escopo (`buildHomologationScopeHtml`)
 - Execução Maestro / Playwright **no PC local** (`QA_AUTOMATION_RUN=1`) ou via agente remoto
 - Curadoria da base de conhecimento (PRs GitHub) — Polygonus
 - Suite API (Newman / Postman) por projeto
@@ -21,7 +21,7 @@ Pasta no repo: `qa-desk/` · package npm: `qa-desk` · remoto: [QA-Desk](https:/
 |--------|------------|
 | Front | React + Vite + Tailwind + React Router |
 | API | Express (`server/`) — serve `dist/` em produção |
-| Dados | JSON em `data/projects/` **ou** Postgres via Prisma (prod = Postgres) |
+| Dados | Postgres via Prisma (prod) **e** espelho JSON em `data/projects/` a cada `writeCatalog`; sem `DATABASE_URL` = só JSON |
 | Auth | Supabase Auth + tabela `profiles` (opcional; sem env = mock admin) |
 | Arquivos | Supabase Storage (`evidence` privado, `avatars` público) via `service_role`; fallback `data/uploads/` |
 | Automação | Maestro + Playwright (flows em `projects/polygonus/automation/`) |
@@ -107,5 +107,5 @@ Sem essas vars: modo mock admin (dev / Maestro local).
 - **Abrir issue GitHub** — [`server/github/create-bug-issue.ts`](server/github/create-bug-issue.ts) via `gh` · repo `polygonus-br/polygonus-suporte-kb` · label `bug` · evidências na branch `bug-evidence`
 - Body: [`src/lib/bug-report-markdown.ts`](src/lib/bug-report-markdown.ts)
 - Bugs → `enviado_gestor`; grava `githubIssueNumber` / `githubIssueUrl`
-- **Volta issue:** webhook `issues` closed/reopened → [`sync-bug-issue.ts`](server/github/sync-bug-issue.ts); `issue_dependencies` → histórico (label `bug` + vínculo Desk)
+- **Volta issue:** webhook `issues` closed/reopened + `issue_comment` (gestor → `em_tratamento`) → [`sync-bug-issue.ts`](server/github/sync-bug-issue.ts); `issue_dependencies` → histórico (label `bug` + vínculo Desk)
 - Discord: legado (código no repo; **não** é o handoff oficial) — ver [`docs/BUG_REPORT.md`](docs/BUG_REPORT.md)

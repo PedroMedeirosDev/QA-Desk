@@ -173,6 +173,8 @@ export interface Homologation {
   slug: string;
   title: string;
   description?: string;
+  /** Briefing da campanha (markdown leve) — HTML do escopo. */
+  scope?: string;
   project: ProjectSlug;
   channel?: ProductChannel;
   /** backend | frontend | fullstack (front + back) */

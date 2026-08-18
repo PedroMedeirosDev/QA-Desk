@@ -102,6 +102,7 @@ export async function writeHomologationCatalog(
   catalog.meta.project = project;
   if (isDatabaseEnabled()) {
     await writeHomologationCatalogToDb(project, catalog);
+    writeHomologationCatalogToFile(project, catalog);
     return;
   }
   writeHomologationCatalogToFile(project, catalog);

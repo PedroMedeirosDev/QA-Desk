@@ -119,6 +119,8 @@ export async function writeCatalog(project: ProjectSlug, catalog: TestCatalog): 
   catalog.meta.project = project;
   if (isDatabaseEnabled()) {
     await writeCatalogToDb(project, catalog);
+    // Espelho JSON (git / fallback). Mesmo padrão da curadoria KB.
+    writeCatalogToFile(project, catalog);
     return;
   }
   writeCatalogToFile(project, catalog);

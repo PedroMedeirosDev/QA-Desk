@@ -110,10 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let cancelled = false;
+    let knownUserId: string | null = null;
 
     async function applySession(next: Session | null) {
       setSession(next);
       setAccessToken(next?.access_token ?? null);
+      knownUserId = next?.user.id ?? null;
       if (!next?.user) {
         setProfile(null);
         return;
@@ -128,7 +130,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      // Alt+Tab: TOKEN_REFRESHED / INITIAL_SESSION. Recarregar perfil
+      // desmonta o editor e apaga o que estava sendo digitado.
+      if (event === "INITIAL_SESSION") return;
+      if (event === "TOKEN_REFRESHED") {
+        if (next) {
+          setAccessToken(next.access_token);
+          setSession((prev) =>
+            prev?.user.id === next.user.id ? prev : next,
+          );
+        }
+        return;
+      }
+      if (event === "SIGNED_IN" && next?.user.id && next.user.id === knownUserId) {
+        setAccessToken(next.access_token);
+        return;
+      }
+      if (event === "SIGNED_OUT") {
+        void applySession(null);
+        return;
+      }
       void applySession(next);
     });
 

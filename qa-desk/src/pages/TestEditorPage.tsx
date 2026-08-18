@@ -8,6 +8,7 @@ import { DesignCheckbox } from "@/components/DesignCheckbox";
 import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { api, type AutomationFlow, type AutomationSpec, type AndroidDeviceStatus } from "@/lib/api";
 import { toastErrorMessage, useToast } from "@/lib/toast";
+import { githubIssueProgressPercent } from "@/lib/github-issue-stream";
 import { useConfirm } from "@/lib/confirm";
 import { useRunProgress, QA_RUN_FINISHED_EVENT, type LiveRunState } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
@@ -38,7 +39,7 @@ import {
   isTestCase,
 } from "@/types/test-record";
 import { copyDiscordReport } from "@/lib/discord-report";
-import { formatBugReportMarkdown } from "@/lib/bug-report-markdown";
+import { formatBugReportMarkdown, ambienteView } from "@/lib/bug-report-markdown";
 import { polishTestForm } from "@/lib/text-corrector";
 import {
   detailedStepsForSave,
@@ -108,6 +109,14 @@ export function TestEditorPage({
   const [stepsMode, setStepsMode] = useState<"resumo" | "detalhado">("resumo");
   const [form, setForm] = useState<Partial<TestRecord>>(emptyDraft(project, channel, editorKind));
   const [saving, setSaving] = useState(false);
+  const [githubBusy, setGithubBusy] = useState<"opening" | "syncing" | "closing" | null>(
+    null,
+  );
+  const [githubProgress, setGithubProgress] = useState<{
+    message: string;
+    percent: number;
+    filename?: string;
+  } | null>(null);
   const [flows, setFlows] = useState<AutomationFlow[]>([]);
   const [specs, setSpecs] = useState<AutomationSpec[]>([]);
   const [running, setRunning] = useState(false);
@@ -127,6 +136,7 @@ export function TestEditorPage({
   } | null>(null);
   const [removingEvidenceId, setRemovingEvidenceId] = useState<string | null>(null);
   const busyRun = running || liveRunning;
+  const deskBusy = saving || Boolean(githubBusy);
 
   const isHomologation = isTestCase(form);
   const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
@@ -208,7 +218,9 @@ export function TestEditorPage({
       const fromTest = (location.state as { draft?: Partial<TestRecord> } | null)?.draft;
       setForm(fromTest ?? emptyDraft(project, channel, editorKind));
     }
-  }, [project, id, isNew, channel, editorKind, location.state, isAdmin]);
+    // Não incluir isAdmin / location.state: Alt+Tab e refresh de token
+    // re-disparavam o GET e apagavam o texto não salvo.
+  }, [project, id, isNew, channel, editorKind]);
 
   useEffect(() => {
     if (isNew || !id || editorKind !== "bug") return;
@@ -492,12 +504,32 @@ export function TestEditorPage({
       toast.error("Salve o bug antes de abrir a issue");
       return;
     }
-    setSaving(true);
+    setGithubBusy("opening");
+    setGithubProgress({ message: "Abrindo issue no GitHub…", percent: 6 });
+    const toastId = toast.info("Abrindo issue no GitHub…", {
+      title: "GitHub",
+      duration: 0,
+      progress: 6,
+    });
     try {
-      const res = await api.openGithubIssue(project, id);
+      const res = await api.openGithubIssue(project, id, (ev) => {
+        const percent = githubIssueProgressPercent(ev);
+        setGithubProgress({
+          message: ev.message,
+          percent,
+          filename: ev.filename,
+        });
+        toast.update(toastId, { message: ev.message, progress: percent });
+      });
       setForm(res.report);
       if (res.alreadyLinked) {
-        toast.info(`Issue já vinculada: #${res.number}`);
+        toast.update(toastId, {
+          variant: "info",
+          title: "GitHub",
+          message: `Issue já vinculada: #${res.number}`,
+          progress: 100,
+          duration: 5000,
+        });
       } else {
         const n = res.evidenceUploaded ?? 0;
         const skip = res.evidenceSkipped?.length ?? 0;
@@ -507,7 +539,16 @@ export function TestEditorPage({
             : skip > 0
               ? " · sem evidências anexadas"
               : "";
-        toast.success(`Issue #${res.number} aberta no GitHub${evHint}`);
+        toast.update(toastId, {
+          variant: "success",
+          title: "GitHub",
+          message: `Issue #${res.number} aberta${evHint}`,
+          progress: 100,
+          duration: 6000,
+          action: res.url
+            ? { label: "Abrir issue", onClick: () => window.open(res.url, "_blank", "noopener,noreferrer") }
+            : undefined,
+        });
         if (skip > 0) {
           toast.info(
             `${skip} arquivo(s) não anexado(s): ${res.evidenceSkipped
@@ -518,9 +559,11 @@ export function TestEditorPage({
       }
       if (res.url) window.open(res.url, "_blank", "noopener,noreferrer");
     } catch (e) {
-      toast.error(toastErrorMessage(e, "Falha ao abrir issue"));
+      toast.dismiss(toastId);
+      toast.error(toastErrorMessage(e, "Falha ao abrir issue"), { title: "GitHub" });
     } finally {
-      setSaving(false);
+      setGithubBusy(null);
+      setGithubProgress(null);
     }
   }
 
@@ -533,9 +576,15 @@ export function TestEditorPage({
       toast.error("Bug sem issue vinculada — abra a issue primeiro");
       return;
     }
-    setSaving(true);
+    const issueNo = form.githubIssueNumber;
+    setGithubBusy("syncing");
+    setGithubProgress({ message: "Salvando o bug no Desk…", percent: 6 });
+    const toastId = toast.info(`Sincronizando issue #${issueNo}…`, {
+      title: "Sync GitHub",
+      duration: 0,
+      progress: 6,
+    });
     try {
-      // Garante que o que está na tela vai para o GitHub (não só o último save)
       const payload: Partial<TestRecord> = {
         ...form,
         recordType: editorKind,
@@ -548,25 +597,46 @@ export function TestEditorPage({
       };
       const saved = await api.updateTest(project, id, payload);
       setForm(saved);
+      setGithubProgress({ message: "Enviando para o GitHub…", percent: 12 });
+      toast.update(toastId, {
+        message: "Enviando título, body e evidências…",
+        progress: 12,
+      });
 
-      const res = await api.syncGithubIssue(project, id);
+      const res = await api.syncGithubIssue(project, id, (ev) => {
+        const percent = githubIssueProgressPercent(ev);
+        setGithubProgress({
+          message: ev.message,
+          percent,
+          filename: ev.filename,
+        });
+        toast.update(toastId, { message: ev.message, progress: percent });
+      });
       setForm(res.report);
       const n = res.evidenceUploaded ?? 0;
       const skip = res.evidenceSkipped?.length ?? 0;
-      const evHint =
-        n > 0
-          ? ` · ${n} evidência${n === 1 ? "" : "s"}`
-          : "";
-      toast.success(`Issue #${res.number} sincronizada${evHint}`);
+      const parts = [`Issue #${res.number} sincronizada`];
+      if (n > 0) parts.push(`${n} evidência${n === 1 ? "" : "s"}`);
       if (res.commentCatchup?.applied) {
-        toast.info(
-          `Comentário do gestor capturado${
-            res.commentCatchup.commentAuthor
-              ? ` · @${res.commentCatchup.commentAuthor}`
-              : ""
-          }`,
+        parts.push(
+          res.commentCatchup.commentAuthor
+            ? `comentário de @${res.commentCatchup.commentAuthor}`
+            : "comentário do gestor",
         );
       }
+      toast.update(toastId, {
+        variant: "success",
+        title: "Sync GitHub",
+        message: parts.join(" · "),
+        progress: 100,
+        duration: 7000,
+        action: res.url
+          ? {
+              label: "Abrir issue",
+              onClick: () => window.open(res.url, "_blank", "noopener,noreferrer"),
+            }
+          : undefined,
+      });
       if (skip > 0) {
         toast.info(
           `${skip} arquivo(s) não anexado(s): ${res.evidenceSkipped
@@ -575,9 +645,13 @@ export function TestEditorPage({
         );
       }
     } catch (e) {
-      toast.error(toastErrorMessage(e, "Falha ao sincronizar issue"));
+      toast.dismiss(toastId);
+      toast.error(toastErrorMessage(e, "Falha ao sincronizar issue"), {
+        title: "Sync GitHub",
+      });
     } finally {
-      setSaving(false);
+      setGithubBusy(null);
+      setGithubProgress(null);
     }
   }
 
@@ -618,7 +692,12 @@ export function TestEditorPage({
     });
     if (comment === null) return;
 
-    setSaving(true);
+    setGithubBusy("closing");
+    const toastId = toast.info(`Fechando issue #${form.githubIssueNumber}…`, {
+      title: "GitHub",
+      duration: 0,
+      progress: 40,
+    });
     try {
       const res = await api.closeGithubIssue(project, id, {
         comment: comment.trim() || undefined,
@@ -630,11 +709,18 @@ export function TestEditorPage({
           : `Issue #${res.number} fechada no GitHub`,
       ];
       if (res.commentPosted) parts.push("comentário publicado");
-      toast.success(parts.join(" · "));
+      toast.update(toastId, {
+        variant: "success",
+        title: "GitHub",
+        message: parts.join(" · "),
+        progress: 100,
+        duration: 6000,
+      });
     } catch (e) {
-      toast.error(toastErrorMessage(e, "Falha ao fechar issue"));
+      toast.dismiss(toastId);
+      toast.error(toastErrorMessage(e, "Falha ao fechar issue"), { title: "GitHub" });
     } finally {
-      setSaving(false);
+      setGithubBusy(null);
     }
   }
 
@@ -751,10 +837,21 @@ export function TestEditorPage({
                   {PRIORITY_LABELS[(form.priority ?? form.severity)!]}
                 </span>
               )}
-              {form.platform && (
-                <span className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground">
-                  {PLATFORM_LABELS[form.platform]}
-                </span>
+              {form.platform === "app_web" ? (
+                <>
+                  <span className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground">
+                    App nativo
+                  </span>
+                  <span className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground">
+                    APP versão WEB
+                  </span>
+                </>
+              ) : (
+                form.platform && (
+                  <span className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground">
+                    {PLATFORM_LABELS[form.platform]}
+                  </span>
+                )
               )}
               {isGestorReplyUnread(form as TestRecord) && (
                 <span className="rounded-full border border-amber-400/20 bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-amber-300">
@@ -1264,10 +1361,10 @@ export function TestEditorPage({
                 <button
                   type="button"
                   onClick={() => void save()}
-                  disabled={saving}
+                  disabled={deskBusy}
                   className={cn(actionBtnBase, actionBtn.save, "w-full")}
                 >
-                  {saving ? "Salvando…" : "Salvar"}
+                  {saving ? "Salvando…" : githubBusy ? "Aguarde o GitHub…" : "Salvar"}
                 </button>
                 <PremiumTooltip
                   label="Copia o Markdown estruturado (mesmo body da issue)"
@@ -1292,11 +1389,15 @@ export function TestEditorPage({
                     <button
                       type="button"
                       onClick={() => void openGithubIssue()}
-                      disabled={saving}
+                      disabled={deskBusy}
                       className={cn(actionBtnBase, actionBtn.create, "w-full")}
                     >
-                      <ExternalLink className="size-4" />
-                      Abrir issue GitHub
+                      {githubBusy === "opening" ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <ExternalLink className="size-4" />
+                      )}
+                      {githubBusy === "opening" ? "Abrindo issue…" : "Abrir issue GitHub"}
                     </button>
                   </PremiumTooltip>
                 )}
@@ -1309,11 +1410,16 @@ export function TestEditorPage({
                     <button
                       type="button"
                       onClick={() => void syncGithubIssue()}
-                      disabled={saving}
+                      disabled={deskBusy}
+                      aria-busy={githubBusy === "syncing"}
                       className={cn(actionBtnBase, actionBtn.checklist, "w-full")}
                     >
-                      <RefreshCw className="size-4" />
-                      Sync issue GitHub
+                      {githubBusy === "syncing" ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="size-4" />
+                      )}
+                      {githubBusy === "syncing" ? "Sincronizando…" : "Sync issue GitHub"}
                     </button>
                   </PremiumTooltip>
                 )}
@@ -1326,14 +1432,22 @@ export function TestEditorPage({
                     <button
                       type="button"
                       onClick={() => void closeGithubIssue()}
-                      disabled={saving}
+                      disabled={deskBusy}
                       className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
                     >
-                      <CheckCircle2 className="size-4" />
-                      Fechar issue GitHub
+                      {githubBusy === "closing" ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="size-4" />
+                      )}
+                      {githubBusy === "closing" ? "Fechando issue…" : "Fechar issue GitHub"}
                     </button>
                   </PremiumTooltip>
                 )}
+                {githubProgress && (
+                  <GithubIssueProgressCard progress={githubProgress} />
+                )}
+                <AmbienteIssuePreview record={form} />
                 {form.githubIssueUrl && (
                   <a
                     href={form.githubIssueUrl}
@@ -1551,14 +1665,14 @@ export function TestEditorPage({
               label={
                 form.channel === "web"
                   ? "Versão (login amostra CQ)"
-                  : "Versão do app (login)"
+                  : "Versão do app (tela Perfil)"
               }
             >
               <PremiumTooltip
                 label={
                   form.channel === "web"
                     ? "Front/Back do rodapé do login na amostra CQ — atualizado ao rodar Playwright"
-                    : "Mesma versão exibida na tela de login; atualizada a cada execução Maestro"
+                    : "Mesma Versão da tela Perfil (APP nativo e APP WEB). Atualizada ao confirmar o perfil em cada execução."
                 }
                 side="top"
                 wide
@@ -1570,7 +1684,7 @@ export function TestEditorPage({
                   placeholder={
                     form.channel === "web"
                       ? "Front: … · Back: … — ao rodar Playwright"
-                      : "Preenchida ao rodar o Maestro"
+                      : "Versão: 6.06.xx — ao confirmar o perfil"
                   }
                 />
               </PremiumTooltip>
@@ -2015,11 +2129,15 @@ export function TestEditorPage({
                   <button
                     type="button"
                     onClick={() => void openGithubIssue()}
-                    disabled={saving}
+                    disabled={deskBusy}
                     className={cn(actionBtnBase, actionBtn.create, "w-full")}
                   >
-                    <ExternalLink className="size-4" />
-                    Abrir issue GitHub
+                    {githubBusy === "opening" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <ExternalLink className="size-4" />
+                    )}
+                    {githubBusy === "opening" ? "Abrindo issue…" : "Abrir issue GitHub"}
                   </button>
                 </PremiumTooltip>
               )}
@@ -2032,11 +2150,16 @@ export function TestEditorPage({
                   <button
                     type="button"
                     onClick={() => void syncGithubIssue()}
-                    disabled={saving}
+                    disabled={deskBusy}
+                    aria-busy={githubBusy === "syncing"}
                     className={cn(actionBtnBase, actionBtn.checklist, "w-full")}
                   >
-                    <RefreshCw className="size-4" />
-                    Sync issue GitHub
+                    {githubBusy === "syncing" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-4" />
+                    )}
+                    {githubBusy === "syncing" ? "Sincronizando…" : "Sync issue GitHub"}
                   </button>
                 </PremiumTooltip>
               )}
@@ -2053,14 +2176,21 @@ export function TestEditorPage({
                     <button
                       type="button"
                       onClick={() => void closeGithubIssue()}
-                      disabled={saving}
+                      disabled={deskBusy}
                       className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
                     >
-                      <CheckCircle2 className="size-4" />
-                      Fechar issue GitHub
+                      {githubBusy === "closing" ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="size-4" />
+                      )}
+                      {githubBusy === "closing" ? "Fechando issue…" : "Fechar issue GitHub"}
                     </button>
                   </PremiumTooltip>
                 )}
+              {githubProgress && !editingBug && (
+                <GithubIssueProgressCard progress={githubProgress} />
+              )}
               {form.githubIssueUrl && (
                 <a
                   href={form.githubIssueUrl}
@@ -2172,6 +2302,80 @@ export function TestEditorPage({
           <HistoryTimeline entries={form.history ?? []} />
         </div>
       )}
+    </div>
+  );
+}
+
+function AmbienteIssuePreview({ record }: { record: Partial<TestRecord> }) {
+  const view = ambienteView(record);
+  if (!view.headline && view.fields.length === 0) return null;
+
+  return (
+    <div className="space-y-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+      <p className="text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
+        Ambiente na issue
+      </p>
+      {view.dual ? (
+        <p className="text-xs font-medium text-foreground">{view.headline}</p>
+      ) : view.headline ? (
+        <p className="text-xs text-foreground">
+          <span className="text-muted-foreground">Onde · </span>
+          {view.headline}
+        </p>
+      ) : null}
+      {view.dual && view.surfaces.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {view.surfaces.map((surface) => (
+            <span
+              key={surface}
+              className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground"
+            >
+              {surface}
+            </span>
+          ))}
+        </div>
+      )}
+      {view.fields.length > 0 && (
+        <dl className="space-y-1 text-xs">
+          {view.fields.map((field) => (
+            <div key={field.label} className="flex min-w-0 gap-2">
+              <dt className="shrink-0 text-muted-foreground">{field.label}</dt>
+              <dd className="min-w-0 wrap-anywhere text-foreground">{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
+}
+
+function GithubIssueProgressCard({
+  progress,
+}: {
+  progress: { message: string; percent: number; filename?: string };
+}) {
+  return (
+    <div
+      className="space-y-1.5 rounded-md border border-emerald-500/30 bg-emerald-600/10 px-3 py-2"
+      role="status"
+      aria-live="polite"
+      aria-label={`${progress.message}: ${progress.percent}%`}
+    >
+      <div className="flex items-center justify-between gap-2 text-xs text-emerald-200/90">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <Loader2 className="size-3.5 shrink-0 animate-spin" />
+          <span className="truncate">{progress.message}</span>
+        </span>
+        <span className="shrink-0 tabular-nums font-medium text-emerald-100">
+          {progress.percent}%
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-black/30">
+        <div
+          className="h-full rounded-full bg-emerald-400 transition-[width] duration-200 ease-out"
+          style={{ width: `${Math.min(100, Math.max(0, progress.percent))}%` }}
+        />
+      </div>
     </div>
   );
 }

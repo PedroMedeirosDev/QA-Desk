@@ -82,7 +82,7 @@ npx tsx scripts/apply-mural-checklist.ts
 
 `/api/health` → `"storage":"postgres"`, `"auth":"supabase"`. Evidências: Supabase Storage (`evidence`) com fallback `data/uploads/`.
 
-Em produção a fonte da verdade é o **Postgres**; o JSON em `data/` é seed / fallback local — evite commitar dumps de execução.
+Em produção a fonte da verdade é o **Postgres**. Cada `writeCatalog` também grava o JSON em `data/` (espelho local). Live e `npm run dev` veem o mesmo bug **se** o `.env` aponta para o **mesmo** `DATABASE_URL` (Supabase). Lista: Polygonus → **WEB** → Bugs (não App).
 
 ## Privacidade (PII)
 

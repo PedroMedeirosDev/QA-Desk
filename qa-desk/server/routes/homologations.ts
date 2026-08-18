@@ -107,6 +107,7 @@ homologationsRouter.put("/:homSlug", requireAdmin, async (req, res) => {
   const body = req.body as {
     title?: string;
     description?: string;
+    scope?: string;
     build?: string;
     status?: HomologationCycleStatus;
     changeScope?: HomologationChangeScope;
