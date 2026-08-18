@@ -78,6 +78,15 @@ export function fichaNovoAlunoUrl(gestaoUrl = resolveGestaoUrl()): string {
   return gestaoUrl.replace(/\/gestao\/?$/, "/academico/alunos/novo");
 }
 
+/** Páginas React do Acadêmico (CQ): notas-parciais, conteudo, faltas-diarias… */
+export function academicoReactUrl(
+  slug: string,
+  gestaoUrl = resolveGestaoUrl(),
+): string {
+  const path = slug.replace(/^\//, "");
+  return gestaoUrl.replace(/\/gestao\/?$/, `/academico/${path}`);
+}
+
 export function gestaoLoginUrl(gestaoUrl = resolveGestaoUrl()): string {
   const base = gestaoUrl.replace(/\/+$/, "");
   if (/\/gestao\/login$/i.test(base)) return base;
@@ -113,8 +122,26 @@ export async function lerVersaoRodapeLogin(
 }
 
 function logWebBuild(version: string, logPrefix: string) {
+  emitAppBuildMarker(version, logPrefix);
+}
+
+/** Imprime o marcador que o Desk grava em `build` da execução. */
+export function emitAppBuildMarker(version: string, logPrefix: string) {
   console.log(`${WEB_BUILD_MARKER} ${version}`);
-  console.log(`${logPrefix} versão login = ${version}`);
+  console.log(`${logPrefix} versão = ${version}`);
+}
+
+/**
+ * Versão na tela Perfil (APP nativo e APP WEB): `Versão: 6.06.28 (60628)`.
+ */
+export function parseVersaoTelaPerfil(text: string): string | undefined {
+  const normalized = text.replace(/\s+/g, " ");
+  const labeled = normalized.match(
+    /Vers[aã]o:\s*(\d+\.\d+\.\d+(?:\s*\(\d+\))?)/i,
+  );
+  if (labeled?.[1]) return labeled[1].replace(/\s+/g, " ").trim();
+  const bare = normalized.match(/\b(\d+\.\d+\.\d+\s*\(\d{4,}\))/);
+  return bare?.[1]?.replace(/\s+/g, " ").trim();
 }
 
 /**

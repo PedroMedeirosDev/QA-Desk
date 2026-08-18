@@ -9,6 +9,8 @@ export interface Homologation {
   slug: string;
   title: string;
   description?: string;
+  /** Briefing da campanha (markdown leve) — exporta no HTML do escopo. */
+  scope?: string;
   project: ProjectSlug;
   channel?: ProductChannel;
   changeScope?: HomologationChangeScope;

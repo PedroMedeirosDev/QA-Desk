@@ -12,7 +12,7 @@ Documento irmão (humano): [`../ARCHITECTURE.md`](../ARCHITECTURE.md) · backlog
 **QA Desk** é um app de **portfólio + operação de QA** multi-projeto:
 
 - Registro de **casos de teste (CT)** e **bugs**
-- **Homologações** (campanhas, ex.: Mural Polygonus)
+- **Homologações** (campanhas, ex.: Mural; **CQ diário** WEB React no Amostra). Página da campanha: briefing + **Exportar escopo HTML**. Campo `scope` no registro.
 - Execução **Maestro** (Android) e **Playwright** (web) — no PC local ou via **agente remoto**
 - **Curadoria KB** (PRs GitHub da base de conhecimento) — Polygonus, admin only
 - **Suite API** (Newman / Postman)
@@ -129,8 +129,8 @@ server/
 
 | Slug | Uso |
 |------|-----|
-| `polygonus` | Principal — Mural, Maestro, Playwright, Curadoria KB |
-| `anihype` | Em setup |
+| `polygonus` | Principal — Mural, Maestro, Playwright, Curadoria KB, homologação **CQ diário** (notas/conteúdo/frequência WEB React no Amostra) |
+| `anihype` | Em setup — CTs e Playwright ainda não são o default; registrar campanha no Desk **antes** de gerar spec |
 | `desk` | Dogfood — Suite API do próprio Desk |
 
 Artefatos de automação Polygonus: `projects/polygonus/automation/maestro|playwright/`.
@@ -150,7 +150,9 @@ Artefatos de automação Polygonus: `projects/polygonus/automation/maestro|playw
 ## 8. Anti-padrões (erros comuns de IAs)
 
 1. Sugerir **Next.js / App Router / `app/api`** — este app é **Vite + Express**.
-2. Sugerir **SQLite** como store — prod é **Postgres/Supabase**; JSON é fallback/seed.
+2. Sugerir **SQLite** como store — prod é **Postgres/Supabase**; JSON é fallback/seed. Com `DATABASE_URL`, `writeCatalog` grava **Postgres + JSON** (espelho). Live ≠ localhost se o `DATABASE_URL` for outro.
+2b. Listar bugs Polygonus no canal **App** quando o defeito é **WEB** (gestão React) — usar **WEB → Bugs** (`WEB-01`, `WEB-02`, …).
+2c. Recarregar o editor no `TOKEN_REFRESHED` / Alt+Tab — apaga texto não salvo; o Auth ignora refresh de token para remount.
 3. Criar rotas `/api/public/...` no estilo Next sem encaixar no Express existente.
 4. Confiar em filtro `is_public` vindo do cliente — o campo real é **`showInPortfolio`**, filtrado **no servidor**.
 5. Sanitizar PII **só no React** — Network vaza; sanitização é **backend**.

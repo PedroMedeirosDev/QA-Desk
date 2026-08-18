@@ -1,10 +1,59 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-08-05",
+    "updatedAt": "2026-08-18",
     "project": "polygonus"
   },
   "homologations": [
+    {
+      "id": "HOM-2026-003",
+      "slug": "diario-cq-homologacao",
+      "title": "Homologação CQ — Notas, Conteúdo, Frequência",
+      "status": "em_andamento",
+      "channel": "web",
+      "history": [
+        {
+          "at": "2026-08-18T17:39:11.942Z",
+          "actor": "Pedro",
+          "action": "homologation_created",
+          "detail": "Homologação criada: Homologação CQ — Notas, Conteúdo, Frequência"
+        },
+        {
+          "at": "2026-08-18T17:39:10.942Z",
+          "actor": "system",
+          "action": "homologation_synced",
+          "detail": "Checklist CQ diário: 14 no escopo · 14 novo(s) · 0 atualizado(s)"
+        },
+        {
+          "at": "2026-08-18T20:50:45.539Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Briefing de escopo para o gestor (HTML)"
+        }
+      ],
+      "project": "polygonus",
+      "campaign": "diario-cq-homologacao",
+      "testKeys": [
+        "academico/cq-notas-01",
+        "academico/cq-notas-02",
+        "academico/cq-notas-03",
+        "academico/cq-notas-04",
+        "academico/cq-notas-05",
+        "academico/cq-notas-06",
+        "academico/cq-conteudo-01",
+        "academico/cq-conteudo-02",
+        "academico/cq-conteudo-03",
+        "academico/cq-conteudo-04",
+        "academico/cq-freq-01",
+        "academico/cq-freq-02",
+        "academico/cq-freq-03",
+        "academico/cq-freq-04"
+      ],
+      "startedAt": "2026-08-18T17:39:11.942Z",
+      "changeScope": "fullstack",
+      "description": "WEB React no Amostra: notas parciais, conteúdo e frequência (dois forms). Conferência no App (responsável).",
+      "scope": "## Onde\nGestão WEB React, o Amostra (CQ). Quem lança: professor. Conferência no App: perfil responsável.\n\n## Notas parciais\n- Abrir o lançamento (turma, etapa, disciplina)\n- Lançar nota inteira e com vírgula (ex.: 7 e 7,5)\n- Um aluno preenchido, demais vazios → Gravar\n- Nota igual ao máximo da avaliação; nota acima do máximo (tem que recusar)\n- Excluir nota\n- Avaliação por conceito: lançar A/B/C; tentar número onde é conceito e letra onde é nota\n- Depois de Gravar, a célula amarela some\n\n## Conteúdo (dois forms)\n1. Quadro por etapa\n2. Por turma\n- Lançar texto\n- Anexar arquivo\n- Criar aula extra (se a tela tiver)\n- Excluir conteúdo\n- Professor substituto: vê/edita só o que a permissão permite\n\n## Frequência (dois forms)\n1. Quadro\n2. Por turma\n- Marcar falta → Gravar\n- Remover falta → Gravar\n- Mesmo recorte de substituto\n\n## App (responsável)\n- Nota / conceito visível\n- Conteúdo do dia\n- Falta do aluno\n\n## Fora deste recorte\nPlano de aula, tarefas diárias, APP iOS do chamado da Stefanie, telas Delphi.\n\n## Já aberto no Desk\n- WEB-01 — AV não aceita conceito (A/B/C)\n- WEB-02 — célula continua amarela após Gravar"
+    },
     {
       "id": "HOM-2026-002",
       "slug": "ficha-academica-homologacao",
@@ -56,7 +105,7 @@
     {
       "id": "HOM-2026-001",
       "slug": "mural-backend-homologacao",
-      "build": "6.06.07 (60607)",
+      "build": "6.06.23 (60623)",
       "title": "Homologação Mural (backend)",
       "status": "em_andamento",
       "channel": "app",

@@ -53,13 +53,8 @@ export function BugListPage({
       reload();
     }
     window.addEventListener(QA_GESTOR_REPLY_EVENT, onReply);
-    function onVisible() {
-      if (document.visibilityState === "visible") reload();
-    }
-    document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.removeEventListener(QA_GESTOR_REPLY_EVENT, onReply);
-      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [project]);
 

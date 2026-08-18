@@ -19,11 +19,12 @@ import type {
   ImplantacaoRequisitoTipo,
   ImplantacaoTipo,
 } from "@/types/implantacao";
+import type { DailyIntent, DailyPortfolioCard, DailySummary } from "@/types/daily-summary";
 import type {
-  DailyIntent,
-  DailyPortfolioCard,
-  DailySummary,
-} from "@/types/daily-summary";
+  GithubIssueDoneEvent,
+  GithubIssueProgressEvent,
+  GithubIssueStreamEvent,
+} from "@/lib/github-issue-stream";
 
 export interface AutomationFlow {
   id: string;
@@ -105,6 +106,74 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     throw new Error((err as { error?: string }).error ?? "Erro na API");
   }
   return res.json() as Promise<T>;
+}
+
+export type GithubIssueResult = Omit<GithubIssueDoneEvent, "type"> & {
+  report: TestRecord;
+};
+
+async function requestGithubIssueStream(
+  url: string,
+  onProgress?: (ev: GithubIssueProgressEvent) => void,
+): Promise<GithubIssueResult> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: authHeaders({ Accept: "application/x-ndjson" }),
+  });
+  const contentType = res.headers.get("content-type") ?? "";
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error((err as { error?: string }).error ?? "Erro na API");
+  }
+
+  if (!contentType.includes("ndjson") || !res.body) {
+    return res.json() as Promise<GithubIssueResult>;
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let done: GithubIssueResult | null = null;
+
+  const handleLine = (line: string) => {
+    let ev: GithubIssueStreamEvent;
+    try {
+      ev = JSON.parse(line) as GithubIssueStreamEvent;
+    } catch {
+      return;
+    }
+    if (ev.type === "progress") {
+      onProgress?.(ev);
+      return;
+    }
+    if (ev.type === "error") {
+      throw new Error(ev.error || "Falha no GitHub");
+    }
+    if (ev.type === "done") {
+      const { type: _t, ...rest } = ev;
+      done = rest as GithubIssueResult;
+    }
+  };
+
+  while (true) {
+    const { done: eof, value } = await reader.read();
+    if (eof) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n");
+    buffer = parts.pop() ?? "";
+    for (const raw of parts) {
+      const line = raw.trim();
+      if (line) handleLine(line);
+    }
+  }
+  const tail = buffer.trim();
+  if (tail) handleLine(tail);
+
+  if (!done) {
+    throw new Error("Sync GitHub terminou sem resultado");
+  }
+  return done;
 }
 
 export const api = {
@@ -202,38 +271,26 @@ export const api = {
       channelId?: string;
     }>(`/api/projects/${project}/tests/${id}/discord-send`, { method: "POST" }),
 
-  openGithubIssue: (project: ProjectSlug, id: string) =>
-    request<{
-      ok: true;
-      alreadyLinked: boolean;
-      number: number;
-      url: string;
-      title: string;
-      repository: string;
-      evidenceUploaded: number;
-      evidenceSkipped: Array<{ filename: string; reason: string }>;
-      report: TestRecord;
-    }>(`/api/projects/${project}/tests/${id}/github-issue`, { method: "POST" }),
+  openGithubIssue: (
+    project: ProjectSlug,
+    id: string,
+    onProgress?: (ev: GithubIssueProgressEvent) => void,
+  ) =>
+    requestGithubIssueStream(
+      `/api/projects/${project}/tests/${id}/github-issue?stream=1`,
+      onProgress,
+    ),
 
   /** Atualiza título/body/evidências da issue já vinculada. */
-  syncGithubIssue: (project: ProjectSlug, id: string) =>
-    request<{
-      ok: true;
-      number: number;
-      url: string;
-      title: string;
-      repository: string;
-      evidenceUploaded: number;
-      evidenceSkipped: Array<{ filename: string; reason: string }>;
-      commentCatchup?: {
-        applied: boolean;
-        statusChanged: boolean;
-        commentAuthor?: string;
-        snippet?: string;
-        reason?: string;
-      };
-      report: TestRecord;
-    }>(`/api/projects/${project}/tests/${id}/github-issue/sync`, { method: "POST" }),
+  syncGithubIssue: (
+    project: ProjectSlug,
+    id: string,
+    onProgress?: (ev: GithubIssueProgressEvent) => void,
+  ) =>
+    requestGithubIssueStream(
+      `/api/projects/${project}/tests/${id}/github-issue/sync?stream=1`,
+      onProgress,
+    ),
 
   /** Fecha a issue no GitHub (comentário opcional) e alinha status no Desk. */
   closeGithubIssue: (
@@ -401,6 +458,7 @@ export const api = {
     data: {
       title?: string;
       description?: string;
+      scope?: string;
       build?: string;
       status?: Homologation["status"];
       changeScope?: Homologation["changeScope"];
