@@ -28,7 +28,7 @@ function platformLabel(platform: TestRecord["platform"] | undefined): string {
     case "web":
       return "Web";
     case "app_web":
-      return "APP + WEB";
+      return "App nativo e APP WEB";
     case "api":
       return "API";
     case "outro":
@@ -41,6 +41,113 @@ function platformLabel(platform: TestRecord["platform"] | undefined): string {
 function channelLabel(channel: TestRecord["channel"] | undefined): string {
   if (!channel) return "—";
   return CHANNEL_LABELS[channel] ?? channel;
+}
+
+/**
+ * Uma peça só para “onde rodou” — evita `App · Web` (lê como dois produtos).
+ * APP-nn fica no título / Referências, não aqui.
+ */
+export function formatWherePlayed(record: Partial<TestRecord>): string | null {
+  const ch = record.channel;
+  const pl = record.platform;
+  if (ch === "app" && pl === "web") return "APP versão WEB";
+  if (pl === "app_web") return "App nativo e APP versão WEB";
+  if (ch === "app" && (pl === "android" || pl === "ios")) {
+    return `App · ${platformLabel(pl)}`;
+  }
+  if (ch === "web") {
+    if (!pl || pl === "web") return "WEB";
+    return `WEB · ${platformLabel(pl)}`;
+  }
+  if (ch === "portal") return "PORTAL";
+  if (pl && pl !== "web") return platformLabel(pl);
+  if (ch) return channelLabel(ch);
+  return null;
+}
+
+export type AmbienteField = { label: string; value: string };
+
+export type AmbienteView = {
+  dual: boolean;
+  headline: string | null;
+  surfaces: string[];
+  fields: AmbienteField[];
+};
+
+function trimField(label: string, value: string | undefined): AmbienteField | null {
+  const v = value?.trim();
+  if (!v) return null;
+  return { label, value: v };
+}
+
+/** Fonte única: Desk (chips) e Markdown da issue. */
+export function ambienteView(record: Partial<TestRecord>): AmbienteView {
+  const pl = record.platform;
+  const login = record.testLogin?.trim();
+  const browser = record.browser?.trim();
+  const device = [record.osVersion?.trim(), record.deviceLabel?.trim()]
+    .filter(Boolean)
+    .join(" · ");
+  const build = record.build?.trim();
+
+  if (pl === "app_web") {
+    return {
+      dual: true,
+      headline: "Reproduz nos dois",
+      surfaces: ["App nativo", "APP versão WEB"],
+      fields: [
+        trimField("Login", login),
+        trimField("APP versão WEB", browser),
+        trimField("App nativo", device),
+        trimField("Versão", build),
+      ].filter((f): f is AmbienteField => Boolean(f)),
+    };
+  }
+
+  const where = formatWherePlayed(record);
+  return {
+    dual: false,
+    headline: where,
+    surfaces: where ? [where] : [],
+    fields: [
+      trimField("Login", login),
+      trimField("Navegador", browser),
+      trimField("Dispositivo", device),
+      trimField("Versão", build),
+    ].filter((f): f is AmbienteField => Boolean(f)),
+  };
+}
+
+/** Lista Markdown — o GitHub não engole tudo numa linha. */
+export function formatAmbienteBlock(record: Partial<TestRecord>): string {
+  const view = ambienteView(record);
+  const lines: string[] = [];
+
+  if (view.dual) {
+    lines.push("Reproduz **nos dois**:");
+    lines.push("");
+    lines.push("- **App nativo** (Android / emulador)");
+    lines.push("- **APP versão WEB** (browser, Flutter Web)");
+    lines.push("");
+  } else if (view.headline) {
+    lines.push(`- **Onde:** ${view.headline}`);
+  }
+
+  for (const field of view.fields) {
+    lines.push(`- **${field.label}:** ${field.value}`);
+  }
+
+  return lines.join("\n").trim() || "—";
+}
+
+/** Compacto (toast / uma linha). Não junta canal + plataforma (`App · APP + WEB`). */
+export function formatAmbienteLine(record: Partial<TestRecord>): string {
+  const view = ambienteView(record);
+  const bits: string[] = [];
+  if (view.dual) bits.push("**Onde:** App nativo e APP versão WEB");
+  else if (view.headline) bits.push(`**Onde:** ${view.headline}`);
+  for (const field of view.fields) bits.push(`**${field.label}:** ${field.value}`);
+  return bits.join(" · ") || "—";
 }
 
 /** Título da issue: `[APP-01] Sintoma` */
@@ -65,10 +172,6 @@ export function formatBugReportMarkdown(
 ): string {
   const code = record.bugCode?.trim() || "—";
   const internalId = record.id?.trim() || "—";
-  const channel = channelLabel(record.channel);
-  const platform = platformLabel(record.platform);
-  const build = record.build?.trim() || "—";
-  const login = record.testLogin?.trim() || "—";
   const severity = record.severity
     ? SEVERITY_LABELS[record.severity]
     : "—";
@@ -80,21 +183,6 @@ export function formatBugReportMarkdown(
   const evidenceNames = (record.evidence ?? [])
     .map((e) => e.filename?.trim())
     .filter(Boolean);
-
-  // Evita "WEB · Web"; em App mostra Android/iOS
-  const redundantWeb = record.channel === "web" && record.platform === "web";
-  const platformBit =
-    platform !== "—" && !redundantWeb ? platform : null;
-
-  const metaBits = [
-    code !== "—" ? `\`${code}\`` : null,
-    channel !== "—" ? channel : null,
-    platformBit,
-    build !== "—" ? `build ${build}` : null,
-    record.browser?.trim() ? record.browser.trim() : null,
-    [record.osVersion, record.deviceLabel].filter(Boolean).join(" · ") || null,
-    login !== "—" ? `login ${login}` : null,
-  ].filter(Boolean);
 
   const evidenceBlock =
     opts?.evidenceMarkdown?.trim() ||
@@ -115,7 +203,7 @@ export function formatBugReportMarkdown(
     severity,
     ``,
     `## Ambiente`,
-    metaBits.length ? metaBits.join(" · ") : "—",
+    formatAmbienteBlock(record),
     ``,
   );
 
