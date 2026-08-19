@@ -5,7 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SOCIAL_LINKS } from "@/components/Footer";
 import { PremiumTooltip } from "@/components/PremiumTooltip";
-import { VISITOR_HOME_PATH } from "@/lib/visitor";
+import { postLoginPath, VISITOR_HOME_PATH } from "@/lib/visitor";
 import { cn } from "@/lib/utils";
 
 const INPUT_CLASS =
@@ -34,8 +34,7 @@ export function LoginPage() {
   const { ready, authEnabled, session, profile, signIn, isVisitor } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from =
-    (location.state as { from?: string } | null)?.from ?? "/projects/polygonus/app";
+  const from = (location.state as { from?: string } | null)?.from;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,12 +64,10 @@ export function LoginPage() {
         </div>
       );
     }
-    return (
-      <Navigate to={isVisitor ? VISITOR_HOME_PATH : from} replace />
-    );
+    return <Navigate to={postLoginPath(isVisitor, from)} replace />;
   }
   if (!authEnabled) {
-    return <Navigate to={from} replace />;
+    return <Navigate to={postLoginPath(false, from)} replace />;
   }
 
   async function onSubmit(e: FormEvent) {
@@ -79,7 +76,8 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await signIn(email.trim(), password);
-      navigate(from, { replace: true });
+      const visitorEmail = email.trim().toLowerCase() === VISITOR_EMAIL.toLowerCase();
+      navigate(postLoginPath(visitorEmail, from), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha no login");
     } finally {
