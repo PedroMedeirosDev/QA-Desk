@@ -159,12 +159,13 @@ function GroupHeaderRow({
       : level === "module"
         ? "text-sm font-bold tracking-wide text-zinc-800 dark:text-zinc-100"
         : "text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-200";
-  const indent = level === "suite" ? "pl-4" : level === "module" ? "pl-2" : "";
+  const indent =
+    level === "suite" ? "pl-3 md:pl-4" : level === "module" ? "pl-2" : "";
   const flowLabel =
     runner === "playwright" ? "com Playwright" : "com flow";
 
   const titleCell = (
-    <td className={cn("px-4 py-2.5", indent)}>
+    <td className={cn("px-3 py-2 md:px-4 md:py-2.5", indent)}>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <button
           type="button"
@@ -191,7 +192,7 @@ function GroupHeaderRow({
   );
 
   const actionsCell = (
-    <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
+    <td className="hidden px-4 py-2.5 md:table-cell" onClick={(e) => e.stopPropagation()}>
       <RunGroupButton
         label={name}
         actionLabel={actionLabel}
@@ -208,10 +209,10 @@ function GroupHeaderRow({
     return (
       <tr className={cn("border-b", rowBg, tableRowHoverClass)}>
         {titleCell}
-        <td className="px-4 py-2.5">
+        <td className="hidden px-4 py-2.5 md:table-cell">
           <ResultChips stats={stats} />
         </td>
-        <td className="px-4 py-2.5 text-center tabular-nums text-muted-foreground">
+        <td className="hidden px-4 py-2.5 text-center tabular-nums text-muted-foreground md:table-cell">
           {stats.totalRuns || "—"}
         </td>
         {actionsCell}
@@ -222,7 +223,7 @@ function GroupHeaderRow({
   return (
     <tr className={cn("border-b", rowBg, tableRowHoverClass)}>
       {titleCell}
-      <td className="px-4 py-2.5">
+      <td className="hidden px-4 py-2.5 sm:table-cell">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {stats.runnable > 0 ? (
             <PremiumTooltip
@@ -258,13 +259,13 @@ function GroupHeaderRow({
           )}
         </div>
       </td>
-      <td className="px-4 py-2.5">
+      <td className="hidden px-4 py-2.5 md:table-cell">
         <ResultChips stats={stats} />
       </td>
-      <td className="px-4 py-2.5 text-center tabular-nums text-muted-foreground">
+      <td className="hidden px-4 py-2.5 text-center tabular-nums text-muted-foreground md:table-cell">
         {stats.totalRuns}
       </td>
-      <td className="px-4 py-2.5 text-xs tabular-nums text-muted-foreground">
+      <td className="hidden px-4 py-2.5 text-xs tabular-nums text-muted-foreground md:table-cell">
         {formatLastRun(stats.lastRunAt)}
       </td>
       {actionsCell}

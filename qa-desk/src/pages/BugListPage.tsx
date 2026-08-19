@@ -123,7 +123,57 @@ export function BugListPage({
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+      <ul className="space-y-2 md:hidden">
+        {loading ? (
+          <li className="rounded-xl border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
+            Carregando…
+          </li>
+        ) : filtered.length === 0 ? (
+          <li className="rounded-xl border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
+            {isAdmin
+              ? "Nenhum bug neste canal."
+              : "Nenhum bug publicado neste canal. O visitante só vê o que estiver marcado no portfólio."}
+          </li>
+        ) : (
+          filtered.map((r) => {
+            const { label, tone } = displayStatus(r);
+            return (
+              <li key={r.id}>
+                <button
+                  type="button"
+                  onClick={() => openDetail(r.id, r)}
+                  className="w-full rounded-xl border bg-card px-3 py-3 text-left transition-colors hover:bg-muted/40"
+                >
+                  <p className="font-medium leading-snug">{r.title}</p>
+                  <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                    {formatRecordId(r.id, r)}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full border px-2 py-0.5 font-medium",
+                        tone === "ok" && "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
+                        tone === "warn" && "border-amber-500/40 bg-amber-500/15 text-amber-300",
+                        tone === "neutral" && "border-border bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {label}
+                    </span>
+                    {r.priority ? <span>{PRIORITY_LABELS[r.priority]}</span> : null}
+                    {r.reportedAt ? (
+                      <span className="tabular-nums">
+                        {new Date(r.reportedAt).toLocaleDateString("pt-BR")}
+                      </span>
+                    ) : null}
+                  </div>
+                </button>
+              </li>
+            );
+          })
+        )}
+      </ul>
+
+      <div className="hidden overflow-x-auto rounded-xl border bg-card shadow-sm md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40 text-left text-muted-foreground">
@@ -145,7 +195,9 @@ export function BugListPage({
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   <span className="animate-fade-in-up-soft inline-block opacity-0">
-                    Nenhum bug neste canal.
+                    {isAdmin
+                      ? "Nenhum bug neste canal."
+                      : "Nenhum bug publicado neste canal. O visitante só vê o que estiver marcado no portfólio."}
                   </span>
                 </td>
               </tr>

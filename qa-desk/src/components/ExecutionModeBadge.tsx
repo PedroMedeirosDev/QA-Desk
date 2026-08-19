@@ -36,7 +36,8 @@ export function ExecutionModeBadge({
         )}
       >
         {showIcon && <Icon className="size-3 shrink-0" strokeWidth={2} />}
-        {EXECUTION_MODE_LABELS[mode]}
+        <span className="md:hidden">{mode === "automated" ? "Auto" : "Manual"}</span>
+        <span className="hidden md:inline">{EXECUTION_MODE_LABELS[mode]}</span>
       </span>
     </PremiumTooltip>
   );

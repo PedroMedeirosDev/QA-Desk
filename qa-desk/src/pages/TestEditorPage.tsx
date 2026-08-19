@@ -52,7 +52,7 @@ import {
 } from "@/lib/automation-runners";
 
 const QUIET_INPUT =
-  "w-full rounded-md border border-border/50 bg-muted/25 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-border focus:bg-muted/40";
+  "w-full rounded-md border border-border/50 bg-muted/25 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-border focus:bg-muted/40 disabled:cursor-default disabled:opacity-100 disabled:border-transparent disabled:bg-transparent";
 
 const emptyDraft = (
   project: ProjectSlug,
@@ -270,6 +270,7 @@ export function TestEditorPage({
   }
 
   function update<K extends keyof TestRecord>(key: K, value: TestRecord[K]) {
+    if (!isAdmin) return;
     setForm((f) => ({ ...f, [key]: value }));
   }
 
@@ -884,8 +885,16 @@ export function TestEditorPage({
       </div>
 
       {tab === "detalhes" ? (
+        <fieldset
+          disabled={!isAdmin}
+          className={cn(
+            "min-w-0 border-0 p-0",
+            !isAdmin &&
+              "[&_button]:pointer-events-none [&_input]:cursor-default [&_select]:cursor-default [&_select]:opacity-100 [&_textarea]:cursor-default",
+          )}
+        >
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
-          <div className="min-w-0 space-y-6 rounded-xl border bg-card p-6">
+          <div className="min-w-0 space-y-6 rounded-xl border bg-card p-4 sm:p-6">
             <FormSection title={editingBug ? "Chamado" : "Caso"}>
             <Field label="Título *">
               <input
@@ -900,6 +909,7 @@ export function TestEditorPage({
               />
             </Field>
             {editingBug ? (
+              isAdmin ? (
               <Field
                 label="Citação do chamado"
                 hint="Id ou trecho do chamado Polygonus. Não aparece no portfólio visitante."
@@ -911,6 +921,7 @@ export function TestEditorPage({
                   onChange={(e) => update("description", e.target.value)}
                 />
               </Field>
+              ) : null
             ) : (
               <Field label="Descrição">
                 <textarea
@@ -972,6 +983,7 @@ export function TestEditorPage({
                     </span>
                   )}
                 </div>
+                {isAdmin && (
                 <div className="flex flex-wrap gap-2">
                   <PremiumTooltip label="Normaliza numeração, espaços e unicode" side="bottom" wide>
                     <button
@@ -1000,6 +1012,7 @@ export function TestEditorPage({
                     <Plus className="size-3" /> Adicionar passo
                   </button>
                 </div>
+                )}
               </div>
               {!editingBug && (
               <p className="mb-2 text-[0.7rem] text-muted-foreground">
@@ -1060,6 +1073,7 @@ export function TestEditorPage({
                                 </p>
                               )}
                             </div>
+                            {isAdmin && (
                             <PremiumTooltip label="Remover passo" side="top" align="end">
                               <button
                                 type="button"
@@ -1075,6 +1089,7 @@ export function TestEditorPage({
                                 <Trash2 className="size-4" />
                               </button>
                             </PremiumTooltip>
+                            )}
                           </div>
                         );
                       })}
@@ -1183,6 +1198,7 @@ export function TestEditorPage({
                                   </p>
                                 )}
                               </div>
+                              {isAdmin && (
                               <PremiumTooltip label="Remover passo" side="top" align="end">
                                 <button
                                   type="button"
@@ -1195,6 +1211,7 @@ export function TestEditorPage({
                                   <Trash2 className="size-4" />
                                 </button>
                               </PremiumTooltip>
+                              )}
                             </div>
                           </div>
                         );
@@ -1325,6 +1342,7 @@ export function TestEditorPage({
                   </div>
                 </div>
               )}
+              {isAdmin && (
               <label
                 className={cn(
                   "mt-3 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm surface-brand",
@@ -1351,6 +1369,7 @@ export function TestEditorPage({
                   }}
                 />
               </label>
+              )}
             </div>
             </FormSection>
           </div>
@@ -1605,6 +1624,7 @@ export function TestEditorPage({
               onChange={(v) => update("platform", v as TestRecord["platform"])}
               disabled={!isAdmin}
             />
+            {isAdmin && (
             <DesignCheckbox
               className="rounded-md border border-border bg-muted/20 px-3 py-2"
               checked={Boolean(form.showInPortfolio)}
@@ -1613,7 +1633,8 @@ export function TestEditorPage({
               label={<span className="font-medium text-[var(--foreground)]">Mostrar no portfólio</span>}
               description="Visitantes autenticados só veem itens marcados aqui."
             />
-            {form.showInPortfolio && (
+            )}
+            {isAdmin && form.showInPortfolio && (
               <div className="rounded-md border border-dashed border-border bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
                 <p className="font-medium text-foreground">Preview visitante</p>
                 <p className="mt-1">
@@ -2291,14 +2312,15 @@ export function TestEditorPage({
               )}
               {!isAdmin && (
                 <p className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                  Modo visitante: somente leitura do portfólio.
+                  Modo visitante: somente leitura. Nada é gravado nem executado.
                 </p>
               )}
             </div>
           </aside>
         </div>
+        </fieldset>
       ) : (
-        <div className="rounded-xl border bg-card p-6">
+        <div className="rounded-xl border bg-card p-4 sm:p-6">
           <HistoryTimeline entries={form.history ?? []} />
         </div>
       )}

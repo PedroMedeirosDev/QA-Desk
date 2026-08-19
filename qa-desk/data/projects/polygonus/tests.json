@@ -300,6 +300,12 @@
           "actor": "Pedro",
           "action": "github_issue_closed_from_desk",
           "detail": "#216 fechada no GH · Desk → homologado"
+        },
+        {
+          "at": "2026-08-18T23:19:31.599Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -335,7 +341,7 @@
       "stepsDetailed": [],
       "expectedResult": "Só o botão circular “mais” abre o fluxo de nova rotina. Cliques/toques em outros elementos devem agir no alvo (ou ser no-op), sem abrir o FAB.",
       "githubIssueUrl": "https://github.com/polygonus-br/polygonus-suporte-kb/issues/216",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "githubIssueNumber": 216,
       "technicalEvidence": "APP versão WEB (Flutter Web / iframe). Sintoma compatível com hit-target/gesture arena: clique/tap curto capturado pelo FAB; long-press não. Bloqueia interação normal na aba Rotina. Código público APP-02 (criado no canal App; registro agora em WEB).\n\n---\nHomologado APP WEB (Flutter): FAB Rotina com hit-target corrigido após limpeza completa de cache. Empty Cache / Clear site data do DevTools sozinho não bastou — foi preciso limpar também cookies/storage do domínio (Ctrl+Shift+Delete) e hard reload. Impressão: service worker / cookies da gestão ainda serviam bundle antigo do iframe Flutter.",
       "homologationStatus": "homologado",
@@ -535,6 +541,12 @@
           "actor": "Pedro",
           "action": "homologated",
           "detail": "Homologação manual confirmada (bug)"
+        },
+        {
+          "at": "2026-08-18T23:19:31.600Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -564,7 +576,7 @@
       "stepsDetailed": [],
       "expectedResult": "O filtro/seletor de turmas permanece visível no composer após marcar Destaque.",
       "githubIssueUrl": "https://github.com/polygonus-br/polygonus-suporte-kb/issues/223",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "githubIssueNumber": 223,
       "technicalEvidence": "Flutter (Android + Flutter Web / kIsWeb). Composer de comunicado: opções (engrenagem) → Destaque. O estado das turmas permanece no envio; só a UI do filtro some. Canal Desk: App · plataforma web (APP WEB) com reprodução também no App nativo.",
       "githubIssueCreatedAt": "2026-08-12T17:55:58.537Z",
@@ -678,6 +690,12 @@
           "actor": "Pedro",
           "action": "homologated",
           "detail": "Homologação manual confirmada (bug)"
+        },
+        {
+          "at": "2026-08-18T23:19:31.600Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -707,7 +725,7 @@
       "stepsDetailed": [],
       "expectedResult": "As datas novas aparecem no card do comunicado e no conteúdo do evento.",
       "githubIssueUrl": "https://github.com/polygonus-br/polygonus-suporte-kb/issues/228",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "githubIssueNumber": 228,
       "technicalEvidence": "Flutter (Android + Flutter Web / kIsWeb). Edição de Evento: toast/modal de sucesso sem atualizar data no card nem no detalhe. Possível dessincronia de persistência vs UI (BrasilTime / campo data no PUT). Canal Desk: App · plataforma APP + WEB.",
       "githubIssueClosedAt": "2026-08-13T13:01:29.073Z",
@@ -813,6 +831,12 @@
           "actor": "Pedro",
           "action": "homologated",
           "detail": "Homologação manual confirmada (bug)"
+        },
+        {
+          "at": "2026-08-18T23:19:31.601Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -842,7 +866,7 @@
       "stepsDetailed": [],
       "expectedResult": "Se Salvar PDF estiver indisponível, mostrar a mesma mensagem amigável do anexo de boleto (sem stack/URI). Compartilhar anexos continua ok.",
       "githubIssueUrl": "https://github.com/polygonus-br/polygonus-suporte-kb/issues/235",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "githubIssueNumber": 235,
       "technicalEvidence": "Flutter (Android + Web). Salvar anexos monta URI com percent-encoding inválido no filename (espaço, º, acentos, parênteses). Boleto no mesmo menu já trata com mensagem amigável — reutilizar. Canal: App · APP + WEB.",
       "githubIssueClosedAt": "2026-08-13T13:02:45.203Z",
@@ -983,6 +1007,12 @@
           "actor": "Pedro",
           "action": "homologated",
           "detail": "Homologação manual confirmada (bug)"
+        },
+        {
+          "at": "2026-08-18T23:19:31.601Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -1013,7 +1043,7 @@
       "stepsDetailed": [],
       "expectedResult": "O horário do cabeçalho do card (datRegistro) coincide com o instante local do lançamento em America/Sao_Paulo (ex.: envio às 14:20 → card 14:20).",
       "githubIssueUrl": "https://github.com/polygonus-br/polygonus-suporte-kb/issues/237",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "githubIssueNumber": 237,
       "technicalEvidence": "Mesmo widget no App nativo e no Flutter Web: lib/rotina/widgets/rotina_card.dart — cabeçalho usa registro.datRegistro.hour/.minute sem toLocal(). Parse: DateTime.tryParse(json['datRegistro']) em rotina_registro.dart. Se a API manda RFC3339 com Z, .hour fica em UTC (17:20) e o chip TipResposta.horario (14:20) segue o valor da pergunta, não o datRegistro. Conferir JSON bruto de datRegistro no feed. Print da lista no APP WEB (13/08). Relacionado: CT mural “há 3h” e POL-11.",
       "githubIssueClosedAt": "2026-08-13T18:40:08.834Z",
@@ -1224,17 +1254,17 @@
         },
         {
           "at": "2026-08-18T20:35:08.514Z",
+          "meta": {
+            "title": "[WEB-02] Notas parciais (WEB): célula continua amarela após Gravar",
+            "repository": "polygonus-br/polygonus-suporte-kb",
+            "githubIssueUrl": "https://github.com/polygonus-br/polygonus-suporte-kb/issues/240",
+            "evidenceSkipped": [],
+            "evidenceUploaded": 1,
+            "githubIssueNumber": 240
+          },
           "actor": "Pedro",
           "action": "github_issue_created",
-          "detail": "#240 · polygonus-br/polygonus-suporte-kb",
-          "meta": {
-            "githubIssueNumber": 240,
-            "githubIssueUrl": "https://github.com/polygonus-br/polygonus-suporte-kb/issues/240",
-            "repository": "polygonus-br/polygonus-suporte-kb",
-            "title": "[WEB-02] Notas parciais (WEB): célula continua amarela após Gravar",
-            "evidenceUploaded": 1,
-            "evidenceSkipped": []
-          }
+          "detail": "#240 · polygonus-br/polygonus-suporte-kb"
         }
       ],
       "project": "polygonus",
@@ -1264,10 +1294,10 @@
       "preconditions": "Amostra — gestão WEB React. Login SUPPETER. Curso EM, grade 2026-EM, período 3aS, turma M3A26, situações Ativo, etapa B3 (3º bimestre), disciplina Química (ou História, se a Química estiver só em conceito).",
       "stepsDetailed": [],
       "expectedResult": "Após Gravar sem recusa, as células voltam à cor padrão e o rodapé permanece em “Nenhuma alteração pendente”.",
-      "showInPortfolio": false,
-      "technicalEvidence": "Gravar só zera o flag dirty do rodapé. Não atualiza o baseline das células (amarelo = valor ≠ baseline). Excluir zera a chave e refaz o seed; Gravar não. Seed só na troca turma|etapa|disciplina.",
-      "githubIssueNumber": 240,
       "githubIssueUrl": "https://github.com/polygonus-br/polygonus-suporte-kb/issues/240",
+      "showInPortfolio": false,
+      "githubIssueNumber": 240,
+      "technicalEvidence": "Gravar só zera o flag dirty do rodapé. Não atualiza o baseline das células (amarelo = valor ≠ baseline). Excluir zera a chave e refaz o seed; Gravar não. Seed só na troca turma|etapa|disciplina.",
       "githubIssueCreatedAt": "2026-08-18T20:35:08.514Z"
     },
     {
@@ -2556,6 +2586,12 @@
           "actor": "Pedro",
           "action": "test_run",
           "detail": "Stage: maestro · Stages: maestro · Homologação: Homologação Mural (backend) · App 6.06.23 (60623) · Ação: captureMuralCardId (pós-envio) · Flow: 01_1_comunicado_enviar.yaml"
+        },
+        {
+          "at": "2026-08-18T23:19:31.601Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -2580,7 +2616,7 @@
       "preconditions": "App amostra instalado; credenciais PHJESUS e ETMENEZES no flows/.env; emulador disponível.",
       "expectedResult": "Comunicado confirmado pelo ID (adb) em Enviadas e no Mural do responsável ETMENEZES; home autenticada ao final.",
       "homologationId": "HOM-2026-001",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "homologationStatus": "falhou"
     },
     {
@@ -4117,6 +4153,12 @@
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — campos do CT atualizados (Homologação Mural (backend))"
+        },
+        {
+          "at": "2026-08-18T23:19:31.601Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -4141,7 +4183,7 @@
       "preconditions": "Fixture de foto no device (FIXTURE_FOTO); credenciais PHJESUS e ETMENEZES.",
       "expectedResult": "ID confirmado (coordenador + ETMENEZES); Compartilhar anexos disparado (download); share sheet fechado se abrir.",
       "homologationId": "HOM-2026-001",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "homologationStatus": "passou"
     },
     {
@@ -4544,6 +4586,12 @@
           "actor": "system",
           "action": "checklist_synced",
           "detail": "Checklist sincronizado — campos do CT atualizados (Homologação Mural (backend))"
+        },
+        {
+          "at": "2026-08-18T23:19:31.601Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -4565,7 +4613,7 @@
       "preconditions": "PHJESUS Coordenador; emulador America/Sao_Paulo + relógio 24h.",
       "expectedResult": "Evento Padrao em Enviadas. Sem dialog BrasilTime.",
       "homologationId": "HOM-2026-001",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "homologationStatus": "pendente"
     },
     {
@@ -7144,6 +7192,12 @@
           "actor": "system",
           "action": "test_created",
           "detail": "CT Rotina seed (flows Maestro)"
+        },
+        {
+          "at": "2026-08-18T23:19:31.601Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -7163,7 +7217,7 @@
       "description": "Aba Rotina do Mural: registrar alimentação via BoomMenu (APP mobile / emulador).",
       "executionMode": "automated",
       "expectedResult": "Registro criado na aba Rotina sem acionar FAB indevido.",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "homologationStatus": "pendente"
     },
     {
@@ -7348,6 +7402,12 @@
           "actor": "system",
           "action": "test_created",
           "detail": "CT Atendimento novo / Chat seed (flows Maestro draft)"
+        },
+        {
+          "at": "2026-08-18T23:19:31.601Z",
+          "actor": "qa",
+          "action": "updated",
+          "detail": "Marcado no portfólio visitante"
         }
       ],
       "project": "polygonus",
@@ -7367,7 +7427,7 @@
       "description": "Atendimento novo (home_card_chat): abrir menu e voltar. Runnable agora.",
       "executionMode": "automated",
       "expectedResult": "Menu abre e volta sem crash; home_card_mural visível de novo.",
-      "showInPortfolio": false,
+      "showInPortfolio": true,
       "homologationStatus": "pendente"
     },
     {

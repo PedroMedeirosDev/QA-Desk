@@ -8,8 +8,10 @@ import {
   FlaskConical,
   GitPullRequest,
   Globe,
+  Home,
   LayoutDashboard,
   ListChecks,
+  Lock,
   Rocket,
   Smartphone,
   PanelTop,
@@ -43,6 +45,7 @@ import {
   projectKbCurationPath,
   projectListPath,
 } from "@/lib/project-paths";
+import { VISITOR_HOME_PATH } from "@/lib/visitor";
 
 const STORAGE_KEY = "qa-sidebar-collapsed";
 
@@ -92,16 +95,24 @@ function homologationsLinkClass(
 export function ProjectSidebar({
   activeChannel,
   visitorMode = false,
+  className,
+  forceExpanded = false,
 }: {
   activeChannel?: ProductChannel;
   /** Visitante: só marca + aviso — sem navegação operacional. */
   visitorMode?: boolean;
+  className?: string;
+  /** Menu em overlay (mobile): sempre expandido. */
+  forceExpanded?: boolean;
 }) {
   const { activeProject: activeSlug, brandTheme } = useActiveProject();
   const channels = getProjectChannels(activeSlug!);
   const activeProjectCfg = getProject(activeSlug!);
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(() => (visitorMode ? false : readCollapsed));
+  const [collapsed, setCollapsed] = useState(() =>
+    visitorMode || forceExpanded ? false : readCollapsed,
+  );
+  const isCollapsed = forceExpanded ? false : collapsed;
   const [kbRereviewCount, setKbRereviewCount] = useState(0);
   /** Submenu do projeto: expandido no ativo; clicar de novo no card recolhe. */
   const [menuExpandedSlug, setMenuExpandedSlug] = useState<string | null>(
@@ -117,12 +128,13 @@ export function ProjectSidebar({
   }, [activeSlug]);
 
   useEffect(() => {
+    if (forceExpanded) return;
     try {
       localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
     } catch {
       /* ignore */
     }
-  }, [collapsed]);
+  }, [collapsed, forceExpanded]);
 
   useEffect(() => {
     if (visitorMode || activeSlug !== "polygonus") {
@@ -149,17 +161,18 @@ export function ProjectSidebar({
     <aside
       className={cn(
         "sidebar-nav relative flex h-full shrink-0 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] transition-[width] duration-200 ease-in-out",
-        collapsed ? "w-[4.5rem]" : "w-[16rem]",
+        isCollapsed ? "w-[4.5rem]" : "w-64",
+        className,
       )}
     >
       {/* Cabeçalho — logo horizontal (arte já inclui “QA DESK”) */}
       <header
         className={cn(
           "relative flex h-[4rem] shrink-0 items-center border-b border-[var(--border)]",
-          collapsed ? "justify-center gap-[0.25rem] px-[0.5rem]" : "gap-[0.5rem] px-[0.75rem]",
+          isCollapsed ? "justify-center gap-[0.25rem] px-[0.5rem]" : "gap-[0.5rem] px-[0.75rem]",
         )}
       >
-        {collapsed ? (
+        {isCollapsed ? (
           <CollapsedTooltip label="QA Desk">
             <BrandLogo size="icon" />
           </CollapsedTooltip>
@@ -174,11 +187,11 @@ export function ProjectSidebar({
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-          aria-expanded={!collapsed}
-          className="group absolute -right-[0.75rem] top-[4rem] z-50 flex h-[1.5rem] w-[1.5rem] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--muted-foreground)] shadow-sm transition-all duration-200 hover:bg-[var(--accent)] hover:text-[var(--foreground)]"
+          aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+          aria-expanded={!isCollapsed}
+          className="group absolute -right-[0.75rem] top-[4rem] z-50 hidden h-[1.5rem] w-[1.5rem] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--muted-foreground)] shadow-sm transition-all duration-200 hover:bg-[var(--accent)] hover:text-[var(--foreground)] md:flex"
         >
-          {collapsed ? (
+          {isCollapsed ? (
             <ChevronRight className="size-3.5" strokeWidth={2} />
           ) : (
             <ChevronLeft className="size-3.5" strokeWidth={2} />
@@ -188,7 +201,7 @@ export function ProjectSidebar({
             role="tooltip"
             className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-slate-100 dark:text-slate-900"
           >
-            {collapsed ? "Expandir menu" : "Recolher menu"}
+            {isCollapsed ? "Expandir menu" : "Recolher menu"}
             {/* Setinha apontando para a esquerda */}
             <div
               aria-hidden
@@ -198,28 +211,32 @@ export function ProjectSidebar({
         </button>
       )}
 
-      {visitorMode ? (
-        <>
-          {!collapsed && (
-            <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Modo visitante
-              </p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Acesso ativo. O portfólio público aparece quando houver cases ou
-                métricas liberados pelo QA.
-              </p>
-            </div>
-          )}
-          {!collapsed && <Footer variant="sidebar" />}
-        </>
-      ) : (
-        <>
+      {visitorMode && !isCollapsed && (
+        <div className="space-y-2 px-3 pt-3">
+          <div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+              <Lock className="size-3.5" strokeWidth={2} />
+              Somente leitura
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Você consulta. Nada é gravado nem executado.
+            </p>
+          </div>
+          <Link
+            to={VISITOR_HOME_PATH}
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          >
+            <Home className="size-4 shrink-0" />
+            Início
+          </Link>
+        </div>
+      )}
       <nav
         className="sidebar-scroll flex min-h-0 flex-1 flex-col gap-[0.5rem] overflow-x-hidden overflow-y-auto p-[0.625rem]"
         aria-label="Selecionar projeto"
       >
         {PROJECTS.map((project) => {
+          if (visitorMode && project.slug === "desk") return null;
           const isSelected = project.slug === activeSlug;
           const itemTheme = isSelected
             ? resolveProjectTheme(project.slug)
@@ -232,8 +249,8 @@ export function ProjectSidebar({
               : projectListPath(project.slug);
           const menuOpen = isSelected && menuExpandedSlug === project.slug;
           const showChannels =
-            !collapsed && menuOpen && channels.length > 0 && !isDesk;
-          const showDeskSuiteOnly = !collapsed && menuOpen && isDesk;
+            !isCollapsed && menuOpen && channels.length > 0 && !isDesk;
+          const showDeskSuiteOnly = !isCollapsed && menuOpen && isDesk && !visitorMode;
           const themeSub = project.accent.subNav;
           const homPath = projectHomologationsListPath(project.slug);
           const dashPath = projectDashboardPath(project.slug);
@@ -259,7 +276,7 @@ export function ProjectSidebar({
               }}
               className={cn(
                 "flex items-center rounded-xl border transition-all duration-300",
-                collapsed ? "justify-center p-2" : "gap-3 px-3 py-3",
+                isCollapsed ? "justify-center p-2" : "gap-3 px-3 py-3",
                 itemTheme.sidebarCardBg,
                 isSelected
                   ? cn(itemTheme.sidebarBorder, "border-2")
@@ -292,7 +309,7 @@ export function ProjectSidebar({
                     : undefined
                 }
               />
-              {!collapsed && (
+              {!isCollapsed && (
                 <span className="min-w-0 flex-1">
                   <span
                     className={cn(
@@ -320,8 +337,8 @@ export function ProjectSidebar({
           );
 
           return (
-            <div key={project.slug} className={cn("space-y-2", collapsed && "shrink-0")}>
-              {collapsed ? (
+            <div key={project.slug} className={cn("space-y-2", isCollapsed && "shrink-0")}>
+              {isCollapsed ? (
                 <CollapsedTooltip label={project.label}>{projectCard}</CollapsedTooltip>
               ) : (
                 projectCard
@@ -403,6 +420,7 @@ export function ProjectSidebar({
                     );
                   })}
                   <div className="mt-6 space-y-1 border-t border-border pt-3 dark:border-zinc-800">
+                    {!visitorMode && (
                     <Link
                       to={dashPath}
                       className={cn(
@@ -414,6 +432,8 @@ export function ProjectSidebar({
                       <LayoutDashboard className="size-3.5 shrink-0 opacity-90" />
                       Dashboard
                     </Link>
+                    )}
+                    {!visitorMode && (
                     <Link
                       to={homPath}
                       className={cn(
@@ -425,7 +445,8 @@ export function ProjectSidebar({
                       <ListChecks className="size-3.5 shrink-0 opacity-90" />
                       Homologações
                     </Link>
-                    {project.slug === "polygonus" && (
+                    )}
+                    {!visitorMode && project.slug === "polygonus" && (
                       <Link
                         to={kbCurationPath}
                         className={cn(
@@ -451,7 +472,7 @@ export function ProjectSidebar({
                         )}
                       </Link>
                     )}
-                    {project.slug === "polygonus" && (
+                    {!visitorMode && project.slug === "polygonus" && (
                       <Link
                         to={implantacoesPath}
                         className={cn(
@@ -464,6 +485,7 @@ export function ProjectSidebar({
                         Implantações
                       </Link>
                     )}
+                    {!visitorMode && (
                     <Link
                       to={apiSuitePath}
                       className={cn(
@@ -475,11 +497,12 @@ export function ProjectSidebar({
                       <FlaskConical className="size-3.5 shrink-0 opacity-90" />
                       Suite API
                     </Link>
+                    )}
                   </div>
                 </div>
               )}
 
-              {collapsed && isSelected && isDesk && menuOpen && (
+              {isCollapsed && isSelected && isDesk && menuOpen && (
                 <CollapsedTooltip label="Suite API">
                   <Link
                     to={apiSuitePath}
@@ -499,7 +522,7 @@ export function ProjectSidebar({
                 </CollapsedTooltip>
               )}
 
-              {collapsed && isSelected && sub && !isDesk && menuOpen && (
+              {isCollapsed && isSelected && sub && !isDesk && menuOpen && (
                 <>
                   <CollapsedTooltip label="Dashboard">
                     <Link
@@ -589,9 +612,7 @@ export function ProjectSidebar({
         })}
       </nav>
 
-      {!collapsed && <Footer variant="sidebar" />}
-        </>
-      )}
+      {!isCollapsed && <Footer variant="sidebar" />}
     </aside>
   );
 }

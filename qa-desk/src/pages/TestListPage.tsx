@@ -150,7 +150,10 @@ export function TestListPage({
 
   function reload(opts?: { soft?: boolean }) {
     if (!opts?.soft) setLoading(true);
-    Promise.all([api.listTests(project), api.listHomologations(project).catch(() => null)])
+    Promise.all([
+      api.listTests(project),
+      isAdmin ? api.listHomologations(project).catch(() => null) : Promise.resolve(null),
+    ])
       .then(([catalog, homRes]) => {
         setReports(catalog.reports);
         setHomologations(homRes?.homologations ?? []);
@@ -517,7 +520,7 @@ export function TestListPage({
           <button
             type="button"
             onClick={() => navigate(projectHomologationsListPath(project))}
-            className={cn(actionBtnBase, actionBtn.onBrand, "px-3")}
+            className={cn(actionBtnBase, actionBtn.onBrand, "w-full justify-center px-3 sm:w-auto")}
           >
             <ListChecks className="size-4" />
             Ver todas as homologações
@@ -584,16 +587,16 @@ export function TestListPage({
         />
       )}
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-card/80 shadow-sm">
+      <div className="min-w-0 overflow-x-auto rounded-xl border border-border/70 bg-card/80 shadow-sm">
         <table className="data-table w-full text-sm">
           <thead>
             <tr className="border-b border-border/80 bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
-              <th className="px-4 py-2.5 font-medium">Título</th>
-              <th className="px-4 py-2.5 font-medium">Modo</th>
-              <th className="px-4 py-2.5 font-medium">Resultado</th>
-              <th className="px-4 py-2.5 font-medium">Rodadas</th>
-              <th className="px-4 py-2.5 font-medium">Última</th>
-              <th className="px-4 py-2.5 font-medium w-36">Ações</th>
+              <th className="px-3 py-2.5 font-medium md:px-4">Título</th>
+              <th className="hidden px-3 py-2.5 font-medium sm:table-cell md:px-4">Modo</th>
+              <th className="hidden px-4 py-2.5 font-medium md:table-cell">Resultado</th>
+              <th className="hidden px-4 py-2.5 font-medium md:table-cell">Rodadas</th>
+              <th className="hidden px-4 py-2.5 font-medium md:table-cell">Última</th>
+              <th className="hidden w-36 px-4 py-2.5 font-medium md:table-cell">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -607,8 +610,12 @@ export function TestListPage({
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center">
                   <div className="animate-fade-in-up-soft opacity-0">
-                    <p className="text-muted-foreground">Nenhum teste neste canal.</p>
-                    {routeChannel && (
+                    <p className="text-muted-foreground">
+                      {isAdmin
+                        ? "Nenhum teste neste canal."
+                        : "Nenhum teste publicado neste canal. O visitante só vê o que estiver marcado no portfólio."}
+                    </p>
+                    {isAdmin && routeChannel && (
                       <p className="mt-2 text-xs text-muted-foreground">
                         {EMPTY_CHANNEL_HINT[routeChannel]}
                       </p>
@@ -723,8 +730,8 @@ export function TestListPage({
                                             )}
                                             onClick={() => openDetail(r.id)}
                                           >
-                                            <td className="px-4 py-2 pl-10">
-                                              <p className="font-medium leading-snug">{r.title}</p>
+                                            <td className="min-w-0 px-3 py-2 pl-6 md:px-4 md:pl-10">
+                                              <p className="font-medium leading-snug break-words">{r.title}</p>
                                               <p className="font-mono text-[0.6875rem] tabular-nums text-muted-foreground">
                                                 {r.testKey ?? formatRecordId(r.id, r)}
                                               </p>
@@ -733,14 +740,31 @@ export function TestListPage({
                                                   {AUTOMATION_RUNNER_SHORT[runner]} não configurado
                                                 </p>
                                               )}
+                                              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
+                                                <ExecutionModeBadge record={r} />
+                                                <AutomationReadinessBadge record={r} runner={runner} />
+                                                <span
+                                                  className={cn(
+                                                    "rounded-full px-2 py-0.5 text-xs font-medium",
+                                                    tone === "ok" && "bg-emerald-600 text-white",
+                                                    tone === "fail" && "bg-red-600 text-white",
+                                                    tone === "warn" &&
+                                                      "border border-amber-400/20 bg-[#1a1a1a] text-amber-300",
+                                                    tone === "neutral" &&
+                                                      "border border-gray-700 bg-[#1a1a1a] text-gray-400",
+                                                  )}
+                                                >
+                                                  {label}
+                                                </span>
+                                              </div>
                                             </td>
-                                            <td className="px-4 py-2">
+                                            <td className="hidden px-4 py-2 sm:table-cell">
                                               <div className="flex flex-wrap items-center gap-1.5">
                                                 <ExecutionModeBadge record={r} />
                                                 <AutomationReadinessBadge record={r} runner={runner} />
                                               </div>
                                             </td>
-                                            <td className="px-4 py-2">
+                                            <td className="hidden px-4 py-2 md:table-cell">
                                               <span
                                                 className={cn(
                                                   "rounded-full px-2 py-0.5 text-xs font-medium",
@@ -755,10 +779,10 @@ export function TestListPage({
                                                 {label}
                                               </span>
                                             </td>
-                                            <td className="px-4 py-2 text-center tabular-nums">
+                                            <td className="hidden px-4 py-2 text-center tabular-nums md:table-cell">
                                               {countTestRunsForRunner(r.history ?? [], runner)}
                                             </td>
-                                            <td className="px-4 py-2 text-xs tabular-nums text-muted-foreground">
+                                            <td className="hidden px-4 py-2 text-xs tabular-nums text-muted-foreground md:table-cell">
                                               {(() => {
                                                 const lastAt =
                                                   runner === "playwright"
@@ -776,7 +800,7 @@ export function TestListPage({
                                               })()}
                                             </td>
                                             <td
-                                              className="px-4 py-2"
+                                              className="hidden px-4 py-2 md:table-cell"
                                               onClick={(e) => e.stopPropagation()}
                                             >
                                               <div className="flex items-center gap-1">
