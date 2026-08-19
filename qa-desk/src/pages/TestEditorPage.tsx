@@ -22,6 +22,7 @@ import {
   projectNewBugPath,
 } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
+import { VISITOR_HOME_PATH } from "@/lib/visitor";
 import { QA_GESTOR_REPLY_EVENT, type GestorReplyEvent } from "@/lib/gestor-replies-stream";
 import { channelSupportsMaestro, getProjectChannels, type ProductChannel } from "@/config/channels";
 import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
@@ -103,7 +104,7 @@ export function TestEditorPage({
   const location = useLocation();
   const toast = useToast();
   const confirm = useConfirm();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isVisitor } = useAuth();
   const { runAutomation, running: liveRunning } = useRunProgress();
   const [tab, setTab] = useState<"detalhes" | "historico">("detalhes");
   const [stepsMode, setStepsMode] = useState<"resumo" | "detalhado">("resumo");
@@ -213,7 +214,13 @@ export function TestEditorPage({
             }
           }
         })
-        .catch(() => toast.error("Registro não encontrado"));
+        .catch(() => {
+          if (isVisitor) {
+            navigate(VISITOR_HOME_PATH, { replace: true });
+            return;
+          }
+          toast.error("Registro não encontrado");
+        });
     } else {
       const fromTest = (location.state as { draft?: Partial<TestRecord> } | null)?.draft;
       setForm(fromTest ?? emptyDraft(project, channel, editorKind));
