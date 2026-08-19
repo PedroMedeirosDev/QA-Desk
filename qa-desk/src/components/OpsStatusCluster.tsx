@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useActiveProject } from "@/lib/active-project";
+import { useActiveProjectOptional } from "@/lib/active-project";
 import { api, type AndroidDeviceStatus, type HealthStatus } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { ProjectSlug } from "@/types/test-record";
@@ -182,11 +182,13 @@ function buildItems(
 
 /** Hook de status ops (agente / AVD / local) — poll a cada 12s. */
 export function useOpsStatus() {
-  const { activeProject } = useActiveProject();
+  const ctx = useActiveProjectOptional();
+  const activeProject = ctx?.activeProject ?? null;
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [device, setDevice] = useState<AndroidDeviceStatus | null>(null);
 
   useEffect(() => {
+    if (!ctx) return;
     let cancelled = false;
     const poll = () => {
       api
@@ -204,7 +206,7 @@ export function useOpsStatus() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [ctx]);
 
   useEffect(() => {
     if (!activeProject || activeProject === "desk") {

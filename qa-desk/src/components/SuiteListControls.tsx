@@ -27,7 +27,8 @@ export function SuiteListControls({
         className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <ChevronsUpDown className="size-3.5" />
-        Expandir tudo
+        <span className="sm:hidden">Abrir</span>
+        <span className="hidden sm:inline">Expandir tudo</span>
       </button>
       <button
         type="button"
@@ -35,7 +36,8 @@ export function SuiteListControls({
         className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <ChevronsDownUp className="size-3.5" />
-        Recolher tudo
+        <span className="sm:hidden">Fechar</span>
+        <span className="hidden sm:inline">Recolher tudo</span>
       </button>
       <PremiumTooltip label="Recolhe suites com 100% passou" side="bottom">
         <button
@@ -44,7 +46,8 @@ export function SuiteListControls({
           className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 px-2 py-1 text-xs text-emerald-400/90 transition-colors hover:bg-emerald-500/10"
         >
           <Leaf className="size-3.5" />
-          Recolher verdes
+          <span className="sm:hidden">Verdes</span>
+          <span className="hidden sm:inline">Recolher verdes</span>
         </button>
       </PremiumTooltip>
       {typeof playwrightHeaded === "boolean" && onPlaywrightHeadedChange && (

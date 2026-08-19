@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SOCIAL_LINKS } from "@/components/Footer";
 import { PremiumTooltip } from "@/components/PremiumTooltip";
+import { VISITOR_HOME_PATH } from "@/lib/visitor";
 import { cn } from "@/lib/utils";
 
 const INPUT_CLASS =
@@ -30,10 +31,11 @@ function Spotlight() {
 }
 
 export function LoginPage() {
-  const { ready, authEnabled, session, signIn } = useAuth();
+  const { ready, authEnabled, session, profile, signIn, isVisitor } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? "/projects/polygonus/app";
+  const from =
+    (location.state as { from?: string } | null)?.from ?? "/projects/polygonus/app";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +54,22 @@ export function LoginPage() {
     );
   }
 
-  if (!authEnabled || session) {
+  if (session) {
+    if (!profile) {
+      return (
+        <div className={SHELL_CLASS}>
+          <Spotlight />
+          <div className="flex flex-1 items-center justify-center text-sm text-zinc-400">
+            Carregando…
+          </div>
+        </div>
+      );
+    }
+    return (
+      <Navigate to={isVisitor ? VISITOR_HOME_PATH : from} replace />
+    );
+  }
+  if (!authEnabled) {
     return <Navigate to={from} replace />;
   }
 
@@ -81,7 +98,7 @@ export function LoginPage() {
     setVisitorSubmitting(true);
     try {
       await signIn(VISITOR_EMAIL, VISITOR_PASSWORD);
-      navigate(from, { replace: true });
+      navigate(VISITOR_HOME_PATH, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha no login visitante");
     } finally {
@@ -123,7 +140,7 @@ export function LoginPage() {
                 Portfólio QA — cases, curadoria KB e automação em um só lugar.
               </p>
               <p className="mt-4 inline-block w-fit rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[0.875rem] text-gray-400">
-                Perfil visitante em configuração — em breve.
+                Visitante: somente leitura, sem alterar dados.
               </p>
             </div>
 

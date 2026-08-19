@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "@/auth/AuthProvider";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -25,7 +26,7 @@ import {
   DIARIO_CQ_HOMOLOGATION_SLUG,
   DIARIO_CQ_SCOPE,
 } from "@/config/homologation-scopes";
-import { projectDetailPath, projectHomologationsListPath } from "@/lib/project-paths";
+import { projectDetailPath, projectHomologationsListPath, projectListPath } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
 import { CHANNEL_LABELS, channelSupportsMaestro } from "@/config/channels";
 import { MURAL_HOMOLOGATION_SLUG } from "@/config/homologations";
@@ -104,6 +105,7 @@ export function HomologationPage({
   homSlug: string;
 }) {
   const navigate = useNavigate();
+  const { isVisitor } = useAuth();
   const toast = useToast();
   const confirm = useConfirm();
   const { runAutomation, running: liveRunning } = useRunProgress();
@@ -167,6 +169,7 @@ export function HomologationPage({
   }
 
   const reload = useCallback((opts?: { soft?: boolean }) => {
+    if (isVisitor) return;
     if (!opts?.soft) setLoading(true);
     Promise.all([
       api.getHomologation(project, homSlug),
@@ -179,11 +182,12 @@ export function HomologationPage({
       })
       .catch((e) => toast.error(toastErrorMessage(e, "Erro ao carregar")))
       .finally(() => setLoading(false));
-  }, [project, homSlug, toast]);
+  }, [project, homSlug, toast, isVisitor]);
 
   useEffect(() => {
+    if (isVisitor) return;
     reload();
-  }, [reload]);
+  }, [reload, isVisitor]);
 
   async function syncScope() {
     if (homSlug !== MURAL_HOMOLOGATION_SLUG) {
@@ -535,6 +539,10 @@ export function HomologationPage({
       persistCollapsed(new Set());
     }
   }, [collapsed, areaGroups, homSlug]);
+
+  if (isVisitor) {
+    return <Navigate to={projectListPath(project)} replace />;
+  }
 
   if (loading && !homologation) {
     return <p className="text-muted-foreground">Carregando homologação…</p>;
