@@ -1,8 +1,8 @@
 # Subflow: abre o BoomMenu FAB na aba Rotina.
 #
-# Build ≥ 6.06.22/23: hit-target do `rotina_boom_fab` corrigido (APP-02) —
-# preferir tap no id. Fallback coordenada se id não responder.
-# Asserts: preferir ids / ASCII (evitar "Alimentação" no YAML — encoding Windows).
+# Build >= 6.06.22/23: hit-target do `rotina_boom_fab` corrigido (APP-02).
+# Menu novo (Go): item `rotina_boom_ocorrencia` vem primeiro; alimentacao
+# pode ficar fora da tela. Menu aberto = ocorrencia OU alimentacao.
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -15,11 +15,11 @@ appId: br.com.polygonus.mobile.amostra
 - waitForAnimationToEnd:
     timeout: 1000
 
-# Menu aberto?
+# Menu aberto? Nao usar so alimentacao — no sheet novo ela pode estar abaixo.
 - runFlow:
     when:
       notVisible:
-        id: "rotina_boom_alimentacao"
+        id: "rotina_boom_ocorrencia|rotina_boom_alimentacao"
     commands:
       - tapOn:
           point: "90%,86%"
@@ -28,5 +28,5 @@ appId: br.com.polygonus.mobile.amostra
 
 - extendedWaitUntil:
     visible:
-      id: "rotina_boom_alimentacao"
+      id: "rotina_boom_ocorrencia|rotina_boom_alimentacao"
     timeout: 8000

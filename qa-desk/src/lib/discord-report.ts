@@ -1,6 +1,7 @@
 import type { TestRecord } from "../types/test-record";
 import { SEVERITY_LABELS } from "../types/test-record";
 import { maskPii } from "./redact-pii";
+import { formatAmbienteBlock } from "./bug-report-markdown";
 
 export interface DiscordReportOptions {
   /** Substitui "Console:" no padrão web — logs, JSON, stack */
@@ -31,7 +32,7 @@ function platformLabel(platform: TestRecord["platform"]): string {
     case "web":
       return "Web";
     case "app_web":
-      return "APP + WEB";
+      return "App nativo e APP WEB";
     case "api":
       return "API";
     default:
@@ -69,6 +70,16 @@ function ambienteWeb(record: Partial<TestRecord>, opts: DiscordReportOptions): s
   const login = loginLine(record, opts);
   if (login) lines.push(login);
   return lines.join("\n");
+}
+
+function ambienteAppAndWeb(record: Partial<TestRecord>, opts: DiscordReportOptions): string {
+  return formatAmbienteBlock({
+    ...record,
+    osVersion: opts.osVersion ?? record.osVersion,
+    deviceLabel: opts.deviceLabel ?? record.deviceLabel,
+    browser: opts.browser ?? record.browser,
+    testLogin: opts.testLogin ?? record.testLogin,
+  });
 }
 
 function isMobileReport(record: Partial<TestRecord>): boolean {
@@ -132,7 +143,12 @@ export function formatDiscordReport(
     `**Resultado atual:** ${actual}`,
   ];
 
-  if (isMobileReport(record)) {
+  if (record.platform === "app_web") {
+    blocks.push("", "**Ambiente (App e APP WEB):**", ambienteAppAndWeb(record, envOpts));
+    if (evidence) {
+      blocks.push("", `**Evidência técnica:** ${evidence}`);
+    }
+  } else if (isMobileReport(record)) {
     blocks.push("", "**Ambiente mobile:**", ambienteMobile(record, envOpts));
     if (evidence) {
       blocks.push("", `**Evidência técnica:** ${evidence}`);

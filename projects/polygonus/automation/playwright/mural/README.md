@@ -50,7 +50,7 @@ Helpers: `shared/mural-composer.ts`.
 - ANEXO-03 vídeo / compressão longa
 - E2E-99 draft do Maestro
 
-FILTRO aniversariante (02/09): seed DN em `ajustar-dn-aniversariante.spec.ts` antes do envio se precisar receptor `ANIVERSARI`.
+FILTRO aniversariante (02/09): seed DN **automático** em `filtros-extras.spec.ts` (helper `garantirDnAniversariante`). Spec isolado: `ajustar-dn-aniversariante.spec.ts`.
 
 ---
 
@@ -58,13 +58,24 @@ FILTRO aniversariante (02/09): seed DN em `ajustar-dn-aniversariante.spec.ts` an
 
 Usuário dedicado: **não** reverter a data de nascimento após o teste.
 
-## Pipeline completo
+## Na suíte Playwright (recomendado)
 
-1. **Playwright (amostra CQ)** — ajusta dia/mês da DN do colaborador `Aniversariante` para o dia/mês do teste.
+`npm run test:filtros-extras` (ou `npx playwright test mural/filtros-extras.spec.ts`) já chama o seed **1×** antes do primeiro CT de aniversariante (02 ou 09). O mesmo seed serve para dia e mês.
+
+| Env | Efeito |
+|-----|--------|
+| `SKIP_ANIVERSARIANTE_DN=1` | pula o seed (DN já ok hoje) |
+| `PLAYWRIGHT_DN_GESTAO_URL` | override da URL CQ (`:8443` por padrão no helper) |
+
+Custo: ~2–4 min na 1ª vez da run; depois é no-op na mesma sessão Node.
+
+## Pipeline completo (APP + receptor)
+
+1. **Playwright** — seed DN (suíte filtros ou `npm run test:mural-dn`).
 2. **Maestro (app)** — `PHJESUS` Coordenador envia com filtro Aniversariantes do dia (FILTRO-02) ou do mês (FILTRO-09).
 3. **Maestro (app)** — logout → login `ANIVERSARI` → assert do mesmo `ID` em Recebidas (como `verificar_responsavel_ve`).
 
-## Playwright — só o ajuste de DN
+## Playwright — só o ajuste de DN (manual)
 
 | Campo | Valor |
 |-------|--------|

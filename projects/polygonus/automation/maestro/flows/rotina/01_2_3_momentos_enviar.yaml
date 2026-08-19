@@ -1,0 +1,34 @@
+# CT-ROTINA-07: Momentos — 8 fotos (aba Rotina)
+# Boom abre lista de modelos (rotina_boom_momentos_modelo) antes do composer.
+#
+# Semantics: rotina_boom_momentos, rotina_composer_galeria
+
+appId: br.com.polygonus.mobile.amostra
+---
+- addMedia:
+    - "../../fixtures/Foto_1.jpeg"
+    - "../../fixtures/Foto_2.jpeg"
+    - "../../fixtures/Foto_3.jpg"
+    - "../../fixtures/Foto_4.jpeg"
+    - "../../fixtures/Foto_5.jpeg"
+    - "../../fixtures/Foto_6.jpeg"
+    - "../../fixtures/Foto_7.jpg"
+    - "../../fixtures/Foto_8.jpeg"
+
+- runFlow: ../shared/rotina/setup_coordenador_rotina.yaml
+
+- runFlow:
+    file: ../shared/rotina/abrir_tipo_rotina.yaml
+    env:
+      ROTINA_BOOM_ID: "rotina_boom_momentos"
+      ROTINA_BOOM_TEXTO: "Momentos"
+      MODELO_ROTINA: "Se divertindo"
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
+
+- runFlow:
+    file: ../shared/rotina/rotina_preencher_enviar.yaml
+    env:
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
+      TURMA_ROTINA: "${TURMA_ROTINA}"
+      ALUNO_ROTINA: "${ALUNO_ROTINA}"
+      ANEXAR_FOTOS_ROTINA: "8"

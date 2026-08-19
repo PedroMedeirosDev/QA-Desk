@@ -13,6 +13,11 @@ description: >-
 Conhecimento operacional da suíte Mural. Detalhes longos: [reference.md](reference.md).
 Contrato canônico de auth: `projects/polygonus/automation/maestro/flows/docs/CONTRATO_AUTH.md`.
 
+## Semantics primeiro (APP e Rotina)
+
+- Fluxo: `tapOn` / `inputText` **por `id:`**. Se falhar, dump hierarchy e anotar em `projects/polygonus/automation/maestro/flows/docs/SEMANTICS_SUGESTOES.md` (id ausente, no pai, ou hit-target errado).
+- **Proibido** `point: "N%,M%"` e toque por porcentagem da tela. Não adivinhar clique para o CT passar.
+
 ## Raiz e appId
 
 - Flows: `projects/polygonus/automation/maestro/flows/`

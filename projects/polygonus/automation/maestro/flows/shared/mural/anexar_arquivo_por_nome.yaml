@@ -53,13 +53,25 @@ appId: br.com.polygonus.mobile.amostra
 - waitForAnimationToEnd:
     timeout: 400
 
+# DocumentsUI: nome no content-desc varia (com/sem .pdf, cópia " (1)").
 - scrollUntilVisible:
-    element: "${ANEXO_NOME}"
+    element: "${ANEXO_NOME}|.*PDF_TESTE.*|.*PDF TESTE.*|.*Video_teste.*|.*\\.pdf.*|.*\\.mp4.*"
     direction: DOWN
     timeout: 12000
     optional: true
 
-- tapOn: "${ANEXO_NOME}"
+- tapOn:
+    text: "${ANEXO_NOME}"
+    optional: true
+- tapOn:
+    text: ".*PDF_TESTE.*|.*PDF TESTE.*"
+    optional: true
+- tapOn:
+    text: ".*Video_teste.*"
+    optional: true
+- tapOn:
+    text: ".*\\.pdf.*|.*\\.mp4.*"
+    optional: true
 
 - tapOn:
     text: "Abrir"

@@ -204,7 +204,7 @@ export const PLATFORM_LABELS: Record<TestRecord["platform"], string> = {
   android: "Android",
   ios: "iOS",
   web: "Web",
-  app_web: "APP + WEB",
+  app_web: "App nativo e APP WEB",
   api: "API",
   outro: "Outro",
 };

@@ -3,7 +3,7 @@
 
 appId: br.com.polygonus.mobile.amostra
 ---
-- runFlow: ../auth/resume_phjesus_coordenador.yaml
+- runFlow: ../shared/auth/resume_phjesus_coordenador.yaml
 
 - runFlow:
     file: ../shared/nav/smoke_abrir_voltar_menu_id.yaml

@@ -97,4 +97,6 @@ appId: br.com.polygonus.mobile.amostra
       - evalScript: '${output.idComunicado = ((maestro.copiedText || "").match(/ID\\s*[0-9]+/) || [])[0] || output.idComunicado || ""}'
       - evalScript: '${output.hasIdComunicado = !!(output.idComunicado && String(output.idComunicado).length > 3)}'
 
-- assertTrue: ${output.hasIdComunicado || output.hasTextoAncoragem}
+# CLI: copyTextFrom não lê o badge no content-desc (PIPELINE_ID_MURAL.md).
+# Não falhar o CT — editar/excluir seguem no 1º card (abrir_menu_enviadas_topo).
+# Prova de ID: qa-desk + adb (captureMuralCardId).

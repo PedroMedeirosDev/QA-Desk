@@ -1,5 +1,6 @@
 # CT-ROTINA-04: Bilhete (aba Rotina)
-# Semantics: rotina_boom_bilhete, rotina_composer_enviar
+# Mobile 6.06.23: turma/aluno/termo + texto + rotina_composer_enviar
+# WEB ainda sem ids de turma/texto — pedido no lote Semantics.
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -10,16 +11,99 @@ appId: br.com.polygonus.mobile.amostra
     env:
       ROTINA_BOOM_ID: "rotina_boom_bilhete"
       ROTINA_BOOM_TEXTO: "Bilhete"
-      TITULO_ROTINA: "Bilhete|Nova|Escreva"
+      MODELO_ROTINA: "Se machucou"
+      TITULO_ROTINA: "Turma|Aluno|Escreva|Digite"
+
+# Turma + aluno (mesmo subflow; sem chips)
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_turma"
+    commands:
+      - tapOn:
+          id: "rotina_composer_turma"
+- runFlow:
+    when:
+      visible: "^Turma$"
+      notVisible:
+        id: "rotina_composer_turma"
+    commands:
+      - tapOn: "^Turma$"
+- tapOn: "${TURMA_ROTINA}"
+- runFlow:
+    when:
+      visible: "OK|Ok"
+      notVisible:
+        id: "rotina_composer_ok"
+    commands:
+      - tapOn: "OK|Ok"
 
 - runFlow:
     when:
-      visible: "Escreva|Digite|mensagem|Bilhete"
+      visible:
+        id: "rotina_composer_aluno"
+    commands:
+      - tapOn:
+          id: "rotina_composer_aluno"
+- runFlow:
+    when:
+      visible: "^Aluno$"
+      notVisible:
+        id: "rotina_composer_aluno"
+    commands:
+      - tapOn: "^Aluno$"
+- tapOn: "${ALUNO_ROTINA}"
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_ok"
+    commands:
+      - tapOn:
+          id: "rotina_composer_ok"
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_ok"
+      visible: "OK|Ok"
+    commands:
+      - tapOn: "OK|Ok"
+
+# Texto do bilhete — id canônico ainda ausente (mobile+WEB); placeholder = "Bilhete"
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_texto"
+    commands:
+      - tapOn:
+          id: "rotina_composer_texto"
+      - inputText: "Teste Maestro Emulador - Bilhete Rotina"
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_texto"
     commands:
       - tapOn:
           text: "Escreva.*|Digite.*|mensagem"
           optional: true
+      # Placeholder colide com o título "Bilhete" — mira o campo amarelo
+      - tapOn:
+          point: "50%,52%"
       - inputText: "Teste Maestro Emulador - Bilhete Rotina"
+      - hideKeyboard
+      - waitForAnimationToEnd:
+          timeout: 400
+
+# Fecha Atenção residual se abriu sem texto
+- runFlow:
+    when:
+      visible: "Atenção|Atençao|Fechar"
+    commands:
+      - tapOn: "Fechar"
+      - tapOn:
+          point: "50%,52%"
+      - inputText: "Teste Maestro Emulador - Bilhete Rotina"
+      - hideKeyboard
+
 
 - runFlow:
     when:
@@ -28,7 +112,6 @@ appId: br.com.polygonus.mobile.amostra
     commands:
       - tapOn:
           id: "rotina_composer_enviar"
-
 - runFlow:
     when:
       notVisible:
@@ -38,5 +121,5 @@ appId: br.com.polygonus.mobile.amostra
       - tapOn: "Enviar"
 
 - extendedWaitUntil:
-    visible: "Registro criado!|Rotina|Show menu|Bilhete"
+    visible: "Registro criado!|Rotina|Show menu|rotina_lista_vazia|rotina_boom_fab"
     timeout: 20000

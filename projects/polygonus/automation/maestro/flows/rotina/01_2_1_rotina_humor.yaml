@@ -1,0 +1,24 @@
+# CT-ROTINA-05: Humor (aba Rotina dentro do Mural)
+# Chips amostra: Tranquilo | Sorridente | Alegre | Triste
+#
+# Semantics: mural_tab_rotina, rotina_boom_humor
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/rotina/setup_coordenador_rotina.yaml
+
+- runFlow:
+    file: ../shared/rotina/abrir_tipo_rotina.yaml
+    env:
+      ROTINA_BOOM_ID: "rotina_boom_humor"
+      ROTINA_BOOM_TEXTO: "Humor"
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
+
+- runFlow:
+    file: ../shared/rotina/rotina_preencher_enviar.yaml
+    env:
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
+      TURMA_ROTINA: "${TURMA_ROTINA}"
+      ALUNO_ROTINA: "${ALUNO_ROTINA}"
+      OPCAO_ID_1: "rotina_composer_opcao_sorridente"
+      OPCAO_ROTINA_1: "Sorridente"

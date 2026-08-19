@@ -1,0 +1,37 @@
+# Anexa 1 foto da galeria no composer Rotina.
+# Semantics: rotina_composer_galeria
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_galeria"
+    commands:
+      - tapOn:
+          id: "rotina_composer_galeria"
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_galeria"
+      visible: "galeria|imagem|foto"
+    commands:
+      - tapOn: "Adicionar imagem da galeria|galeria|imagem"
+
+- runFlow:
+    when:
+      visible: "Allow|ALLOW|Permitir|While using|Durante o uso"
+    commands:
+      - tapOn: "Allow|ALLOW|Permitir|While using the app|Durante o uso do app"
+      - waitForAnimationToEnd:
+          timeout: 500
+
+- extendedWaitUntil:
+    visible: "Images|Recent|Recentes|Fotos|Photos|Galeria|Select|Selecionar|Show roots|Foto_1|Documents"
+    timeout: 12000
+
+- runFlow: ../mural/pick_galeria_android.yaml
+
+- extendedWaitUntil:
+    visible: "Enviar|Turma|Aluno|rotina_composer_enviar"
+    timeout: 10000

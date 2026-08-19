@@ -18,8 +18,19 @@ values (
   'evidence',
   'evidence',
   false,
-  5242880, -- 5 MB
-  array['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+  52428800, -- 50 MB (prints + vídeos de tela)
+  array[
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/webp',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+    'video/x-msvideo',
+    'video/x-matroska',
+    'video/3gpp'
+  ]
 )
 on conflict (id) do update set
   public = excluded.public,

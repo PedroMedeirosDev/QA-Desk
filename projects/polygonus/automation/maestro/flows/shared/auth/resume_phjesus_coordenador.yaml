@@ -12,23 +12,36 @@ appId: br.com.polygonus.mobile.amostra
 ---
 - launchApp
 - waitForAnimationToEnd:
-    timeout: 2000
+    timeout: 8000
 
-# Picker residual (DocumentsUI) — até 3× Back se ainda aberto
+# Picker residual (DocumentsUI) — Back até a home/login aparecer.
+# Não Back no splash (logo Colégio Polygonus): isso manda o app para o launcher.
 - repeat:
-    times: 3
+    times: 5
     commands:
       - runFlow:
           when:
-            visible: "Show roots|Recent|Downloads|Files|Allow|WHILE USING|While using|Open from|Abrir de"
+            visible: "Show roots|Recent|Downloads|Files|Allow|WHILE USING|While using|Open from|Abrir de|Audio|Videos"
           commands:
             - pressKey: Back
             - waitForAnimationToEnd:
                 timeout: 500
 
+- runFlow:
+    when:
+      notVisible: "PULAR|ENTRAR|FAZER LOGIN|Pedro Jesus|Pedro|Eliza|Teixeira|Ana|Bruno|Davi|Show menu|Responder comunicado|.*MURAL.*|CARDÁPIO|CARDAPIO|Colégio Polygonus|Mensalidades em aberto|Agora não"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 800
+      - waitForAnimationToEnd:
+          timeout: 2500
+
 - extendedWaitUntil:
-    visible: "PULAR|ENTRAR|FAZER LOGIN|Pedro Jesus|Pedro|Eliza|Teixeira|Ana|Bruno|Davi|Show menu|Responder comunicado|Mural da Rotina|Selecionar|Versão|RESPONSAVEIS|.*MURAL.*|CARDÁPIO|CARDAPIO|Colégio Polygonus|.*Acompanhe de perto.*|Confira o rendimento|Comece a usar"
-    timeout: 30000
+    visible: "PULAR|ENTRAR|FAZER LOGIN|Pedro Jesus|Pedro|Eliza|Teixeira|Ana|Bruno|Davi|Show menu|Responder comunicado|Mural da Rotina|Selecionar|Versão|RESPONSAVEIS|.*MURAL.*|CARDÁPIO|CARDAPIO|Colégio Polygonus|.*Acompanhe de perto.*|Confira o rendimento|Comece a usar|Mensalidades em aberto|Agora não"
+    timeout: 45000
+
+- runFlow: ../nav/dismiss_pendencia_dialog.yaml
 
 # 1ª instalação — no-op se já logado (sem botão avancar)
 - runFlow: dismiss_onboarding_primeira_instalacao.yaml
@@ -129,6 +142,8 @@ appId: br.com.polygonus.mobile.amostra
 - extendedWaitUntil:
     visible: "Pedro Jesus|Pedro"
     timeout: 25000
+
+- runFlow: ../nav/dismiss_pendencia_dialog.yaml
 
 # Só agora — PHJESUS confirmado; ETMENEZES nunca chega aqui
 - runFlow: ../perfil/garantir_perfil_coordenador.yaml

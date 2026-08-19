@@ -1,20 +1,33 @@
-# Subflow: preenche turma/aluno/termo mínimo e envia registro de rotina
-# Env: TURMA_ROTINA (ou TURMA_TESTE), ALUNO_ROTINA, TITULO_ROTINA
-#       TERMO_ROTINA (opcional — texto do termo), OPCAO_ROTINA_ID (opcional —
-#       ex. rotina_composer_opcao_nao | rotina_composer_opcao_0)
+# Subflow: preenche turma/aluno (+ termo/opções se o CT pedir) e envia.
+# Env: TURMA_ROTINA, ALUNO_ROTINA, TITULO_ROTINA
+#      TERMO_ROTINA (opcional — só abre picker se preenchido; default da tela basta)
+#      OPCAO_ROTINA_1..3 (texto dos chips em cascata, ex. Comida → Jantar → Comeu bem)
+#      ANEXAR_FOTOS_ROTINA (opcional — "8" anexa 8 fotos da galeria, Momentos)
 #
 # Build ≥ 6.06.22 — Semantics:
 #   rotina_composer_turma | _aluno | _termo | _ok (só picker Aluno) |
 #   _cancelar | _limpar | rotina_composer_opcao_<slug> | rotina_composer_enviar
 # Turma/Termo fecham no toque da opção (sem OK). Aluno multi-select → OK.
-# Opções do termo: slug do nome da escola (Não→_nao); sem nome → _opcao_0.
 # Assinatura: "Teste Maestro Emulador - …"
 
 appId: br.com.polygonus.mobile.amostra
 ---
 - assertVisible: ${TITULO_ROTINA}
 
+# Fecha picker residual se um CT anterior/re-tap deixou CANCELAR aberto
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_cancelar"
+    commands:
+      - tapOn:
+          id: "rotina_composer_cancelar"
+      - waitForAnimationToEnd:
+          timeout: 400
+
 # —— Turma ——
+# Fallback texto só se o campo ainda está no formulário (visível "Turma").
+# Não usar só notVisible:id — após tap no id o picker abre e o id some.
 - runFlow:
     when:
       visible:
@@ -24,12 +37,12 @@ appId: br.com.polygonus.mobile.amostra
           id: "rotina_composer_turma"
 - runFlow:
     when:
+      visible: "^Turma$"
       notVisible:
         id: "rotina_composer_turma"
     commands:
-      - tapOn: "Turma"
+      - tapOn: "^Turma$"
 - tapOn: "${TURMA_ROTINA}"
-# Sem OK em Turma (≥6.06.22) — fecha no toque; fallback OK em builds antigos
 - runFlow:
     when:
       visible: "OK|Ok"
@@ -48,10 +61,11 @@ appId: br.com.polygonus.mobile.amostra
           id: "rotina_composer_aluno"
 - runFlow:
     when:
+      visible: "^Aluno$"
       notVisible:
         id: "rotina_composer_aluno"
     commands:
-      - tapOn: "Aluno"
+      - tapOn: "^Aluno$"
 - tapOn: "${ALUNO_ROTINA}"
 - runFlow:
     when:
@@ -68,51 +82,102 @@ appId: br.com.polygonus.mobile.amostra
     commands:
       - tapOn: "OK|Ok"
 
-# —— Termo ——
-- runFlow:
-    when:
-      visible:
-        id: "rotina_composer_termo"
-    commands:
-      - tapOn:
-          id: "rotina_composer_termo"
-- runFlow:
-    when:
-      notVisible:
-        id: "rotina_composer_termo"
-    commands:
-      - tapOn: "Termo"
+# —— Termo (só se o CT pedir; senão usa o default da tela) ——
 - runFlow:
     when:
       true: ${TERMO_ROTINA != null && TERMO_ROTINA != ""}
     commands:
+      - runFlow:
+          when:
+            visible:
+              id: "rotina_composer_termo"
+          commands:
+            - tapOn:
+                id: "rotina_composer_termo"
+      - runFlow:
+          when:
+            visible: "^Termo$"
+            notVisible:
+              id: "rotina_composer_termo"
+          commands:
+            - tapOn: "^Termo$"
       - tapOn: "${TERMO_ROTINA}"
+      - runFlow:
+          when:
+            visible: "OK|Ok"
+            notVisible:
+              id: "rotina_composer_ok"
+          commands:
+            - tapOn: "OK|Ok"
+
+# Fecha picker residual (ex. termo aberto por engano)
 - runFlow:
     when:
-      true: ${TERMO_ROTINA == null || TERMO_ROTINA == ""}
+      visible:
+        id: "rotina_composer_cancelar"
     commands:
       - tapOn:
-          index: 0
-          optional: true
+          id: "rotina_composer_cancelar"
+
+# —— Chips em cascata (texto UI; id opcional se o CT passar OPCAO_ID_*) ——
 - runFlow:
     when:
-      visible: "OK|Ok"
-      notVisible:
-        id: "rotina_composer_ok"
+      true: ${OPCAO_ID_1 != null && OPCAO_ID_1 != ""}
     commands:
-      - tapOn: "OK|Ok"
+      - tapOn:
+          id: "${OPCAO_ID_1}"
+      - waitForAnimationToEnd:
+          timeout: 500
+- runFlow:
+    when:
+      true: ${(OPCAO_ID_1 == null || OPCAO_ID_1 == "") && OPCAO_ROTINA_1 != null && OPCAO_ROTINA_1 != ""}
+    commands:
+      - tapOn: "${OPCAO_ROTINA_1}"
+      - waitForAnimationToEnd:
+          timeout: 500
+- runFlow:
+    when:
+      true: ${OPCAO_ID_2 != null && OPCAO_ID_2 != ""}
+    commands:
+      - tapOn:
+          id: "${OPCAO_ID_2}"
+      - waitForAnimationToEnd:
+          timeout: 500
+- runFlow:
+    when:
+      true: ${(OPCAO_ID_2 == null || OPCAO_ID_2 == "") && OPCAO_ROTINA_2 != null && OPCAO_ROTINA_2 != ""}
+    commands:
+      - tapOn: "${OPCAO_ROTINA_2}"
+      - waitForAnimationToEnd:
+          timeout: 500
+- runFlow:
+    when:
+      true: ${OPCAO_ID_3 != null && OPCAO_ID_3 != ""}
+    commands:
+      - tapOn:
+          id: "${OPCAO_ID_3}"
+      - waitForAnimationToEnd:
+          timeout: 500
+- runFlow:
+    when:
+      true: ${(OPCAO_ID_3 == null || OPCAO_ID_3 == "") && OPCAO_ROTINA_3 != null && OPCAO_ROTINA_3 != ""}
+    commands:
+      - tapOn: "${OPCAO_ROTINA_3}"
+      - waitForAnimationToEnd:
+          timeout: 500
 
-# —— Opção do termo (slug escola; default tenta nao / 0 / texto) ——
+# —— Um id de opção (CTs simples) ——
 - runFlow:
     when:
       true: ${OPCAO_ROTINA_ID != null && OPCAO_ROTINA_ID != ""}
     commands:
       - tapOn:
           id: "${OPCAO_ROTINA_ID}"
-          optional: true
+
+# Fallback genérico só se o CT não pediu chips nem fotos
 - runFlow:
     when:
-      true: ${OPCAO_ROTINA_ID == null || OPCAO_ROTINA_ID == ""}
+      true: ${(OPCAO_ROTINA_1 == null || OPCAO_ROTINA_1 == "") && (OPCAO_ROTINA_ID == null || OPCAO_ROTINA_ID == "") && (ANEXAR_FOTOS_ROTINA == null || ANEXAR_FOTOS_ROTINA == "")}
     commands:
       - tapOn:
           id: "rotina_composer_opcao_nao"
@@ -127,14 +192,32 @@ appId: br.com.polygonus.mobile.amostra
           text: "Não"
           optional: true
 
-# —— Enviar (AgendaBottomBar — todos os tipos) ——
-- tapOn:
-    id: rotina_composer_enviar
-    optional: true
-- tapOn:
-    text: "Enviar"
-    optional: true
+# —— Fotos (Momentos) ——
+- runFlow:
+    when:
+      true: ${ANEXAR_FOTOS_ROTINA != null && ANEXAR_FOTOS_ROTINA != ""}
+    commands:
+      - repeat:
+          times: 8
+          commands:
+            - runFlow: rotina_anexar_foto_galeria.yaml
+
+# —— Enviar ——
+- runFlow:
+    when:
+      visible:
+        id: "rotina_composer_enviar"
+    commands:
+      - tapOn:
+          id: "rotina_composer_enviar"
+- runFlow:
+    when:
+      notVisible:
+        id: "rotina_composer_enviar"
+      visible: "Enviar"
+    commands:
+      - tapOn: "Enviar"
 
 - extendedWaitUntil:
-    visible: "Registro criado!|Rotina|rotina_lista_vazia"
+    visible: "Registro criado!|Rotina|rotina_lista_vazia|Show menu"
     timeout: 20000

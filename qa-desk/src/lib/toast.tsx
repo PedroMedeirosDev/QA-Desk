@@ -16,14 +16,25 @@ export type Toast = {
   variant: ToastVariant;
   title?: string;
   message: string;
+  /** 0–100; se definido, o toast mostra barra de progresso. */
+  progress?: number;
   action?: { label: string; onClick: () => void };
 };
 
-type ToastInput = {
+export type ToastInput = {
   variant: ToastVariant;
   title?: string;
   message: string;
+  /** 0 = fica até dismiss/update; omitido = default da variante. */
   duration?: number;
+  progress?: number;
+  action?: { label: string; onClick: () => void };
+};
+
+export type ToastOpts = {
+  title?: string;
+  duration?: number;
+  progress?: number;
   action?: { label: string; onClick: () => void };
 };
 
@@ -35,7 +46,8 @@ const DEFAULT_DURATION: Record<ToastVariant, number> = {
 
 type ToastContextValue = {
   toasts: Toast[];
-  push: (input: ToastInput) => void;
+  push: (input: ToastInput) => string;
+  update: (id: string, patch: Partial<ToastInput>) => void;
   dismiss: (id: string) => void;
 };
 
@@ -58,6 +70,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
+  const armTimer = useCallback(
+    (id: string, duration: number) => {
+      const prev = timers.current.get(id);
+      if (prev) clearTimeout(prev);
+      if (duration <= 0) {
+        timers.current.delete(id);
+        return;
+      }
+      timers.current.set(
+        id,
+        setTimeout(() => dismiss(id), duration),
+      );
+    },
+    [dismiss],
+  );
+
   const push = useCallback(
     (input: ToastInput) => {
       const id = `toast-${++idCounter}`;
@@ -66,18 +94,41 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         variant: input.variant,
         title: input.title,
         message: input.message,
+        progress: input.progress,
         action: input.action,
       };
 
       setToasts((prev) => [...prev, toast].slice(-5));
-
       const duration = input.duration ?? DEFAULT_DURATION[input.variant];
-      timers.current.set(
-        id,
-        setTimeout(() => dismiss(id), duration),
-      );
+      armTimer(id, duration);
+      return id;
     },
-    [dismiss],
+    [armTimer],
+  );
+
+  const update = useCallback(
+    (id: string, patch: Partial<ToastInput>) => {
+      setToasts((prev) =>
+        prev.map((toast) =>
+          toast.id === id
+            ? {
+                ...toast,
+                ...(patch.variant ? { variant: patch.variant } : {}),
+                ...(patch.title !== undefined ? { title: patch.title } : {}),
+                ...(patch.message !== undefined ? { message: patch.message } : {}),
+                ...(patch.progress !== undefined ? { progress: patch.progress } : {}),
+                ...(patch.action !== undefined ? { action: patch.action } : {}),
+              }
+            : toast,
+        ),
+      );
+      if (patch.duration !== undefined) {
+        armTimer(id, patch.duration);
+      } else if (patch.variant) {
+        armTimer(id, DEFAULT_DURATION[patch.variant]);
+      }
+    },
+    [armTimer],
   );
 
   useEffect(
@@ -89,8 +140,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ toasts, push, dismiss }),
-    [toasts, push, dismiss],
+    () => ({ toasts, push, update, dismiss }),
+    [toasts, push, update, dismiss],
   );
 
   return (
@@ -102,60 +153,43 @@ export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error("useToast must be used within ToastProvider");
 
-  const { push, dismiss } = ctx;
+  const { push, update, dismiss } = ctx;
 
   // Estável enquanto push/dismiss forem estáveis — NÃO depender de `toasts`
   // (senão useEffect([toast]) no Dashboard/Homologação re-fetcha e pisca).
   return useMemo(
     () => ({
-      error: (
-        message: string,
-        opts?: {
-          title?: string;
-          duration?: number;
-          action?: { label: string; onClick: () => void };
-        },
-      ) =>
+      error: (message: string, opts?: ToastOpts) =>
         push({
           variant: "error",
           message,
           title: opts?.title ?? "Erro",
           duration: opts?.duration,
+          progress: opts?.progress,
           action: opts?.action,
         }),
-      success: (
-        message: string,
-        opts?: {
-          title?: string;
-          duration?: number;
-          action?: { label: string; onClick: () => void };
-        },
-      ) =>
+      success: (message: string, opts?: ToastOpts) =>
         push({
           variant: "success",
           message,
           title: opts?.title ?? "Sucesso",
           duration: opts?.duration,
+          progress: opts?.progress,
           action: opts?.action,
         }),
-      info: (
-        message: string,
-        opts?: {
-          title?: string;
-          duration?: number;
-          action?: { label: string; onClick: () => void };
-        },
-      ) =>
+      info: (message: string, opts?: ToastOpts) =>
         push({
           variant: "info",
           message,
           title: opts?.title,
           duration: opts?.duration,
+          progress: opts?.progress,
           action: opts?.action,
         }),
+      update,
       dismiss,
     }),
-    [push, dismiss],
+    [push, update, dismiss],
   );
 }
 

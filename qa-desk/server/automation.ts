@@ -318,7 +318,7 @@ export async function runMaestroFlow(
           ok: false,
           exitCode: null,
           output: clipMaestroOutput(normalizeMaestroOutput(chunks.join(""))),
-          appVersion: resolveAppVersionForRun() ?? appVersion,
+          appVersion: resolveAppVersionForRun(chunks.join("")) ?? appVersion,
           cancelled: true,
           failure: {
             errorSummary: "Cancelado pelo usuário",
@@ -345,7 +345,7 @@ export async function runMaestroFlow(
         ok: false,
         exitCode: null,
         output: clipMaestroOutput(normalizeMaestroOutput(chunks.join(""))),
-        appVersion: resolveAppVersionForRun() ?? appVersion,
+        appVersion: resolveAppVersionForRun(chunks.join("")) ?? appVersion,
         // cancelled:false → lote (módulo/suite) continua no próximo CT
         cancelled: false,
         failure: {
@@ -418,7 +418,8 @@ export async function runMaestroFlow(
         push("\n[qa-desk] Execução cancelada pelo usuário.\n");
       }
       const ok = !cancelled && code === 0;
-      const versionAfter = resolveAppVersionForRun() ?? appVersion;
+      const versionAfter =
+        resolveAppVersionForRun(chunks.join("")) ?? appVersion;
       void cleanupMaestroArtifacts({ ok, runStartedAt });
       settle({
         ok,
@@ -1503,22 +1504,7 @@ export const MURAL_HOMOLOGATION_ITEMS: MuralHomologationItem[] = [
       headed: true,
     },
   },
-  {
-    ctId: "FILTRO-10",
-    suite: "Filtros",
-    legacyNum: "30",
-    title: "FILTRO-10 · Limpar filtro",
-    flowPath:
-      "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_filtro_limpar.yaml",
-    description:
-      "Aplica Pagantes → Limpar filtro → envia texto (sem filtro especial).",
-    preconditions: "Sessão PHJESUS Coordenador.",
-    expectedResult:
-      "Comunicado “Teste filtro Limpar filtro” em Enviadas após limpar o funil.",
-    steps: [
-      "Funil → Pagantes → funil → Limpar filtro → enviar → Enviadas",
-    ],
-  },
+  // FILTRO-10 Limpar filtro — fora de escopo (helper limparFiltroExtrasComposer se precisar no meio do fluxo)
   // —— E2E (adiado: só depois que CRUD/Anexos/Filtros/… estiverem estáveis) ——
   {
     ctId: "E2E-99",
@@ -1560,7 +1546,7 @@ export function createMuralHomologationRecords(project: ProjectSlug) {
     steps: item.steps,
     platform: "android" as const,
     channel: "app" as const,
-    module: "Mural",
+    module: "Comunicados",
     status: "rascunho" as const,
     priority: "media" as const,
     campaign,
@@ -1578,7 +1564,7 @@ export function createMuralHomologationRecords(project: ProjectSlug) {
       "homologacao",
       "mural",
       campaign,
-      "module:Mural",
+      "module:Comunicados",
       `suite:${item.suite}`,
       `ct:${item.ctId}`,
       ...(item.suite === "E2E" ? (["deferred:batch"] as const) : []),

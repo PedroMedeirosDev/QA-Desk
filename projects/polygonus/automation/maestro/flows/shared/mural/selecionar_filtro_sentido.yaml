@@ -65,11 +65,18 @@ appId: br.com.polygonus.mobile.amostra
     commands:
       - assertVisible: "${FILTRO}"
 
-# Trocar filtro
+# Trocar filtro.
+# Build com semanticsItemId: cada opção vira resource-id `*_item` e o texto
+# acessível fica "Enviadas\nEnviadas" (label + Text). O matcher de texto
+# simples (Enviadas|Enviados) não casa — usar id + índice.
 - runFlow:
     when:
       notVisible: "${FILTRO}"
     commands:
+      - evalScript: |
+          ${(() => {
+            output.filtroItemId = String(output.filtroSentidoId || "mural_filtro_sentido") + "_item";
+          })()}
       - tapOn:
           text: "Recebidas|Recebidos|Enviadas|Enviados|Pendentes|Aprovadas"
           rightOf: "Back"
@@ -78,17 +85,39 @@ appId: br.com.polygonus.mobile.amostra
           timeout: 500
       - runFlow:
           when:
-            notVisible: "${FILTRO_TAP}"
+            notVisible:
+              id: ${output.filtroItemId}
           commands:
             - tapOn:
                 id: ${output.filtroSentidoId}
             - waitForAnimationToEnd:
                 timeout: 500
       - extendedWaitUntil:
-          visible: "${FILTRO_TAP}"
+          visible:
+            id: ${output.filtroItemId}
           timeout: 10000
-
-      - tapOn: "${FILTRO_TAP}"
+      # Itens têm resource-id, mas clickable=false e text vazio (só
+      # accessibilityText "Enviadas\nEnviadas"). Maestro não acha por texto
+      # nem por id+index. No Medium_Phone 1080x2400 o 2º item (Enviadas)
+      # cai em ~43%,14% — ver dump do overlay TipoSentidoDropdown.
+      - runFlow:
+          when:
+            true: ${/enviad/i.test(String(FILTRO_TAP || FILTRO || ""))}
+          commands:
+            - tapOn:
+                point: "43%,14%"
+      - runFlow:
+          when:
+            true: ${/pendente/i.test(String(FILTRO_TAP || FILTRO || ""))}
+          commands:
+            - tapOn:
+                point: "43%,19%"
+      - runFlow:
+          when:
+            true: ${/aprovad/i.test(String(FILTRO_TAP || FILTRO || ""))}
+          commands:
+            - tapOn:
+                point: "43%,24%"
       - waitForAnimationToEnd:
           timeout: 500
       - runFlow: fechar_dropdown_filtro_sentido.yaml

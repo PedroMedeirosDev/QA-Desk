@@ -299,6 +299,7 @@ async function runTestJob(
         exitCode: pw.cancelled ? null : pw.exitCode,
         output: combined || pw.output,
         cancelled: pw.cancelled || log.isCancelled(),
+        appVersion: pw.appVersion,
       });
       return;
     }

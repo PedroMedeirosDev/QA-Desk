@@ -5,13 +5,16 @@
  * "Limpar filtro" no funil NÃO é CT — só desmarca filtros especiais (helper
  * `limparFiltroExtrasComposer` se precisar no meio de um fluxo).
  *
- * Aniversariantes (02/09): rode antes `ajustar-dn-aniversariante.spec.ts` se precisar receptor.
+ * Aniversariantes (02/09): seed DN automático 1× nesta run (SUPPETER / Colaboradores).
+ *   SKIP_ANIVERSARIANTE_DN=1 — pula o seed se a DN já estiver ok hoje.
  *
  *   npx playwright test mural/filtros-extras.spec.ts
+ *   npm run test:filtros-extras
  */
 import { test } from "@playwright/test";
 import path from "node:path";
 import { textoComunicadoPlaywright } from "../shared/assinatura-teste";
+import { garantirDnAniversariante } from "../shared/ajustar-dn-aniversariante";
 import { openComunicadosSession } from "../shared/comunicados-session";
 import {
   assertTextoNaLista,
@@ -36,9 +39,16 @@ const FILTROS: { id: string; label: string | RegExp; rotulo: string }[] = [
   { id: "FILTRO-09", label: /Aniversariantes do m[eê]s|Aniversariante.*m[eê]s/i, rotulo: "aniversariantes-mes" },
 ];
 
+const precisaSeedDn = (rotulo: string) =>
+  rotulo === "aniversariantes-dia" || rotulo === "aniversariantes-mes";
+
 for (const f of FILTROS) {
   test(`${f.id} WEB: filtro ${f.rotulo}`, async () => {
     const log = `[${f.id.toLowerCase()}-web]`;
+    if (precisaSeedDn(f.rotulo)) {
+      // 1× por run do Node (02 e 09 compartilham) — ~2–4 min na 1ª vez
+      await garantirDnAniversariante(ROOT);
+    }
     const { context, page } = await openComunicadosSession(ROOT, log);
     const texto = textoComunicadoPlaywright(`${f.id} ${f.rotulo}`);
     try {

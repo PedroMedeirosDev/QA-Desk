@@ -208,6 +208,58 @@ export async function tapFlutterSemIdCompact(
   return true;
 }
 
+/** Dump ids no iframe (inclui shadow) e avisa o que falta — pedido Semantics WEB. */
+export async function logMissingSemantics(
+  page: Page,
+  expected: string[],
+  log = "[semantics-web]",
+): Promise<string[]> {
+  const present = await flutterFrameLocator(page)
+    .locator("body")
+    .evaluate((body) => {
+      const ids: string[] = [];
+      const walk = (node: Node | null) => {
+        if (!node) return;
+        if (node instanceof Element) {
+          const id = node.getAttribute("flt-semantics-identifier");
+          if (id) ids.push(id);
+          if (node.shadowRoot) walk(node.shadowRoot);
+          for (const c of Array.from(node.children)) walk(c);
+        }
+      };
+      walk(body);
+      return [...new Set(ids)];
+    });
+  const missing = expected.filter((id) => !present.includes(id));
+  if (missing.length) {
+    console.log(`${log} FALTA Semantics WEB: ${missing.join(", ")}`);
+  }
+  console.log(
+    `${log} ids presentes (${present.length})=${present.slice(0, 40).join(",")}`,
+  );
+  return missing;
+}
+
+/** Todos os flt-semantics-identifier no iframe (shadow incluso). */
+export async function dumpFlutterSemanticsIds(page: Page): Promise<string[]> {
+  return flutterFrameLocator(page)
+    .locator("body")
+    .evaluate((body) => {
+      const ids: string[] = [];
+      const walk = (node: Node | null) => {
+        if (!node) return;
+        if (node instanceof Element) {
+          const id = node.getAttribute("flt-semantics-identifier");
+          if (id) ids.push(id);
+          if (node.shadowRoot) walk(node.shadowRoot);
+          for (const c of Array.from(node.children)) walk(c);
+        }
+      };
+      walk(body);
+      return [...new Set(ids)];
+    });
+}
+
 /**
  * Tap por aria-label / texto / id no light+shadow DOM do iframe.
  * Necessário quando o canvas Flutter pinta o rótulo sem nó getByText.
