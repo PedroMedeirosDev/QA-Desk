@@ -80,3 +80,8 @@ projects/polygonus/automation/playwright/playwright.probe.config.ts
 projects/polygonus/automation/maestro/flows/docs/Untitled
 qa-desk/test-results/
 qa-desk/.maestro-*.txt
+
+# Artefatos locais (não são o produto)
+package-lock.json
+scripts/gerar-curriculo-qa.py
+scripts/linkedin-qa-desk-thumb.html
