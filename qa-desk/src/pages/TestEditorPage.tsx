@@ -1244,6 +1244,9 @@ export function TestEditorPage({
             </Field>
             {!isHomologation && (
               <Field label="Resultado observado">
+                {isVisitor ? (
+                  <VisitorRedactedNote field="O resultado observado" />
+                ) : (
                 <textarea
                   className={cn(QUIET_INPUT, "min-h-16")}
                   placeholder={
@@ -1254,16 +1257,21 @@ export function TestEditorPage({
                   value={form.actualResult ?? ""}
                   onChange={(e) => update("actualResult", e.target.value)}
                 />
+                )}
               </Field>
             )}
             {isHomologation && form.homologationStatus === "falhou" && (
               <Field label="Observações (falha / bug encontrado)">
+                {isVisitor ? (
+                  <VisitorRedactedNote field="As observações de falha" />
+                ) : (
                 <textarea
                   className={cn(QUIET_INPUT, "min-h-16")}
                   placeholder="Descreva o que falhou ou converta para Bug encontrado no painel lateral"
                   value={form.actualResult ?? ""}
                   onChange={(e) => update("actualResult", e.target.value)}
                 />
+                )}
               </Field>
             )}
             </FormSection>
@@ -2328,7 +2336,11 @@ export function TestEditorPage({
         </fieldset>
       ) : (
         <div className="rounded-xl border bg-card p-4 sm:p-6">
-          <HistoryTimeline entries={form.history ?? []} />
+          {isVisitor ? (
+            <VisitorRedactedNote field="O histórico" />
+          ) : (
+            <HistoryTimeline entries={form.history ?? []} />
+          )}
         </div>
       )}
     </div>
@@ -2423,6 +2435,18 @@ function FormSection({
       </h3>
       {children}
     </section>
+  );
+}
+
+function VisitorRedactedNote({ field }: { field: string }) {
+  return (
+    <blockquote className="border-l-2 border-muted-foreground/40 bg-muted/20 px-3 py-2.5">
+      <p className="text-sm italic text-muted-foreground">«[conteúdo omitido]»</p>
+      <footer className="mt-1.5 text-xs text-muted-foreground/90">
+        {field} consta no registro interno. Omitido no portfólio por segurança —
+        não significa que o campo estava vazio.
+      </footer>
+    </blockquote>
   );
 }
 

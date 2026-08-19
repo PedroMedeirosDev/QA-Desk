@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  BookOpen,
+  ArrowRight,
   Eye,
   FolderOpen,
   Lock,
@@ -8,11 +8,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { ProjectLogo } from "@/components/ProjectLogo";
 import { PROJECTS } from "@/config/projects";
 import { defaultChannel } from "@/config/channels";
-import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { projectListPath } from "@/lib/project-paths";
-import { cn } from "@/lib/utils";
 import type { ProjectSlug } from "@/types/test-record";
 
 const TIPS = [
@@ -55,8 +54,14 @@ export function VisitorWelcomePage() {
           Bem-vindo ao QA Desk
         </h2>
         <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
-          Este é um recorte público da bancada de QA. Mesmo em leitura, só entram
-          cases que o QA marcou para o portfólio — o restante não aparece.
+          <span className="hidden md:inline">
+            Este é um recorte público da bancada. Escolha um projeto no menu à
+            esquerda para ver os cases publicados daquele produto.
+          </span>
+          <span className="md:hidden">
+            Este é um recorte público da bancada. Abra o menu e escolha um
+            projeto para ver os cases publicados daquele produto.
+          </span>
         </p>
       </div>
 
@@ -77,41 +82,27 @@ export function VisitorWelcomePage() {
         ))}
       </ul>
 
-      <div className="space-y-3">
-        <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <BookOpen className="size-4 text-primary" />
-          Começar por um projeto
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {SHOWCASE.map((slug) => {
-            const project = PROJECTS.find((p) => p.slug === slug);
-            if (!project) return null;
-            const href = projectListPath(slug, defaultChannel(slug));
-            return (
-              <Link
-                key={slug}
-                to={href}
-                className="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-muted/30"
-              >
-                <p className="text-sm font-semibold text-foreground group-hover:text-primary">
-                  {project.label}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {project.description}
-                </p>
-                <span
-                  className={cn(
-                    actionBtnBase,
-                    actionBtn.ghost,
-                    "mt-3 h-8 px-3 text-xs",
-                  )}
-                >
-                  Abrir em leitura
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+      <div className="grid gap-3 md:hidden">
+        {SHOWCASE.map((slug) => {
+          const project = PROJECTS.find((p) => p.slug === slug);
+          if (!project) return null;
+          return (
+            <Link
+              key={slug}
+              to={projectListPath(slug, defaultChannel(slug))}
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+            >
+              <ProjectLogo
+                logoFile={project.logoFile}
+                label={project.label}
+                size="sm"
+                className="size-8 shrink-0"
+              />
+              <span className="min-w-0 flex-1 font-medium">{project.label}</span>
+              <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
