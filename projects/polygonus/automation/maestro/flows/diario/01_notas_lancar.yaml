@@ -1,0 +1,78 @@
+# CT-NOTAS-01: Lançar nota (História / AV1 / Ana Carolina)
+# STATUS: draft — validar 2× no emulador; só tapOn/inputText por id
+# Perfil: PROFESSORES (não Coordenador)
+#
+# Escopo: TURMA_DIARIO=M3A2026 DISCIPLINA_DIARIO=Historia ALUNO_DIARIO=Ana…
+#         AVALIACAO_DIARIO=AV1  NOTA_DIARIO opcional (senão 0–10 via eval)
+#
+# Semantics: home_card_notas, notas_turma|_disciplina|_avaliacao|_enviar,
+#            notas_turma_item, notas_aluno_item, notas_aluno_<i>
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/auth/resume_phjesus_professor.yaml
+
+- evalScript: |
+    ${(() => {
+      output.turmaDiario = (typeof TURMA_DIARIO !== "undefined" && TURMA_DIARIO) ? String(TURMA_DIARIO) : "M3A2026";
+      output.disciplinaDiario = (typeof DISCIPLINA_DIARIO !== "undefined" && DISCIPLINA_DIARIO) ? String(DISCIPLINA_DIARIO) : "Historia";
+      output.alunoDiario = (typeof ALUNO_DIARIO !== "undefined" && ALUNO_DIARIO) ? String(ALUNO_DIARIO) : "Ana Carolina Teixeira de Menezes";
+      output.avaliacaoDiario = (typeof AVALIACAO_DIARIO !== "undefined" && AVALIACAO_DIARIO) ? String(AVALIACAO_DIARIO) : "AV1";
+      if (typeof NOTA_DIARIO !== "undefined" && NOTA_DIARIO) {
+        output.notaDiario = String(NOTA_DIARIO);
+      } else {
+        output.notaDiario = String(Date.now() % 11);
+      }
+    })()}
+
+- scrollUntilVisible:
+    element:
+      id: "home_card_notas"
+    direction: DOWN
+    timeout: 12000
+    centerElement: true
+- tapOn:
+    id: "home_card_notas"
+- extendedWaitUntil:
+    visible:
+      id: "notas_turma"
+    timeout: 20000
+
+- tapOn:
+    id: "notas_turma"
+- tapOn: "${output.turmaDiario}"
+- waitForAnimationToEnd:
+    timeout: 600
+
+- tapOn:
+    id: "notas_disciplina"
+- tapOn: "${output.disciplinaDiario}"
+- waitForAnimationToEnd:
+    timeout: 600
+
+- tapOn:
+    id: "notas_avaliacao"
+- tapOn: "${output.avaliacaoDiario}"
+- waitForAnimationToEnd:
+    timeout: 800
+
+# Tile do aluno (label a11y) + campo notas_aluno_<i> — se o índice for estável
+# na amostra, Ana costuma estar no 0; preferir texto do nome se o item expuser label.
+- scrollUntilVisible:
+    element: "${output.alunoDiario}"
+    direction: DOWN
+    timeout: 10000
+    optional: true
+- tapOn: "${output.alunoDiario}"
+- tapOn:
+    id: "notas_aluno_0"
+    optional: true
+- inputText: "${output.notaDiario}"
+- hideKeyboard
+
+- tapOn:
+    id: "notas_enviar"
+
+- extendedWaitUntil:
+    visible: "Salvo|salvo|Notas|home_card_notas|Back"
+    timeout: 20000

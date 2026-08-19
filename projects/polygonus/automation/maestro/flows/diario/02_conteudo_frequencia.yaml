@@ -1,0 +1,122 @@
+# CT-DIARIO-01: Conteúdo e Frequência — falta + conteúdo + PDF + vídeo
+# STATUS: draft — validar 2×; só tapOn/inputText por id (picker SO fora)
+# Perfil: PROFESSORES (não Coordenador)
+#
+# Escopo: M3A2026 / Historia / Ana Carolina…
+# Textos: "Conteudo teste (Mobile)" / "Tarefas teste (Mobile)"
+# Fixtures: PDF_TESTE.pdf + Video_teste.mp4 (push para Download no device)
+#
+# Semantics: home_card_conteudo_frequencia, frequencia_turma|_disciplina|_aula|_materia,
+#            diario_aluno_item, frequencia_aluno_<i>,
+#            conteudo_descricao|_tarefa|_anexo|_confirmar
+# WEB: um botão conteudo_anexo abre filechooser. APP iOS: diario_anexar_pdf|_video.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/auth/resume_phjesus_professor.yaml
+
+- evalScript: |
+    ${(() => {
+      output.turmaDiario = (typeof TURMA_DIARIO !== "undefined" && TURMA_DIARIO) ? String(TURMA_DIARIO) : "M3A2026";
+      output.disciplinaDiario = (typeof DISCIPLINA_DIARIO !== "undefined" && DISCIPLINA_DIARIO) ? String(DISCIPLINA_DIARIO) : "Historia";
+      output.alunoDiario = (typeof ALUNO_DIARIO !== "undefined" && ALUNO_DIARIO) ? String(ALUNO_DIARIO) : "Ana Carolina Teixeira de Menezes";
+    })()}
+
+- scrollUntilVisible:
+    element:
+      id: "home_card_conteudo_frequencia"
+    direction: DOWN
+    timeout: 12000
+    centerElement: true
+- tapOn:
+    id: "home_card_conteudo_frequencia"
+- extendedWaitUntil:
+    visible:
+      id: "frequencia_turma"
+    timeout: 20000
+
+- tapOn:
+    id: "frequencia_turma"
+- tapOn: "${output.turmaDiario}"
+- waitForAnimationToEnd:
+    timeout: 600
+
+- tapOn:
+    id: "frequencia_disciplina"
+- tapOn: "${output.disciplinaDiario}"
+- waitForAnimationToEnd:
+    timeout: 600
+
+- runFlow:
+    when:
+      visible:
+        id: "frequencia_aula"
+    commands:
+      - tapOn:
+          id: "frequencia_aula"
+      - waitForAnimationToEnd:
+          timeout: 500
+      # 1ª aula/data da lista — sem item id estável na AulaDropdown
+      - tapOn:
+          text: ".*\\d{2}/\\d{2}.*|.*Aula.*"
+          optional: true
+
+# Marca falta (check → X vermelho)
+- scrollUntilVisible:
+    element: "${output.alunoDiario}"
+    direction: DOWN
+    timeout: 10000
+    optional: true
+- tapOn: "${output.alunoDiario}"
+- tapOn:
+    id: "frequencia_aluno_0"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 600
+
+# Abre composer Conteúdo / Tarefas
+- tapOn:
+    id: "frequencia_materia"
+- extendedWaitUntil:
+    visible:
+      id: "conteudo_descricao"
+    timeout: 15000
+
+- tapOn:
+    id: "conteudo_descricao"
+- inputText: "Conteudo teste (Mobile)"
+- hideKeyboard
+
+- tapOn:
+    id: "conteudo_tarefa"
+- inputText: "Tarefas teste (Mobile)"
+- hideKeyboard
+
+# Anexo: Android/WEB — botão único; iOS — menu PDF/vídeo (ids diario_anexar_*)
+- tapOn:
+    id: "conteudo_anexo"
+- runFlow:
+    when:
+      visible:
+        id: "diario_anexar_pdf"
+    commands:
+      - tapOn:
+          id: "diario_anexar_pdf"
+# Picker nativo DocumentsUI / galeria — fora de Semantics (manual ou fixture push)
+
+- tapOn:
+    id: "conteudo_anexo"
+- runFlow:
+    when:
+      visible:
+        id: "diario_anexar_video"
+    commands:
+      - tapOn:
+          id: "diario_anexar_video"
+
+- tapOn:
+    id: "conteudo_confirmar"
+
+- extendedWaitUntil:
+    visible: "frequencia_turma|Conteudo|Frequencia|Back|home_card_conteudo_frequencia"
+    timeout: 20000

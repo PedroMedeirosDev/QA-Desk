@@ -10,6 +10,15 @@ appId: br.com.polygonus.mobile.amostra
     visible: ".*Unidade.*|Versão.*"
     timeout: 12000
 
+# Perfil: linha "Versao" + numero (pode nao vir no a11y tree). Nao bloquear o CT.
+- assertVisible:
+    text: "Vers.o"
+    optional: true
+- copyTextFrom:
+    text: "Vers.o"
+    optional: true
+- evalScript: ${output.perfilVersao = String(maestro.copiedText || "").replace(/\s+/g, " ")}
+
 # Sessão errada (responsável) — sair sem mexer no dropdown
 - runFlow:
     when:

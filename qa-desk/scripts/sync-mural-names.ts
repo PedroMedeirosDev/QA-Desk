@@ -38,7 +38,7 @@ for (const item of MURAL_HOMOLOGATION_ITEMS) {
   hit.expectedResult = item.expectedResult;
   hit.steps = item.steps;
   hit.testKey = domainKey;
-  hit.module = "Mural";
+  hit.module = "Comunicados";
   if (hit.automation) {
     hit.automation.label = item.ctId;
   }
@@ -47,13 +47,14 @@ for (const item of MURAL_HOMOLOGATION_ITEMS) {
   tags.add("homologacao");
   tags.add("mural");
   tags.add("mural-backend-homologacao");
-  tags.add("module:Mural");
+  tags.add("module:Comunicados");
   tags.add(`suite:${item.suite}`);
   tags.add(`ct:${item.ctId}`);
   // drop stale suite:/ct: tags
   hit.tags = [...tags].filter((t) => {
     if (t.startsWith("suite:") && t !== `suite:${item.suite}`) return false;
     if (t.startsWith("ct:") && t !== `ct:${item.ctId}`) return false;
+    if (t === "module:Mural") return false;
     return true;
   });
 

@@ -16,7 +16,12 @@ import {
   abrirComunicadosNaGestao,
   probeMuralFlutter,
 } from "./flutter-comunicados";
-import { garantirPerfilCoordenador } from "./garantir-perfil-coordenador";
+import {
+  garantirPerfilCoordenador,
+  garantirPerfilFuncao,
+  garantirPerfilProfessor,
+  type FuncaoPerfilFlutter,
+} from "./garantir-perfil-coordenador";
 
 export type ComunicadosSession = {
   context: BrowserContext;
@@ -67,6 +72,7 @@ export function comunicadosProfileDir(playwrightRoot: string) {
 export async function openComunicadosSession(
   playwrightRoot: string,
   log = "[comunicados-web]",
+  opts?: { perfil?: FuncaoPerfilFlutter },
 ): Promise<ComunicadosSession> {
   prepareComunicadosEnv(playwrightRoot);
   const headed = process.env.PLAYWRIGHT_HEADED !== "0";
@@ -122,8 +128,15 @@ export async function openComunicadosSession(
     `Esperado home_card_mural ou mural_*; veio: ${probe.sampleIds.join(",")}`,
   ).toBeTruthy();
 
-  // Envio sem Coordenador cai em Pendentes (não Enviadas) — quebra CRUD WEB
-  await garantirPerfilCoordenador(page);
+  const perfil = opts?.perfil ?? "COORDENADOR";
+  if (perfil === "PROFESSORES") {
+    await garantirPerfilProfessor(page);
+  } else if (perfil === "COORDENADOR") {
+    // Envio mural sem Coordenador cai em Pendentes — quebra CRUD WEB
+    await garantirPerfilCoordenador(page);
+  } else {
+    await garantirPerfilFuncao(page, perfil);
+  }
 
   return { context, page, log };
 }

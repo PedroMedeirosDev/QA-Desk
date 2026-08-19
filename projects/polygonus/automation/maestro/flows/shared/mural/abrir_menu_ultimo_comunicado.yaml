@@ -29,7 +29,11 @@ appId: br.com.polygonus.mobile.amostra
       ID_COMUNICADO: ${ID_COMUNICADO}
       MURAL_ID: ${MURAL_ID}
 
-- assertTrue: ${(output.idComunicado || "").length > 3}
+# Sem ID (CLI / copyTextFrom): ⋮ do 1º card. Com ID (qa-desk): tap âncora no content-desc.
+- extendedWaitUntil:
+    visible:
+      id: "mural_card_menu"
+    timeout: 10000
 
 # 2) ⋮ do topo em Enviadas → Editar|Excluir
 - runFlow: abrir_menu_enviadas_topo.yaml

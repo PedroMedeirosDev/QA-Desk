@@ -30,10 +30,6 @@ test("CT-CHAT-00 WEB: smoke abrir atendimento", async () => {
 });
 
 test("CT-CHAT-01 WEB: enviar mensagem texto", async () => {
-  test.skip(
-    true,
-    "WEB: lista só expõe chat_lista_fab_nova (sem chat_lista_item_0); Novo grupo ainda não seleciona pessoa",
-  );
   const log = "[ct-chat-01-web]";
   const { context, page } = await openComunicadosSession(ROOT, log);
   const runId = Date.now().toString(36).slice(-6);

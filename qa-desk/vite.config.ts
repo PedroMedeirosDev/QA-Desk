@@ -23,7 +23,7 @@ export default defineConfig({
         target: apiTarget,
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq, req) => {
-            if (req.url?.includes("stream")) {
+            if (req.url?.includes("stream") || req.url?.includes("github-issue")) {
               proxyReq.setHeader("Accept-Encoding", "identity");
             }
           });

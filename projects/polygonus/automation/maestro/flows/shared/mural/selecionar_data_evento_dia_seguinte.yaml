@@ -15,33 +15,34 @@ appId: br.com.polygonus.mobile.amostra
     timeout: 8000
 
 - scrollUntilVisible:
-    element: "\\d{1,2} de .*\\. de \\d{4}|\\d{1,2}/\\d{1,2}/\\d{4}"
+    element:
+      id: "mural_evento_data_inicio"
+    direction: DOWN
+    timeout: 8000
+    optional: true
+- scrollUntilVisible:
+    element: "\\d{1,2} de .* de \\d{4}|\\d{1,2}/\\d{1,2}/\\d{4}|Início|Inicio|Data"
     direction: DOWN
     timeout: 8000
     optional: true
 
 # Preferência: semantics da data de início
-- runFlow:
-    when:
-      visible:
-        id: "mural_evento_data_inicio"
-    commands:
-      - tapOn:
-          id: "mural_evento_data_inicio"
-      - waitForAnimationToEnd:
-          timeout: 600
+- tapOn:
+    id: "mural_evento_data_inicio"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 400
 
-# Fallback: primeira data do formulário (texto)
-- runFlow:
-    when:
-      notVisible:
-        id: "mural_evento_data_inicio"
-    commands:
-      - tapOn:
-          text: ".*\\d{1,2} de .*\\. de \\d{4}.*|.*\\d{1,2}/\\d{1,2}/\\d{4}.*"
-          index: 0
-      - waitForAnimationToEnd:
-          timeout: 600
+# Fallback: rótulo / texto da data (mês por extenso sem exigir "ago.")
+- tapOn:
+    text: "Início|Inicio|Data de início|Data de inicio"
+    optional: true
+- tapOn:
+    text: ".*\\d{1,2} de .* de \\d{4}.*|.*\\d{1,2}/\\d{1,2}/\\d{4}.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 600
 
 - extendedWaitUntil:
     visible: "Ok|OK|Confirmar|Selecionar|CANCELAR|Cancelar|jan\\.|fev\\.|mar\\.|abr\\.|mai\\.|jun\\.|jul\\.|ago\\.|set\\.|out\\.|nov\\.|dez\\."

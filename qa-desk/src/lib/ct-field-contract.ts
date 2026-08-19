@@ -202,5 +202,5 @@ export const CT_DRAFT_EXAMPLE: CtDraftFields = {
   ],
   flowPath:
     "projects/polygonus/automation/maestro/flows/mural/01_1_comunicado_editar.yaml",
-  module: "Mural",
+  module: "Comunicados",
 };

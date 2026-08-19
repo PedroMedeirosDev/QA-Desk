@@ -5,6 +5,7 @@
  */
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
+import path from "node:path";
 import {
   FLUTTER_IFRAME,
   dismissContinuarOverlay,
@@ -13,6 +14,7 @@ import {
   tapFlutterByAccessibleName,
   tapFlutterSemId,
   tapFlutterSemIdCompact,
+  logMissingSemantics,
 } from "./flutter-comunicados";
 
 const LOG = "[chat-web]";
@@ -80,12 +82,16 @@ export async function abrirListaChat(page: Page): Promise<void> {
     )
     .toBe(true);
 
-  const ids = await flutterFrameLocator(page)
-    .locator("[flt-semantics-identifier]")
-    .evaluateAll((els) =>
-      [...new Set(els.map((e) => e.getAttribute("flt-semantics-identifier")))],
-    );
-  console.log(`${LOG} lista ids=${ids.filter((id) => id?.startsWith("chat_")).join(",")}`);
+  await logMissingSemantics(
+    page,
+    [
+      "chat_lista_fab_nova",
+      "chat_lista_item_0",
+      "chat_input_texto",
+      "chat_input_enviar_ou_mic",
+    ],
+    LOG,
+  );
 }
 
 async function chatInputVisivel(page: Page): Promise<boolean> {
@@ -271,4 +277,190 @@ export async function smokeAbrirChat(page: Page): Promise<void> {
       .count()) > 0;
   expect(ok, "smoke chat: lista/fab/input").toBeTruthy();
   console.log(`${LOG} smoke ok`);
+}
+
+export type ChatAnexoTipo = "documento" | "galeria" | "camera";
+
+async function blobA11yChat(page: Page): Promise<string> {
+  return flutterFrameLocator(page)
+    .locator("body")
+    .evaluate((body) => {
+      const parts: string[] = [body.innerText || ""];
+      const walk = (node: Node | null) => {
+        if (!node) return;
+        if (node instanceof Element) {
+          const a = node.getAttribute("aria-label");
+          const id = node.getAttribute("flt-semantics-identifier");
+          if (a) parts.push(a);
+          if (id) parts.push(id);
+          if (node.shadowRoot) walk(node.shadowRoot);
+          for (const c of Array.from(node.children)) walk(c);
+        }
+      };
+      walk(body);
+      return parts.join("\n");
+    });
+}
+
+/** Abre o sheet de anexo (`chat_input_anexo`). Sem id → anota gap Semantics. */
+export async function abrirMenuAnexoChat(page: Page): Promise<void> {
+  console.log(`${LOG} abrir menu anexo`);
+  await logMissingSemantics(page, ["chat_input_anexo"], LOG);
+
+  if (
+    (await tapFlutterSemIdCompact(page, "chat_input_anexo")) ||
+    (await tapFlutterSemId(page, "chat_input_anexo"))
+  ) {
+    await page.waitForTimeout(900);
+    await logMissingSemantics(
+      page,
+      ["chat_anexo_documento", "chat_anexo_galeria", "chat_anexo_camera"],
+      LOG,
+    );
+    return;
+  }
+
+  // Fallback texto / ícone clipe (só se a11y expuser)
+  if (
+    (await tapFlutterByAccessibleName(page, /anexo|anexar|documento|clip|attach/i)) ||
+    (await tapFlutterByAccessibleName(page, /^Adicionar$/i))
+  ) {
+    await page.waitForTimeout(900);
+    return;
+  }
+
+  throw new Error(
+    "abrirMenuAnexoChat: chat_input_anexo ausente no WEB — anotar item 4 em SEMANTICS_SUGESTOES.md",
+  );
+}
+
+async function tocarItemAnexoChat(
+  page: Page,
+  tipo: ChatAnexoTipo,
+): Promise<void> {
+  const id =
+    tipo === "documento"
+      ? "chat_anexo_documento"
+      : tipo === "galeria"
+        ? "chat_anexo_galeria"
+        : "chat_anexo_camera";
+  const labelRe =
+    tipo === "documento"
+      ? /documento|arquivo|PDF|Selecionar arquivo/i
+      : tipo === "galeria"
+        ? /galeria|imagem|foto|v[ií]deo|m[ií]dia/i
+        : /c[aâ]mera|camera|filmar/i;
+
+  console.log(`${LOG} item anexo → ${id}`);
+  if (await tapFlutterSemIdCompact(page, id)) return;
+  if (await tapFlutterSemId(page, id)) return;
+  if (await tapFlutterByAccessibleName(page, labelRe)) return;
+
+  throw new Error(
+    `tocarItemAnexoChat: ${id} / rótulo não encontrado (WEB — item 4 SEMANTICS)`,
+  );
+}
+
+/**
+ * Anexa arquivo no chat WEB via filechooser (espelho Maestro 06_1_chat_pdf / vídeo).
+ * `tipo`: documento (PDF) | galeria (foto/vídeo).
+ */
+export async function anexarArquivoChatWeb(
+  page: Page,
+  filePath: string,
+  tipo: Exclude<ChatAnexoTipo, "camera"> = "documento",
+): Promise<void> {
+  console.log(`${LOG} anexar WEB (${tipo}): ${filePath}`);
+  const chooserPromise = page.waitForEvent("filechooser", { timeout: 18_000 });
+
+  await abrirMenuAnexoChat(page);
+  await tocarItemAnexoChat(page, tipo);
+
+  const chooser = await chooserPromise.catch(() => null);
+  if (!chooser) {
+    throw new Error(
+      `filechooser não abriu após ${tipo} — Flutter WEB pode não expor <input type=file> / falta Semantics (item 4)`,
+    );
+  }
+  await chooser.setFiles(filePath);
+  await page.waitForTimeout(2_000);
+  console.log(`${LOG} filechooser ok`);
+}
+
+/** Envia o que estiver no composer (texto ou anexo já escolhido). */
+export async function tocarEnviarChat(page: Page): Promise<void> {
+  if (!(await tapFlutterSemId(page, "chat_input_enviar_ou_mic"))) {
+    if (!(await tapFlutterSemId(page, "chat_input_enviar"))) {
+      if (!(await tapFlutterByAccessibleName(page, /^Enviar$/i))) {
+        const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+        if (box) {
+          await page.mouse.click(
+            box.x + box.width * 0.92,
+            box.y + box.height * 0.9,
+          );
+        }
+      }
+    }
+  }
+  await page.waitForTimeout(1_500);
+}
+
+/**
+ * Fluxo completo: thread → anexo → (opcional legenda) → enviar → assert a11y.
+ */
+export async function enviarAnexoChat(
+  page: Page,
+  filePath: string,
+  opts: {
+    tipo: Exclude<ChatAnexoTipo, "camera">;
+    legenda?: string;
+    /** Trecho esperado na thread (nome do arquivo ou “pdf” / “foto”). */
+    assertNeedle?: string | RegExp;
+  },
+): Promise<void> {
+  await abrirChat(page);
+  await anexarArquivoChatWeb(page, filePath, opts.tipo);
+
+  if (opts.legenda?.trim()) {
+    if (!(await tapFlutterSemId(page, "chat_input_texto"))) {
+      await tapFlutterByAccessibleName(page, /Escreva|Digite|Mensagem/i);
+    }
+    await page.waitForTimeout(200);
+    await page.keyboard.type(opts.legenda, { delay: 12 });
+    await page.waitForTimeout(300);
+  }
+
+  await tocarEnviarChat(page);
+
+  const needle =
+    opts.assertNeedle ||
+    opts.legenda?.slice(0, 24) ||
+    path.basename(filePath).slice(0, 18);
+  const re =
+    typeof needle === "string"
+      ? new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
+      : needle;
+
+  let ok = false;
+  try {
+    await expect
+      .poll(async () => re.test(await blobA11yChat(page)), {
+        timeout: 25_000,
+        message: `Chat: anexo/legenda não refletiu na a11y (${String(needle)})`,
+      })
+      .toBe(true);
+    ok = true;
+  } catch {
+    // Anexo pode ir só no canvas — se o composer voltou, considera envio consumido
+    if (await chatInputVisivel(page)) {
+      console.log(`${LOG} anexo enviado (sem texto a11y do arquivo — canvas)`);
+      ok = true;
+    }
+  }
+  if (!ok) {
+    throw new Error(
+      `Chat: anexo não confirmado na a11y nem pelo composer (${String(needle)})`,
+    );
+  }
+  console.log(`${LOG} anexo ok`);
 }

@@ -1,5 +1,6 @@
 # Abre item do BoomMenu da Rotina.
-# Env: ROTINA_BOOM_ID (ex.: rotina_boom_alimentacao) e/ou ROTINA_BOOM_TEXTO (ASCII preferível)
+# Env: ROTINA_BOOM_ID, ROTINA_BOOM_TEXTO
+#      MODELO_ROTINA (opcional) — Bilhete/Momentos têm lista de modelos antes do composer
 
 appId: br.com.polygonus.mobile.amostra
 ---
@@ -13,14 +14,41 @@ appId: br.com.polygonus.mobile.amostra
       - tapOn:
           id: "${ROTINA_BOOM_ID}"
 
+# Fallback texto só se o boom ainda está aberto (outro tipo ainda visível)
+# e o composer ainda não montou. Não usar só notVisible:id — após tap o id
+# some e o título da tela (ex. "Soneca") re-disparava o fallback.
 - runFlow:
     when:
+      visible:
+        id: "rotina_boom_alimentacao"
       notVisible:
         id: "${ROTINA_BOOM_ID}"
       visible: "${ROTINA_BOOM_TEXTO}"
+      notVisible: "Turma|Aluno|Termo|Enviar|Escreva|Digite"
     commands:
       - tapOn: "${ROTINA_BOOM_TEXTO}"
 
+# Bilhete / Momentos: lista de modelos (rotina_boom_*_modelo) antes do composer
+- runFlow:
+    when:
+      visible:
+        id: "${ROTINA_BOOM_ID}_modelo"
+    commands:
+      - runFlow:
+          when:
+            true: ${MODELO_ROTINA != null && MODELO_ROTINA != ""}
+          commands:
+            - tapOn: "${MODELO_ROTINA}"
+      - runFlow:
+          when:
+            true: ${MODELO_ROTINA == null || MODELO_ROTINA == ""}
+          commands:
+            - tapOn:
+                id: "${ROTINA_BOOM_ID}_modelo"
+      - waitForAnimationToEnd:
+          timeout: 600
+
+# Composer — sem nomes do boom (Soneca|Banheiro…) que passam falso positivo
 - extendedWaitUntil:
-    visible: "Turma|Aluno|Termo|Enviar|Escreva|Digite|Soneca|Banheiro|Bilhete"
+    visible: "Turma|Aluno|Termo|Enviar|Escreva|Digite"
     timeout: 12000

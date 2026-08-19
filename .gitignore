@@ -69,3 +69,14 @@ projects/polygonus/automation/playwright/.auth/
 projects/polygonus/automation/playwright/playwright-report/
 projects/polygonus/automation/playwright/test-results/
 projects/polygonus/automation/playwright/**/blob_storage/
+
+# Prints e probes de debug — nunca versionar
+**/debug-*.png
+**/debug-*.jpg
+**/debug-*.jpeg
+projects/polygonus/automation/playwright/**/_probe-*.spec.ts
+projects/polygonus/automation/playwright/**/debug-*.spec.ts
+projects/polygonus/automation/playwright/playwright.probe.config.ts
+projects/polygonus/automation/maestro/flows/docs/Untitled
+qa-desk/test-results/
+qa-desk/.maestro-*.txt

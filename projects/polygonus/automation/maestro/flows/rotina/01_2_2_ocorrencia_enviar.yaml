@@ -1,0 +1,117 @@
+# CT-ROTINA-08: Ocorrência / registros pedagógicos (aba Rotina)
+# STATUS: draft — semantics APP incompletas (ver flows/docs/SEMANTICS_SUGESTOES.md item 3)
+# Só tapOn/inputText por id. Sem point:% / below / childOf.
+#
+# Composer: ocorrencia_turma | _disciplina (opcional, nao tocar) | _tipo | _termo | _aluno | _texto | _enviar
+# Picker: ocorrencia_ok | ocorrencia_tipo_item | ocorrencia_termo_item
+# Tipo/termo: TIPO_TERMO_OCORRENCIA / TERMO_OCORRENCIA no .env, senão o item 0.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/rotina/setup_coordenador_rotina.yaml
+
+- runFlow:
+    file: ../shared/rotina/abrir_tipo_rotina.yaml
+    env:
+      ROTINA_BOOM_ID: "rotina_boom_ocorrencia"
+      ROTINA_BOOM_TEXTO: "Registros Pedagogicos|Ocorrencia|Registrar ocorr"
+      TITULO_ROTINA: "Novo registro|Tipo termo|Turma|Enviar"
+
+- assertVisible:
+    id: "ocorrencia_tipo"
+
+# —— Turma ——
+- tapOn:
+    id: "ocorrencia_turma"
+- tapOn: "${TURMA_ROTINA}"
+- runFlow:
+    when:
+      visible:
+        id: "ocorrencia_ok"
+    commands:
+      - tapOn:
+          id: "ocorrencia_ok"
+
+# Disciplina (opcional) entra no layout depois da turma — esperar, não tocar.
+- extendedWaitUntil:
+    visible:
+      id: "ocorrencia_disciplina"
+    timeout: 10000
+
+# —— Tipo termo ——
+# Aceite (SEMANTICS 3b): um tap em ocorrencia_tipo abre Disciplinares, não Faltas.
+- tapOn:
+    id: "ocorrencia_tipo"
+- runFlow:
+    when:
+      true: ${TIPO_TERMO_OCORRENCIA != null && TIPO_TERMO_OCORRENCIA != ""}
+    commands:
+      - tapOn: "${TIPO_TERMO_OCORRENCIA}"
+- runFlow:
+    when:
+      true: ${TIPO_TERMO_OCORRENCIA == null || TIPO_TERMO_OCORRENCIA == ""}
+    commands:
+      - tapOn:
+          id: "ocorrencia_tipo_item"
+          index: 0
+- runFlow:
+    when:
+      visible:
+        id: "ocorrencia_ok"
+    commands:
+      - tapOn:
+          id: "ocorrencia_ok"
+
+# —— Termo ——
+- extendedWaitUntil:
+    visible:
+      id: "ocorrencia_termo"
+    timeout: 8000
+- tapOn:
+    id: "ocorrencia_termo"
+- runFlow:
+    when:
+      true: ${TERMO_OCORRENCIA != null && TERMO_OCORRENCIA != ""}
+    commands:
+      - tapOn: "${TERMO_OCORRENCIA}"
+- runFlow:
+    when:
+      true: ${TERMO_OCORRENCIA == null || TERMO_OCORRENCIA == ""}
+    commands:
+      - tapOn:
+          id: "ocorrencia_termo_item"
+          index: 0
+- runFlow:
+    when:
+      visible:
+        id: "ocorrencia_ok"
+    commands:
+      - tapOn:
+          id: "ocorrencia_ok"
+
+# —— Aluno ——
+- tapOn:
+    id: "ocorrencia_aluno"
+- tapOn: "${ALUNO_ROTINA}"
+- runFlow:
+    when:
+      visible:
+        id: "ocorrencia_ok"
+    commands:
+      - tapOn:
+          id: "ocorrencia_ok"
+
+# —— Descrição ——
+# Aceite (SEMANTICS 3a): tap + inputText no id ocorrencia_texto grava e habilita Enviar.
+- tapOn:
+    id: "ocorrencia_texto"
+- inputText: "Teste Maestro ocorrencia"
+- hideKeyboard
+
+# —— Enviar ——
+- tapOn:
+    id: "ocorrencia_enviar"
+
+- extendedWaitUntil:
+    visible: "Registro criado!|Rotina|Show menu|rotina_lista_vazia|rotina_boom_fab"
+    timeout: 20000

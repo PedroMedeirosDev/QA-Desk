@@ -11,6 +11,7 @@ import {
   tapFlutterByAccessibleName,
   tapFlutterSemId,
   tapFlutterSemIdCompact,
+  logMissingSemantics,
 } from "./flutter-comunicados";
 import { ensureMuralHome } from "./mural-composer";
 
@@ -20,7 +21,10 @@ export type RotinaBoomId =
   | "rotina_boom_alimentacao"
   | "rotina_boom_soneca"
   | "rotina_boom_banheiro"
-  | "rotina_boom_bilhete";
+  | "rotina_boom_bilhete"
+  | "rotina_boom_humor"
+  | "rotina_boom_vestuario"
+  | "rotina_boom_momentos";
 
 function normEnv(v: string | undefined): string {
   return (v || "").replace(/\s+/g, " ").trim().replace(/^["']|["']$/g, "");
@@ -260,10 +264,57 @@ async function tapCampoDropdown(page: Page, labelRe: RegExp): Promise<boolean> {
   const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
   if (!box || !hit) return false;
   await page.mouse.click(
-    box.x + Math.min(hit.x + hit.w + 90, box.width * 0.72),
+    box.x + Math.min(hit.x + Math.max(hit.w * 0.65, hit.w + 90), box.width * 0.72),
     box.y + hit.y + hit.h / 2,
   );
   return true;
+}
+
+/** Linha larga do dropdown Turma (o campo, não o rótulo curto). */
+async function tapDropdownTurmaLargo(page: Page): Promise<boolean> {
+  const frame = flutterFrameLocator(page);
+  const hit = await frame.locator("body").evaluate((body) => {
+    let best: { x: number; y: number; w: number; h: number; score: number } | null =
+      null;
+    const walk = (node: Node | null) => {
+      if (!node) return;
+      if (node instanceof Element) {
+        const t =
+          ((node as HTMLElement).innerText || "").trim().split("\n")[0] || "";
+        const aria =
+          (node.getAttribute("aria-label") || "").trim().split("\n")[0] || "";
+        if (/^Turma$/i.test(t) || /^Turma$/i.test(aria)) {
+          const r = node.getBoundingClientRect();
+          if (r.width >= 80 && r.height >= 16 && r.height < 90 && r.y > 40) {
+            const score = r.width * Math.min(r.height, 48);
+            if (!best || score > best.score) {
+              best = { x: r.x, y: r.y, w: r.width, h: r.height, score };
+            }
+          }
+        }
+        if (node.shadowRoot) walk(node.shadowRoot);
+        for (const c of Array.from(node.children)) walk(c);
+      }
+    };
+    walk(body);
+    return best;
+  });
+  const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+  if (!box || !hit) return false;
+  await page.mouse.click(
+    box.x + hit.x + Math.min(hit.w * 0.7, 420),
+    box.y + hit.y + hit.h / 2,
+  );
+  return true;
+}
+
+async function listaTurmasVisivel(page: Page): Promise<boolean> {
+  const blob = await flutterFrameLocator(page)
+    .locator("body")
+    .evaluate((b) => b.innerText || "");
+  return /Maternal|Ber[cç][aá]rio|Infantil|Jardim|1[ºo]\s*ano|Procurar|Limpar filtro/i.test(
+    blob,
+  );
 }
 
 async function pickerAberto(page: Page): Promise<boolean> {
@@ -466,6 +517,14 @@ async function marcarOpcoes(page: Page, opcoes: string[]): Promise<void> {
       continue;
     }
     await page.waitForTimeout(900);
+    await logMissingSemantics(
+      page,
+      [
+        "rotina_composer_ok",
+        `rotina_composer_opcao_${slug}`,
+      ],
+      `${LOG} pós-${slug}`,
+    );
   }
 }
 
@@ -490,10 +549,67 @@ async function confirmarOkPicker(page: Page): Promise<void> {
   await tapListLabel(page, /^(OK|Ok)$/i, { maxH: 60 });
 }
 
+/** Bilhete/Momentos expandem modelos (rotina_boom_*_modelo) antes do composer. */
+async function escolherModeloBoom(
+  page: Page,
+  boomId: RotinaBoomId,
+  modelo?: string,
+): Promise<void> {
+  const modeloId = `${boomId}_modelo`;
+  const present = await flutterFrameLocator(page)
+    .locator("body")
+    .evaluate((body, id) => {
+      let n = 0;
+      const walk = (node: Node | null) => {
+        if (!node) return;
+        if (node instanceof Element) {
+          if (node.getAttribute("flt-semantics-identifier") === id) n += 1;
+          if (node.shadowRoot) walk(node.shadowRoot);
+          for (const c of Array.from(node.children)) walk(c);
+        }
+      };
+      walk(body);
+      return n;
+    }, modeloId);
+  if (!present) return;
+
+  const nome = modelo?.trim();
+  console.log(`${LOG} modelo → ${nome || "(primeiro da lista)"}`);
+  if (nome) {
+    const re = new RegExp(`^${escapeRe(nome)}$`, "i");
+    if (await tapLinhaPicker(page, re)) return;
+    if (await tapListLabel(page, re, { maxH: 56, minY: 90 })) return;
+    if (await tapFlutterByAccessibleName(page, re)) return;
+  }
+  if (await tapFlutterSemIdCompact(page, modeloId)) return;
+  await tapFlutterSemId(page, modeloId);
+}
+
+async function composerRotinaAberto(page: Page): Promise<boolean> {
+  const frame = flutterFrameLocator(page);
+  if (
+    (await frame
+      .locator('[flt-semantics-identifier="rotina_composer_enviar"]')
+      .count()) > 0
+  ) {
+    return true;
+  }
+  if (
+    (await frame
+      .locator('[flt-semantics-identifier="rotina_composer_turma"]')
+      .count()) > 0
+  ) {
+    return true;
+  }
+  const blob = await frame.locator("body").evaluate((b) => b.innerText || "");
+  return /Turma/.test(blob) && /Aluno/.test(blob);
+}
+
 export async function abrirTipoRotina(
   page: Page,
   boomId: RotinaBoomId,
   boomTexto?: RegExp,
+  modelo?: string,
 ): Promise<void> {
   await ensureAbaRotina(page);
   console.log(`${LOG} boom → ${boomId}`);
@@ -520,14 +636,29 @@ export async function abrirTipoRotina(
       }
     }
   }
+  await page.waitForTimeout(800);
+  await escolherModeloBoom(page, boomId, modelo);
   await page.waitForTimeout(1_000);
-  const ids = await flutterFrameLocator(page)
-    .locator("[flt-semantics-identifier]")
-    .evaluateAll((els) =>
-      [...new Set(els.map((e) => e.getAttribute("flt-semantics-identifier")))],
-    );
-  console.log(
-    `${LOG} composer ids=${ids.filter((id) => id?.startsWith("rotina_")).join(",")}`,
+
+  await expect
+    .poll(() => composerRotinaAberto(page), {
+      timeout: 15_000,
+      message: `${boomId}: composer não abriu (faltou clicar o modelo?)`,
+    })
+    .toBe(true);
+
+  await logMissingSemantics(
+    page,
+    [
+      "rotina_composer_turma",
+      "rotina_composer_aluno",
+      "rotina_composer_termo",
+      "rotina_composer_ok",
+      "rotina_composer_enviar",
+      "rotina_composer_texto",
+      "rotina_composer_galeria",
+    ],
+    LOG,
   );
 }
 
@@ -540,22 +671,38 @@ async function abrirPickerCampo(
   if (semId) {
     if (await tapFlutterSemIdCompact(page, semId)) {
       await page.waitForTimeout(600);
-      if (await pickerAberto(page)) return true;
+      if ((await pickerAberto(page)) || (await listaTurmasVisivel(page))) {
+        return true;
+      }
+    }
+  }
+  if (labelRe.test("Turma")) {
+    if (await tapDropdownTurmaLargo(page)) {
+      await page.waitForTimeout(700);
+      if ((await pickerAberto(page)) || (await listaTurmasVisivel(page))) {
+        return true;
+      }
     }
   }
   if (await tapCampoDropdown(page, labelRe)) {
     await page.waitForTimeout(700);
-    if (await pickerAberto(page)) return true;
+    if ((await pickerAberto(page)) || (await listaTurmasVisivel(page))) {
+      return true;
+    }
   }
   if (await tapListLabel(page, labelRe, { maxH: 48 })) {
     await page.waitForTimeout(700);
-    if (await pickerAberto(page)) return true;
+    if ((await pickerAberto(page)) || (await listaTurmasVisivel(page))) {
+      return true;
+    }
   }
   const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
   if (box) {
     await page.mouse.click(box.x + box.width * 0.7, box.y + box.height * fracY);
     await page.waitForTimeout(500);
-    if (await pickerAberto(page)) return true;
+    if ((await pickerAberto(page)) || (await listaTurmasVisivel(page))) {
+      return true;
+    }
   }
   const blob = await flutterFrameLocator(page)
     .locator("body")
@@ -564,7 +711,7 @@ async function abrirPickerCampo(
   return false;
 }
 
-/** Turma + Aluno (+ OK). Usado por alimentação/soneca/banheiro/bilhete. */
+/** Turma + Aluno (+ OK). Usado por alimentação/soneca/banheiro/bilhete/humor/vestuário. */
 export async function preencherTurmaAluno(
   page: Page,
   opts?: { turma?: string; aluno?: string },
@@ -663,7 +810,7 @@ export async function enviarBilheteRotina(
   page: Page,
   texto: string,
 ): Promise<void> {
-  await abrirTipoRotina(page, "rotina_boom_bilhete", /Bilhete/i);
+  await abrirTipoRotina(page, "rotina_boom_bilhete", /Bilhete/i, "Se machucou");
   await preencherTurmaAluno(page);
 
   if (await tapFlutterSemId(page, "rotina_composer_termo")) {
@@ -688,6 +835,297 @@ export async function enviarBilheteRotina(
   await page.keyboard.type(texto, { delay: 12 });
   await page.waitForTimeout(400);
   await enviarRotina(page);
+}
+
+/** Galeria do composer Rotina (WEB filechooser). */
+export async function anexarFotosRotina(
+  page: Page,
+  files: string[],
+): Promise<void> {
+  for (let i = 0; i < files.length; i++) {
+    const filePath = files[i]!;
+    console.log(`${LOG} galeria ${i + 1}/${files.length} → ${path.basename(filePath)}`);
+    const chooserPromise = page.waitForEvent("filechooser", { timeout: 12_000 });
+    if (
+      !(await tapFlutterSemIdCompact(page, "rotina_composer_galeria")) &&
+      !(await tapFlutterSemId(page, "rotina_composer_galeria"))
+    ) {
+      if (!(await tapListLabel(page, /galeria|imagem|foto/i, { maxH: 80 }))) {
+        const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+        if (box) {
+          await page.mouse.click(
+            box.x + box.width * 0.12,
+            box.y + box.height * 0.78,
+          );
+        }
+      }
+    }
+    const chooser = await chooserPromise.catch(() => null);
+    if (!chooser) {
+      throw new Error(
+        `filechooser não abriu na foto ${i + 1}/${files.length} (rotina_composer_galeria)`,
+      );
+    }
+    await chooser.setFiles(filePath);
+    await page.waitForTimeout(900);
+  }
+}
+
+export async function enviarMomentosRotina(
+  page: Page,
+  files: string[],
+  modelo = "Se divertindo",
+): Promise<void> {
+  await abrirTipoRotina(page, "rotina_boom_momentos", /Momentos/i, modelo);
+  await preencherTurmaAluno(page);
+  await anexarFotosRotina(page, files);
+  await enviarRotina(page);
+}
+
+async function composerOcorrenciaAberto(page: Page): Promise<boolean> {
+  const frame = flutterFrameLocator(page);
+  if (
+    (await frame
+      .locator('[flt-semantics-identifier="ocorrencia_enviar"]')
+      .count()) > 0
+  ) {
+    return true;
+  }
+  if (
+    (await frame
+      .locator('[flt-semantics-identifier="ocorrencia_tipo"]')
+      .count()) > 0
+  ) {
+    return true;
+  }
+  const blob = await frame.locator("body").evaluate((b) => b.innerText || "");
+  return /Novo registro/i.test(blob) && /Tipo termo/i.test(blob);
+}
+
+/** Só id + rótulo — clique geométrico no composer de ocorrência derruba o iframe. */
+async function abrirPickerPorId(
+  page: Page,
+  semId: string,
+  labelRe: RegExp,
+): Promise<boolean> {
+  if (await tapFlutterSemIdCompact(page, semId)) {
+    await page.waitForTimeout(700);
+    if ((await pickerAberto(page)) || (await listaTurmasVisivel(page))) {
+      return true;
+    }
+  }
+  if (await tapFlutterSemId(page, semId)) {
+    await page.waitForTimeout(700);
+    if ((await pickerAberto(page)) || (await listaTurmasVisivel(page))) {
+      return true;
+    }
+  }
+  if (await tapCampoDropdown(page, labelRe)) {
+    await page.waitForTimeout(700);
+    if ((await pickerAberto(page)) || (await listaTurmasVisivel(page))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function confirmarOkOcorrencia(page: Page): Promise<void> {
+  if (await tapFlutterSemIdCompact(page, "ocorrencia_ok")) return;
+  await confirmarOkPicker(page);
+}
+
+async function escolherItemPicker(
+  page: Page,
+  itemId: string,
+  nome?: string,
+): Promise<void> {
+  if (nome) {
+    if (!(await escolherNaLista(page, nome))) {
+      throw new Error(`Opção "${nome}" não apareceu no picker`);
+    }
+  } else if (!(await tapFlutterSemIdCompact(page, itemId))) {
+    if (!(await tapFlutterSemId(page, itemId))) {
+      if (!(await tapPrimeiraLinhaLista(page))) {
+        const blob = await flutterFrameLocator(page)
+          .locator("body")
+          .evaluate((b) => (b.innerText || "").replace(/\s+/g, " ").slice(0, 400));
+        throw new Error(`Picker sem itens (${itemId}). text=${blob}`);
+      }
+    }
+  }
+  await page.waitForTimeout(400);
+  if (await pickerAberto(page)) await confirmarOkOcorrencia(page);
+}
+
+export async function abrirOcorrenciaRotina(page: Page): Promise<void> {
+  await ensureAbaRotina(page);
+  console.log(`${LOG} boom → rotina_boom_ocorrencia`);
+
+  if (
+    !(await tapFlutterSemIdCompact(page, "rotina_boom_fab")) &&
+    !(await tapFlutterSemId(page, "rotina_boom_fab"))
+  ) {
+    const box = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+    if (box) {
+      await page.mouse.click(box.x + box.width * 0.9, box.y + box.height * 0.86);
+    }
+  }
+  await page.waitForTimeout(800);
+
+  if (
+    !(await tapFlutterSemIdCompact(page, "rotina_boom_ocorrencia")) &&
+    !(await tapFlutterSemId(page, "rotina_boom_ocorrencia"))
+  ) {
+    if (!(await tapFlutterByAccessibleName(page, /Ocorr[eê]ncia/i))) {
+      if (!(await tapListLabel(page, /Ocorr[eê]ncia/i))) {
+        throw new Error("rotina_boom_ocorrencia não encontrado");
+      }
+    }
+  }
+  await page.waitForTimeout(1_000);
+
+  await expect
+    .poll(() => composerOcorrenciaAberto(page), {
+      timeout: 15_000,
+      message: "Composer de ocorrência não abriu (Novo registro / Tipo termo)",
+    })
+    .toBe(true);
+
+  await logMissingSemantics(
+    page,
+    [
+      "ocorrencia_turma",
+      "ocorrencia_tipo",
+      "ocorrencia_texto",
+      "ocorrencia_enviar",
+      "ocorrencia_aluno",
+      "ocorrencia_termo",
+    ],
+    LOG,
+  );
+}
+
+/**
+ * Registro pedagógico (composer `ocorrencia_*`): turma → tipo → termo → aluno → texto → enviar.
+ * Tipo/termo: `TIPO_TERMO_OCORRENCIA` / `TERMO_OCORRENCIA` ou o primeiro da lista.
+ */
+export async function enviarOcorrenciaRotina(
+  page: Page,
+  texto: string,
+): Promise<void> {
+  const turma = resolveTurmaRotina();
+  const tipo = (process.env.TIPO_TERMO_OCORRENCIA || "").trim();
+  const termo = (process.env.TERMO_OCORRENCIA || "").trim();
+  await abrirOcorrenciaRotina(page);
+
+  console.log(`${LOG} ocorrência turma → ${turma}`);
+  if (!(await abrirPickerPorId(page, "ocorrencia_turma", /^Turma$/i))) {
+    throw new Error("Picker Turma (ocorrencia_turma) não abriu");
+  }
+  if (!(await escolherNaLista(page, turma))) {
+    throw new Error(`Turma "${turma}" não encontrada`);
+  }
+  await page.waitForTimeout(600);
+  if (await pickerAberto(page)) await confirmarOkOcorrencia(page);
+  await page.waitForTimeout(500);
+
+  console.log(`${LOG} tipo termo → ${tipo || "(primeiro)"}`);
+  if (!(await abrirPickerPorId(page, "ocorrencia_tipo", /^Tipo termo$/i))) {
+    throw new Error("Picker Tipo termo (ocorrencia_tipo) não abriu");
+  }
+  await escolherItemPicker(page, "ocorrencia_tipo_item", tipo || undefined);
+  await page.waitForTimeout(700);
+
+  await expect
+    .poll(
+      async () =>
+        (await flutterFrameLocator(page)
+          .locator('[flt-semantics-identifier="ocorrencia_termo"]')
+          .count()) > 0,
+      { timeout: 8_000, message: "Campo Termo não apareceu após o tipo" },
+    )
+    .toBe(true);
+
+  console.log(`${LOG} termo → ${termo || "(primeiro)"}`);
+  if (!(await abrirPickerPorId(page, "ocorrencia_termo", /^Termo$/i))) {
+    throw new Error("Picker Termo (ocorrencia_termo) não abriu");
+  }
+  await escolherItemPicker(page, "ocorrencia_termo_item", termo || undefined);
+  await page.waitForTimeout(500);
+
+  console.log(`${LOG} aluno ocorrência`);
+  if (
+    !(await abrirPickerPorId(page, "ocorrencia_aluno", /Selecionar aluno|^Aluno$/i))
+  ) {
+    throw new Error("Picker aluno (ocorrencia_aluno) não abriu");
+  }
+  await page.waitForTimeout(600);
+  if (!(await tapLinhaPicker(page, /^Selecionar$/i))) {
+    if (!(await tapListLabel(page, /^Selecionar$/i, { maxH: 80 }))) {
+      await tapFlutterByAccessibleName(page, /^Selecionar$/i);
+    }
+  }
+  await page.waitForTimeout(400);
+  await confirmarOkOcorrencia(page);
+  if (await pickerAberto(page)) {
+    await confirmarOkOcorrencia(page);
+    await page.waitForTimeout(400);
+  }
+  await dismissAtenção(page);
+
+  console.log(`${LOG} descrição ocorrência`);
+  if (!(await tapFlutterSemIdCompact(page, "ocorrencia_texto"))) {
+    if (!(await tapFlutterSemId(page, "ocorrencia_texto"))) {
+      if (
+        !(await tapListLabel(page, /Descrição da ocorrência/i, { maxH: 160 }))
+      ) {
+        throw new Error("Campo ocorrencia_texto não encontrado");
+      }
+    }
+  }
+  await page.waitForTimeout(300);
+  await page.keyboard.type(texto, { delay: 12 });
+  await page.waitForTimeout(400);
+
+  console.log(`${LOG} enviar ocorrência`);
+  if (!(await tapFlutterSemIdCompact(page, "ocorrencia_enviar"))) {
+    if (!(await tapFlutterSemId(page, "ocorrencia_enviar"))) {
+      if (!(await tapListLabel(page, /^Enviar$/i, { maxH: 80 }))) {
+        throw new Error("ocorrencia_enviar não encontrado");
+      }
+    }
+  }
+
+  const frame = flutterFrameLocator(page);
+  await expect
+    .poll(
+      async () => {
+        if (page.isClosed()) return false;
+        try {
+          await dismissAtenção(page);
+          const blob = await frame
+            .locator("body")
+            .evaluate((body) => (body.innerText || "").replace(/\s+/g, " "));
+          if (/informe pelo menos um aluno/i.test(blob)) return false;
+          if (/Registro criado|ocorrência salva|ocorrencia salva/i.test(blob)) {
+            return true;
+          }
+          if (
+            (await frame
+              .locator('[flt-semantics-identifier="rotina_boom_fab"]')
+              .count()) > 0
+          ) {
+            return true;
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 30_000, message: "Ocorrência: não voltou à lista / sem toast" },
+    )
+    .toBe(true);
+  console.log(`${LOG} ocorrência envio ok`);
 }
 
 export async function enviarRotina(page: Page): Promise<void> {
@@ -749,7 +1187,7 @@ export async function enviarRotina(page: Page): Promise<void> {
           }
           if (
             /Show menu/i.test(blob) &&
-            /Rotina|Alimenta|Soneca|Banheiro|Bilhete/i.test(blob) &&
+            /Rotina|Alimenta|Soneca|Banheiro|Bilhete|Humor|Vestu|Momentos/i.test(blob) &&
             !/Registre hábitos|Envie bilhetes/i.test(blob)
           ) {
             return true;

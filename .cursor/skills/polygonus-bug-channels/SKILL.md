@@ -18,7 +18,7 @@ Evita misturar **App nativo**, **APP versão WEB** (Flutter Web do mesmo produto
 |-----------------|------------------------|-------------------------|----------------|--------------|
 | App no celular / emulador (Maestro, APK) | `app` | `android` ou `ios` | `APP-NN` | **APP** |
 | **APP versão WEB** — mesmo app Polygonus no **browser** (Flutter Web, iframe `flt-*`) | `app` | `web` | `APP-NN` | **APP** (não WEB) |
-| **App nativo e APP WEB** (mesmo sintoma nos dois) | `app` | `app_web` (label **APP + WEB**) | `APP-NN` | **APP** |
+| **App nativo e APP WEB** (mesmo sintoma nos dois) | `app` | `app_web` (label **App e APP WEB**) | `APP-NN` | **APP** |
 | Produto web de gestão / portal escolar (não é o shell Flutter do app) | `web` ou `portal` | `web` | `WEB-NN` / `PORTAL-NN` | **WEB** / **PORTAL** |
 
 Se o usuário disser **“APP versão WEB”**, **“app no Chrome”**, **“Flutter Web”**, **“iframe do mural”** → **APP WEB**: `channel: app` + `platform: web`. Fica no menu **APP**.
@@ -43,6 +43,15 @@ Menu **WEB** do Desk = produto de gestão / portal — **não** o Flutter do app
 - Automação típica: Playwright (não Maestro).
 - Não escrever só “Abrir o App” sem “versão WEB” — fica ambíguo.
 - No formulário: canal **App**, plataforma **web** (não mudar canal para WEB).
+- Se o mesmo widget Flutter também roda no App nativo e o sintoma vale nos dois → usar a seção abaixo (`app_web`), não só APP WEB.
+
+### App nativo e APP WEB (os dois)
+- Título: incluir **App e APP WEB** (ex.: `Rotina (Mural · App e APP WEB): …`).
+- Pré: os dois ambientes — APK/emulador **e** APP versão WEB (browser).
+- Passos: deixar explícito que reproduz no App **e** no APP WEB (mesmo widget Flutter).
+- Ambiente na issue: lista com **Reproduz nos dois** + bullets **App nativo** e **APP versão WEB**. Nunca `App · APP + WEB` nem `App · Web` numa linha só.
+- No formulário: canal **App**, plataforma **App e APP WEB** (`app_web`).
+- `bugCode` continua `APP-NN` — não criar outro código.
 
 ### WEB / PORTAL de produto (não Flutter do app)
 - Deixar claro o produto (gestão, portal, ficha, etc.).
@@ -53,8 +62,9 @@ Menu **WEB** do Desk = produto de gestão / portal — **não** o Flutter do app
 ```
 - [ ] channel + platform batem com a tabela acima
 - [ ] APP WEB está em App → Bugs (channel app), não em WEB → Bugs
-- [ ] título distingue App mobile vs APP WEB
-- [ ] passos/pré não misturam emulador com browser
+- [ ] título distingue App mobile vs APP WEB vs os dois (`App e APP WEB`)
+- [ ] se vale nos dois: `platform: app_web` (não só `web`)
+- [ ] passos/pré não misturam emulador com browser — salvo `app_web`, que cita os dois
 - [ ] evidência (print/vídeo) no ambiente certo
 - [ ] se já houver issue GitHub: atualizar título + body após editar o Desk
 ```
@@ -71,5 +81,6 @@ Repo: `polygonus-br/polygonus-suporte-kb` (label `bug`).
 ## Anti-padrões
 
 - Colocar APP WEB em `channel: web` só porque abriu no browser → some do menu APP e mistura com WEB de gestão.
-- Passos de emulador num bug APP WEB (ou o inverso).
+- Registrar só APP WEB (`platform: web`) quando o mesmo widget Flutter roda no App nativo e o sintoma vale nos dois → usar `app_web`.
+- Passos de emulador num bug só APP WEB (ou o inverso), sem ser `app_web`.
 - Assumir que “iframe” = bug de produto WEB de gestão — no Mural costuma ser **Flutter Web do APP**.

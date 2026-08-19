@@ -1,0 +1,25 @@
+# Fecha o diálogo "Mensalidades em aberto" (uma vez por dia no app).
+# Semantics: pendencia_dialog_depois (Agora não). Sem o dismiss, o overlay
+# cobre a home e o resume/CTs falham no assert do header.
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow:
+    when:
+      visible:
+        id: "pendencia_dialog_depois"
+    commands:
+      - tapOn:
+          id: "pendencia_dialog_depois"
+      - waitForAnimationToEnd:
+          timeout: 500
+
+- runFlow:
+    when:
+      visible: "Agora não|Agora nao"
+      notVisible:
+        id: "pendencia_dialog_depois"
+    commands:
+      - tapOn: "Agora não|Agora nao"
+      - waitForAnimationToEnd:
+          timeout: 500

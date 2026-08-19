@@ -1,12 +1,22 @@
 # Stub → happy path texto (Atendimento novo).
-# Build ≥ 6.06.22: chat_input_texto; enviar = chat_input_enviar_ou_mic
-# (mantido — decisão do time). Anexos: chat_anexo_documento | _galeria | _camera
-# (camera só !kIsWeb no bottom-sheet).
-#
+# Build ≥ 6.06.23: chat_lista_item_* → chat_input_texto + chat_input_enviar_ou_mic
 # Env: CHAT_TEXTO
 
 appId: br.com.polygonus.mobile.amostra
 ---
+# Se ainda na lista, abre a 1ª conversa
+- runFlow:
+    when:
+      visible:
+        id: "chat_lista_item_0"
+      notVisible:
+        id: "chat_input_texto"
+    commands:
+      - tapOn:
+          id: "chat_lista_item_0"
+      - waitForAnimationToEnd:
+          timeout: 1500
+
 - runFlow:
     when:
       visible:
@@ -33,6 +43,9 @@ appId: br.com.polygonus.mobile.amostra
                 id: "chat_input_enviar"
       - waitForAnimationToEnd:
           timeout: 2000
+      # Composer continua; corpo da msg pode ser canvas
+      - assertVisible:
+          id: "chat_input_texto"
 
 # Fallback texto (flaky) — só se o id ainda não existir
 - runFlow:
@@ -46,3 +59,13 @@ appId: br.com.polygonus.mobile.amostra
       - tapOn: "Enviar"
       - waitForAnimationToEnd:
           timeout: 2000
+
+# Falha explícita se não abriu composer
+- runFlow:
+    when:
+      notVisible:
+        id: "chat_input_texto"
+      notVisible: "Escreva|Digite|Mensagem"
+    commands:
+      - assertVisible:
+          id: "chat_input_texto"

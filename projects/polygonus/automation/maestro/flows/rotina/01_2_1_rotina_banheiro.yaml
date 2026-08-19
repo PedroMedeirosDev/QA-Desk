@@ -19,3 +19,7 @@ appId: br.com.polygonus.mobile.amostra
       TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
       TURMA_ROTINA: "${TURMA_ROTINA}"
       ALUNO_ROTINA: "${ALUNO_ROTINA}"
+      OPCAO_ID_1: "rotina_composer_opcao_xixi"
+      OPCAO_ROTINA_1: "Xixi"
+      OPCAO_ID_2: "rotina_composer_opcao_no_vaso"
+      OPCAO_ROTINA_2: "No vaso"

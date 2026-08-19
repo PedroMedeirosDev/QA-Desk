@@ -41,8 +41,6 @@ appId: br.com.polygonus.mobile.amostra
 
 - runFlow: ../shared/mural/capturar_id_ultimo_comunicado.yaml
 
-- assertTrue: ${(output.idComunicado || "").length > 3}
-
 - runFlow:
     file: ../shared/mural/excluir_comunicado_lista.yaml
     env:

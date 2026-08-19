@@ -12,6 +12,7 @@ import {
   openMuralFromHome,
   tapFlutterByAccessibleName,
   tapFlutterSemId,
+  tapFlutterSemIdCompact,
 } from "./flutter-comunicados";
 import path from "node:path";
 
@@ -94,15 +95,30 @@ export async function dismissAtencaoSeVisivel(page: Page): Promise<boolean> {
   if (!(await atencao.isVisible({ timeout: 1_200 }).catch(() => false))) {
     return false;
   }
-  const fechar = frame.getByText(/^Fechar$/i).first();
-  if (await fechar.isVisible({ timeout: 2_000 }).catch(() => false)) {
-    await fechar.click({ force: true });
-  } else if (await tapFlutterSemId(page, "shared_dialog_sim")) {
-    /* ok */
-  } else {
-    await frame.getByText(/OK|Ok|Fechar/i).first().click({ force: true }).catch(() => undefined);
+  // Flutter WEB: el.click no "Fechar" costuma falhar — mouse no rótulo compacto
+  const closed =
+    (await tapFlutterLabelByMouse(page, /^Fechar$/i)) ||
+    (await tapCompactFlutterLabel(page, /^Fechar$/i, { minY: 120 })) ||
+    (await tapFlutterSemId(page, "shared_dialog_sim"));
+  if (!closed) {
+    const fechar = frame.getByText(/^Fechar$/i).first();
+    if (await fechar.isVisible({ timeout: 1_500 }).catch(() => false)) {
+      const box = await fechar.boundingBox();
+      if (box) {
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      } else {
+        await fechar.click({ force: true }).catch(() => undefined);
+      }
+    } else {
+      await frame
+        .getByText(/OK|Ok|Fechar/i)
+        .first()
+        .click({ force: true })
+        .catch(() => undefined);
+    }
   }
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(600);
+  console.log(`${LOG} Atenção dismiss mouse=${closed}`);
   return true;
 }
 
@@ -230,23 +246,115 @@ export async function selecionarAlvoTodos(page: Page): Promise<void> {
   const frame = flutterFrameLocator(page);
   console.log(`${LOG} alvo → Todos`);
 
-  if (!(await tapFlutterSemId(page, "mural_composer_alvo"))) {
-    const alunos = frame.getByText(/Alunos/i).first();
-    if (await alunos.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await alunos.click({ force: true });
+  // Abrir dialog "Selecionar Destinatário" (chip Ao lado de Para: — default Alunos)
+  if (!(await tapFlutterSemIdCompact(page, "mural_composer_alvo"))) {
+    if (!(await tapFlutterSemId(page, "mural_composer_alvo"))) {
+      const opened =
+        (await tapFlutterLabelByMouse(page, /^Alunos$/i)) ||
+        (await tapCompactFlutterLabel(page, /Alunos/i, { minY: 80 }));
+      if (!opened) {
+        await frame
+          .getByText(/Alunos/i)
+          .first()
+          .click({ force: true })
+          .catch(() => undefined);
+      }
     }
   }
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(800);
 
-  const todos = frame.getByText(/^Todos$/i).first();
-  if (await todos.isVisible({ timeout: 5_000 }).catch(() => false)) {
-    await todos.click({ force: true });
+  await expect
+    .poll(
+      async () =>
+        (await frame
+          .getByText(/Selecionar Destinat[aá]rio|Respons[aá]veis|^Todos$/i)
+          .count()) > 0 ||
+        (await frame.locator('[role="checkbox"]').count()) > 0,
+      { timeout: 10_000, message: "Dialog de alvos (destinatário) não abriu" },
+    )
+    .toBe(true)
+    .catch(() => undefined);
+
+  // NÃO usar a 1ª checkbox — no dialog de alvos a 1ª é "Alunos" (já marcada).
+  // Marcar explicitamente "Todos" (checkbox com aria/texto ou rótulo).
+  let marked = await marcarCheckboxAlvoTodos(page);
+  if (!marked) {
+    marked = await tapFlutterLabelByMouse(page, /^Todos$/i);
+    console.log(`${LOG} alvo Todos via label=${marked}`);
   }
-  const ok = frame.getByText(/^(Ok|OK)$/i).first();
-  if (await ok.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await ok.click({ force: true });
+  if (!marked) {
+    marked = await tapCompactFlutterLabel(page, /^Todos$/i, { minY: 100 });
+    console.log(`${LOG} alvo Todos via compact=${marked}`);
+  }
+  await page.waitForTimeout(400);
+
+  const okOk =
+    (await tapFlutterLabelByMouse(page, /^(Ok|OK)$/i)) ||
+    (await tapCompactFlutterLabel(page, /^(Ok|OK)$/i, { minY: 100 }));
+  if (!okOk) {
+    const ok = frame.getByText(/^(Ok|OK)$/i).first();
+    if (await ok.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await ok.click({ force: true });
+    }
   }
   await page.waitForTimeout(500);
+  console.log(`${LOG} alvo marked=${marked}`);
+}
+
+/** Marca checkbox "Todos" no dialog de destinatários (não confundir com Alunos). */
+async function marcarCheckboxAlvoTodos(page: Page): Promise<boolean> {
+  const frame = flutterFrameLocator(page);
+  const hit = await frame.locator("body").evaluate(() => {
+    const re = /^Todos$/i;
+    let best: {
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      checked: boolean;
+    } | null = null;
+    const walk = (node: Node | null) => {
+      if (!node) return;
+      if (node instanceof Element) {
+        const role = node.getAttribute("role") || "";
+        const aria = (node.getAttribute("aria-label") || "").trim();
+        const first =
+          ((node as HTMLElement).innerText || "").trim().split("\n")[0]?.trim() ||
+          "";
+        const name = (aria.split("\n")[0] || first).trim();
+        if (role === "checkbox" && re.test(name)) {
+          const r = node.getBoundingClientRect();
+          if (r.width >= 16 && r.height >= 16 && r.y > 80) {
+            best = {
+              x: r.x,
+              y: r.y,
+              w: r.width,
+              h: r.height,
+              checked: node.getAttribute("aria-checked") === "true",
+            };
+          }
+        }
+        if (node.shadowRoot) walk(node.shadowRoot);
+        for (const c of Array.from(node.children)) walk(c);
+      }
+    };
+    walk(document.body);
+    return best;
+  });
+
+  if (!hit) return false;
+  if (hit.checked) {
+    console.log(`${LOG} alvo checkbox Todos já marcado`);
+    return true;
+  }
+  const iframeBox = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+  if (!iframeBox) return false;
+  await page.mouse.click(
+    iframeBox.x + hit.x + hit.w / 2,
+    iframeBox.y + hit.y + hit.h / 2,
+  );
+  console.log(`${LOG} alvo checkbox Todos → checked`);
+  return true;
 }
 
 export async function escreverTextoComunicado(
@@ -284,6 +392,27 @@ export async function escreverTextoComunicado(
   await page.waitForTimeout(100);
   await page.keyboard.type(texto, { delay: 12 });
   await page.waitForTimeout(500);
+
+  // Se o hint ainda está visível, o type não entrou no campo — tenta de novo
+  const hintStill = await frame
+    .getByText(/Escreva seu texto aqui/i)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (hintStill) {
+    console.log(`${LOG} texto: hint ainda visível — re-foco`);
+    await page.keyboard.press("Escape").catch(() => undefined);
+    await page.waitForTimeout(200);
+    if (await tapFlutterSemId(page, "mural_composer_texto")) {
+      /* ok */
+    } else if (box) {
+      await page.mouse.click(box.x + box.width * 0.45, box.y + box.height * 0.48);
+    }
+    await page.waitForTimeout(300);
+    await page.keyboard.press("Control+A");
+    await page.keyboard.type(texto, { delay: 12 });
+    await page.waitForTimeout(400);
+  }
   console.log(`${LOG} texto digitado (${texto.length} chars)`);
 }
 
@@ -366,9 +495,25 @@ export async function enviarComunicado(page: Page): Promise<void> {
     await tapEnviarFab(page);
     await page.waitForTimeout(1_800);
 
-    if (await dismissAtencaoSeVisivel(page)) {
-      console.log(`${LOG} falta turma — re-selecionando (tentativa ${attempt})`);
-      await selecionarTurmasTodos(page);
+    // Atenção pode ser: (a) falta turma → re-selecionar; (b) aviso admin/alvo Todos → só Fechar + reenviar
+    const faltaTurma = await frame
+      .getByText(/selecione pelo menos uma turma/i)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    const atencaoVisivel = await frame
+      .getByText(/Atenção!/i)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (atencaoVisivel || faltaTurma) {
+      await dismissAtencaoSeVisivel(page);
+      if (faltaTurma) {
+        console.log(`${LOG} falta turma — re-selecionando (tentativa ${attempt})`);
+        await selecionarTurmasTodos(page);
+      } else {
+        console.log(`${LOG} Atenção informativa — reenviar (tentativa ${attempt})`);
+      }
       continue;
     }
 
@@ -417,8 +562,18 @@ export async function enviarComunicado(page: Page): Promise<void> {
     console.log(`${LOG} pós-enviar state=${done} attempt=${attempt}`);
     if (done === "lista") return;
     await dismissAtencaoSeVisivel(page);
-    if (done === "atencao" || done === "composer") {
-      await selecionarTurmasTodos(page);
+    if (done === "atencao") {
+      const aindaFaltaTurma = await frame
+        .getByText(/selecione pelo menos uma turma/i)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (aindaFaltaTurma) await selecionarTurmasTodos(page);
+      continue;
+    }
+    if (done === "composer") {
+      // Composer ainda aberto: tenta Enviar de novo (não reabrir turmas às cegas)
+      continue;
     }
   }
 
@@ -728,47 +883,78 @@ export async function filtrarSentido(
 
   const labelRe =
     sentido === "Enviadas"
-      ? /^(Enviadas|Enviados)$/i
+      ? /^(Enviadas|Enviados)(\b|\s|$)/i
       : sentido === "Recebidas"
-        ? /^(Recebidas|Recebidos)$/i
-        : /^(Pendentes)$/i;
+        ? /^(Recebidas|Recebidos)(\b|\s|$)/i
+        : /^(Pendentes)(\b|\s|$)/i;
 
   // O Semantics `mural_filtro_sentido` cobre ~header inteiro (APP-02-like).
-  // Clicar no rótulo compacto (Recebidas ~140×27), não no centro do nó grande.
-  const opened = await clickCompactSentidoLabel(page, /^(Recebidas|Recebidos|Enviadas|Enviados|Pendentes)$/i);
+  // Preferir clique compacto (mouse) — el.click falha no Flutter WEB.
+  let opened = await clickCompactSentidoLabel(
+    page,
+    /^(Recebidas|Recebidos|Enviadas|Enviados|Pendentes)(\b|\s|$)/i,
+  );
   if (!opened) {
-    // fallback: canto esquerdo do nó semantics (onde fica o dropdown)
-    const chip = frame.locator('[flt-semantics-identifier="mural_filtro_sentido"]').first();
+    opened = await tapFlutterSemIdCompact(page, "mural_filtro_sentido");
+  }
+  if (!opened) {
+    opened = await tapFlutterLabelByMouse(
+      page,
+      /^(Recebidas|Recebidos|Enviadas|Enviados|Pendentes)$/i,
+    );
+  }
+  if (!opened) {
+    const chip = frame
+      .locator('[flt-semantics-identifier="mural_filtro_sentido"]')
+      .first();
     const box = await chip.boundingBox().catch(() => null);
     if (box) {
-      await page.mouse.click(box.x + 70, box.y + box.height * 0.65);
+      // Canto esquerdo do nó (onde fica o dropdown Recebidas)
+      await page.mouse.click(box.x + Math.min(70, box.width * 0.25), box.y + box.height * 0.65);
+      opened = true;
     } else {
-      await tapFlutterSemId(page, "mural_filtro_sentido");
+      opened = await tapFlutterSemId(page, "mural_filtro_sentido");
     }
   }
-  await page.waitForTimeout(1_000);
+  console.log(`${LOG} dropdown sentido aberto=${opened}`);
+  await page.waitForTimeout(1_200);
 
-  let picked = await clickMenuSentidoItem(page, labelRe);
+  // Preferência Maestro ≥ semantics: mural_filtro_sentido_item (aria "Enviadas\nEnviadas")
+  let picked = await clickFiltroSentidoItem(page, labelRe);
+  if (!picked) {
+    picked = await clickMenuSentidoItem(page, labelRe);
+  }
+  if (!picked) {
+    picked = await tapFlutterLabelByMouse(page, labelRe);
+  }
   if (!picked) {
     picked = await tapFlutterByAccessibleName(page, labelRe);
   }
   if (!picked) {
-    // Item do menu Material — qualquer Enviadas/Recebidas com y>100
-    picked = await frame.locator("body").evaluate((body, source) => {
+    // Fallback amplo: qualquer nó com Enviadas/Recebidas abaixo do app bar
+    const hit = await frame.locator("body").evaluate((body, source) => {
       const re = new RegExp(source, "i");
-      let best: { el: HTMLElement; area: number } | null = null;
+      let best: { x: number; y: number; w: number; h: number; area: number } | null =
+        null;
       const walk = (node: Node | null) => {
         if (!node) return;
         if (node instanceof Element) {
           const text =
             ((node as HTMLElement).innerText || "").trim().split("\n")[0] || "";
-          const aria = node.getAttribute("aria-label") || "";
-          if (re.test(text) || re.test(aria)) {
+          const aria = (node.getAttribute("aria-label") || "").trim();
+          const ariaFirst = aria.split("\n")[0] || "";
+          if (re.test(text) || re.test(ariaFirst) || re.test(aria)) {
             const r = node.getBoundingClientRect();
-            if (r.width >= 40 && r.height >= 18 && r.y > 100) {
+            if (
+              r.width >= 40 &&
+              r.height >= 18 &&
+              r.y > 70 &&
+              r.y < 420 &&
+              r.height < 100
+            ) {
               const area = r.width * r.height;
               if (area < 80_000 && (!best || area < best.area)) {
-                best = { el: node as HTMLElement, area };
+                best = { x: r.x, y: r.y, w: r.width, h: r.height, area };
               }
             }
           }
@@ -777,15 +963,20 @@ export async function filtrarSentido(
         }
       };
       walk(body);
-      if (!best) return false;
-      best.el.click();
-      return true;
+      return best;
     }, labelRe.source);
+    const iframeBox = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+    if (hit && iframeBox) {
+      await page.mouse.click(
+        iframeBox.x + hit.x + hit.w / 2,
+        iframeBox.y + hit.y + hit.h / 2,
+      );
+      picked = true;
+    }
   }
 
   if (!picked) {
     await page.keyboard.press("Escape").catch(() => undefined);
-    // Se o chip já mudou (tap no próprio valor), aceita
     const after = await lerRotuloFiltroSentido(page);
     if (after && expectRe.test(after)) {
       console.log(`${LOG} sentido ${sentido} via chip (${after})`);
@@ -795,6 +986,97 @@ export async function filtrarSentido(
   }
   console.log(`${LOG} sentido ${sentido} selecionado`);
   await page.waitForTimeout(1_200);
+  await assertFiltroSentidoAtivo(page, sentido);
+}
+
+/** Item do dropdown TipoSentido — Semantics `mural_filtro_sentido_item` (WEB/APP ≥ 6.06). */
+async function clickFiltroSentidoItem(
+  page: Page,
+  labelRe: RegExp,
+): Promise<boolean> {
+  const frame = flutterFrameLocator(page);
+  const hit = await frame.locator("body").evaluate((body, source) => {
+    const re = new RegExp(source, "i");
+    const hits: {
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      score: number;
+      aria: string;
+      id: string;
+    }[] = [];
+    const walk = (node: Node | null) => {
+      if (!node) return;
+      if (node instanceof Element) {
+        const id = node.getAttribute("flt-semantics-identifier") || "";
+        const aria = (node.getAttribute("aria-label") || "").trim();
+        const text = ((node as HTMLElement).innerText || "").trim();
+        // WEB: text costuma ser "Enviadas Enviadas" (label+value)
+        const candidates = [
+          aria.split("\n")[0]?.trim() || "",
+          text.split("\n")[0]?.trim() || "",
+          (aria.split(/\s+/)[0] || "").trim(),
+          (text.split(/\s+/)[0] || "").trim(),
+          aria,
+          text,
+        ];
+        const label = candidates.find((c) => c && re.test(c)) || "";
+        const isItem = id === "mural_filtro_sentido_item" || id.endsWith("_filtro_sentido_item");
+        // Preferir a LINHA do menu (h~48 w~180) — o *_item costuma ser clickable=false (h~21)
+        const isMenuRow =
+          !id &&
+          label &&
+          text.length < 40 &&
+          /^(Recebidas|Recebidos|Enviadas|Enviados|Pendentes|Aprovadas|Rejeitadas|Modelos|Agendamentos)/i.test(
+            text.split("\n")[0] || text,
+          );
+        if (label && (isItem || isMenuRow)) {
+          const r = node.getBoundingClientRect();
+          if (r.width >= 40 && r.height >= 16 && r.y > 40 && r.y < 420) {
+            // Score: linhas do menu (h 40–56) primeiro; depois *_item
+            const rowBonus = r.height >= 36 && r.height <= 56 && r.width >= 120 ? 0 : 200;
+            const itemPenalty = isItem ? 50 : 0;
+            hits.push({
+              x: r.x,
+              y: r.y,
+              w: r.width,
+              h: r.height,
+              score: rowBonus + itemPenalty + Math.abs(48 - r.height) + r.y * 0.01,
+              aria: label,
+              id: id || "row",
+            });
+          }
+        }
+        if (node.shadowRoot) walk(node.shadowRoot);
+        for (const c of Array.from(node.children)) walk(c);
+      }
+    };
+    walk(body);
+    hits.sort((a, b) => a.score - b.score);
+    return hits[0] || null;
+  }, labelRe.source);
+
+  if (!hit) {
+    const n = await frame
+      .locator('[flt-semantics-identifier="mural_filtro_sentido_item"]')
+      .count()
+      .catch(() => 0);
+    console.log(`${LOG} sentido_item match=0 (nodes=${n})`);
+    return false;
+  }
+
+  const iframeBox = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+  if (!iframeBox) return false;
+  // Clique no centro da linha (não só no texto estreito)
+  await page.mouse.click(
+    iframeBox.x + hit.x + Math.max(hit.w * 0.45, 40),
+    iframeBox.y + hit.y + hit.h / 2,
+  );
+  console.log(
+    `${LOG} sentido_item → ${hit.aria} id=${hit.id} @y=${Math.round(hit.y)} h=${Math.round(hit.h)}`,
+  );
+  return true;
 }
 
 /** Item do dropdown de sentido (abaixo do chip; não confundir com o chip do header). */
@@ -803,9 +1085,10 @@ async function clickMenuSentidoItem(
   labelRe: RegExp,
 ): Promise<boolean> {
   const frame = flutterFrameLocator(page);
-  return frame.locator("body").evaluate((body, source) => {
+  const hit = await frame.locator("body").evaluate((body, source) => {
     const re = new RegExp(source, "i");
-    let best: { el: HTMLElement; score: number } | null = null;
+    let best: { x: number; y: number; w: number; h: number; score: number } | null =
+      null;
     const walk = (node: Node | null) => {
       if (!node) return;
       if (node instanceof Element) {
@@ -822,13 +1105,15 @@ async function clickMenuSentidoItem(
           if (
             r.width >= 80 &&
             r.width <= 360 &&
-            r.height >= 32 &&
-            r.height <= 64 &&
-            r.y >= 100 &&
-            r.y < 280
+            r.height >= 28 &&
+            r.height <= 72 &&
+            r.y >= 90 &&
+            r.y < 360
           ) {
             const score = r.y + Math.abs(160 - r.width);
-            if (!best || score < best.score) best = { el: node as HTMLElement, score };
+            if (!best || score < best.score) {
+              best = { x: r.x, y: r.y, w: r.width, h: r.height, score };
+            }
           }
         }
         if (node.shadowRoot) walk(node.shadowRoot);
@@ -836,17 +1121,23 @@ async function clickMenuSentidoItem(
       }
     };
     walk(body);
-    if (!best) return false;
-    best.el.click();
-    return true;
+    return best;
   }, labelRe.source);
+  if (!hit) return false;
+  const iframeBox = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+  if (!iframeBox) return false;
+  await page.mouse.click(
+    iframeBox.x + hit.x + hit.w / 2,
+    iframeBox.y + hit.y + hit.h / 2,
+  );
+  return true;
 }
 
 /** Lê o rótulo compacto atual do chip Recebidas/Enviadas/Pendentes. */
 export async function lerRotuloFiltroSentido(page: Page): Promise<string | null> {
   const frame = flutterFrameLocator(page);
   return frame.locator("body").evaluate(() => {
-    const re = /^(Recebidas|Recebidos|Enviadas|Enviados|Pendentes)$/i;
+    const re = /^(Recebidas|Recebidos|Enviadas|Enviados|Pendentes)(\b|\s|$)/i;
     let best: { t: string; score: number } | null = null;
     const walk = (node: Node | null) => {
       if (!node) return;
@@ -855,17 +1146,25 @@ export async function lerRotuloFiltroSentido(page: Page): Promise<string | null>
           ((node as HTMLElement).innerText || "").trim().split("\n")[0]?.trim() ||
           "";
         const aria = (node.getAttribute("aria-label") || "").trim().split("\n")[0] || "";
-        for (const t of [firstLine, aria]) {
-          if (re.test(t)) {
+        const id = node.getAttribute("flt-semantics-identifier") || "";
+        for (const raw of [firstLine, aria]) {
+          const word = (raw.split(/\s+/)[0] || "").trim();
+          const t = re.test(raw) || re.test(word) ? word || raw : "";
+          if (t) {
             const r = node.getBoundingClientRect();
+            // Chip do header (ou nó semantics um pouco maior)
             if (
               r.width >= 60 &&
-              r.width <= 220 &&
-              r.height >= 18 &&
-              r.height <= 48 &&
-              r.y < 140
+              r.width <= 400 &&
+              r.height >= 16 &&
+              r.height <= 80 &&
+              r.y < 200 &&
+              (id === "mural_filtro_sentido" || r.height <= 48)
             ) {
-              const score = Math.abs(140 - r.width) + Math.abs(28 - r.height);
+              const score =
+                Math.abs(140 - Math.min(r.width, 140)) +
+                Math.abs(28 - r.height) +
+                (id === "mural_filtro_sentido" ? 0 : 20);
               if (!best || score < best.score) best = { t, score };
             }
           }
@@ -907,20 +1206,33 @@ async function clickCompactSentidoLabel(
   labelRe: RegExp,
 ): Promise<boolean> {
   const frame = flutterFrameLocator(page);
-  return frame.locator("body").evaluate((body, source) => {
+  const hit = await frame.locator("body").evaluate((body, source) => {
     const re = new RegExp(source, "i");
-    let best: { el: HTMLElement; score: number } | null = null;
+    let best: { x: number; y: number; w: number; h: number; score: number } | null =
+      null;
     const walk = (node: Node | null) => {
       if (!node) return;
       if (node instanceof Element) {
         const text = ((node as HTMLElement).innerText || "").trim();
         const firstLine = text.split("\n")[0]?.trim() || "";
-        if (re.test(firstLine) && firstLine.length < 24) {
+        const word = firstLine.split(/\s+/)[0] || "";
+        if (
+          (re.test(firstLine) || re.test(word)) &&
+          firstLine.length < 40
+        ) {
           const r = node.getBoundingClientRect();
           // chip do header: estreito e baixo
-          if (r.width >= 60 && r.width <= 220 && r.height >= 18 && r.height <= 48 && r.y < 120) {
+          if (
+            r.width >= 60 &&
+            r.width <= 220 &&
+            r.height >= 18 &&
+            r.height <= 48 &&
+            r.y < 140
+          ) {
             const score = Math.abs(140 - r.width) + Math.abs(28 - r.height);
-            if (!best || score < best.score) best = { el: node as HTMLElement, score };
+            if (!best || score < best.score) {
+              best = { x: r.x, y: r.y, w: r.width, h: r.height, score };
+            }
           }
         }
         if (node.shadowRoot) walk(node.shadowRoot);
@@ -928,10 +1240,16 @@ async function clickCompactSentidoLabel(
       }
     };
     walk(body);
-    if (!best) return false;
-    best.el.click();
-    return true;
+    return best;
   }, labelRe.source);
+  if (!hit) return false;
+  const iframeBox = await page.locator(FLUTTER_IFRAME).first().boundingBox();
+  if (!iframeBox) return false;
+  await page.mouse.click(
+    iframeBox.x + hit.x + hit.w / 2,
+    iframeBox.y + hit.y + hit.h / 2,
+  );
+  return true;
 }
 
 /** Abre ⋮ do card que contém o trecho (assinatura / #runId). Preferir Enviadas. */
@@ -1401,18 +1719,29 @@ export async function selecionarFiltroExtras(
   }
   await page.waitForTimeout(700);
 
-  // Sub-dialogs (Período / Sexo / Situação) — só se ainda NÃO voltou ao composer
+  // Sexo: submenu Masculino/Feminino (Maestro selecionar_filtro_extras)
+  const sexoAberto = await frame
+    .getByText(/^Masculino$|^Feminino$/i)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (sexoAberto || /sexo/i.test(String(filtroLabel))) {
+    const masc =
+      (await tapFlutterLabelByMouse(page, /^Masculino$/i)) ||
+      (await tapCompactFlutterLabel(page, /^Masculino$/i, { minY: 100 }));
+    console.log(`${LOG} filtro sexo → Masculino=${masc}`);
+    await page.waitForTimeout(500);
+  }
+
+  // Sub-dialogs (Período / Situação) — só se ainda NÃO voltou ao composer
   const stillInSubDialog = async () =>
     (await frame.getByText(/Novo comunicado|Para:|Escreva seu texto aqui/i).count()) ===
       0 ||
-    (await frame.getByText(/M[eê]s corrente|Masculino|Transferido|Per[ií]odo/i).count()) >
+    (await frame.getByText(/M[eê]s corrente|Transferido|Per[ií]odo/i).count()) >
       0;
 
   if (await stillInSubDialog()) {
     await tapCompactFlutterLabel(page, /M[eê]s corrente/i, { minY: 100 }).catch(
-      () => false,
-    );
-    await tapCompactFlutterLabel(page, /^Masculino$/i, { minY: 100 }).catch(
       () => false,
     );
     await tapCompactFlutterLabel(page, /Transferido/i, { minY: 100 }).catch(
@@ -1457,14 +1786,12 @@ export async function publicarComunicadoComFiltroExtras(
   texto: string,
   filtroLabel: string | RegExp,
 ): Promise<void> {
+  // Ordem = Maestro publicar_comunicado_filtro_extras: turmas → alvo → funil → texto → enviar
   await ensureMuralHome(page);
   await abrirNovoComunicado(page);
   await selecionarTurmasTodos(page);
   await selecionarAlvoTodos(page);
-  // Texto ANTES do funil — filtro às vezes rouba foco / overlay
-  await escreverTextoComunicado(page, texto);
   await selecionarFiltroExtras(page, filtroLabel);
-  // Re-foca e reforça o texto caso o funil tenha limpo o campo
   await escreverTextoComunicado(page, texto);
   await enviarComunicado(page);
 }

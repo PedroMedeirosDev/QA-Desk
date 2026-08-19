@@ -1,5 +1,6 @@
 # Slides da 1ª instalação (5 setas → FAZER LOGIN).
-# Só roda se o botão avançar existir. Entre slides: espera curta (não animation default).
+# Só roda se auth_onboarding_avancar existir. Sem o id (SEMANTICS item 21)
+# o resume precisa de sessão já no login — não adivinhar a seta por %.
 
 appId: br.com.polygonus.mobile.amostra
 ---

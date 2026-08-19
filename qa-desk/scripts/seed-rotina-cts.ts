@@ -67,6 +67,65 @@ const ITEMS = [
       "Escrever mensagem assinada e enviar",
     ],
   },
+  {
+    ctId: "ROTINA-05",
+    title: "ROTINA-05 · Humor",
+    suite: "Humor",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/rotina/01_2_1_rotina_humor.yaml",
+    description: "Aba Rotina: registrar humor via BoomMenu (chip Sorridente).",
+    steps: [
+      "PHJESUS coordenador → Mural → aba Rotina",
+      "FAB → Humor",
+      "Selecionar turma/aluno, chip Sorridente e enviar",
+    ],
+  },
+  {
+    ctId: "ROTINA-06",
+    title: "ROTINA-06 · Vestuário",
+    suite: "Vestuario",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/rotina/01_2_1_rotina_vestuario.yaml",
+    description:
+      "Aba Rotina: registrar vestuário/pertences via BoomMenu (Fralda + Uniforme).",
+    steps: [
+      "PHJESUS coordenador → Mural → aba Rotina",
+      "FAB → Vestuário",
+      "Selecionar turma/aluno, chips Fralda e Uniforme e enviar",
+    ],
+  },
+  {
+    ctId: "ROTINA-07",
+    title: "ROTINA-07 · Momentos",
+    suite: "Momentos",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/rotina/01_2_3_momentos_enviar.yaml",
+    description:
+      "Aba Rotina: Momentos — modelo + 8 fotos da galeria via BoomMenu.",
+    steps: [
+      "PHJESUS coordenador → Mural → aba Rotina",
+      "FAB → Momentos → modelo (ex. Se divertindo)",
+      "Selecionar turma/aluno, anexar 8 fotos e enviar",
+    ],
+  },
+  {
+    ctId: "ROTINA-08",
+    title: "ROTINA-08 · Ocorrência",
+    suite: "Ocorrencia",
+    flowPath:
+      "projects/polygonus/automation/maestro/flows/rotina/01_2_2_ocorrencia_enviar.yaml",
+    playwrightSpec:
+      "projects/polygonus/automation/playwright/rotina/08-ocorrencia-enviar.spec.ts",
+    description:
+      "Aba Rotina: registro pedagógico/disciplinar (Tipo termo + Termo + aluno + descrição).",
+    steps: [
+      "PHJESUS coordenador → Mural → aba Rotina",
+      "FAB → Registros Pedagógicos e Disciplinares",
+      "Turma, Tipo termo, Termo, aluno, descrição e enviar",
+    ],
+    platform: "app_web" as const,
+    playwrightReady: "ready" as const,
+  },
 ] as const;
 
 const catalog = await readCatalog("polygonus");
@@ -88,18 +147,29 @@ for (const item of ITEMS) {
   }
 
   const id = nextTestId("polygonus", catalog);
+  const playwrightSpec =
+    "playwrightSpec" in item ? item.playwrightSpec : undefined;
+  const playwrightReady =
+    "playwrightReady" in item ? item.playwrightReady : undefined;
+  const platform = "platform" in item ? item.platform : "android";
   const report: TestRecord = {
     id,
     testKey,
     recordType: "teste",
     title: item.title,
     description: item.description,
+    ...(item.ctId === "ROTINA-08"
+      ? {
+          preconditions:
+            "PHJESUS coordenador; TURMA_ROTINA / ALUNO_ROTINA; unidade com tipos e termos de ocorrência (GET /pedagogico/ocorrencia/catalogo).",
+        }
+      : {}),
     steps: [...item.steps],
     expectedResult: "Registro criado na aba Rotina sem acionar FAB indevido.",
     reportedAt: now,
     project: "polygonus",
     channel: "app",
-    platform: "android",
+    platform,
     module: "Rotina",
     status: "rascunho",
     homologationStatus: "pendente",
@@ -114,6 +184,15 @@ for (const item of ITEMS) {
       flowPath: item.flowPath,
       label: item.ctId,
       readiness: "draft",
+      ...(playwrightSpec
+        ? {
+            playwright: {
+              specPath: playwrightSpec,
+              headed: true,
+              readiness: playwrightReady ?? "draft",
+            },
+          }
+        : {}),
     },
     tags: [
       "rotina",
@@ -122,6 +201,7 @@ for (const item of ITEMS) {
       `suite:${item.suite}`,
       `ct:${item.ctId}`,
       "maestro",
+      ...(playwrightSpec ? ["playwright"] : []),
     ],
   };
 

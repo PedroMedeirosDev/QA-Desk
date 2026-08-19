@@ -1,0 +1,26 @@
+# CT-ROTINA-06: Vestuário (aba Rotina dentro do Mural)
+# Chips amostra: lista de pertences (Fralda, Uniforme, Meias, …)
+#
+# Semantics: mural_tab_rotina, rotina_boom_vestuario
+
+appId: br.com.polygonus.mobile.amostra
+---
+- runFlow: ../shared/rotina/setup_coordenador_rotina.yaml
+
+- runFlow:
+    file: ../shared/rotina/abrir_tipo_rotina.yaml
+    env:
+      ROTINA_BOOM_ID: "rotina_boom_vestuario"
+      ROTINA_BOOM_TEXTO: "Vestuario|Vestuário"
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
+
+- runFlow:
+    file: ../shared/rotina/rotina_preencher_enviar.yaml
+    env:
+      TITULO_ROTINA: "Turma|Aluno|Termo|Enviar"
+      TURMA_ROTINA: "${TURMA_ROTINA}"
+      ALUNO_ROTINA: "${ALUNO_ROTINA}"
+      OPCAO_ID_1: "rotina_composer_opcao_fralda"
+      OPCAO_ROTINA_1: "Fralda"
+      OPCAO_ID_2: "rotina_composer_opcao_uniforme"
+      OPCAO_ROTINA_2: "Uniforme"

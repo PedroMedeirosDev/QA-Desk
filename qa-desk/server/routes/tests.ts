@@ -1,4 +1,4 @@
-import { Router, type Request } from "express";
+import { Router, type Request, type Response } from "express";
 import multer from "multer";
 import path from "node:path";
 import { v4 as uuid } from "uuid";
@@ -41,6 +41,25 @@ import {
 function param(req: Request, key: string): string {
   const v = req.params[key];
   return Array.isArray(v) ? v[0] : (v ?? "");
+}
+
+function wantsNdjson(req: Request): boolean {
+  return (
+    req.query.stream === "1" ||
+    String(req.headers.accept ?? "").includes("application/x-ndjson")
+  );
+}
+
+function startNdjson(res: Response): (obj: unknown) => void {
+  res.status(200);
+  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders?.();
+  return (obj: unknown) => {
+    res.write(`${JSON.stringify(obj)}\n`);
+    (res as Response & { flush?: () => void }).flush?.();
+  };
 }
 
 /** Prints + vídeos de tela (gravidade / repro). */
@@ -469,9 +488,11 @@ testsRouter.post("/:id/github-issue", requireAdmin, async (req, res) => {
   }
 
   try {
+    const stream = wantsNdjson(req);
+    const send = stream ? startNdjson(res) : null;
     const { createBugGithubIssue } = await import("../github/create-bug-issue.js");
     const alreadyLinked = Boolean(report.githubIssueNumber && report.githubIssueUrl);
-    const result = await createBugGithubIssue(report);
+    const result = await createBugGithubIssue(report, send ?? undefined);
 
     if (!alreadyLinked) {
       report.githubIssueNumber = result.number;
@@ -504,8 +525,8 @@ testsRouter.post("/:id/github-issue", requireAdmin, async (req, res) => {
       await writeCatalog(project, catalog);
     }
 
-    res.json({
-      ok: true,
+    const payload = {
+      ok: true as const,
       alreadyLinked,
       number: result.number,
       url: result.url,
@@ -514,11 +535,23 @@ testsRouter.post("/:id/github-issue", requireAdmin, async (req, res) => {
       evidenceUploaded: result.evidenceUploaded,
       evidenceSkipped: result.evidenceSkipped,
       report,
-    });
+    };
+    if (send) {
+      send({ type: "done", ...payload });
+      res.end();
+      return;
+    }
+    res.json(payload);
   } catch (e) {
     const err = e as Error & { status?: number };
     const status = err.status && err.status >= 400 ? err.status : 500;
-    res.status(status).json({ error: err.message || "Falha ao abrir issue" });
+    const error = err.message || "Falha ao abrir issue";
+    if (res.headersSent) {
+      res.write(`${JSON.stringify({ type: "error", error })}\n`);
+      res.end();
+      return;
+    }
+    res.status(status).json({ error });
   }
 });
 
@@ -546,12 +579,19 @@ testsRouter.post("/:id/github-issue/sync", requireAdmin, async (req, res) => {
   }
 
   try {
+    const stream = wantsNdjson(req);
+    const send = stream ? startNdjson(res) : null;
     const { updateBugGithubIssue } = await import("../github/create-bug-issue.js");
     const { pullGestorCommentsIntoReport } = await import(
       "../github/sync-bug-issue.js"
     );
-    const result = await updateBugGithubIssue(report);
+    const result = await updateBugGithubIssue(report, send ?? undefined);
 
+    send?.({
+      type: "progress",
+      phase: "comments",
+      message: "Buscando comentários do gestor…",
+    });
     const catchup = await pullGestorCommentsIntoReport(report, {
       actor: actorOf(req),
     });
@@ -577,8 +617,8 @@ testsRouter.post("/:id/github-issue/sync", requireAdmin, async (req, res) => {
       emitGestorReplyFromReport(project, report, "catchup");
     }
 
-    res.json({
-      ok: true,
+    const payload = {
+      ok: true as const,
       number: result.number,
       url: result.url,
       title: result.title,
@@ -587,11 +627,23 @@ testsRouter.post("/:id/github-issue/sync", requireAdmin, async (req, res) => {
       evidenceSkipped: result.evidenceSkipped,
       commentCatchup: catchup,
       report,
-    });
+    };
+    if (send) {
+      send({ type: "done", ...payload });
+      res.end();
+      return;
+    }
+    res.json(payload);
   } catch (e) {
     const err = e as Error & { status?: number };
     const status = err.status && err.status >= 400 ? err.status : 500;
-    res.status(status).json({ error: err.message || "Falha ao sincronizar issue" });
+    const error = err.message || "Falha ao sincronizar issue";
+    if (res.headersSent) {
+      res.write(`${JSON.stringify({ type: "error", error })}\n`);
+      res.end();
+      return;
+    }
+    res.status(status).json({ error });
   }
 });
 

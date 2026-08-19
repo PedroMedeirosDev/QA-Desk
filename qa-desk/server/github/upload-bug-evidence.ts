@@ -196,10 +196,17 @@ export function evidenceToMarkdown(uploaded: UploadedEvidence[]): string {
 /**
  * Baixa evidências do Storage/disco e sobe no repo da issue.
  */
+export type EvidenceUploadProgress = {
+  current: number;
+  total: number;
+  filename: string;
+};
+
 export async function uploadBugEvidenceToRepo(
   repository: string,
   folderKey: string,
   evidence: EvidenceFile[],
+  onProgress?: (ev: EvidenceUploadProgress) => void,
 ): Promise<UploadEvidenceResult> {
   const skipped: Array<{ filename: string; reason: string }> = [];
   const uploaded: UploadedEvidence[] = [];
@@ -208,11 +215,19 @@ export async function uploadBugEvidenceToRepo(
     return { uploaded, skipped, markdown: evidenceToMarkdown(uploaded) };
   }
 
+  onProgress?.({
+    current: 0,
+    total: evidence.length,
+    filename: "branch bug-evidence",
+  });
   await ensureEvidenceBranch(repository);
   const folder = safeSegment(folderKey);
 
+  let index = 0;
   for (const ev of evidence) {
+    index += 1;
     const filename = ev.filename?.trim() || "arquivo";
+    onProgress?.({ current: index, total: evidence.length, filename });
     const loaded = await resolveEvidenceForAttach(ev.storageKey);
     if (!loaded) {
       skipped.push({ filename, reason: "arquivo ausente (Storage/disco)" });

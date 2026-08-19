@@ -76,12 +76,32 @@ export function readLoginScreenVersion(): string | undefined {
 }
 
 /**
- * Versão do app no registro da execução — o mesmo texto da tela de login
- * (`Versão: name (code)` via packageInfo). Preferimos dumpsys (rápido/estável);
- * UI dump só como fallback se o device não responder dumpsys.
+ * Versão do app no registro da execução.
+ * Preferência: texto da tela Perfil no log Maestro (`Versão: 6.06.xx`);
+ * senão dumpsys (mesmo formato da tela de login).
  */
-export function resolveAppVersionForRun(): string | undefined {
-  return readInstalledAppVersion() ?? readLoginScreenVersion();
+export function parseAppVersionFromMaestroOutput(
+  output: string,
+): string | undefined {
+  const marker = output.match(/\[qa-desk\] web-build:\s*(.+)/i);
+  if (marker?.[1]?.trim()) return marker[1].trim();
+  const perfil = output.match(
+    /perfilVersao\s*=\s*['"]?(Vers[aã]o:\s*)?(\d+\.\d+\.\d+(?:\s*\(\d+\))?)/i,
+  );
+  if (perfil?.[2]) return perfil[2].replace(/\s+/g, " ").trim();
+  const labeled = output.match(
+    /Vers[aã]o:\s*(\d+\.\d+\.\d+(?:\s*\(\d+\))?)/i,
+  );
+  if (labeled?.[1]) return labeled[1].replace(/\s+/g, " ").trim();
+  return undefined;
+}
+
+export function resolveAppVersionForRun(output?: string): string | undefined {
+  return (
+    (output ? parseAppVersionFromMaestroOutput(output) : undefined) ??
+    readInstalledAppVersion() ??
+    readLoginScreenVersion()
+  );
 }
 
 /** Extrai ação/flow que falhou do stdout do Maestro. */

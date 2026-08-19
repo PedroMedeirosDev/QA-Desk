@@ -13,9 +13,9 @@ Flows `*_editar.yaml` / `*_excluir.yaml` — backlog.
 
 Resposta do responsável (ETMENEZES) → manual ou flow dedicado.
 
-## Momentos — 15 fotos (1.2.3)
+## Momentos — 8 fotos (1.2.3)
 
-Maestro: galeria ok para 1–2 fotos; **15 fotos** = manual ou script ADB preparando galeria.
+Maestro: `01_2_3_momentos_enviar.yaml` — modelo `Se divertindo` + 8 fotos (`addMedia` Foto_1–8). Galeria nativa ainda flaky em lote.
 
 ## Conteúdo (3.x)
 

@@ -14,6 +14,7 @@ import {
 } from "../../src/lib/bug-report-markdown.js";
 import type { TestRecord } from "../types.js";
 import { uploadBugEvidenceToRepo } from "./upload-bug-evidence.js";
+import type { GithubIssueProgressEvent } from "../../src/lib/github-issue-stream.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -36,7 +37,12 @@ export type BugIssueResult = {
 /** @deprecated use BugIssueResult */
 export type CreateBugIssueResult = BugIssueResult;
 
-async function buildIssueMarkdown(report: TestRecord): Promise<{
+export type IssueProgressFn = (ev: GithubIssueProgressEvent) => void;
+
+async function buildIssueMarkdown(
+  report: TestRecord,
+  onProgress?: IssueProgressFn,
+): Promise<{
   title: string;
   body: string;
   evidenceUploaded: number;
@@ -45,11 +51,35 @@ async function buildIssueMarkdown(report: TestRecord): Promise<{
   const repository = bugIssuesRepo();
   const title = formatBugIssueTitle(report);
   const folderKey = report.bugCode?.trim() || report.id;
+  const files = report.evidence ?? [];
+
+  if (files.length) {
+    onProgress?.({
+      type: "progress",
+      phase: "evidence",
+      message: `Preparando ${files.length} evidência${files.length === 1 ? "" : "s"}…`,
+      current: 0,
+      total: files.length,
+    });
+  }
 
   const evidenceResult = await uploadBugEvidenceToRepo(
     repository,
     folderKey,
-    report.evidence ?? [],
+    files,
+    (ev) => {
+      const preparing = ev.current === 0;
+      onProgress?.({
+        type: "progress",
+        phase: "evidence",
+        message: preparing
+          ? "Preparando branch de evidências no GitHub…"
+          : `Enviando evidência ${ev.current}/${ev.total}: ${ev.filename}`,
+        current: ev.current,
+        total: ev.total,
+        filename: ev.filename,
+      });
+    },
   );
 
   let evidenceMarkdown = evidenceResult.markdown;
@@ -117,6 +147,7 @@ function parseIssueCreateOutput(stdout: string): { number: number; url: string }
 
 export async function createBugGithubIssue(
   report: TestRecord,
+  onProgress?: IssueProgressFn,
 ): Promise<BugIssueResult> {
   if (report.githubIssueNumber && report.githubIssueUrl) {
     return {
@@ -130,7 +161,12 @@ export async function createBugGithubIssue(
   }
 
   const repository = bugIssuesRepo();
-  const built = await buildIssueMarkdown(report);
+  const built = await buildIssueMarkdown(report, onProgress);
+  onProgress?.({
+    type: "progress",
+    phase: "issue",
+    message: "Criando a issue no GitHub…",
+  });
 
   return withBodyFile(built.body, async (bodyFile) => {
     let stdout: string;
@@ -177,6 +213,7 @@ export async function createBugGithubIssue(
  */
 export async function updateBugGithubIssue(
   report: TestRecord,
+  onProgress?: IssueProgressFn,
 ): Promise<BugIssueResult> {
   const number = report.githubIssueNumber;
   const url = report.githubIssueUrl?.trim();
@@ -188,7 +225,12 @@ export async function updateBugGithubIssue(
   }
 
   const repository = bugIssuesRepo();
-  const built = await buildIssueMarkdown(report);
+  const built = await buildIssueMarkdown(report, onProgress);
+  onProgress?.({
+    type: "progress",
+    phase: "issue",
+    message: `Atualizando título e body da issue #${number}…`,
+  });
 
   return withBodyFile(built.body, async (bodyFile) => {
     try {

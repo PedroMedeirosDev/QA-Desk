@@ -697,12 +697,11 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
     });
     stagesRun.push("playwright");
     combinedOutput += pw.output;
-    const webBuild =
-      report.channel === "web" ? pw.appVersion : undefined;
+    const webBuild = pw.appVersion;
     if (webBuild) {
       send({
         type: "log",
-        line: `[qa-desk] Versão amostra CQ (login) → build: ${webBuild}`,
+        line: `[qa-desk] Versão (tela Perfil / login) → build: ${webBuild}`,
       });
     }
     result = {
@@ -990,23 +989,18 @@ automationRouter.post("/tests/:id/run", async (req, res) => {
       : result.failure;
 
   if (result.appVersion) {
-    // Maestro (app) ou Playwright WEB — Portal não usa este build
-    if (!wantPlaywrightOnly || report.channel === "web") {
-      report.build = result.appVersion;
-    }
+    report.build = result.appVersion;
   }
 
   if (homologation && result.appVersion) {
-    if (!wantPlaywrightOnly || report.channel === "web") {
-      const homCatalog = await readHomologationCatalog(project);
-      const idxHom = homCatalog.homologations.findIndex((h) => h.id === homologation.id);
-      if (idxHom >= 0) {
-        homCatalog.homologations[idxHom] = {
-          ...homCatalog.homologations[idxHom],
-          build: result.appVersion,
-        };
-        await writeHomologationCatalog(project, homCatalog);
-      }
+    const homCatalog = await readHomologationCatalog(project);
+    const idxHom = homCatalog.homologations.findIndex((h) => h.id === homologation.id);
+    if (idxHom >= 0) {
+      homCatalog.homologations[idxHom] = {
+        ...homCatalog.homologations[idxHom],
+        build: result.appVersion,
+      };
+      await writeHomologationCatalog(project, homCatalog);
     }
   }
 

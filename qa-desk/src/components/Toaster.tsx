@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info, Loader2, X } from "lucide-react";
 import { useToasts, type Toast, type ToastVariant } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -26,10 +26,13 @@ const VARIANT_STYLES: Record<
   },
 };
 
-function ToastIcon({ variant }: { variant: ToastVariant }) {
-  const className = cn("size-5 shrink-0", VARIANT_STYLES[variant].icon);
-  if (variant === "success") return <CheckCircle2 className={className} strokeWidth={2} />;
-  if (variant === "info") return <Info className={className} strokeWidth={2} />;
+function ToastIcon({ toast }: { toast: Toast }) {
+  const className = cn("size-5 shrink-0", VARIANT_STYLES[toast.variant].icon);
+  const inProgress =
+    toast.progress != null && toast.progress < 100 && toast.variant === "info";
+  if (inProgress) return <Loader2 className={cn(className, "animate-spin")} strokeWidth={2} />;
+  if (toast.variant === "success") return <CheckCircle2 className={className} strokeWidth={2} />;
+  if (toast.variant === "info") return <Info className={className} strokeWidth={2} />;
   return <AlertCircle className={className} strokeWidth={2} />;
 }
 
@@ -46,7 +49,7 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
         styles.container,
       )}
     >
-      <ToastIcon variant={toast.variant} />
+      <ToastIcon toast={toast} />
 
       <div className="min-w-0 flex-1">
         {toast.title && (
@@ -60,6 +63,14 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
         >
           {toast.message}
         </p>
+        {toast.progress != null && (
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/30">
+            <div
+              className="h-full rounded-full bg-current transition-[width] duration-200 ease-out"
+              style={{ width: `${Math.min(100, Math.max(0, toast.progress))}%` }}
+            />
+          </div>
+        )}
         {toast.action && (
           <button
             type="button"

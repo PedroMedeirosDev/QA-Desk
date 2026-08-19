@@ -29,6 +29,7 @@ foreach ($name in $files) {
   Write-Host "adb push -> /sdcard/Download/$name"
   adb -s $Device push $src "/sdcard/Download/$name"
   if ($LASTEXITCODE -ne 0) { throw "adb push falhou: $name" }
+  adb -s $Device shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file:///sdcard/Download/$name" | Out-Null
 }
 
 Write-Host ""

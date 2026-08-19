@@ -31,6 +31,28 @@ const flows = process.argv.slice(2).length
     ];
 
 const quote = (s) => (/[\s"]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+
+function scanDownloadFixtures() {
+  const files = ["PDF_TESTE.pdf", "PDF TESTE.pdf", "Video_teste.mp4"];
+  for (const name of files) {
+    spawnSync(
+      "adb",
+      [
+        "-s",
+        "emulator-5554",
+        "shell",
+        "am",
+        "broadcast",
+        "-a",
+        "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
+        "-d",
+        `file:///sdcard/Download/${name}`,
+      ],
+      { windowsHide: true, encoding: "utf8" },
+    );
+  }
+}
+
 const results = [];
 let combinedOutput = "";
 
@@ -45,6 +67,7 @@ for (const flow of flows) {
 
   const runStartedAt = Date.now();
   console.log(`\n========== ${flow} ==========`);
+  scanDownloadFixtures();
   const cmd = `maestro.bat ${args.map(quote).join(" ")}`;
   const r = spawnSync(cmd, {
     cwd: root,
