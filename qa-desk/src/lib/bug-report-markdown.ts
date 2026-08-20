@@ -243,7 +243,7 @@ function formatAmbientePlain(record: Partial<TestRecord>): string {
   const lines: string[] = [];
 
   if (view.dual) {
-    lines.push("Onde: App nativo e APP versão WEB (reproduz nos dois)");
+    lines.push("Onde: App nativo e APP versao WEB (reproduz nos dois)");
   } else if (view.headline) {
     lines.push(`Onde: ${view.headline}`);
   }
@@ -252,7 +252,7 @@ function formatAmbientePlain(record: Partial<TestRecord>): string {
     lines.push(`${field.label}: ${field.value}`);
   }
 
-  return lines.join("\n").trim() || "—";
+  return lines.join("\n").trim() || "-";
 }
 
 function formatStepsPlain(steps: string[]): string {
@@ -267,18 +267,37 @@ function formatStepsPlain(steps: string[]): string {
 }
 
 /**
+ * Sistema de chamados Polygonus (e cola em apps legados) costuma tratar o texto
+ * como Windows-1252. Aspas curvas / tracos tipograficos em UTF-8 viram `â□□`.
+ * Mantem acentos latinos (ok no 1252); so achata pontuacao "bonita".
+ */
+export function sanitizeForChamado(text: string): string {
+  return text
+    .replace(/[\u201C\u201D\u201E\u201F\u2033\u00AB\u00BB]/g, '"') // “ ” „ ‟ ″ « »
+    .replace(/[\u2018\u2019\u201A\u201B\u2032]/g, "'") // ‘ ’ ‚ ‛ ′
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, "-") // hifens / travessoes
+    .replace(/\u2026/g, "...") // …
+    .replace(/\u2192/g, "->")
+    .replace(/\u2190/g, "<-")
+    .replace(/\u00A0/g, " ") // NBSP
+    .replace(/\u2022/g, "-") // •
+    .replace(/\u00B7/g, "-") // ·
+    .replace(/\uFFFD/g, ""); // replacement char ja quebrado
+}
+
+/**
  * Texto puro para colar no chamado interno Polygonus (sem Markdown).
- * Inclui título + corpo separados — copiar o bloco inteiro e usar cada seção
+ * Inclui titulo + corpo separados - copiar o bloco inteiro e usar cada secao
  * no campo correspondente do sistema de chamados.
  */
 export function formatChamadoPolygonus(record: Partial<TestRecord>): string {
   const code = record.bugCode?.trim();
-  const title = record.title?.trim() || "(sem título)";
+  const title = record.title?.trim() || "(sem titulo)";
   const titleLine = code ? `[${code}] ${title}` : title;
   const severity = record.severity
     ? SEVERITY_LABELS[record.severity]
     : "(informar)";
-  /** Em bugs do Desk, `description` = citação/id do chamado Polygonus. */
+  /** Em bugs do Desk, `description` = citacao/id do chamado Polygonus. */
   const ticketCitation = record.description?.trim() || "";
   const preconditions = record.preconditions?.trim() || "";
   const steps = formatStepsPlain(record.steps ?? []);
@@ -291,21 +310,21 @@ export function formatChamadoPolygonus(record: Partial<TestRecord>): string {
   const internalId = record.id?.trim();
 
   const parts: string[] = [
-    "=== TÍTULO (cole no campo título do chamado) ===",
+    "=== TITULO (cole no campo titulo do chamado) ===",
     titleLine,
     "",
-    "=== DESCRIÇÃO (cole no corpo / observação) ===",
+    "=== DESCRICAO (cole no corpo / observacao) ===",
     "",
   ];
 
   if (ticketCitation) {
-    parts.push("Referência ao chamado:", ticketCitation, "");
+    parts.push("Referencia ao chamado:", ticketCitation, "");
   }
 
   parts.push(`Gravidade: ${severity}`, "");
 
   if (preconditions) {
-    parts.push("Pré-condições:", preconditions, "");
+    parts.push("Pre-condicoes:", preconditions, "");
   }
 
   parts.push(
@@ -325,23 +344,23 @@ export function formatChamadoPolygonus(record: Partial<TestRecord>): string {
 
   if (evidenceNames.length > 0) {
     parts.push(
-      "Evidências (anexar no chamado):",
+      "Evidencias (anexar no chamado):",
       ...evidenceNames.map((n) => `- ${n}`),
       "",
     );
   }
 
   if (tech) {
-    parts.push("Notas técnicas:", tech, "");
+    parts.push("Notas tecnicas:", tech, "");
   }
 
   const refs = [
-    code ? `Código QA Desk: ${code}` : null,
+    code ? `Codigo QA Desk: ${code}` : null,
     internalId ? `Id interno: ${internalId}` : null,
   ].filter(Boolean);
   if (refs.length) {
-    parts.push("Referências:", ...refs.map((r) => `- ${r}`));
+    parts.push("Referencias:", ...refs.map((r) => `- ${r}`));
   }
 
-  return maskPii(parts.join("\n").trimEnd() + "\n");
+  return sanitizeForChamado(maskPii(parts.join("\n").trimEnd() + "\n"));
 }
