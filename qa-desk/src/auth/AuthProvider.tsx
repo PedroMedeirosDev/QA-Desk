@@ -111,6 +111,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     let knownUserId: string | null = null;
+    let markedReady = false;
+
+    function markReady() {
+      if (cancelled || markedReady) return;
+      markedReady = true;
+      setReady(true);
+    }
 
     async function applySession(next: Session | null) {
       setSession(next);
@@ -120,15 +127,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         return;
       }
-      const p = await loadProfile(next.user.id, next.user.email);
-      if (!cancelled) setProfile(p);
+      try {
+        const p = await Promise.race([
+          loadProfile(next.user.id, next.user.email),
+          new Promise<UserProfile>((_, reject) => {
+            window.setTimeout(() => reject(new Error("profile timeout")), 8_000);
+          }),
+        ]);
+        if (!cancelled) setProfile(p);
+      } catch {
+        if (!cancelled) {
+          const displayName = next.user.email?.split("@")[0] ?? "Usuário";
+          setProfile({
+            id: next.user.id,
+            email: next.user.email ?? "",
+            displayName,
+            role: "visitor",
+            actor: displayName,
+            initials: initialsFromName(displayName),
+            avatarPath: null,
+            avatarUrl: null,
+          });
+        }
+      }
     }
 
-    void supabase.auth.getSession().then(({ data }) => {
-      void applySession(data.session).finally(() => {
-        if (!cancelled) setReady(true);
+    const bootTimeout = window.setTimeout(() => {
+      console.warn("[auth] timeout ao carregar sessão — liberando UI");
+      markReady();
+    }, 12_000);
+
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => applySession(data.session))
+      .catch((err) => {
+        console.warn("[auth] getSession falhou", err);
+        setSession(null);
+        setAccessToken(null);
+        setProfile(null);
+      })
+      .finally(() => {
+        window.clearTimeout(bootTimeout);
+        markReady();
       });
-    });
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       // Alt+Tab: TOKEN_REFRESHED / INITIAL_SESSION. Recarregar perfil
@@ -156,6 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(bootTimeout);
       sub.subscription.unsubscribe();
     };
   }, [authEnabled]);
