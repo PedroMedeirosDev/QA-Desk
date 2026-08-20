@@ -237,3 +237,111 @@ export function formatBugReportMarkdown(
 
   return maskPii(sections.join("\n").trimEnd() + "\n");
 }
+
+function formatAmbientePlain(record: Partial<TestRecord>): string {
+  const view = ambienteView(record);
+  const lines: string[] = [];
+
+  if (view.dual) {
+    lines.push("Onde: App nativo e APP versão WEB (reproduz nos dois)");
+  } else if (view.headline) {
+    lines.push(`Onde: ${view.headline}`);
+  }
+
+  for (const field of view.fields) {
+    lines.push(`${field.label}: ${field.value}`);
+  }
+
+  return lines.join("\n").trim() || "—";
+}
+
+function formatStepsPlain(steps: string[]): string {
+  const cleaned = steps.map((s) => s.trim()).filter(Boolean);
+  if (!cleaned.length) return "(nenhum passo)";
+  return cleaned
+    .map((step, i) => {
+      const normalized = step.replace(/^\d+\s*[-.)]\s*/, "");
+      return `${i + 1}. ${normalized}`;
+    })
+    .join("\n");
+}
+
+/**
+ * Texto puro para colar no chamado interno Polygonus (sem Markdown).
+ * Inclui título + corpo separados — copiar o bloco inteiro e usar cada seção
+ * no campo correspondente do sistema de chamados.
+ */
+export function formatChamadoPolygonus(record: Partial<TestRecord>): string {
+  const code = record.bugCode?.trim();
+  const title = record.title?.trim() || "(sem título)";
+  const titleLine = code ? `[${code}] ${title}` : title;
+  const severity = record.severity
+    ? SEVERITY_LABELS[record.severity]
+    : "(informar)";
+  /** Em bugs do Desk, `description` = citação/id do chamado Polygonus. */
+  const ticketCitation = record.description?.trim() || "";
+  const preconditions = record.preconditions?.trim() || "";
+  const steps = formatStepsPlain(record.steps ?? []);
+  const actual = record.actualResult?.trim() || "(descrever)";
+  const expected = record.expectedResult?.trim() || "(descrever)";
+  const tech = record.technicalEvidence?.trim() || "";
+  const evidenceNames = (record.evidence ?? [])
+    .map((e) => e.filename?.trim())
+    .filter(Boolean);
+  const internalId = record.id?.trim();
+
+  const parts: string[] = [
+    "=== TÍTULO (cole no campo título do chamado) ===",
+    titleLine,
+    "",
+    "=== DESCRIÇÃO (cole no corpo / observação) ===",
+    "",
+  ];
+
+  if (ticketCitation) {
+    parts.push("Referência ao chamado:", ticketCitation, "");
+  }
+
+  parts.push(`Gravidade: ${severity}`, "");
+
+  if (preconditions) {
+    parts.push("Pré-condições:", preconditions, "");
+  }
+
+  parts.push(
+    "Passo a passo:",
+    steps,
+    "",
+    "Resultado atual:",
+    actual,
+    "",
+    "Resultado esperado:",
+    expected,
+    "",
+    "Ambiente:",
+    formatAmbientePlain(record),
+    "",
+  );
+
+  if (evidenceNames.length > 0) {
+    parts.push(
+      "Evidências (anexar no chamado):",
+      ...evidenceNames.map((n) => `- ${n}`),
+      "",
+    );
+  }
+
+  if (tech) {
+    parts.push("Notas técnicas:", tech, "");
+  }
+
+  const refs = [
+    code ? `Código QA Desk: ${code}` : null,
+    internalId ? `Id interno: ${internalId}` : null,
+  ].filter(Boolean);
+  if (refs.length) {
+    parts.push("Referências:", ...refs.map((r) => `- ${r}`));
+  }
+
+  return maskPii(parts.join("\n").trimEnd() + "\n");
+}
