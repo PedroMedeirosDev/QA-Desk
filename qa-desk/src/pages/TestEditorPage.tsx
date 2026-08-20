@@ -40,7 +40,11 @@ import {
   isTestCase,
 } from "@/types/test-record";
 import { copyDiscordReport } from "@/lib/discord-report";
-import { formatBugReportMarkdown, ambienteView } from "@/lib/bug-report-markdown";
+import {
+  formatBugReportMarkdown,
+  formatChamadoPolygonus,
+  ambienteView,
+} from "@/lib/bug-report-markdown";
 import { polishTestForm } from "@/lib/text-corrector";
 import {
   detailedStepsForSave,
@@ -505,6 +509,18 @@ export function TestEditorPage({
     const ok = await copyDiscordReport(text);
     if (ok) toast.success("Report Markdown copiado");
     else toast.error("Não foi possível copiar (permissão do navegador)");
+  }
+
+  async function copyChamadoPolygonus() {
+    const text = formatChamadoPolygonus(form);
+    const ok = await copyDiscordReport(text);
+    if (ok) {
+      toast.success(
+        "Texto do chamado copiado — cole título e descrição nos campos do sistema Polygonus",
+      );
+    } else {
+      toast.error("Não foi possível copiar (permissão do navegador)");
+    }
   }
 
   async function openGithubIssue() {
@@ -1400,6 +1416,20 @@ export function TestEditorPage({
                 >
                   {saving ? "Salvando…" : githubBusy ? "Aguarde o GitHub…" : "Salvar"}
                 </button>
+                <PremiumTooltip
+                  label="Texto puro (sem Markdown) para colar no chamado Polygonus — título e descrição separados"
+                  side="left"
+                  wide
+                >
+                  <button
+                    type="button"
+                    onClick={() => void copyChamadoPolygonus()}
+                    className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                  >
+                    <Copy className="size-4" />
+                    Copiar para chamado Polygonus
+                  </button>
+                </PremiumTooltip>
                 <PremiumTooltip
                   label="Copia o Markdown estruturado (mesmo body da issue)"
                   side="left"
