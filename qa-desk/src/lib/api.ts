@@ -1,4 +1,8 @@
 import { authHeaders, getAccessToken } from "@/lib/auth-token";
+import {
+  emitGestorInboxChanged,
+  type GestorUnreadItem,
+} from "@/lib/gestor-replies-stream";
 import type {
   EvidenceFile,
   TestCatalog,
@@ -199,10 +203,19 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  markGestorCommentSeen: (project: ProjectSlug, id: string) =>
-    request<TestRecord>(`/api/projects/${project}/bugs/${id}/gestor-comment/seen`, {
-      method: "POST",
-    }),
+  markGestorCommentSeen: async (project: ProjectSlug, id: string) => {
+    const record = await request<TestRecord>(
+      `/api/projects/${project}/bugs/${id}/gestor-comment/seen`,
+      { method: "POST" },
+    );
+    emitGestorInboxChanged();
+    return record;
+  },
+
+  listGestorUnread: () =>
+    request<{ items: GestorUnreadItem[]; count: number }>(
+      "/api/bugs/gestor-replies/unread",
+    ),
 
   uploadEvidence: (
     project: ProjectSlug,

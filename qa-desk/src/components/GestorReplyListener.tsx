@@ -4,6 +4,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import {
   listenGestorRepliesStream,
   QA_GESTOR_REPLY_EVENT,
+  emitGestorInboxChanged,
   type GestorReplyEvent,
 } from "@/lib/gestor-replies-stream";
 import { notifyGestorReply, readGestorNotifyPref } from "@/lib/gestor-notify";
@@ -36,6 +37,7 @@ export function GestorReplyListener() {
       };
 
       window.dispatchEvent(new CustomEvent<GestorReplyEvent>(QA_GESTOR_REPLY_EVENT, { detail: event }));
+      emitGestorInboxChanged();
 
       if (readGestorNotifyPref() !== "on") return;
 

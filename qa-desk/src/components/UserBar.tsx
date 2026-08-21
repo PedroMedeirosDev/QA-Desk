@@ -3,6 +3,7 @@ import { ChevronDown, LogOut, Moon, Sun, Bell, BellOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { OpsStatusPanel, useOpsStatus } from "@/components/OpsStatusCluster";
+import { GestorInboxBell } from "@/components/GestorInboxBell";
 import { UserAvatar } from "@/components/UserAvatar";
 import { api } from "@/lib/api";
 import { useColorScheme } from "@/lib/color-scheme";
@@ -130,6 +131,8 @@ export function UserBar({ className }: { className?: string }) {
           onChange={(e) => void onAvatarSelected(e.target.files?.[0])}
         />
       )}
+
+      <GestorInboxBell />
 
       {isAdmin ? (
         <span className="relative shrink-0">
