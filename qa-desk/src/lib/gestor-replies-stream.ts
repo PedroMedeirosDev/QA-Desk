@@ -2,6 +2,8 @@ import { authHeaders } from "@/lib/auth-token";
 import type { ProductChannel, ProjectSlug } from "@/types/test-record";
 
 export const QA_GESTOR_REPLY_EVENT = "qa-gestor-reply";
+/** Inbox mudou (novo comentário ou marcado como lido). */
+export const QA_GESTOR_INBOX_CHANGED = "qa-gestor-inbox-changed";
 
 export type GestorReplyEvent = {
   project: ProjectSlug;
@@ -16,6 +18,22 @@ export type GestorReplyEvent = {
   via: "webhook" | "catchup";
   channel?: ProductChannel;
 };
+
+export type GestorUnreadItem = {
+  project: ProjectSlug;
+  bugId: string;
+  bugCode: string;
+  title: string;
+  author: string;
+  snippet: string;
+  at: string;
+  channel?: ProductChannel;
+  commentUrl?: string;
+};
+
+export function emitGestorInboxChanged() {
+  window.dispatchEvent(new CustomEvent(QA_GESTOR_INBOX_CHANGED));
+}
 
 /**
  * Mantém a conexão SSE aberta (fetch + ReadableStream — Bearer auth).
