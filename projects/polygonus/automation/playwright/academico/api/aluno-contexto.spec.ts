@@ -16,6 +16,7 @@
 import { test, expect, chromium, type Page } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
+import { chromePersistentLaunchOptions } from "../../shared/gestao-auth";
 
 function loadDotEnv() {
   const file = path.join(__dirname, "..", "..", ".env");
@@ -158,13 +159,10 @@ test("Ficha: GET /academico/aluno/contexto (interceptado da tela)", async () => 
   console.log("[ficha-api] amostra CQ =", GESTAO_URL);
   console.log("[ficha-api] novo aluno =", FICHA_NOVO_URL);
 
-  const context = await chromium.launchPersistentContext(PROFILE_DIR, {
-    channel: "chrome",
-    headless: false,
-    locale: "pt-BR",
-    viewport: { width: 1400, height: 900 },
-    args: ["--disable-blink-features=AutomationControlled"],
-  });
+  const context = await chromium.launchPersistentContext(
+    PROFILE_DIR,
+    chromePersistentLaunchOptions(PROFILE_DIR, { headed: true }),
+  );
   const page = context.pages()[0] || (await context.newPage());
 
   try {

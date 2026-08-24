@@ -5,6 +5,7 @@ import { expect, chromium, type BrowserContext, type Page } from "@playwright/te
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import {
+  chromePersistentLaunchOptions,
   loadPlaywrightDotEnv,
   loginGestaoSePreciso,
   passarCloudflareSePreciso,
@@ -76,14 +77,8 @@ export async function openComunicadosSession(
 ): Promise<ComunicadosSession> {
   prepareComunicadosEnv(playwrightRoot);
   const headed = process.env.PLAYWRIGHT_HEADED !== "0";
-  const launchOpts = {
-    channel: "chrome" as const,
-    headless: !headed,
-    locale: "pt-BR",
-    viewport: { width: 1400, height: 900 },
-    args: ["--disable-blink-features=AutomationControlled"],
-  };
   const profile = comunicadosProfileDir(playwrightRoot);
+  const launchOpts = chromePersistentLaunchOptions(profile, { headed });
   let context: BrowserContext | undefined;
   let lastErr: unknown;
   for (let i = 0; i < 4; i++) {

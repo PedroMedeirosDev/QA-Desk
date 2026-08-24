@@ -6,6 +6,7 @@ import path from "node:path";
 import {
   GESTAO_URL,
   capturarVersaoGestaoLogin,
+  chromePersistentLaunchOptions,
   fichaNovoAlunoUrl,
   loginGestaoSePreciso,
   passarCloudflareSePreciso,
@@ -23,13 +24,10 @@ export async function abrirSessaoFicha(): Promise<{
   context: BrowserContext;
   page: Page;
 }> {
-  const context = await chromium.launchPersistentContext(PROFILE_DIR, {
-    channel: "chrome",
-    headless: !HEADED,
-    locale: "pt-BR",
-    viewport: { width: 1400, height: 900 },
-    args: ["--disable-blink-features=AutomationControlled"],
-  });
+  const context = await chromium.launchPersistentContext(
+    PROFILE_DIR,
+    chromePersistentLaunchOptions(PROFILE_DIR, { headed: HEADED }),
+  );
   const page = context.pages()[0] || (await context.newPage());
   return { context, page };
 }

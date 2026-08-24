@@ -16,6 +16,7 @@
 import { test, expect, chromium } from "@playwright/test";
 import path from "node:path";
 import {
+  chromePersistentLaunchOptions,
   loadPlaywrightDotEnv,
   loginGestaoSePreciso,
   passarCloudflareSePreciso,
@@ -57,13 +58,10 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test.describe.configure({ mode: "serial", timeout: 180_000 });
 
 test("smoke: gestão → Comunicados → Mural", async () => {
-  const context = await chromium.launchPersistentContext(PROFILE_DIR, {
-    channel: "chrome",
-    headless: !HEADED,
-    locale: "pt-BR",
-    viewport: { width: 1400, height: 900 },
-    args: ["--disable-blink-features=AutomationControlled"],
-  });
+  const context = await chromium.launchPersistentContext(
+    PROFILE_DIR,
+    chromePersistentLaunchOptions(PROFILE_DIR, { headed: HEADED }),
+  );
   const page = context.pages()[0] || (await context.newPage());
 
   try {
