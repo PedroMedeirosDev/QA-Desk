@@ -6,6 +6,79 @@ import type { Browser, Page } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 
+/** Args Chrome para automação (sem prompts de senha / notificação). */
+export const CHROME_AUTOMATION_ARGS = [
+  "--disable-blink-features=AutomationControlled",
+  "--disable-features=PasswordManagerOnboarding,PasswordLeakDetection",
+  "--disable-save-password-bubble",
+  "--disable-notifications",
+] as const;
+
+/**
+ * Endurece o perfil persistente do Chrome da automação:
+ * - sem "Salvar senha?"
+ * - sem "Permitir notificações?"
+ */
+export function prepareChromeAutomationProfile(userDataDir: string) {
+  const defaultDir = path.join(userDataDir, "Default");
+  fs.mkdirSync(defaultDir, { recursive: true });
+  const prefsPath = path.join(defaultDir, "Preferences");
+  let prefs: Record<string, unknown> = {};
+  if (fs.existsSync(prefsPath)) {
+    try {
+      prefs = JSON.parse(fs.readFileSync(prefsPath, "utf8")) as Record<
+        string,
+        unknown
+      >;
+    } catch {
+      prefs = {};
+    }
+  }
+  prefs.credentials_enable_service = false;
+  const profile =
+    typeof prefs.profile === "object" && prefs.profile !== null
+      ? (prefs.profile as Record<string, unknown>)
+      : {};
+  profile.password_manager_enabled = false;
+  profile.password_manager_leak_detection = false;
+  const contentValues =
+    typeof profile.default_content_setting_values === "object" &&
+    profile.default_content_setting_values !== null
+      ? (profile.default_content_setting_values as Record<string, unknown>)
+      : {};
+  // 2 = Block (Chrome content settings)
+  contentValues.notifications = 2;
+  profile.default_content_setting_values = contentValues;
+  prefs.profile = profile;
+  fs.writeFileSync(prefsPath, JSON.stringify(prefs));
+}
+
+/** @deprecated use prepareChromeAutomationProfile */
+export function disableChromePasswordManager(userDataDir: string) {
+  prepareChromeAutomationProfile(userDataDir);
+}
+
+export type ChromePersistentLaunchOpts = {
+  headed?: boolean;
+  viewport?: { width: number; height: number };
+};
+
+/** Opções padrão de launchPersistentContext (Chrome + sem prompts chatos). */
+export function chromePersistentLaunchOptions(
+  userDataDir: string,
+  opts?: ChromePersistentLaunchOpts,
+) {
+  prepareChromeAutomationProfile(userDataDir);
+  const headed = opts?.headed ?? process.env.PLAYWRIGHT_HEADED !== "0";
+  return {
+    channel: "chrome" as const,
+    headless: !headed,
+    locale: "pt-BR",
+    viewport: opts?.viewport ?? { width: 1400, height: 900 },
+    args: [...CHROME_AUTOMATION_ARGS],
+  };
+}
+
 export function loadPlaywrightDotEnv(fromDir: string) {
   const candidates = [
     path.join(fromDir, ".env"),

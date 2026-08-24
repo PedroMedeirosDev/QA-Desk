@@ -8,6 +8,7 @@
 import { expect, chromium, type Page, type Frame, type FrameLocator } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
+import { chromePersistentLaunchOptions } from "./gestao-auth";
 
 type Escopo = Page | Frame | FrameLocator;
 
@@ -267,13 +268,12 @@ export async function garantirDnAniversariante(
     `[dn] alvo=${dnAlvo} url=${gestaoUrl} login=${login} profile=${profileDir}`,
   );
 
-  const context = await chromium.launchPersistentContext(profileDir, {
-    channel: "chrome",
-    headless: process.env.PLAYWRIGHT_HEADED === "0",
-    locale: "pt-BR",
-    viewport: { width: 1400, height: 900 },
-    args: ["--disable-blink-features=AutomationControlled"],
-  });
+  const context = await chromium.launchPersistentContext(
+    profileDir,
+    chromePersistentLaunchOptions(profileDir, {
+      headed: process.env.PLAYWRIGHT_HEADED !== "0",
+    }),
+  );
   const page = context.pages()[0] || (await context.newPage());
 
   try {
