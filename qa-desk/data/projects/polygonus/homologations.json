@@ -1,13 +1,58 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-08-18",
+    "updatedAt": "2026-08-25",
     "project": "polygonus"
   },
   "homologations": [
     {
+      "id": "HOM-2026-004",
+      "slug": "inconsistencias-diario-tarefas-notas-24-08",
+      "scope": "## Fonte\nPDF do relato: `projects/polygonus/evidence/homologacao-2026-08-24-inconsistencias/POLYGONUS_INCONSISTENCIAS_24_ago_26.pdf`\nTítulo original: *Problemas e inconsistências no sistema polygonos* (24/08/2026).\n\n## Escopo (só os itens do PDF)\n1. Conteúdo — não acrescenta no mesmo dia\n2. Horário de aula incorreto (aula dupla)\n3. Tarefa abre outra (dia diferente)\n4. Relatório de tarefa em branco × não entregues em datas futuras\n5. Sem diferenciação entregue × atraso\n6. Tarefas somem ao abrir notas\n7. Conteúdo no App some no dispositivo de mesa\n8. Valores de atividade/notas somem no App (vermelho)\n9. Relatório com quantidade de aulas divergente da grade\n\n## Como homologar hoje\n- Reproduzir cada INC na amostra (App e/ou WEB conforme o CT).\n- Evidência: print/vídeo + data/turma/login.\n- Se confirmar: abrir bug Desk (APP/WEB) e, se for o caso, issue na KB.\n- Se não reproduzir: marcar CT como passou / não reproduzido com nota.\n\n## Fora deste recorte\nDemais deploys do digest (chat encaminhada, conciliação, orçamento, histórico escolar) — não misturar nesta homologação.\n",
+      "title": "Inconsistências Diário/Tarefas/Notas — relato 24/08",
+      "status": "em_andamento",
+      "channel": "app",
+      "history": [
+        {
+          "at": "2026-08-25T13:04:47.144Z",
+          "actor": "Pedro",
+          "action": "homologation_created",
+          "detail": "Homologação criada: Inconsistências Diário/Tarefas/Notas — relato 24/08"
+        },
+        {
+          "at": "2026-08-25T13:04:47.439Z",
+          "actor": "system",
+          "action": "homologation_synced",
+          "detail": "Checklist PDF 24/08: 9 no escopo · 9 novo(s) · 0 atualizado(s) · 0 vinculado(s)"
+        },
+        {
+          "at": "2026-08-25T13:38:57.126Z",
+          "actor": "Pedro",
+          "action": "updated",
+          "detail": "Vinculado APP-08: seletor de data de entrega vazio (6.06.35)"
+        }
+      ],
+      "project": "polygonus",
+      "campaign": "inconsistencias-diario-tarefas-notas-24-08",
+      "testKeys": [
+        "academico/inc-diario-01",
+        "academico/inc-diario-02",
+        "academico/inc-diario-03",
+        "academico/inc-diario-04",
+        "academico/inc-diario-05",
+        "academico/inc-diario-06",
+        "academico/inc-diario-07",
+        "academico/inc-diario-08",
+        "academico/inc-diario-09"
+      ],
+      "startedAt": "2026-08-25T13:04:47.144Z",
+      "changeScope": "fullstack",
+      "description": "Homologação dos 8 itens (+ relatório de aulas) do PDF de inconsistências enviado em 24–25/08. Evidência: projects/polygonus/evidence/homologacao-2026-08-24-inconsistencias/POLYGONUS_INCONSISTENCIAS_24_ago_26.pdf"
+    },
+    {
       "id": "HOM-2026-003",
       "slug": "diario-cq-homologacao",
+      "scope": "## Onde\nGestão WEB React, o Amostra (CQ). Quem lança: professor. Conferência no App: perfil responsável.\n\n## Notas parciais\n- Abrir o lançamento (turma, etapa, disciplina)\n- Lançar nota inteira e com vírgula (ex.: 7 e 7,5)\n- Um aluno preenchido, demais vazios → Gravar\n- Nota igual ao máximo da avaliação; nota acima do máximo (tem que recusar)\n- Excluir nota\n- Avaliação por conceito: lançar A/B/C; tentar número onde é conceito e letra onde é nota\n- Depois de Gravar, a célula amarela some\n\n## Conteúdo (dois forms)\n1. Quadro por etapa\n2. Por turma\n- Lançar texto\n- Anexar arquivo\n- Criar aula extra (se a tela tiver)\n- Excluir conteúdo\n- Professor substituto: vê/edita só o que a permissão permite\n\n## Frequência (dois forms)\n1. Quadro\n2. Por turma\n- Marcar falta → Gravar\n- Remover falta → Gravar\n- Mesmo recorte de substituto\n\n## App (responsável)\n- Nota / conceito visível\n- Conteúdo do dia\n- Falta do aluno\n\n## Fora deste recorte\nPlano de aula, tarefas diárias, APP iOS do chamado da Stefanie, telas Delphi.\n\n## Já aberto no Desk\n- WEB-01 — AV não aceita conceito (A/B/C)\n- WEB-02 — célula continua amarela após Gravar",
       "title": "Homologação CQ — Notas, Conteúdo, Frequência",
       "status": "em_andamento",
       "channel": "web",
@@ -51,8 +96,7 @@
       ],
       "startedAt": "2026-08-18T17:39:11.942Z",
       "changeScope": "fullstack",
-      "description": "WEB React no Amostra: notas parciais, conteúdo e frequência (dois forms). Conferência no App (responsável).",
-      "scope": "## Onde\nGestão WEB React, o Amostra (CQ). Quem lança: professor. Conferência no App: perfil responsável.\n\n## Notas parciais\n- Abrir o lançamento (turma, etapa, disciplina)\n- Lançar nota inteira e com vírgula (ex.: 7 e 7,5)\n- Um aluno preenchido, demais vazios → Gravar\n- Nota igual ao máximo da avaliação; nota acima do máximo (tem que recusar)\n- Excluir nota\n- Avaliação por conceito: lançar A/B/C; tentar número onde é conceito e letra onde é nota\n- Depois de Gravar, a célula amarela some\n\n## Conteúdo (dois forms)\n1. Quadro por etapa\n2. Por turma\n- Lançar texto\n- Anexar arquivo\n- Criar aula extra (se a tela tiver)\n- Excluir conteúdo\n- Professor substituto: vê/edita só o que a permissão permite\n\n## Frequência (dois forms)\n1. Quadro\n2. Por turma\n- Marcar falta → Gravar\n- Remover falta → Gravar\n- Mesmo recorte de substituto\n\n## App (responsável)\n- Nota / conceito visível\n- Conteúdo do dia\n- Falta do aluno\n\n## Fora deste recorte\nPlano de aula, tarefas diárias, APP iOS do chamado da Stefanie, telas Delphi.\n\n## Já aberto no Desk\n- WEB-01 — AV não aceita conceito (A/B/C)\n- WEB-02 — célula continua amarela após Gravar"
+      "description": "WEB React no Amostra: notas parciais, conteúdo e frequência (dois forms). Conferência no App (responsável)."
     },
     {
       "id": "HOM-2026-002",

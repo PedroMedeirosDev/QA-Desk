@@ -292,11 +292,11 @@ function tallyManualFromHistory(
 
       if (h.action === "homologation_changed") {
         const target = detailTargetStatus(h.detail);
-        if (target === "passou" || target === "falhou" || target === "homologado") {
+        if (target === "passou" || target === "falhou" || target === "homologado" || target === "falta_evidencias") {
           manual.total += 1;
           if (target === "passou") manual.passed += 1;
           else if (target === "falhou") manual.failed += 1;
-          else manual.homologated += 1;
+          else if (target === "homologado") manual.homologated += 1;
           if (report.campaign || report.homologationId) hasHomologationContext = true;
           pushHighlight(highlights, {
             kind: "manual",

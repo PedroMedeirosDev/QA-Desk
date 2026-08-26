@@ -1,4 +1,8 @@
-import type { HomologationStatus, TestRecord } from "@/types/test-record";
+import {
+  HOMOLOGATION_LABELS,
+  type HomologationStatus,
+  type TestRecord,
+} from "@/types/test-record";
 import { countTestRunsForRunner } from "@/lib/history";
 import {
   hasMaestroAutomation,
@@ -481,23 +485,43 @@ function bucketStatus(status?: HomologationStatus | string): "passed" | "failed"
 }
 
 /**
- * Resultado no escopo do runner — não compartilha status entre Maestro e Playwright.
- * Playwright usa só `playwright.lastRunStatus`; Maestro usa lastRunStatus + fallback de homologação.
+ * Resultado no escopo do runner.
+ * Usa lastRun do runner ativo quando houver success/failed; senão cai no
+ * status de homologação (manual / sem run desse executor).
+ * Não mistura lastRun do Maestro na visão Playwright e vice-versa.
  */
 export function resultBucketForRunner(
   item: Pick<TestRecord, "homologationStatus" | "automation">,
   runner: AutomationRunner,
 ): "passed" | "failed" | "pending" {
-  if (runner === "playwright") {
-    const st = item.automation?.playwright?.lastRunStatus;
-    if (st === "success") return "passed";
-    if (st === "failed") return "failed";
-    return "pending";
-  }
-  const st = item.automation?.lastRunStatus;
+  const st =
+    runner === "playwright"
+      ? item.automation?.playwright?.lastRunStatus
+      : item.automation?.lastRunStatus;
   if (st === "success") return "passed";
   if (st === "failed") return "failed";
   return bucketStatus(item.homologationStatus);
+}
+
+/** Badge da coluna Resultado na homologação (progress item). */
+export function homologationResultDisplay(
+  item: {
+    status: HomologationStatus;
+    maestroLastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
+    playwrightLastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
+  },
+  runner: AutomationRunner,
+): { status: HomologationStatus; label: string } {
+  const st =
+    runner === "playwright"
+      ? item.playwrightLastRunStatus
+      : item.maestroLastRunStatus;
+  if (st === "success") return { status: "passou", label: "Passou" };
+  if (st === "failed") return { status: "falhou", label: "Falhou" };
+  return {
+    status: item.status,
+    label: HOMOLOGATION_LABELS[item.status] ?? "Pendente",
+  };
 }
 
 /** Estatísticas agregadas da suite (cabeçalho expandido ou recolhido), por runner. */
@@ -605,7 +629,7 @@ export function summarizeSuiteProgress(
       const st = item.playwrightLastRunStatus;
       if (st === "success") bucket = "passed";
       else if (st === "failed") bucket = "failed";
-      else bucket = "pending";
+      else bucket = bucketStatus(item.status);
     } else {
       const st = item.maestroLastRunStatus;
       if (st === "success") bucket = "passed";

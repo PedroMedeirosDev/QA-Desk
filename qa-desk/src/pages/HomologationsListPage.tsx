@@ -59,6 +59,11 @@ function ProgressCell({ hom }: { hom: HomologationWithProgress }) {
         {progress.failed > 0 && (
           <span className="ml-1 text-red-400">· {progress.failed} falhou</span>
         )}
+        {(progress.needsEvidence ?? 0) > 0 && (
+          <span className="ml-1 text-amber-300">
+            · {progress.needsEvidence} falta evid.
+          </span>
+        )}
       </p>
       <div className="h-1.5 overflow-hidden rounded-full bg-muted">
         <div
@@ -352,7 +357,20 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
                 const scope = h.changeScope ?? "backend";
 
                 return (
-                  <tr key={h.id} className="border-b last:border-0 hover:bg-muted/30">
+                  <tr
+                    key={h.id}
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`Abrir ${h.title}`}
+                    onClick={() => navigate(projectHomologationPath(project, h.slug))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        navigate(projectHomologationPath(project, h.slug));
+                      }
+                    }}
+                    className="cursor-pointer border-b last:border-0 hover:bg-muted/30 focus-visible:bg-muted/40 focus-visible:outline-none"
+                  >
                     <td className="px-4 py-3">
                       <p className="font-medium">{h.title}</p>
                       <p className="font-mono text-xs text-muted-foreground">
@@ -399,7 +417,11 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td
+                      className="px-4 py-3"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
                       <div className="flex flex-wrap items-center gap-1">
                         <PremiumTooltip label="Abrir" side="top" align="end">
                           <button
