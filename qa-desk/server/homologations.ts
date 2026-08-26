@@ -266,8 +266,33 @@ export function computeHomologationProgress(
   homologation: Homologation,
   testCatalog: TestCatalog,
 ): HomologationProgress {
-  const items = homologation.testKeys.map((testKey) => {
+  function isBugRecord(r: TestRecord | undefined): boolean {
+    if (!r) return false;
+    return r.recordType === "bug" || r.id.startsWith("BUG-");
+  }
+
+  function toBugItem(r: TestRecord) {
+    return {
+      bugId: r.id,
+      bugCode: r.bugCode,
+      title: r.title,
+      status: r.status,
+      channel: r.channel,
+      priority: r.priority ?? r.severity,
+      testKey: r.testKey,
+    };
+  }
+
+  const items: HomologationProgress["items"] = [];
+  const bugsById = new Map<string, HomologationProgress["bugs"][number]>();
+
+  for (const testKey of homologation.testKeys) {
     const test = findByTestKey(testCatalog, testKey);
+    if (isBugRecord(test)) {
+      bugsById.set(test!.id, toBugItem(test!));
+      continue;
+    }
+
     const status = test?.homologationStatus ?? "pendente";
     const runsInHomologation = (test?.history ?? []).filter(
       (h) =>
@@ -282,12 +307,17 @@ export function computeHomologationProgress(
     const hasMaestro = Boolean(test?.automation?.flowPath?.trim());
     const hasPlaywright = Boolean(test?.automation?.playwright?.specPath?.trim());
 
-    return {
+    items.push({
       testKey,
       testId: test?.id,
       title: test?.title ?? testKey,
       suite,
       status,
+      executionMode: test?.executionMode
+        ? test.executionMode
+        : hasMaestro || hasPlaywright
+          ? "automated"
+          : "manual",
       runsInHomologation,
       lastRunAt:
         test?.automation?.lastRunAt ?? test?.automation?.playwright?.lastRunAt,
@@ -308,24 +338,39 @@ export function computeHomologationProgress(
             ? "ready"
             : "draft") as "draft" | "ready")
         : undefined,
-    };
-  });
+    });
+  }
+
+  // Bugs vinculados só por homologationId (sem estar em testKeys)
+  for (const report of testCatalog.reports) {
+    if (!isBugRecord(report)) continue;
+    if (report.homologationId !== homologation.id) continue;
+    if (bugsById.has(report.id)) continue;
+    bugsById.set(report.id, toBugItem(report));
+  }
+
+  const bugs = [...bugsById.values()].sort((a, b) =>
+    (a.bugCode ?? a.bugId).localeCompare(b.bugCode ?? b.bugId, "pt-BR"),
+  );
 
   const found = items.filter((i) => i.found).length;
   const passed = items.filter((i) => i.status === "passou" || i.status === "homologado").length;
   const failed = items.filter((i) => i.status === "falhou").length;
   const pending = items.filter((i) => i.status === "pendente").length;
+  const needsEvidence = items.filter((i) => i.status === "falta_evidencias").length;
   const homologated = items.filter((i) => i.status === "homologado").length;
 
   return {
     homologationId: homologation.id,
-    total: homologation.testKeys.length,
+    total: items.length,
     registered: found,
     passed,
     failed,
     pending,
+    needsEvidence,
     homologated,
     items,
+    bugs,
   };
 }
 

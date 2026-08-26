@@ -18,7 +18,12 @@ export type BugStatus =
   | "arquivado";
 
 /** Resultado do teste dentro de uma homologação */
-export type TestHomologationStatus = "pendente" | "passou" | "falhou" | "homologado";
+export type TestHomologationStatus =
+  | "pendente"
+  | "falta_evidencias"
+  | "passou"
+  | "falhou"
+  | "homologado";
 
 /** Ciclo da homologação (campanha) */
 export type HomologationCycleStatus = "em_andamento" | "concluida" | "pausada";
@@ -37,6 +42,12 @@ export interface HistoryEntry {
   meta?: Record<string, unknown>;
 }
 
+export type EvidencePurpose =
+  | "prova_ok"
+  | "reproducao"
+  | "antes_depois"
+  | "contexto";
+
 export interface EvidenceFile {
   fileId: string;
   type: "screenshot" | "video" | "log";
@@ -44,8 +55,10 @@ export interface EvidenceFile {
   mimeType: string;
   sizeBytes: number;
   uploadedAt: string;
+  /** @deprecated preferir purpose */
   label?: string;
   storageKey: string;
+  purpose?: EvidencePurpose;
 }
 
 export interface AutomationPrep {
@@ -200,6 +213,7 @@ export interface HomologationProgress {
   passed: number;
   failed: number;
   pending: number;
+  needsEvidence: number;
   homologated: number;
   items: Array<{
     testKey: string;
@@ -208,13 +222,26 @@ export interface HomologationProgress {
     /** Bloco/suite (ex.: CRUD, Anexos) — para agrupar na UI */
     suite?: string;
     status: TestHomologationStatus;
+    executionMode?: ExecutionMode;
     runsInHomologation: number;
     lastRunAt?: string;
+    playwrightLastRunAt?: string;
+    maestroLastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
+    playwrightLastRunStatus?: "idle" | "running" | "success" | "failed" | "cancelled";
     found: boolean;
     hasAutomation?: boolean;
     hasMaestro?: boolean;
     hasPlaywright?: boolean;
     readiness?: "draft" | "ready";
     playwrightReadiness?: "draft" | "ready";
+  }>;
+  bugs: Array<{
+    bugId: string;
+    bugCode?: string;
+    title: string;
+    status: BugStatus;
+    channel?: ProductChannel;
+    priority?: "baixa" | "media" | "alta" | "critica";
+    testKey?: string;
   }>;
 }

@@ -1,4 +1,11 @@
-import type { HistoryEntry, HomologationStatus, ProductChannel, ProjectSlug } from "./test-record";
+import type {
+  BugStatus,
+  ExecutionMode,
+  HistoryEntry,
+  HomologationStatus,
+  ProductChannel,
+  ProjectSlug,
+} from "./test-record";
 
 export type HomologationCycleStatus = "em_andamento" | "concluida" | "pausada";
 
@@ -17,10 +24,22 @@ export interface Homologation {
   status: HomologationCycleStatus;
   build?: string;
   campaign?: string;
+  /** Chaves de CT (não incluir bugs — bugs vão em bugs[] do progresso / homologationId). */
   testKeys: string[];
   startedAt: string;
   finishedAt?: string;
   history: HistoryEntry[];
+}
+
+/** Bug encontrado durante a campanha (lista separada dos CTs). */
+export interface HomologationLinkedBug {
+  bugId: string;
+  bugCode?: string;
+  title: string;
+  status: BugStatus;
+  channel?: ProductChannel;
+  priority?: "baixa" | "media" | "alta" | "critica";
+  testKey?: string;
 }
 
 export interface HomologationProgress {
@@ -30,6 +49,8 @@ export interface HomologationProgress {
   passed: number;
   failed: number;
   pending: number;
+  /** CT testado, mas ainda sem prova suficiente para fechar. */
+  needsEvidence: number;
   homologated: number;
   items: Array<{
     testKey: string;
@@ -38,6 +59,8 @@ export interface HomologationProgress {
     /** Bloco/suite (ex.: CRUD, Anexos) — para agrupar na UI */
     suite?: string;
     status: HomologationStatus;
+    /** Modo do CT (manual × automatizado) — para badge na lista. */
+    executionMode?: ExecutionMode;
     runsInHomologation: number;
     lastRunAt?: string;
     playwrightLastRunAt?: string;
@@ -50,6 +73,8 @@ export interface HomologationProgress {
     readiness?: "draft" | "ready";
     playwrightReadiness?: "draft" | "ready";
   }>;
+  /** Bugs vinculados à campanha (não entram no contador de CTs). */
+  bugs: HomologationLinkedBug[];
 }
 
 export interface HomologationWithProgress extends Homologation {

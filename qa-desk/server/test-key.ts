@@ -7,6 +7,7 @@ import type {
   TestCatalog,
   TestRecord,
 } from "./types.js";
+import { fixUtf8Mojibake } from "./utf8-mojibake.js";
 
 const READINESS_PASS_THRESHOLD = 2;
 
@@ -174,6 +175,21 @@ export function normalizeCatalog(catalog: TestCatalog): { catalog: TestCatalog; 
     }
     if (report.automation?.flowPath) {
       if (applyAutomationReadinessAfterRun(report.automation, report.history)) {
+        changed = true;
+      }
+    }
+    for (const ev of report.evidence ?? []) {
+      const filename = fixUtf8Mojibake(ev.filename);
+      if (filename !== ev.filename) {
+        ev.filename = filename;
+        changed = true;
+      }
+    }
+    for (const entry of report.history ?? []) {
+      if (!entry.detail) continue;
+      const detail = fixUtf8Mojibake(entry.detail);
+      if (detail !== entry.detail) {
+        entry.detail = detail;
         changed = true;
       }
     }

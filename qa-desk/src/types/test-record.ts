@@ -16,7 +16,12 @@ export type BugStatus =
   | "nao_reproduzido"
   | "arquivado";
 
-export type HomologationStatus = "pendente" | "passou" | "falhou" | "homologado";
+export type HomologationStatus =
+  | "pendente"
+  | "falta_evidencias"
+  | "passou"
+  | "falhou"
+  | "homologado";
 
 export type ExecutionMode = "manual" | "automated";
 
@@ -28,6 +33,20 @@ export interface HistoryEntry {
   meta?: Record<string, unknown>;
 }
 
+/** Papel da evidência no relatório de homologação. */
+export type EvidencePurpose =
+  | "prova_ok"
+  | "reproducao"
+  | "antes_depois"
+  | "contexto";
+
+export const EVIDENCE_PURPOSE_LABELS: Record<EvidencePurpose, string> = {
+  prova_ok: "Prova de OK",
+  reproducao: "Reprodução do defeito",
+  antes_depois: "Antes / depois",
+  contexto: "Contexto",
+};
+
 export interface EvidenceFile {
   fileId: string;
   type: "screenshot" | "video" | "log";
@@ -36,6 +55,8 @@ export interface EvidenceFile {
   sizeBytes: number;
   uploadedAt: string;
   storageKey: string;
+  /** Papel no relatório (prova de OK, reprodução, etc.). */
+  purpose?: EvidencePurpose;
 }
 
 export interface AutomationPrep {
@@ -184,10 +205,28 @@ export const PRIORITY_LABELS: Record<
 
 export const HOMOLOGATION_LABELS: Record<HomologationStatus, string> = {
   pendente: "Pendente",
+  falta_evidencias: "Falta evidências",
   passou: "Passou",
   falhou: "Falhou",
   homologado: "Homologado",
 };
+
+/** Default do papel da evidência a partir do status do CT. */
+export function defaultEvidencePurpose(
+  status?: HomologationStatus,
+): EvidencePurpose {
+  if (status === "passou" || status === "homologado") return "prova_ok";
+  if (status === "falhou") return "reproducao";
+  return "contexto";
+}
+
+export function evidencePurposeLabel(
+  purpose: EvidencePurpose | undefined,
+  fallbackStatus?: HomologationStatus,
+): string {
+  const resolved = purpose ?? defaultEvidencePurpose(fallbackStatus);
+  return EVIDENCE_PURPOSE_LABELS[resolved];
+}
 
 export const RECORD_TYPE_LABELS: Record<NonNullable<TestRecord["recordType"]>, string> = {
   teste: "Teste",
@@ -330,7 +369,13 @@ export function displayStatus(
     }
     const h = record.homologationStatus ?? "pendente";
     const tone =
-      h === "passou" || h === "homologado" ? "ok" : h === "falhou" ? "fail" : "neutral";
+      h === "passou" || h === "homologado"
+        ? "ok"
+        : h === "falhou"
+          ? "fail"
+          : h === "falta_evidencias"
+            ? "warn"
+            : "neutral";
     return { label: HOMOLOGATION_LABELS[h], tone };
   }
   const s = record.status;

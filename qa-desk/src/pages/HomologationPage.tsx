@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import {
   ArrowLeft,
+  Bug,
   CheckCircle2,
   Download,
   ExternalLink,
@@ -11,6 +12,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
+import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
 import { AreaHeaderRow, ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
 import { SuiteListControls } from "@/components/SuiteListControls";
@@ -19,14 +21,28 @@ import { useConfirm } from "@/lib/confirm";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { useRunProgress, RUN_CANCELLED_MESSAGE, clearBatchStop, isBatchStopRequested } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
-import { buildHomologationScopeHtml, downloadHtmlReport } from "@/lib/html-report";
+import { authHeaders } from "@/lib/auth-token";
+import {
+  buildHomologationScopeHtml,
+  collectEvidenceMediaForReport,
+  downloadHtmlReport,
+  fetchAsDataUrl,
+} from "@/lib/html-report";
+import { getBundledLogoUrl } from "@/config/logos";
+import { resolveProjectTheme } from "@/config/project-themes";
 import { CURRENT_USER } from "@/config/user";
 import { PROJECTS } from "@/config/projects";
 import {
   DIARIO_CQ_HOMOLOGATION_SLUG,
   DIARIO_CQ_SCOPE,
 } from "@/config/homologation-scopes";
-import { projectDetailPath, projectHomologationsListPath, projectListPath } from "@/lib/project-paths";
+import {
+  projectBugDetailPath,
+  projectDetailPath,
+  projectHomologationPath,
+  projectHomologationsListPath,
+  projectListPath,
+} from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
 import { CHANNEL_LABELS, channelSupportsMaestro } from "@/config/channels";
 import { MURAL_HOMOLOGATION_SLUG } from "@/config/homologations";
@@ -38,6 +54,7 @@ import {
   suiteCollapseKey,
   summarizeSuiteProgress,
   SUITE_LABELS,
+  homologationResultDisplay,
 } from "@/lib/suite";
 import {
   AUTOMATION_RUNNER_SHORT,
@@ -49,8 +66,10 @@ import {
   type AutomationRunner,
 } from "@/lib/automation-runners";
 import {
-  HOMOLOGATION_LABELS,
+  BUG_STATUS_LABELS,
   inferChannel,
+  type BugStatus,
+  type EvidenceFile,
   type HomologationStatus,
   type ProjectSlug,
   type TestRecord,
@@ -69,6 +88,22 @@ function statusTone(status: HomologationStatus): string {
     return "border-emerald-500/40 bg-emerald-500/15 text-emerald-400";
   }
   if (status === "falhou") return "border-red-500/40 bg-red-500/15 text-red-400";
+  if (status === "falta_evidencias") {
+    return "border-amber-500/40 bg-amber-500/15 text-amber-300";
+  }
+  return "border-border bg-muted text-muted-foreground";
+}
+
+function bugStatusTone(status: BugStatus): string {
+  if (status === "homologado" || status === "corrigido_gestor") {
+    return "border-emerald-500/40 bg-emerald-500/15 text-emerald-400";
+  }
+  if (status === "reportado" || status === "enviado_gestor" || status === "em_tratamento") {
+    return "border-amber-500/40 bg-amber-500/15 text-amber-300";
+  }
+  if (status === "cancelado" || status === "arquivado" || status === "nao_reproduzido") {
+    return "border-border bg-muted text-muted-foreground";
+  }
   return "border-border bg-muted text-muted-foreground";
 }
 
@@ -91,7 +126,15 @@ function ProgressBar({ progress }: { progress: HomologationProgress }) {
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
         <span>{progress.registered} cadastrado(s)</span>
         {progress.failed > 0 && <span className="text-red-400">{progress.failed} falhou</span>}
+        {(progress.needsEvidence ?? 0) > 0 && (
+          <span className="text-amber-300">
+            {progress.needsEvidence} falta evidência(s)
+          </span>
+        )}
         {progress.pending > 0 && <span>{progress.pending} pendente(s)</span>}
+        {(progress.bugs?.length ?? 0) > 0 && (
+          <span>{progress.bugs.length} bug(s) vinculado(s)</span>
+        )}
       </div>
     </div>
   );
@@ -567,9 +610,12 @@ export function HomologationPage({
   const allPassed = progress.total > 0 && progress.passed === progress.total;
   const isMural = homSlug === MURAL_HOMOLOGATION_SLUG;
   const scopeKeys = new Set(homologation.testKeys);
+  const linkedBugs = progress.bugs ?? [];
   const addableTests = catalogTests.filter(
     (t) =>
       t.testKey &&
+      t.recordType !== "bug" &&
+      !t.id.startsWith("BUG-") &&
       !scopeKeys.has(t.testKey) &&
       (!homologation.channel || inferChannel(t) === homologation.channel),
   );
@@ -580,15 +626,97 @@ export function HomologationPage({
     campanha.scope?.trim() ||
     (homSlug === DIARIO_CQ_HOMOLOGATION_SLUG ? DIARIO_CQ_SCOPE : "");
 
-  function exportScopeHtml() {
-    const html = buildHomologationScopeHtml(campanha, progresso, {
-      projectLabel: PROJECTS.find((p) => p.slug === project)?.label ?? project,
-      author: CURRENT_USER.actor,
-      briefing,
+  async function exportScopeHtml() {
+    const toastId = toast.info("Preparando relatório e embutindo anexos…", {
+      duration: 0,
     });
-    const day = new Date().toISOString().slice(0, 10);
-    downloadHtmlReport(html, `escopo-${campanha.slug}-${day}.html`);
-    toast.success("HTML do escopo baixado");
+    try {
+      // Catálogo fresco — evita CT sem evidence por lista desatualizada.
+      const catalog = await api.listTests(project);
+      const byKey = new Map(
+        catalog.reports
+          .filter((t) => t.testKey)
+          .map((t) => [t.testKey as string, t]),
+      );
+      const byId = new Map(catalog.reports.map((t) => [t.id, t]));
+
+      const recordsByKey: Record<string, TestRecord> = {};
+      const allEvidence: EvidenceFile[] = [];
+      for (const item of progresso.items) {
+        const rec =
+          byKey.get(item.testKey) ??
+          (item.testId ? byId.get(item.testId) : undefined);
+        if (rec?.testKey) {
+          recordsByKey[rec.testKey] = rec;
+          allEvidence.push(...(rec.evidence ?? []));
+        }
+      }
+      const mediaByFileId = await collectEvidenceMediaForReport(
+        allEvidence,
+        (storageKey) => api.evidenceUrl(storageKey),
+        { headers: authHeaders(), concurrency: 2 },
+      );
+      const embedded = Object.values(mediaByFileId).filter((m) => m.dataUrl).length;
+      const projectCfg = PROJECTS.find((p) => p.slug === project);
+      const theme = resolveProjectTheme(project);
+      const logoUrl = getBundledLogoUrl(projectCfg?.logoFile ?? project);
+      const brandLogoDataUrl = logoUrl
+        ? await fetchAsDataUrl(logoUrl)
+        : undefined;
+      const html = buildHomologationScopeHtml(campanha, progresso, {
+        projectLabel: projectCfg?.label ?? project,
+        author: CURRENT_USER.actor,
+        recordsByKey,
+        mediaByFileId,
+        brandLogoDataUrl,
+        themeAccent: theme.accent,
+        themeHighlight: theme.highlight,
+      });
+      const namePart = (campanha.slug || campanha.id || "campanha")
+        .replace(/[^a-zA-Z0-9._-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+      downloadHtmlReport(html, `rel-${namePart}.html`);
+      if (allEvidence.length === 0) {
+        toast.update(toastId, {
+          variant: "success",
+          message: "Relatório HTML baixado",
+          duration: 4000,
+        });
+      } else if (embedded === allEvidence.length) {
+        toast.update(toastId, {
+          variant: "success",
+          message: `Relatório HTML baixado · ${embedded} anexo(s) embutido(s)`,
+          duration: 5000,
+        });
+      } else if (embedded === 0) {
+        toast.update(toastId, {
+          variant: "error",
+          message:
+            "Relatório baixado, mas nenhum anexo foi embutido. Confira se o Desk está aberto e tente de novo.",
+          duration: 8000,
+        });
+      } else {
+        toast.update(toastId, {
+          variant: "info",
+          message: `Relatório baixado · ${embedded}/${allEvidence.length} anexo(s) embutidos. Reexporte se faltar prévia.`,
+          duration: 7000,
+        });
+      }
+    } catch (e) {
+      toast.dismiss(toastId);
+      toast.error(toastErrorMessage(e, "Falha ao gerar o relatório HTML"));
+    }
+  }
+
+  /** Abre CT/bug e faz o Voltar do editor retornar a esta campanha. */
+  function openFromCampaign(path: string) {
+    navigate(path, {
+      state: {
+        backTo: projectHomologationPath(project, campanha.slug),
+        backLabel: "Voltar à campanha",
+      },
+    });
   }
 
   return (
@@ -610,8 +738,8 @@ export function HomologationPage({
           </li>
           <li>Nova campanha: botão <strong>Nova homologação</strong> na lista de testes.</li>
           <li>
-            <strong>Exportar escopo HTML</strong> gera um arquivo para enviar ao gestor (briefing +
-            checklist).
+            <strong>Exportar relatório HTML</strong> gera um arquivo enxuto por CT (problema,
+            observação e evidência) — sem o textão de escopo.
           </li>
         </ul>
       </div>
@@ -665,22 +793,20 @@ export function HomologationPage({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {briefing ? (
-            <PremiumTooltip
-              label="Gera HTML com o briefing e o checklist (para enviar ao gestor)"
-              side="bottom"
-              wide
+          <PremiumTooltip
+            label="HTML enxuto: cabeçalho do produto + um bloco por CT (problema, observação, evidência). Sem briefing."
+            side="bottom"
+            wide
+          >
+            <button
+              type="button"
+              onClick={() => void exportScopeHtml()}
+              className={cn(actionBtnBase, actionBtn.ghost, "px-3")}
             >
-              <button
-                type="button"
-                onClick={exportScopeHtml}
-                className={cn(actionBtnBase, actionBtn.ghost, "px-3")}
-              >
-                <Download className="size-4" />
-                Exportar escopo HTML
-              </button>
-            </PremiumTooltip>
-          ) : null}
+              <Download className="size-4" />
+              Exportar relatório HTML
+            </button>
+          </PremiumTooltip>
           {homologation.status !== "concluida" && (
             <PremiumTooltip
               label="Executa todos os testes Maestro desta campanha, um após o outro"
@@ -792,6 +918,9 @@ export function HomologationPage({
             <p className="text-sm font-medium">Escopo ({progress.total} teste(s))</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Área → aba → suite · chave <code className="text-[11px]">módulo/ct-id</code>
+              {linkedBugs.length > 0
+                ? ` · ${linkedBugs.length} bug(s) na seção abaixo`
+                : ""}
             </p>
           </div>
           <SuiteListControls
@@ -968,7 +1097,42 @@ export function HomologationPage({
                       return (
                       <tr
                         key={item.testKey}
-                        className={cn("border-b last:border-0", tableRowHoverClass)}
+                        role={item.testId ? "link" : undefined}
+                        tabIndex={item.testId ? 0 : undefined}
+                        aria-label={item.testId ? `Abrir ${item.title}` : undefined}
+                        onClick={
+                          item.testId
+                            ? () =>
+                                openFromCampaign(
+                                  projectDetailPath(
+                                    project,
+                                    item.testId!,
+                                    homologation.channel,
+                                  ),
+                                )
+                            : undefined
+                        }
+                        onKeyDown={
+                          item.testId
+                            ? (e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  openFromCampaign(
+                                    projectDetailPath(
+                                      project,
+                                      item.testId!,
+                                      homologation.channel,
+                                    ),
+                                  );
+                                }
+                              }
+                            : undefined
+                        }
+                        className={cn(
+                          "border-b last:border-0",
+                          tableRowHoverClass,
+                          item.testId && "cursor-pointer focus-visible:bg-muted/40 focus-visible:outline-none",
+                        )}
                       >
                         <td className="px-4 py-3 pl-10">
                           <p className="font-medium">{item.title}</p>
@@ -1010,43 +1174,45 @@ export function HomologationPage({
                         </td>
                         <td className="px-4 py-3">
                           {(() => {
-                            let label = HOMOLOGATION_LABELS[item.status];
-                            let status: HomologationStatus = item.status;
-                            if (runner === "playwright") {
-                              const st = item.playwrightLastRunStatus;
-                              if (st === "success") {
-                                status = "passou";
-                                label = "Passou";
-                              } else if (st === "failed") {
-                                status = "falhou";
-                                label = "Falhou";
-                              } else {
-                                status = "pendente";
-                                label = "Pendente";
-                              }
-                            } else if (item.maestroLastRunStatus === "success") {
-                              status = "passou";
-                              label = "Passou";
-                            } else if (item.maestroLastRunStatus === "failed") {
-                              status = "falhou";
-                              label = "Falhou";
-                            }
+                            const { status, label } = homologationResultDisplay(
+                              item,
+                              runner,
+                            );
+                            const fromCatalog = catalogTests.find(
+                              (t) => t.testKey === item.testKey,
+                            );
                             return (
-                              <span
-                                className={cn(
-                                  "rounded-full border px-2 py-0.5 text-xs",
-                                  statusTone(status),
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span
+                                  className={cn(
+                                    "rounded-full border px-2 py-0.5 text-xs",
+                                    statusTone(status),
+                                  )}
+                                >
+                                  {label}
+                                </span>
+                                {item.found && (
+                                  <ExecutionModeBadge
+                                    record={{
+                                      executionMode:
+                                        item.executionMode ??
+                                        fromCatalog?.executionMode,
+                                      automation: fromCatalog?.automation,
+                                    }}
+                                  />
                                 )}
-                              >
-                                {label}
-                              </span>
+                              </div>
                             );
                           })()}
                         </td>
                         <td className="px-4 py-3 tabular-nums text-center">
                           {item.runsInHomologation || "—"}
                         </td>
-                        <td className="px-4 py-3">
+                        <td
+                          className="px-4 py-3"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
                           {item.testId && (
                             <div className="flex items-center gap-1">
                               <PremiumTooltip label="Abrir teste" align="end">
@@ -1054,7 +1220,7 @@ export function HomologationPage({
                                   type="button"
                                   aria-label="Abrir teste"
                                   onClick={() =>
-                                    navigate(
+                                    openFromCampaign(
                                       projectDetailPath(
                                         project,
                                         item.testId!,
@@ -1148,6 +1314,97 @@ export function HomologationPage({
         </table>
       </div>
       </div>
+
+      {linkedBugs.length > 0 && (
+        <div className="space-y-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-medium">
+              <Bug className="size-4 text-muted-foreground" aria-hidden />
+              Bugs encontrados ({linkedBugs.length})
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Defeitos vinculados a esta campanha — não entram no contador de CTs acima.
+            </p>
+          </div>
+          <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="px-4 py-3 font-medium">Bug</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium w-24">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {linkedBugs.map((bug) => (
+                  <tr
+                    key={bug.bugId}
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`Abrir ${bug.bugCode ?? bug.bugId}`}
+                    onClick={() =>
+                      openFromCampaign(
+                        projectBugDetailPath(project, bug.bugId, bug.channel),
+                      )
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openFromCampaign(
+                          projectBugDetailPath(project, bug.bugId, bug.channel),
+                        );
+                      }
+                    }}
+                    className={cn("border-b last:border-0 cursor-pointer", tableRowHoverClass)}
+                  >
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{bug.title}</p>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {bug.bugCode ?? bug.bugId}
+                        {bug.testKey ? ` · ${bug.testKey}` : ""}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={cn(
+                          "rounded-full border px-2 py-0.5 text-xs",
+                          bugStatusTone(bug.status),
+                        )}
+                      >
+                        {BUG_STATUS_LABELS[bug.status] ?? bug.status}
+                      </span>
+                    </td>
+                    <td
+                      className="px-4 py-3"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <PremiumTooltip label="Abrir bug" align="end">
+                        <button
+                          type="button"
+                          aria-label="Abrir bug"
+                          onClick={() =>
+                            openFromCampaign(
+                              projectBugDetailPath(
+                                project,
+                                bug.bugId,
+                                bug.channel,
+                              ),
+                            )
+                          }
+                          className={cn(actionBtnBase, actionBtn.ghost, "size-8 p-0")}
+                        >
+                          <ExternalLink className="size-4" />
+                        </button>
+                      </PremiumTooltip>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {homologation.status !== "concluida" && addableTests.length > 0 && (
         <div className="rounded-xl border bg-card p-4">

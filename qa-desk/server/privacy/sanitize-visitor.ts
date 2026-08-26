@@ -153,6 +153,7 @@ export function sanitizeVisitorTestRecord(report: TestRecord): TestRecord {
       sizeBytes: ev.sizeBytes,
       uploadedAt: ev.uploadedAt,
       storageKey: ev.storageKey,
+      purpose: ev.purpose,
     })),
     history: [],
     showInPortfolio: true,

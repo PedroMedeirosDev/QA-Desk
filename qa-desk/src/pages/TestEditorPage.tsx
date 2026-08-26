@@ -1,6 +1,6 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, type SelectHTMLAttributes, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Bug, CheckCircle2, Copy, ExternalLink, Loader2, Play, Plus, RefreshCw, Smartphone, Sparkles, Trash2, Upload, Video } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Bug, Check, CheckCircle2, ChevronDown, CircleHelp, Clock, Copy, ExternalLink, Loader2, Play, Plus, RefreshCw, Smartphone, Sparkles, Trash2, Upload, Video, X } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
@@ -18,6 +18,7 @@ import {
   projectBugDetailPath,
   projectBugsListPath,
   projectDetailPath,
+  projectHomologationPath,
   projectListPath,
   projectNewBugPath,
 } from "@/lib/project-paths";
@@ -25,7 +26,12 @@ import { cn } from "@/lib/utils";
 import { VISITOR_HOME_PATH } from "@/lib/visitor";
 import { QA_GESTOR_REPLY_EVENT, type GestorReplyEvent } from "@/lib/gestor-replies-stream";
 import { channelSupportsMaestro, getProjectChannels, type ProductChannel } from "@/config/channels";
-import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
+import type {
+  BugStatus,
+  EvidencePurpose,
+  ProjectSlug,
+  TestRecord,
+} from "@/types/test-record";
 import {
   BUG_STATUS_LABELS,
   CHANNEL_LABELS,
@@ -33,6 +39,8 @@ import {
   HOMOLOGATION_LABELS,
   PRIORITY_LABELS,
   RECORD_TYPE_LABELS,
+  EVIDENCE_PURPOSE_LABELS,
+  defaultEvidencePurpose,
   displayStatus,
   formatRecordId,
   isBugReport,
@@ -46,6 +54,7 @@ import {
   ambienteView,
 } from "@/lib/bug-report-markdown";
 import { polishTestForm } from "@/lib/text-corrector";
+import { fixUtf8Mojibake } from "@/lib/utf8-mojibake";
 import {
   detailedStepsForSave,
   detailedStepsFromRecord,
@@ -57,7 +66,143 @@ import {
 } from "@/lib/automation-runners";
 
 const QUIET_INPUT =
-  "w-full rounded-md border border-border/50 bg-muted/25 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-border focus:bg-muted/40 disabled:cursor-default disabled:opacity-100 disabled:border-transparent disabled:bg-transparent";
+  "w-full rounded-lg border border-border/50 bg-muted/25 px-3 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-border focus:bg-muted/40 disabled:cursor-default disabled:opacity-100 disabled:border-transparent disabled:bg-transparent";
+
+/** Card leve para toggles do painel de propriedades. */
+const PROP_TOGGLE_CARD =
+  "rounded-xl border border-border/70 bg-muted/20 p-4 transition-colors hover:bg-muted/30";
+
+/** Label padrão dos campos do aside / formulário quieto. */
+const PROP_LABEL = "text-xs font-medium text-muted-foreground";
+
+/** Rascunho local — sobrevive a remount/HMR/reload enquanto o usuário edita. */
+function editorDraftKey(project: ProjectSlug, id: string) {
+  return `qa-desk-editor-draft:${project}:${id}`;
+}
+
+/** Campos que o usuário edita no formulário (não sobrescrever com GET após anexo). */
+const EDITOR_DRAFT_KEYS = [
+  "title",
+  "description",
+  "preconditions",
+  "steps",
+  "stepsDetailed",
+  "expectedResult",
+  "actualResult",
+  "technicalEvidence",
+  "module",
+  "testLogin",
+  "build",
+  "osVersion",
+  "deviceLabel",
+  "browser",
+  "homologationStatus",
+  "status",
+  "priority",
+  "severity",
+  "platform",
+  "channel",
+  "showInPortfolio",
+  "consolidated",
+  "automation",
+  "recordType",
+  "tags",
+  "comments",
+  "executionMode",
+] as const satisfies ReadonlyArray<keyof TestRecord>;
+
+type EditorDraftFields = Pick<TestRecord, (typeof EDITOR_DRAFT_KEYS)[number]>;
+
+function pickEditorDraft(form: Partial<TestRecord>): Partial<EditorDraftFields> {
+  const out: Partial<EditorDraftFields> = {};
+  for (const key of EDITOR_DRAFT_KEYS) {
+    if (key in form) {
+      (out as Record<string, unknown>)[key] = form[key];
+    }
+  }
+  return out;
+}
+
+function readEditorDraft(
+  project: ProjectSlug,
+  id: string,
+): Partial<EditorDraftFields> | null {
+  try {
+    const raw = sessionStorage.getItem(editorDraftKey(project, id));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { form?: Partial<EditorDraftFields> };
+    return parsed.form ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeEditorDraft(
+  project: ProjectSlug,
+  id: string,
+  form: Partial<TestRecord>,
+) {
+  try {
+    sessionStorage.setItem(
+      editorDraftKey(project, id),
+      JSON.stringify({ at: Date.now(), form: pickEditorDraft(form) }),
+    );
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function clearEditorDraft(project: ProjectSlug, id: string) {
+  try {
+    sessionStorage.removeItem(editorDraftKey(project, id));
+  } catch {
+    /* ignore */
+  }
+}
+
+function applyEditorDraft(
+  remote: TestRecord,
+  draft: Partial<EditorDraftFields> | null,
+): TestRecord {
+  if (!draft) return remote;
+  return {
+    ...remote,
+    ...draft,
+    // Sempre do servidor após fetch / anexo
+    id: remote.id,
+    project: remote.project,
+    evidence: remote.evidence,
+    history: remote.history,
+    bugCode: remote.bugCode,
+    githubIssueUrl: remote.githubIssueUrl,
+    githubIssueNumber: remote.githubIssueNumber,
+    githubIssueLastCommentAt: remote.githubIssueLastCommentAt,
+    githubIssueLastCommentBy: remote.githubIssueLastCommentBy,
+    githubIssueLastCommentBody: remote.githubIssueLastCommentBody,
+    githubIssueLastCommentUrl: remote.githubIssueLastCommentUrl,
+    githubIssueLastCommentSeenAt: remote.githubIssueLastCommentSeenAt,
+  };
+}
+
+/** Input limpo dentro do card de passo — sem caixa duplicada. */
+const STEP_INPUT =
+  "w-full border-0 bg-transparent px-0 py-0.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/60 focus-visible:ring-0";
+
+function StepIndex({ n, failed }: { n: number; failed?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ring-1",
+        failed
+          ? "bg-red-600 text-white ring-red-500/40"
+          : "bg-[#1a1a1a] text-muted-foreground ring-border",
+      )}
+      aria-hidden
+    >
+      {n}
+    </span>
+  );
+}
 
 const emptyDraft = (
   project: ProjectSlug,
@@ -209,10 +354,12 @@ export function TestEditorPage({
       api
         .getTest(project, id)
         .then(async (record) => {
-          setForm(record);
-          if (editorKind === "bug" && isAdmin && isGestorReplyUnread(record)) {
+          const withDraft = applyEditorDraft(record, readEditorDraft(project, id));
+          setForm(withDraft);
+          if (editorKind === "bug" && isAdmin && isGestorReplyUnread(withDraft)) {
             try {
-              setForm(await api.markGestorCommentSeen(project, id));
+              const seen = await api.markGestorCommentSeen(project, id);
+              setForm(applyEditorDraft(seen, readEditorDraft(project, id)));
             } catch {
               /* lista ainda mostra não lido; o card continua */
             }
@@ -233,12 +380,30 @@ export function TestEditorPage({
     // re-disparavam o GET e apagavam o texto não salvo.
   }, [project, id, isNew, channel, editorKind]);
 
+  const [draftReady, setDraftReady] = useState(false);
+  useEffect(() => {
+    setDraftReady(false);
+    const t = window.setTimeout(() => setDraftReady(true), 400);
+    return () => window.clearTimeout(t);
+  }, [project, id, isNew]);
+
+  useEffect(() => {
+    if (isNew || !id || !isAdmin || !draftReady) return;
+    if (!form.id) return;
+    const timer = window.setTimeout(() => {
+      writeEditorDraft(project, id, form);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [form, project, id, isNew, isAdmin, draftReady]);
+
   useEffect(() => {
     if (isNew || !id || editorKind !== "bug") return;
     const onReply = (event: Event) => {
       const detail = (event as CustomEvent<GestorReplyEvent>).detail;
       if (detail.bugId !== id) return;
-      void api.getTest(project, id).then(setForm);
+      void api.getTest(project, id).then((remote) => {
+        setForm(applyEditorDraft(remote, readEditorDraft(project, id)));
+      });
     };
     window.addEventListener(QA_GESTOR_REPLY_EVENT, onReply);
     return () => window.removeEventListener(QA_GESTOR_REPLY_EVENT, onReply);
@@ -249,7 +414,28 @@ export function TestEditorPage({
     const onFinished = (event: Event) => {
       const detail = (event as CustomEvent<LiveRunState>).detail;
       if (detail.testId && detail.testId !== id) return;
-      void api.getTest(project, id).then(setForm);
+      void api.getTest(project, id).then((remote) => {
+        const draft = readEditorDraft(project, id);
+        // Resultado da automação vem do servidor; texto local (obs etc.) permanece.
+        setForm({
+          ...applyEditorDraft(remote, draft),
+          evidence: remote.evidence,
+          history: remote.history,
+          automation: remote.automation,
+          homologationStatus: remote.homologationStatus,
+          executionMode: remote.executionMode,
+          build: remote.build ?? draft?.build ?? remote.build,
+        });
+        if (draft) {
+          writeEditorDraft(project, id, {
+            ...draft,
+            homologationStatus: remote.homologationStatus,
+            automation: remote.automation,
+            executionMode: remote.executionMode,
+            build: remote.build ?? draft.build,
+          });
+        }
+      });
       if (detail.result) setTab("historico");
     };
     window.addEventListener(QA_RUN_FINISHED_EVENT, onFinished);
@@ -259,18 +445,33 @@ export function TestEditorPage({
   useEffect(() => {
     if (isNew || !id || !form.id) return;
     const ch = form.channel ?? channel;
+    const navState = location.state;
     if (editorKind === "bug" && isTestCase(form)) {
-      navigate(projectDetailPath(project, id, ch), { replace: true });
+      navigate(projectDetailPath(project, id, ch), { replace: true, state: navState });
     } else if (editorKind === "teste" && isBugReport(form)) {
-      navigate(projectBugDetailPath(project, id, ch), { replace: true });
+      navigate(projectBugDetailPath(project, id, ch), { replace: true, state: navState });
     }
-  }, [form.id, form.recordType, form.campaign, editorKind, id, isNew, navigate, project, channel]);
+  }, [form.id, form.recordType, form.campaign, editorKind, id, isNew, navigate, project, channel, location.state]);
 
   function listPathFor(record: Partial<TestRecord>) {
+    const backTo = (location.state as { backTo?: string } | null)?.backTo;
+    if (backTo) return backTo;
+    // Bug de campanha: após F5 (sem state) ainda volta ao escopo, não à lista geral de bugs
+    const campaignSlug = record.campaign?.trim();
+    if (campaignSlug && isBugReport(record as TestRecord)) {
+      return projectHomologationPath(project, campaignSlug);
+    }
     const ch = record.channel ?? channel;
     return isBugReport(record as TestRecord)
       ? projectBugsListPath(project, ch)
       : projectListPath(project, ch);
+  }
+
+  function backNavLabel() {
+    const labeled = (location.state as { backLabel?: string } | null)?.backLabel;
+    if (labeled) return labeled;
+    if (form.campaign && isBugReport(form as TestRecord)) return "Voltar à campanha";
+    return "Voltar à lista";
   }
 
   function detailPathFor(recordId: string, record: Partial<TestRecord>) {
@@ -285,24 +486,38 @@ export function TestEditorPage({
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  function buildSavePayload(base: Partial<TestRecord> = form): Partial<TestRecord> {
+    return {
+      ...base,
+      recordType: editorKind,
+      stepsDetailed: detailedStepsForSave(
+        detailedStepsFromRecord(base).length
+          ? detailedStepsFromRecord(base)
+          : base.stepsDetailed ?? [],
+      ),
+      stepsManual: undefined,
+    };
+  }
+
+  /** Grava o formulário atual no servidor (sem toast) — usado antes de anexo. */
+  async function persistFormQuiet(): Promise<TestRecord | null> {
+    if (!id || isNew || !isAdmin) return null;
+    const updated = await api.updateTest(project, id, buildSavePayload());
+    clearEditorDraft(project, id);
+    setForm(updated);
+    return updated;
+  }
+
   async function save() {
     setSaving(true);
     try {
-      const payload: Partial<TestRecord> = {
-        ...form,
-        recordType: editorKind,
-        stepsDetailed: detailedStepsForSave(
-          detailedStepsFromRecord(form).length
-            ? detailedStepsFromRecord(form)
-            : form.stepsDetailed ?? [],
-        ),
-        stepsManual: undefined,
-      };
+      const payload = buildSavePayload();
       if (isNew) {
         const created = await api.createTest(project, payload);
         navigate(detailPathFor(created.id, created), { replace: true });
       } else if (id) {
         const updated = await api.updateTest(project, id, payload);
+        clearEditorDraft(project, id);
         setForm(updated);
       }
     } catch (e) {
@@ -342,7 +557,15 @@ export function TestEditorPage({
         runner,
         ...(runner === "playwright" ? { headed: playwrightHeaded } : {}),
       });
-      setForm(res.report);
+      setForm({
+        ...applyEditorDraft(res.report, readEditorDraft(project, id)),
+        evidence: res.report.evidence,
+        history: res.report.history,
+        automation: res.report.automation,
+        homologationStatus: res.report.homologationStatus,
+        executionMode: res.report.executionMode,
+        build: res.report.build ?? form.build,
+      });
       const ver = res.appVersion ? ` · v${res.appVersion}` : "";
       const vids = (res.report.evidence ?? []).filter((e) => e.type === "video");
       const stageHint =
@@ -425,13 +648,29 @@ export function TestEditorPage({
     if (uploadProgress) return;
     setUploadProgress({ filename: file.name, percent: 0 });
     try {
+      // Persiste status/obs/passos antes do anexo — senão some no refresh.
+      await persistFormQuiet();
       await api.uploadEvidence(project, id, file, {
         onProgress: (percent) =>
           setUploadProgress((prev) =>
             prev ? { ...prev, percent } : { filename: file.name, percent },
           ),
       });
-      setForm(await api.getTest(project, id));
+      const remote = await api.getTest(project, id);
+      const merged = applyEditorDraft(remote, readEditorDraft(project, id));
+      const evidence = [...(merged.evidence ?? [])];
+      const last = evidence[evidence.length - 1];
+      if (last && !last.purpose) {
+        last.purpose = defaultEvidencePurpose(merged.homologationStatus);
+        const withPurpose = { ...merged, evidence };
+        setForm(withPurpose);
+        await api.updateTest(project, id, {
+          ...withPurpose,
+          recordType: editorKind,
+        });
+      } else {
+        setForm(merged);
+      }
       toast.success("Evidência anexada");
     } catch (e) {
       toast.error(toastErrorMessage(e, "Falha no upload da evidência"));
@@ -451,13 +690,35 @@ export function TestEditorPage({
     if (!ok) return;
     setRemovingEvidenceId(ev.fileId);
     try {
-      const updated = await api.deleteEvidence(project, id, ev.fileId);
-      setForm(updated);
+      await persistFormQuiet();
+      const remote = await api.deleteEvidence(project, id, ev.fileId);
+      setForm(applyEditorDraft(remote, readEditorDraft(project, id)));
       toast.success("Evidência removida");
     } catch (e) {
       toast.error(toastErrorMessage(e, "Não foi possível remover a evidência"));
     } finally {
       setRemovingEvidenceId(null);
+    }
+  }
+
+  async function onEvidencePurposeChange(
+    fileId: string,
+    purpose: EvidencePurpose,
+  ) {
+    const nextEvidence = (form.evidence ?? []).map((ev) =>
+      ev.fileId === fileId ? { ...ev, purpose } : ev,
+    );
+    setForm((prev) => ({ ...prev, evidence: nextEvidence }));
+    if (!id || isNew || !isAdmin) return;
+    try {
+      const updated = await api.updateTest(project, id, {
+        ...form,
+        evidence: nextEvidence,
+        recordType: editorKind,
+      });
+      setForm(applyEditorDraft(updated, readEditorDraft(project, id)));
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Não foi possível gravar o tipo da evidência"));
     }
   }
 
@@ -802,11 +1063,11 @@ export function TestEditorPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <PremiumTooltip label="Voltar à lista" side="bottom">
+        <PremiumTooltip label={backNavLabel()} side="bottom">
           <Link
             to={listPathFor(form)}
             className={cn(actionBtnBase, actionBtn.back, "size-9 px-0")}
-            aria-label="Voltar à lista"
+            aria-label={backNavLabel()}
           >
             <ArrowLeft className="size-4" />
           </Link>
@@ -946,9 +1207,25 @@ export function TestEditorPage({
               </Field>
               ) : null
             ) : (
-              <Field label="Descrição">
+              <Field
+                label={
+                  isHomologation
+                    ? "Problema (nas palavras do cliente)"
+                    : "Descrição"
+                }
+                hint={
+                  isHomologation
+                    ? "Como o cliente descreveu — vai no relatório de homologação."
+                    : undefined
+                }
+              >
                 <textarea
                   className={cn(QUIET_INPUT, "min-h-24")}
+                  placeholder={
+                    isHomologation
+                      ? "Ex.: “Na ficha individual aparece a nota, mas no histórico some o ano”"
+                      : undefined
+                  }
                   value={form.description ?? ""}
                   onChange={(e) => update("description", e.target.value)}
                 />
@@ -967,17 +1244,17 @@ export function TestEditorPage({
             </FormSection>
             <FormSection title={editingBug ? "Reprodução" : "Passos"}>
             <div>
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   {!editingBug ? (
-                  <div className="inline-flex rounded-md border p-0.5 text-xs">
+                  <div className="inline-flex rounded-lg border border-border/80 bg-muted/20 p-0.5 text-xs">
                     <PremiumTooltip label="Atalho QA / Discord" side="bottom">
                       <button
                         type="button"
                         className={cn(
-                          "rounded px-2 py-0.5",
+                          "rounded-md px-2.5 py-1 transition-colors",
                           stepsMode === "resumo"
-                            ? "bg-muted font-medium text-foreground"
+                            ? "bg-background font-medium text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground",
                         )}
                         onClick={() => setStepsMode("resumo")}
@@ -989,9 +1266,9 @@ export function TestEditorPage({
                       <button
                         type="button"
                         className={cn(
-                          "rounded px-2 py-0.5",
+                          "rounded-md px-2.5 py-1 transition-colors",
                           stepsMode === "detalhado"
-                            ? "bg-muted font-medium text-foreground"
+                            ? "bg-background font-medium text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground",
                         )}
                         onClick={() => setStepsMode("detalhado")}
@@ -1011,15 +1288,15 @@ export function TestEditorPage({
                   <PremiumTooltip label="Normaliza numeração, espaços e unicode" side="bottom" wide>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/50"
+                      className={cn(actionBtnBase, actionBtn.ghost, "h-8 px-2.5 text-xs")}
                       onClick={applyTextPolish}
                     >
-                      <Sparkles className="size-3" /> Corrigir texto
+                      <Sparkles className="size-3.5" /> Corrigir texto
                     </button>
                   </PremiumTooltip>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                    className={cn(actionBtnBase, actionBtn.ghost, "h-8 px-2.5 text-xs")}
                     onClick={() => {
                       if (stepsMode === "detalhado") {
                         const cur = detailedStepsFromRecord(form);
@@ -1032,13 +1309,13 @@ export function TestEditorPage({
                       }
                     }}
                   >
-                    <Plus className="size-3" /> Adicionar passo
+                    <Plus className="size-3.5" /> Adicionar passo
                   </button>
                 </div>
                 )}
               </div>
               {!editingBug && (
-              <p className="mb-2 text-[0.7rem] text-muted-foreground">
+              <p className="mb-3 text-[0.7rem] text-muted-foreground">
                 {stepsMode === "resumo"
                   ? "Enxuto — atalho para você e reports curtos."
                   : "1 toque por linha. Âncoras Maestro (flow/ação) ligam a falha da automação a este passo."}
@@ -1053,33 +1330,25 @@ export function TestEditorPage({
                     failInfo?.stepIndex != null && failInfo.stepSource === "steps";
                   const failedIdx = highlight ? failInfo?.stepIndex : undefined;
                   return (
-                    <div className="space-y-2">
+                    <ol className="space-y-2">
                       {list.map((step, i) => {
                         const isFailedStep = failedIdx === i;
                         return (
-                          <div
+                          <li
                             key={`steps-${i}`}
                             className={cn(
-                              "flex gap-2 rounded-md",
-                              isFailedStep &&
-                                "border border-red-500/40 bg-red-500/10 p-1.5",
+                              "group flex items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors",
+                              isFailedStep
+                                ? "border-red-500/40 bg-red-500/10"
+                                : "border-border/70 bg-muted/15 hover:border-border hover:bg-muted/30",
                             )}
                           >
-                            <span
-                              className={cn(
-                                "mt-2 w-6 text-xs",
-                                isFailedStep
-                                  ? "font-semibold text-red-400"
-                                  : "text-muted-foreground",
-                              )}
-                            >
-                              {i + 1}.
-                            </span>
-                            <div className="min-w-0 flex-1">
+                            <StepIndex n={i + 1} failed={isFailedStep} />
+                            <div className="min-w-0 flex-1 space-y-1">
                               <input
                                 className={cn(
-                                  QUIET_INPUT,
-                                  isFailedStep && "border-red-500/50 bg-red-500/10",
+                                  STEP_INPUT,
+                                  isFailedStep && "text-red-100 placeholder:text-red-300/50",
                                 )}
                                 value={step}
                                 onChange={(e) => {
@@ -1089,7 +1358,7 @@ export function TestEditorPage({
                                 }}
                               />
                               {isFailedStep && failInfo && (
-                                <p className="mt-1 text-[0.7rem] text-red-300">
+                                <p className="text-[0.7rem] text-red-300">
                                   Falhou aqui
                                   {failInfo.action ? ` · ${failInfo.action}` : ""}
                                   {failInfo.flow ? ` · ${failInfo.flow}` : ""}
@@ -1100,7 +1369,7 @@ export function TestEditorPage({
                             <PremiumTooltip label="Remover passo" side="top" align="end">
                               <button
                                 type="button"
-                                className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
+                                className="mt-0.5 rounded-md p-1.5 text-muted-foreground opacity-70 transition-all hover:bg-red-500/10 hover:text-red-500 hover:opacity-100 group-hover:opacity-100"
                                 aria-label="Remover passo"
                                 onClick={() =>
                                   update(
@@ -1109,14 +1378,14 @@ export function TestEditorPage({
                                   )
                                 }
                               >
-                                <Trash2 className="size-4" />
+                                <Trash2 className="size-3.5" />
                               </button>
                             </PremiumTooltip>
                             )}
-                          </div>
+                          </li>
                         );
                       })}
-                    </div>
+                    </ol>
                   );
                 })()
               ) : (
@@ -1134,34 +1403,26 @@ export function TestEditorPage({
                   const setDetailed = (next: DetailedStep[]) =>
                     update("stepsDetailed", next);
                   return (
-                    <div className="space-y-3">
+                    <ol className="space-y-2.5">
                       {list.map((step, i) => {
                         const isFailedStep = failedIdx === i;
                         return (
-                          <div
+                          <li
                             key={`detailed-${i}`}
                             className={cn(
-                              "rounded-md",
-                              isFailedStep &&
-                                "border border-red-500/40 bg-red-500/10 p-1.5",
+                              "group rounded-lg border px-3 py-2.5 transition-colors",
+                              isFailedStep
+                                ? "border-red-500/40 bg-red-500/10"
+                                : "border-border/70 bg-muted/15 hover:border-border hover:bg-muted/30",
                             )}
                           >
-                            <div className="flex gap-2">
-                              <span
-                                className={cn(
-                                  "mt-2 w-6 text-xs",
-                                  isFailedStep
-                                    ? "font-semibold text-red-400"
-                                    : "text-muted-foreground",
-                                )}
-                              >
-                                {i + 1}.
-                              </span>
-                              <div className="min-w-0 flex-1 space-y-1.5">
+                            <div className="flex items-start gap-3">
+                              <StepIndex n={i + 1} failed={isFailedStep} />
+                              <div className="min-w-0 flex-1 space-y-2">
                                 <input
                                   className={cn(
-                                    QUIET_INPUT,
-                                    isFailedStep && "border-red-500/50 bg-red-500/10",
+                                    STEP_INPUT,
+                                    isFailedStep && "text-red-100 placeholder:text-red-300/50",
                                   )}
                                   value={step.text}
                                   placeholder="Ex.: Toque no ícone de funil na barra do composer"
@@ -1178,7 +1439,7 @@ export function TestEditorPage({
                                     wide
                                   >
                                     <input
-                                      className="w-full rounded-md border border-dashed px-2 py-1 text-[0.7rem] text-muted-foreground"
+                                      className="w-full rounded-md border border-dashed border-border/80 bg-background/40 px-2 py-1.5 text-[0.7rem] text-muted-foreground placeholder:text-muted-foreground/60"
                                       value={(step.flows ?? []).join(", ")}
                                       placeholder="Flows YAML (vírgula) — ex. abrir_filtro_extras_composer.yaml"
                                       onChange={(e) => {
@@ -1198,7 +1459,7 @@ export function TestEditorPage({
                                     wide
                                   >
                                     <input
-                                      className="w-full rounded-md border border-dashed px-2 py-1 text-[0.7rem] text-muted-foreground"
+                                      className="w-full rounded-md border border-dashed border-border/80 bg-background/40 px-2 py-1.5 text-[0.7rem] text-muted-foreground placeholder:text-muted-foreground/60"
                                       value={(step.actions ?? []).join(", ")}
                                       placeholder="Ações (vírgula) — ex. mural_composer_filtro"
                                       onChange={(e) => {
@@ -1225,21 +1486,21 @@ export function TestEditorPage({
                               <PremiumTooltip label="Remover passo" side="top" align="end">
                                 <button
                                   type="button"
-                                  className="mt-1 rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
+                                  className="mt-0.5 rounded-md p-1.5 text-muted-foreground opacity-70 transition-all hover:bg-red-500/10 hover:text-red-500 hover:opacity-100 group-hover:opacity-100"
                                   aria-label="Remover passo"
                                   onClick={() =>
                                     setDetailed(list.filter((_, j) => j !== i))
                                   }
                                 >
-                                  <Trash2 className="size-4" />
+                                  <Trash2 className="size-3.5" />
                                 </button>
                               </PremiumTooltip>
                               )}
                             </div>
-                          </div>
+                          </li>
                         );
                       })}
-                    </div>
+                    </ol>
                   );
                 })()
               )}
@@ -1276,17 +1537,37 @@ export function TestEditorPage({
                 )}
               </Field>
             )}
-            {isHomologation && form.homologationStatus === "falhou" && (
-              <Field label="Observações (falha / bug encontrado)">
+            {isHomologation && (
+              <Field
+                label={
+                  form.homologationStatus === "falhou"
+                    ? "Observações (falha / bug encontrado)"
+                    : form.homologationStatus === "falta_evidencias"
+                      ? "Observações (o que falta para fechar)"
+                      : form.homologationStatus === "passou" ||
+                          form.homologationStatus === "homologado"
+                        ? "Observações (o que foi verificado)"
+                        : "Observações do teste"
+                }
+              >
                 {isVisitor ? (
-                  <VisitorRedactedNote field="As observações de falha" />
+                  <VisitorRedactedNote field="As observações do teste" />
                 ) : (
-                <textarea
-                  className={cn(QUIET_INPUT, "min-h-16")}
-                  placeholder="Descreva o que falhou ou converta para Bug encontrado no painel lateral"
-                  value={form.actualResult ?? ""}
-                  onChange={(e) => update("actualResult", e.target.value)}
-                />
+                  <textarea
+                    className={cn(QUIET_INPUT, "min-h-16")}
+                    placeholder={
+                      form.homologationStatus === "falhou"
+                        ? "Descreva o que falhou ou converta para Bug no painel lateral"
+                        : form.homologationStatus === "falta_evidencias"
+                          ? "Ex.: na turma X o horário bateu com a grade; preciso de print/vídeo do cliente com turma/data em que viu o erro"
+                          : form.homologationStatus === "passou" ||
+                              form.homologationStatus === "homologado"
+                            ? "Ex.: reproduzi no App 6.06.35 com PHJESUS; consegui acrescentar conteúdo no mesmo dia; sem bloqueio"
+                            : "Anote o que observar durante a execução (login, build, resultado…)"
+                    }
+                    value={form.actualResult ?? ""}
+                    onChange={(e) => update("actualResult", e.target.value)}
+                  />
                 )}
               </Field>
             )}
@@ -1296,11 +1577,21 @@ export function TestEditorPage({
             <div>
             <div className="flex flex-wrap gap-3">
                 {(form.evidence ?? []).length === 0 && (
-                  <p className="text-sm text-muted-foreground">Nenhum print ainda.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum print ainda
+                    {isHomologation
+                      ? " — anexe evidência do que passou ou falhou."
+                      : "."}
+                  </p>
                 )}
-                {(form.evidence ?? []).map((ev) => (
-                  <div key={ev.fileId} className="group relative">
-                    <PremiumTooltip label={ev.filename} side="top">
+                {(form.evidence ?? []).map((ev) => {
+                  const filename = fixUtf8Mojibake(ev.filename);
+                  const purpose =
+                    ev.purpose ?? defaultEvidencePurpose(form.homologationStatus);
+                  return (
+                  <div key={ev.fileId} className="group relative w-36 space-y-1.5">
+                    <div className="relative">
+                    <PremiumTooltip label={filename} side="top">
                       <a
                         href={api.evidenceUrl(ev.storageKey)}
                         target="_blank"
@@ -1308,7 +1599,7 @@ export function TestEditorPage({
                         className="block overflow-hidden rounded-md border"
                       >
                         {ev.type === "video" ? (
-                          <span className="relative block h-24 w-36 overflow-hidden bg-muted/40">
+                          <span className="relative block h-24 w-full overflow-hidden bg-muted/40">
                             <video
                               src={api.evidenceUrl(ev.storageKey)}
                               className="h-full w-full object-cover"
@@ -1323,20 +1614,27 @@ export function TestEditorPage({
                         ) : (
                           <img
                             src={api.evidenceUrl(ev.storageKey)}
-                            alt={ev.filename}
-                            className="h-24 w-auto object-cover"
+                            alt={filename}
+                            className="h-24 w-full object-cover"
                           />
                         )}
                       </a>
                     </PremiumTooltip>
                     {isAdmin && !isNew && (
-                      <PremiumTooltip label="Remover evidência" side="top" align="end">
+                      <PremiumTooltip
+                        label="Remover evidência"
+                        side="bottom"
+                        align="end"
+                        className="absolute bottom-1 right-1 z-10"
+                      >
                         <button
                           type="button"
-                          aria-label={`Remover ${ev.filename}`}
+                          aria-label={`Remover ${filename}`}
                           disabled={removingEvidenceId === ev.fileId}
-                          onClick={() => void onRemoveEvidence(ev)}
-                          className="absolute top-1 right-1 rounded bg-black/70 p-1 text-white opacity-90 transition-opacity hover:bg-red-600 hover:opacity-100 disabled:opacity-50"
+                          onClick={() =>
+                            void onRemoveEvidence({ ...ev, filename })
+                          }
+                          className="rounded bg-black/70 p-1 text-white opacity-90 transition-opacity hover:bg-red-600 hover:opacity-100 disabled:opacity-50"
                         >
                           {removingEvidenceId === ev.fileId ? (
                             <Loader2 className="size-3.5 animate-spin" />
@@ -1346,8 +1644,34 @@ export function TestEditorPage({
                         </button>
                       </PremiumTooltip>
                     )}
+                    </div>
+                    {isAdmin ? (
+                      <QuietSelect
+                        className="py-1 text-[0.7rem]"
+                        aria-label={`Tipo da evidência ${filename}`}
+                        value={purpose}
+                        disabled={isNew}
+                        onChange={(e) => {
+                          const nextPurpose = e.target.value as EvidencePurpose;
+                          void onEvidencePurposeChange(ev.fileId, nextPurpose);
+                        }}
+                      >
+                        {(
+                          Object.keys(EVIDENCE_PURPOSE_LABELS) as EvidencePurpose[]
+                        ).map((key) => (
+                          <option key={key} value={key}>
+                            {EVIDENCE_PURPOSE_LABELS[key]}
+                          </option>
+                        ))}
+                      </QuietSelect>
+                    ) : (
+                      <p className="text-[0.7rem] text-muted-foreground">
+                        {EVIDENCE_PURPOSE_LABELS[purpose]}
+                      </p>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
               {uploadProgress && (
                 <div
@@ -1359,7 +1683,9 @@ export function TestEditorPage({
                   <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                     <span className="flex min-w-0 items-center gap-1.5">
                       <Loader2 className="size-3.5 shrink-0 animate-spin" />
-                      <span className="truncate">{uploadProgress.filename}</span>
+                      <span className="truncate">
+                        {fixUtf8Mojibake(uploadProgress.filename)}
+                      </span>
                     </span>
                     <span className="shrink-0 tabular-nums font-medium text-foreground">
                       {uploadProgress.percent}%
@@ -1405,7 +1731,7 @@ export function TestEditorPage({
             </FormSection>
           </div>
 
-          <aside className="sticky top-8 max-h-[calc(100vh-4rem)] min-w-0 space-y-4 self-start overflow-y-auto rounded-xl border bg-card p-4 scrollbar-thin">
+          <aside className="sticky top-8 flex max-h-[calc(100vh-4rem)] min-w-0 flex-col gap-6 self-start overflow-y-auto rounded-xl border bg-card p-4 scrollbar-thin">
             {editingBug && isAdmin && (
               <div className="flex min-w-0 flex-col gap-2 border-b border-border/60 pb-4">
                 <button
@@ -1590,6 +1916,7 @@ export function TestEditorPage({
                 )}
               </div>
             )}
+            <div className="flex flex-col gap-4">
             {getProjectChannels(project).length > 0 && (
               <PropSelect
                 label="Canal"
@@ -1618,13 +1945,14 @@ export function TestEditorPage({
             )}
 
             {isHomologation ? (
-              <div className="rounded-md border bg-muted/30 px-3 py-2">
-                <p className="text-xs text-muted-foreground">Homologação</p>
-                <p className="text-sm font-medium">
-                  {HOMOLOGATION_LABELS[form.homologationStatus ?? "pendente"]}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Atualizado automaticamente ao executar Maestro
+              <div className="space-y-2">
+                <HomologationStatusPicker
+                  value={form.homologationStatus ?? "pendente"}
+                  onChange={(v) => update("homologationStatus", v)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Manual: escolha Passou/Falhou e Salve. Automação Maestro/Playwright
+                  também atualiza este status.
                 </p>
               </div>
             ) : (
@@ -1669,18 +1997,19 @@ export function TestEditorPage({
               onChange={(v) => update("platform", v as TestRecord["platform"])}
               disabled={!isAdmin}
             />
+            </div>
             {isAdmin && (
+            <div className="flex flex-col gap-3">
             <DesignCheckbox
-              className="rounded-md border border-border bg-muted/20 px-3 py-2"
+              className={PROP_TOGGLE_CARD}
               checked={Boolean(form.showInPortfolio)}
               disabled={!isAdmin}
               onChange={(e) => update("showInPortfolio", e.target.checked)}
-              label={<span className="font-medium text-[var(--foreground)]">Mostrar no portfólio</span>}
+              label={<span className="font-medium text-foreground">Mostrar no portfólio</span>}
               description="Visitantes autenticados só veem itens marcados aqui."
             />
-            )}
-            {isAdmin && form.showInPortfolio && (
-              <div className="rounded-md border border-dashed border-border bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
+            {form.showInPortfolio && (
+              <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-3 text-xs text-muted-foreground">
                 <p className="font-medium text-foreground">Preview visitante</p>
                 <p className="mt-1">
                   Vê: título, passos, esperado, evidências (PII mascarada no servidor).
@@ -1692,14 +2021,16 @@ export function TestEditorPage({
                 </p>
               </div>
             )}
+            </div>
+            )}
             <details
               className={
-                editingBug ? "rounded-md border border-border/70" : "contents"
+                editingBug ? "rounded-xl border border-border/70" : "contents"
               }
             >
               <summary
                 className={cn(
-                  "cursor-pointer px-3 py-2 text-sm font-medium text-muted-foreground",
+                  "cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground",
                   !editingBug && "hidden",
                 )}
               >
@@ -1708,8 +2039,8 @@ export function TestEditorPage({
               <div
                 className={
                   editingBug
-                    ? "space-y-4 border-t border-border/60 px-3 py-3"
-                    : "contents"
+                    ? "flex flex-col gap-4 border-t border-border/60 px-3 py-3"
+                    : "flex flex-col gap-4"
                 }
               >
             <Field label="Módulo">
@@ -1799,9 +2130,11 @@ export function TestEditorPage({
             </details>
 
             {isHomologation && isAdmin && (
-            <div className="space-y-4 border-t pt-3">
+            <div className="flex flex-col gap-4 border-t border-border/60 pt-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium">Automação</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Automação
+                </span>
                 {maestroAllowed && form.automation?.prep?.type === "playwright" && (
                   <span className="rounded border px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
                     Seed PW → Maestro
@@ -1815,7 +2148,7 @@ export function TestEditorPage({
               </div>
 
               <DesignCheckbox
-                className="rounded-md border border-border bg-muted/20 px-3 py-2"
+                className={PROP_TOGGLE_CARD}
                 checked={Boolean(form.consolidated)}
                 onChange={(e) => update("consolidated", e.target.checked)}
                 label={
@@ -1825,8 +2158,8 @@ export function TestEditorPage({
               />
 
               {maestroAllowed && (
-              <div className="space-y-2 rounded-lg border border-border/70 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="flex flex-col gap-2 rounded-xl border border-border/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Emulador / Maestro
                 </p>
                 {form.automation?.flowPath ? (
@@ -1834,10 +2167,12 @@ export function TestEditorPage({
                     <p className="rounded-md border bg-muted/30 p-2 font-mono text-xs break-all">
                       {form.automation.label ?? form.automation.flowPath}
                     </p>
-                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                      Seed Playwright (opcional, antes do Maestro)
+                    <label className="flex flex-col gap-1.5">
+                      <span className={PROP_LABEL}>
+                        Seed Playwright (opcional, antes do Maestro)
+                      </span>
                       <input
-                        className="h-9 rounded-md border bg-background px-2 font-mono text-[0.7rem] text-foreground"
+                        className={cn(QUIET_INPUT, "font-mono text-[0.7rem]")}
                         value={form.automation.prep?.specPath ?? ""}
                         placeholder="projects/.../playwright/mural/ajustar-dn-aniversariante.spec.ts"
                         onChange={(e) => {
@@ -1855,10 +2190,9 @@ export function TestEditorPage({
                         }}
                       />
                     </label>
-                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                      Status do flow
-                      <select
-                        className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
+                    <label className="flex flex-col gap-1.5">
+                      <span className={PROP_LABEL}>Status do flow</span>
+                      <QuietSelect
                         value={form.automation.readiness === "ready" ? "ready" : "draft"}
                         onChange={(e) =>
                           update("automation", {
@@ -1869,15 +2203,14 @@ export function TestEditorPage({
                       >
                         <option value="draft">Rascunho (ainda mapeando)</option>
                         <option value="ready">Estável na suite (2 passes)</option>
-                      </select>
+                      </QuietSelect>
                     </label>
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground">Nenhum flow Maestro vinculado</p>
                 )}
                 {flows.length > 0 && (
-                  <select
-                    className="w-full rounded-md border px-2 py-1.5 text-xs"
+                  <QuietSelect
                     value={form.automation?.flowPath ?? ""}
                     onChange={(e) => {
                       const f = flows.find((x) => x.flowPath === e.target.value);
@@ -1890,16 +2223,16 @@ export function TestEditorPage({
                         {f.label}
                       </option>
                     ))}
-                  </select>
+                  </QuietSelect>
                 )}
               </div>
               )}
 
-              <div className="space-y-2 rounded-lg border border-sky-500/25 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-sky-300/90">
+              <div className="flex flex-col gap-2 rounded-xl border border-sky-500/25 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-sky-300/90">
                   Web / Playwright
                 </p>
-                <p className="text-[0.7rem] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {maestroAllowed
                     ? "Mesmo CT, executor alternativo (App no navegador). Separado do seed acima."
                     : "Executor Web/Portal — specs Playwright na amostra CQ."}
@@ -1909,10 +2242,9 @@ export function TestEditorPage({
                     <p className="rounded-md border bg-muted/30 p-2 font-mono text-xs break-all">
                       {form.automation.playwright.specPath}
                     </p>
-                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                      Status do spec
-                      <select
-                        className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
+                    <label className="flex flex-col gap-1.5">
+                      <span className={PROP_LABEL}>Status do spec</span>
+                      <QuietSelect
                         value={
                           form.automation.playwright.readiness === "ready"
                             ? "ready"
@@ -1930,15 +2262,14 @@ export function TestEditorPage({
                       >
                         <option value="draft">Rascunho</option>
                         <option value="ready">Estável na suite</option>
-                      </select>
+                      </QuietSelect>
                     </label>
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground">Nenhum spec Playwright vinculado</p>
                 )}
                 {specs.length > 0 ? (
-                  <select
-                    className="w-full rounded-md border px-2 py-1.5 text-xs"
+                  <QuietSelect
                     value={form.automation?.playwright?.specPath ?? ""}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -1961,12 +2292,12 @@ export function TestEditorPage({
                         {s.label}
                       </option>
                     ))}
-                  </select>
+                  </QuietSelect>
                 ) : (
-                  <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    Spec (caminho relativo ao repo)
+                  <label className="flex flex-col gap-1.5">
+                    <span className={PROP_LABEL}>Spec (caminho relativo ao repo)</span>
                     <input
-                      className="h-9 rounded-md border bg-background px-2 font-mono text-[0.7rem] text-foreground"
+                      className={cn(QUIET_INPUT, "font-mono text-[0.7rem]")}
                       value={form.automation?.playwright?.specPath ?? ""}
                       placeholder="projects/polygonus/automation/playwright/mural/exemplo.spec.ts"
                       onChange={(e) => {
@@ -1987,7 +2318,7 @@ export function TestEditorPage({
                 {!isNew && form.automation?.playwright?.specPath && (
                   <>
                     <DesignCheckbox
-                      className="rounded-md border px-2.5 py-2"
+                      className={PROP_TOGGLE_CARD}
                       checked={!playwrightHeaded}
                       disabled={busyRun}
                       onChange={(e) => {
@@ -2031,7 +2362,7 @@ export function TestEditorPage({
               </div>
 
               {!isNew && maestroAllowed && form.automation?.flowPath && (
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <div className="flex items-start gap-2 rounded-md border bg-muted/20 px-2.5 py-2 text-xs text-muted-foreground">
                     <span
                       className={cn(
@@ -2078,7 +2409,7 @@ export function TestEditorPage({
                     </PremiumTooltip>
                   )}
                   <DesignCheckbox
-                    className="rounded-md border px-2.5 py-2"
+                    className={PROP_TOGGLE_CARD}
                     checked={recordVideo}
                     disabled={busyRun}
                     onChange={(e) => {
@@ -2090,7 +2421,7 @@ export function TestEditorPage({
                         /* ignore */
                       }
                     }}
-                    label={<span className="font-medium text-[var(--foreground)]">Gravar vídeo</span>}
+                    label={<span className="font-medium text-foreground">Gravar vídeo</span>}
                     description="adb screenrecord em paralelo (chunks de ~3 min). Arquivos ficam em Evidência."
                   />
                   <PremiumTooltip
@@ -2150,7 +2481,7 @@ export function TestEditorPage({
             </div>
             )}
 
-            <div className="flex flex-col gap-2 pt-2">
+            <div className="flex flex-col gap-2 border-t border-border/60 pt-4">
               {isAdmin && isHomologation && !isNew && (
                 <PremiumTooltip
                   label={
@@ -2491,10 +2822,117 @@ function Field({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className={cn(PROP_LABEL, "block")}>{label}</span>
       {children}
       {hint ? <span className="block text-xs text-muted-foreground/80">{hint}</span> : null}
     </label>
+  );
+}
+
+function QuietSelect({
+  className,
+  children,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className="relative">
+      <select
+        className={cn(
+          QUIET_INPUT,
+          "appearance-none pr-9 disabled:opacity-60",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </select>
+      <ChevronDown
+        className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground opacity-70"
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+function HomologationStatusPicker({
+  value,
+  onChange,
+}: {
+  value: NonNullable<TestRecord["homologationStatus"]>;
+  onChange: (v: NonNullable<TestRecord["homologationStatus"]>) => void;
+}) {
+  const options: {
+    value: NonNullable<TestRecord["homologationStatus"]>;
+    label: string;
+    icon: typeof Clock;
+    active: string;
+  }[] = [
+    {
+      value: "pendente",
+      label: HOMOLOGATION_LABELS.pendente,
+      icon: Clock,
+      active: "bg-muted/40 border-border text-foreground",
+    },
+    {
+      value: "falta_evidencias",
+      label: HOMOLOGATION_LABELS.falta_evidencias,
+      icon: CircleHelp,
+      active: "bg-amber-500/10 border-amber-500/60 text-amber-300",
+    },
+    {
+      value: "passou",
+      label: HOMOLOGATION_LABELS.passou,
+      icon: Check,
+      active: "bg-emerald-500/10 border-emerald-500/60 text-emerald-400",
+    },
+    {
+      value: "falhou",
+      label: HOMOLOGATION_LABELS.falhou,
+      icon: X,
+      active: "bg-red-500/10 border-red-500/60 text-red-400",
+    },
+    {
+      value: "homologado",
+      label: HOMOLOGATION_LABELS.homologado,
+      icon: BadgeCheck,
+      active: "bg-sky-500/10 border-sky-500/60 text-sky-300",
+    },
+  ];
+
+  const idle =
+    "bg-muted/20 border-border/70 text-muted-foreground hover:border-border hover:text-foreground hover:bg-muted/40";
+
+  return (
+    <div className="space-y-1.5">
+      <span className={cn(PROP_LABEL, "block")}>Resultado da homologação</span>
+      <div
+        role="radiogroup"
+        aria-label="Resultado da homologação"
+        className="grid grid-cols-2 gap-2"
+      >
+        {options.map((o) => {
+          const selected = value === o.value;
+          const Icon = o.icon;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(o.value)}
+              className={cn(
+                "flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors",
+                o.value === "homologado" && "col-span-2",
+                selected ? o.active : idle,
+              )}
+            >
+              <Icon className="size-4 shrink-0" aria-hidden />
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -2513,9 +2951,8 @@ function PropSelect({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm font-medium">{label}</span>
-      <select
-        className={cn(QUIET_INPUT, "disabled:opacity-60")}
+      <span className={cn(PROP_LABEL, "block")}>{label}</span>
+      <QuietSelect
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
@@ -2525,7 +2962,7 @@ function PropSelect({
             {o.label}
           </option>
         ))}
-      </select>
+      </QuietSelect>
     </label>
   );
 }

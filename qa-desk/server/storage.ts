@@ -6,6 +6,7 @@ import { readCatalogFromDb, writeCatalogToDb } from "./db/pg-catalog.js";
 import { findHomologationBySlug, readHomologationCatalog } from "./homologations.js";
 import { redactPiiDeep } from "./privacy/redact-pii.js";
 import { normalizeCatalog } from "./test-key.js";
+import { fixUtf8Mojibake } from "./utf8-mojibake.js";
 import type { HistoryEntry, ProductChannel, ProjectSlug, TestCatalog, TestRecord } from "./types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -100,8 +101,30 @@ export async function readCatalog(project: ProjectSlug): Promise<TestCatalog> {
         return normalized;
       }
     }
-    // Postgres já é fonte de verdade — não re-normaliza / não re-lê homologações em todo GET
-    // (isso dobrava a latência remota em cada lista de testes).
+    // Postgres já é fonte de verdade — não re-liga homologações em todo GET.
+    // Só corrige mojibake de nomes de evidência (Multer/Windows), barato e one-shot.
+    let healed = false;
+    for (const report of catalog.reports) {
+      for (const ev of report.evidence ?? []) {
+        const filename = fixUtf8Mojibake(ev.filename);
+        if (filename !== ev.filename) {
+          ev.filename = filename;
+          healed = true;
+        }
+      }
+      for (const entry of report.history ?? []) {
+        if (!entry.detail) continue;
+        const detail = fixUtf8Mojibake(entry.detail);
+        if (detail !== entry.detail) {
+          entry.detail = detail;
+          healed = true;
+        }
+      }
+    }
+    if (healed) {
+      await writeCatalogToDb(project, catalog);
+      writeCatalogToFile(project, catalog);
+    }
     return catalog;
   }
 

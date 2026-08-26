@@ -17,6 +17,7 @@ import {
   deleteEvidenceObject,
 } from "../supabase-storage.js";
 import { deriveTestKey, findByTestKey } from "../test-key.js";
+import { fixUtf8Mojibake } from "../utf8-mojibake.js";
 import {
   actorOf,
   attachUser,
@@ -100,6 +101,29 @@ function evidenceTypeFromUpload(
     return "screenshot";
   }
   return "log";
+}
+
+/** Atualiza metadados (ex.: purpose) sem permitir inventar arquivos novos. */
+function mergeEvidenceMeta(
+  prev: EvidenceFile[] | undefined,
+  incoming: EvidenceFile[] | undefined,
+): EvidenceFile[] | undefined {
+  if (incoming === undefined) return prev;
+  const byId = new Map((prev ?? []).map((ev) => [ev.fileId, ev]));
+  const merged: EvidenceFile[] = [];
+  for (const item of incoming) {
+    const existing = byId.get(item.fileId);
+    if (!existing) continue;
+    merged.push({
+      ...existing,
+      purpose: item.purpose ?? existing.purpose,
+      label: item.label ?? existing.label,
+    });
+    byId.delete(item.fileId);
+  }
+  // Mantém evidências que o cliente omitiu (não usa o body para apagar — DELETE dedicado).
+  for (const leftover of byId.values()) merged.push(leftover);
+  return merged;
 }
 
 const upload = multer({
@@ -278,7 +302,7 @@ testsRouter.put("/:id", requireAdmin, async (req, res) => {
     id: prev.id,
     project,
     history: prev.history,
-    evidence: prev.evidence,
+    evidence: mergeEvidenceMeta(prev.evidence, body.evidence),
     automation: body.automation ?? prev.automation,
     testKey: prev.testKey ?? deriveTestKey({ ...prev, ...body }),
     recordType: body.recordType ?? prev.recordType,
@@ -391,15 +415,16 @@ testsRouter.post(
   if (idx < 0) return res.status(404).json({ error: "Teste não encontrado" });
   if (!req.file?.buffer) return res.status(400).json({ error: "Arquivo obrigatório" });
 
+  const originalName = fixUtf8Mojibake(req.file.originalname || "arquivo");
   const fileId = uuid();
-  const storedFilename = makeStoredEvidenceFilename(req.file.originalname, fileId);
+  const storedFilename = makeStoredEvidenceFilename(originalName, fileId);
   let storageKey: string;
   try {
     const uploaded = await uploadEvidenceBuffer({
       project,
       testId,
       buffer: req.file.buffer,
-      originalName: req.file.originalname,
+      originalName,
       mimeType: req.file.mimetype,
       storedFilename,
     });
@@ -413,8 +438,8 @@ testsRouter.post(
 
   const evidence: EvidenceFile = {
     fileId,
-    type: evidenceTypeFromUpload(req.file.mimetype, req.file.originalname),
-    filename: req.file.originalname,
+    type: evidenceTypeFromUpload(req.file.mimetype, originalName),
+    filename: originalName,
     mimeType: req.file.mimetype,
     sizeBytes: req.file.size,
     uploadedAt: new Date().toISOString(),
@@ -426,7 +451,7 @@ testsRouter.post(
   appendHistory(report, {
     actor: actorOf(req),
     action: "evidence_uploaded",
-    detail: req.file.originalname,
+    detail: originalName,
   });
 
   catalog.reports[idx] = report;

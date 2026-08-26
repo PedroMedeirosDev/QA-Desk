@@ -18,6 +18,16 @@ export default defineConfig({
   },
   server: {
     port: 5174,
+    // Espelho JSON do catálogo (Postgres → data/projects/*/tests.json) NÃO deve
+    // recarregar a SPA — senão Salvar/anexo dispara full reload e some texto/histórico da tela.
+    watch: {
+      ignored: [
+        "**/data/projects/**",
+        "**/data/uploads/**",
+        "**/tmp-*.json",
+        "**/tmp-*.mts",
+      ],
+    },
     proxy: {
       "/api": {
         target: apiTarget,

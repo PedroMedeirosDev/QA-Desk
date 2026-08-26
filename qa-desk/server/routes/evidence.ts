@@ -6,9 +6,9 @@ import { attachUser, isVisitor, rejectVisitorMutations } from "../middleware/aut
 import { assertProject, readCatalog } from "../storage.js";
 import {
   buildEvidenceStorageKey,
+  downloadEvidenceBytes,
   isLocalUploadsKey,
   localEvidenceAbsPath,
-  signedEvidenceUrl,
 } from "../supabase-storage.js";
 import type { ProjectSlug } from "../types.js";
 
@@ -24,9 +24,27 @@ function relativeEvidencePath(reqPath: string): string {
   return reqPath.replace(/^\/+/, "").replace(/\\/g, "/");
 }
 
+function mimeFromName(name: string): string | undefined {
+  const ext = path.extname(name).toLowerCase();
+  const map: Record<string, string> = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+    ".mov": "video/quicktime",
+    ".mkv": "video/x-matroska",
+  };
+  return map[ext];
+}
+
 /**
  * Serve evidências sob /api/evidence/*
  * Path: `{project}/{testId}/{file}` (legado disco ou Storage).
+ * Sempre faz proxy dos bytes (sem redirect ao Storage) para <img>/<video>/fetch
+ * funcionarem no mesmo origin — inclusive no export do relatório HTML.
  * Visitante: só arquivos sob CT com showInPortfolio === true.
  */
 evidenceRouter.get("/{*path}", async (req, res) => {
@@ -62,43 +80,50 @@ evidenceRouter.get("/{*path}", async (req, res) => {
     }
   }
 
+  const sendLocal = (absPath: string) => {
+    const mime = mimeFromName(absPath);
+    if (mime) res.type(mime);
+    return res.sendFile(absPath);
+  };
+
   // 1) Disco legado
   const localKey = `uploads/${relRaw}`;
   const absLocal = localEvidenceAbsPath(localKey);
   if (absLocal && fs.existsSync(absLocal) && fs.statSync(absLocal).isFile()) {
-    return res.sendFile(absLocal);
+    return sendLocal(absLocal);
   }
 
-  // Path absoluto antigo (mesmo root)
   const abs = path.resolve(UPLOADS_ROOT, relRaw);
   if (
     (abs.startsWith(UPLOADS_ROOT + path.sep) || abs === UPLOADS_ROOT) &&
     fs.existsSync(abs) &&
     fs.statSync(abs).isFile()
   ) {
-    return res.sendFile(abs);
+    return sendLocal(abs);
   }
 
-  // 2) Supabase Storage (signed URL)
+  // 2) Supabase Storage — proxy (não redirect; evita CORS no fetch do relatório)
+  if (segments.length < 3) {
+    return res.status(404).json({ error: "Arquivo não encontrado" });
+  }
+
   const storageKey = buildEvidenceStorageKey(
     project,
     testId,
     segments.slice(2).join("/"),
   );
-  if (segments.length < 3) {
+  const hit =
+    (await downloadEvidenceBytes(storageKey)) ??
+    (!isLocalUploadsKey(relRaw)
+      ? await downloadEvidenceBytes(`evidence/${relRaw}`)
+      : null);
+
+  if (!hit) {
     return res.status(404).json({ error: "Arquivo não encontrado" });
   }
 
-  const signed = await signedEvidenceUrl(storageKey);
-  if (signed) {
-    return res.redirect(302, signed);
-  }
-
-  // Tentativa com storageKey “nu” (só object path)
-  if (!isLocalUploadsKey(relRaw)) {
-    const signed2 = await signedEvidenceUrl(`evidence/${relRaw}`);
-    if (signed2) return res.redirect(302, signed2);
-  }
-
-  return res.status(404).json({ error: "Arquivo não encontrado" });
+  const mime = hit.mimeType || mimeFromName(relRaw) || "application/octet-stream";
+  res.setHeader("Content-Type", mime);
+  res.setHeader("Cache-Control", "private, max-age=300");
+  return res.send(hit.buffer);
 });
