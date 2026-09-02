@@ -39,7 +39,7 @@ Documento irmão (humano): [`../ARCHITECTURE.md`](../ARCHITECTURE.md) · backlog
 **Monorepo na prática:**
 
 ```
-Qa Desk/                          # raiz do git
+QA-Desk/                          # raiz do git
 ├── projects/                     # artefatos por cliente (maestro, playwright, homologação)
 │   ├── polygonus/
 │   ├── anihype/

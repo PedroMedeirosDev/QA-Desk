@@ -45,8 +45,8 @@ Depois o Apps Script / API só precisa ler linhas e montar JSON por coluna.
 Pré-requisito: **Python 3.9+** no PATH.
 
 ```powershell
-cd "C:\Users\PEDRO\Documents\Projetos Portfolio\QA Automate"
-python testes\support\tools\sentry_to_support_record.py caminho\para\evento.json
+cd C:\projetos\QA-Desk
+python projects\polygonus\support\tools\sentry_to_support_record.py caminho\para\evento.json
 ```
 
 Saída: um JSON **uma linha** (ou formatado com `--pretty`) no stdout.
@@ -54,7 +54,7 @@ Saída: um JSON **uma linha** (ou formatado com `--pretty`) no stdout.
 Gravar em arquivo (para testar o bot / pipeline):
 
 ```powershell
-python testes\support\tools\sentry_to_support_record.py evento.json --out testes\support\out\ultimo.json
+python projects\polygonus\support\tools\sentry_to_support_record.py evento.json --out projects\polygonus\support\out\ultimo.json
 ```
 
 Linha para colar no Sheets (mesma ordem do cabeçalho):

@@ -1,6 +1,6 @@
 # Projetos
 
-Cada cliente/produto tem sua pasta em `projects/<slug>/`. O repositório **QA Automate** é multi-projeto; Polygonus foi o primeiro e não define o escopo do repo.
+Cada cliente/produto tem sua pasta em `projects/<slug>/`. O repositório **QA Desk** é multi-projeto; Polygonus foi o primeiro e não define o escopo do repo.
 
 ## Projetos ativos
 

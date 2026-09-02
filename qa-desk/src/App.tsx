@@ -18,6 +18,7 @@ import { HomologationsListPage } from "@/pages/HomologationsListPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { KbCurationPage } from "@/pages/KbCurationPage";
 import { ImplantacoesListPage } from "@/pages/ImplantacoesListPage";
+import { GestorCasesPage } from "@/pages/GestorCasesPage";
 import { ImplantacaoPage } from "@/pages/ImplantacaoPage";
 import { ApiSuitePage } from "@/pages/ApiSuitePage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -57,13 +58,15 @@ function ProjectShell() {
         ? "Curadoria KB"
         : route.view === "implantacoes-list" || route.view === "implantacao"
           ? "Implantações"
-          : route.view === "api-suite"
-            ? "Suite API"
-            : route.view === "homologations-list" || route.view === "homologation"
-              ? "Homologações"
-              : route.view === "bugs-list"
-                ? "Bugs reportados"
-                : "Registro de Testes";
+          : route.view === "gestor-cases"
+            ? "Repasse"
+            : route.view === "api-suite"
+              ? "Suite API"
+              : route.view === "homologations-list" || route.view === "homologation"
+                ? "Homologações"
+                : route.view === "bugs-list"
+                  ? "Bugs reportados"
+                  : "Registro de Testes";
 
   const headerSubtitle = isVisitor
     ? "Somente leitura"
@@ -73,7 +76,9 @@ function ProjectShell() {
         ? "Rastreabilidade da base de conhecimento"
         : route.view === "implantacoes-list"
           ? "Tipos e requisitos operacionais"
-          : route.view === "implantacao"
+          : route.view === "gestor-cases"
+            ? "Casos para o gestor (Discord)"
+            : route.view === "implantacao"
             ? "Checklist do tipo"
             : route.view === "api-suite"
               ? "Newman / Postman"
@@ -181,9 +186,8 @@ function ProjectShell() {
               route.view === "api-suite" ||
               route.view === "implantacoes-list" ||
               route.view === "implantacao" ||
-              route.view === "dashboard" ||
-              route.view === "homologations-list" ||
-              route.view === "homologation") ? (
+              route.view === "gestor-cases" ||
+              route.view === "dashboard") ? (
               <Navigate
                 to={
                   slug === "desk"
@@ -198,6 +202,8 @@ function ProjectShell() {
               <KbCurationPage project={slug} />
             ) : route.view === "implantacoes-list" ? (
               <ImplantacoesListPage project={slug} />
+            ) : route.view === "gestor-cases" ? (
+              <GestorCasesPage project={slug} />
             ) : route.view === "implantacao" && route.impSlug ? (
               <ImplantacaoPage project={slug} impSlug={route.impSlug} />
             ) : route.view === "api-suite" ? (

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.use({
   locale: 'pt-BR',
-  storageState: 'C:\\Users\\pedro\\Projetos Portfolio\\Polygonus-QA\\testes\\automation\\playwright\\.auth\\user.json'
+  storageState: '.auth/user.json'
 });
 
 test('test', async ({ page }) => {

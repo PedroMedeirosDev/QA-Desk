@@ -5,13 +5,13 @@ Sempre comece entrando na pasta do registro (ajuste o caminho se o seu for difer
 ## PowerShell (Windows)
 
 ```powershell
-cd "C:\Users\PEDRO\Documents\Projetos Portfolio\QA Automate\testes\polygonus-sentry-suporte"
+cd "C:\projetos\QA-Desk\projects\polygonus\polygonus-sentry-suporte"
 ```
 
 ## bash / zsh / Git Bash
 
 ```bash
-cd "/c/Users/PEDRO/Documents/Projetos Portfolio/QA Automate/testes/polygonus-sentry-suporte"
+cd "/c/projetos/QA-Desk/projects/polygonus/polygonus-sentry-suporte"
 ```
 
 ---

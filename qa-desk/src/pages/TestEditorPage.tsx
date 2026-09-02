@@ -1574,6 +1574,11 @@ export function TestEditorPage({
             </FormSection>
 
             <FormSection title="Evidências">
+            {isVisitor ? (
+              <p className="text-sm text-muted-foreground">
+                Prints e vídeos não entram no portfólio — a tela do produto permanece privada.
+              </p>
+            ) : (
             <div>
             <div className="flex flex-wrap gap-3">
                 {(form.evidence ?? []).length === 0 && (
@@ -1728,6 +1733,7 @@ export function TestEditorPage({
               </label>
               )}
             </div>
+            )}
             </FormSection>
           </div>
 
@@ -2012,12 +2018,12 @@ export function TestEditorPage({
               <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 px-4 py-3 text-xs text-muted-foreground">
                 <p className="font-medium text-foreground">Preview visitante</p>
                 <p className="mt-1">
-                  Vê: título, passos, esperado, evidências (PII mascarada no servidor).
+                  Vê: título, passos e resultado esperado (PII mascarada no servidor).
                 </p>
                 <p className="mt-1">
                   Não vê:{" "}
                   {editingBug ? "citação do chamado, " : ""}
-                  resultado observado, automação, histórico, logs.
+                  resultado observado, evidências (prints/vídeo), automação, histórico, logs.
                 </p>
               </div>
             )}

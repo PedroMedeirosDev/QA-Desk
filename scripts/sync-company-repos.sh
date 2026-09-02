@@ -70,7 +70,7 @@ sync_repo() {
   popd >/dev/null
 }
 
-echo "QA Automate — sincronizar codigo da empresa"
+echo "QA Desk — sincronizar codigo da empresa"
 echo "Raiz: ${ROOT}"
 
 if [[ "${ONLY}" == "all" || "${ONLY}" == "mobile" ]]; then

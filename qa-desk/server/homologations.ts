@@ -231,6 +231,7 @@ export function createHomologation(
     testKeys: input.testKeys ?? [],
     build: input.build,
     startedAt: now,
+    showInPortfolio: false,
     history: [
       {
         at: now,

@@ -23,6 +23,7 @@ import type {
   ImplantacaoRequisitoTipo,
   ImplantacaoTipo,
 } from "@/types/implantacao";
+import type { GestorCase, GestorCasesListResponse } from "@/types/gestor-case";
 import type { DailyIntent, DailyPortfolioCard, DailySummary } from "@/types/daily-summary";
 import type {
   GithubIssueDoneEvent,
@@ -476,6 +477,7 @@ export const api = {
       status?: Homologation["status"];
       changeScope?: Homologation["changeScope"];
       testKeys?: string[];
+      showInPortfolio?: boolean;
     },
   ) =>
     request<{ homologation: Homologation; progress: HomologationProgress }>(
@@ -580,6 +582,77 @@ export const api = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+      },
+    ),
+
+  listGestorCases: (project: ProjectSlug) =>
+    request<GestorCasesListResponse>(`/api/projects/${project}/gestor-cases`),
+
+  createGestorCase: (
+    project: ProjectSlug,
+    data: {
+      title: string;
+      body: string;
+      discordUrl?: string;
+      internalRef?: string;
+      linkedTestId?: string;
+    },
+  ) =>
+    request<{ case: GestorCase; message: string }>(
+      `/api/projects/${project}/gestor-cases`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      },
+    ),
+
+  composeGestorCase: (
+    project: ProjectSlug,
+    id: string,
+    kind: "intro" | "continuacao",
+    body?: string,
+  ) => {
+    const q =
+      kind === "continuacao" && body
+        ? `?kind=continuacao&body=${encodeURIComponent(body)}`
+        : "?kind=intro";
+    return request<{ message: string }>(
+      `/api/projects/${project}/gestor-cases/${id}/compose${q}`,
+    );
+  },
+
+  addGestorCaseContinuacao: (
+    project: ProjectSlug,
+    id: string,
+    data: { body: string; discordUrl?: string },
+  ) =>
+    request<{ case: GestorCase; message: string }>(
+      `/api/projects/${project}/gestor-cases/${id}/continuacao`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      },
+    ),
+
+  markGestorCaseDevolvido: (project: ProjectSlug, id: string) =>
+    request<{ case: GestorCase }>(
+      `/api/projects/${project}/gestor-cases/${id}/devolvido`,
+      { method: "PATCH" },
+    ),
+
+  updateGestorCaseDiscordUrl: (
+    project: ProjectSlug,
+    id: string,
+    discordUrl: string,
+  ) =>
+    request<{ case: GestorCase }>(
+      `/api/projects/${project}/gestor-cases/${id}/discord-url`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUrl }),
       },
     ),
 

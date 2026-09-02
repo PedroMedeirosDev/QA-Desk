@@ -12,7 +12,8 @@ export type ProjectRouteView =
   | "dashboard"
   | "api-suite"
   | "implantacoes-list"
-  | "implantacao";
+  | "implantacao"
+  | "gestor-cases";
 
 export interface ParsedProjectRoute {
   view: ProjectRouteView;
@@ -100,6 +101,10 @@ export function projectApiSuitePath(project: ProjectSlug): string {
   return `${projectRootPath(project)}/suite-api`;
 }
 
+export function projectGestorCasesPath(project: ProjectSlug): string {
+  return `${projectRootPath(project)}/repasse`;
+}
+
 export function isHomologationPath(project: ProjectSlug, pathname: string): boolean {
   const root = projectRootPath(project);
   return (
@@ -125,6 +130,10 @@ export function isImplantacoesPath(project: ProjectSlug, pathname: string): bool
 
 export function isApiSuitePath(project: ProjectSlug, pathname: string): boolean {
   return pathname === projectApiSuitePath(project);
+}
+
+export function isGestorCasesPath(project: ProjectSlug, pathname: string): boolean {
+  return pathname === projectGestorCasesPath(project);
 }
 
 export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedProjectRoute {
@@ -166,6 +175,9 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
     if (first === "suite-api") {
       return { view: "api-suite" };
     }
+    if (first === "repasse") {
+      return { view: "gestor-cases" };
+    }
     if (first === "homologacoes") {
       return { view: "homologations-list" };
     }
@@ -205,6 +217,7 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
 
   // Projetos sem canais (ex.: desk) — suite-api é a casa
   if (first === "suite-api") return { view: "api-suite" };
+  if (first === "repasse") return { view: "gestor-cases" };
   if (project === "desk") {
     return { view: "api-suite", redirectTo: projectApiSuitePath(project) };
   }

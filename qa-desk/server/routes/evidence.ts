@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { attachUser, isVisitor, rejectVisitorMutations } from "../middleware/auth.js";
-import { assertProject, readCatalog } from "../storage.js";
+import { assertProject } from "../storage.js";
 import {
   buildEvidenceStorageKey,
   downloadEvidenceBytes,
@@ -45,7 +45,7 @@ function mimeFromName(name: string): string | undefined {
  * Path: `{project}/{testId}/{file}` (legado disco ou Storage).
  * Sempre faz proxy dos bytes (sem redirect ao Storage) para <img>/<video>/fetch
  * funcionarem no mesmo origin — inclusive no export do relatório HTML.
- * Visitante: só arquivos sob CT com showInPortfolio === true.
+ * Visitante: nenhum byte de print/vídeo (tela do produto).
  */
 evidenceRouter.get("/{*path}", async (req, res) => {
   const raw = req.params.path;
@@ -70,14 +70,7 @@ evidenceRouter.get("/{*path}", async (req, res) => {
   const testId = segments[1];
 
   if (isVisitor(req)) {
-    const catalog = await readCatalog(project);
-    const test = catalog.reports.find((r) => r.id === testId);
-    if (!test?.showInPortfolio) {
-      return res.status(404).json({ error: "Arquivo não encontrado" });
-    }
-    if (!relRaw.startsWith(`${project}/${testId}/`)) {
-      return res.status(404).json({ error: "Arquivo não encontrado" });
-    }
+    return res.status(404).json({ error: "Arquivo não encontrado" });
   }
 
   const sendLocal = (absPath: string) => {

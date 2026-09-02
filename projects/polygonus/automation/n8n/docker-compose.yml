@@ -1,4 +1,4 @@
-# n8n local — homologação Maestro (Polygonus-QA)
+# n8n local — homologação Maestro (QA Desk)
 # Uso: docker compose up -d
 # UI:  http://localhost:5678
 # Webhook (após importar workflow): http://localhost:5678/webhook/maestro-run

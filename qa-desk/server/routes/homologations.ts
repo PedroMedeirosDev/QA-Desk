@@ -11,7 +11,8 @@ import {
 } from "../homologations.js";
 import { MURAL_HOMOLOGATION_SLUG } from "../homologation-config.js";
 import { assertProject, readCatalog, writeCatalog } from "../storage.js";
-import { actorOf, attachUser, forbidVisitor, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
+import { actorOf, attachUser, isVisitor, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
+import { sanitizeVisitorHomologation } from "../privacy/sanitize-visitor.js";
 import type { HomologationCycleStatus, HomologationChangeScope, ProductChannel } from "../types.js";
 
 function param(req: { params: Record<string, string | string[] | undefined> }, key: string) {
@@ -23,17 +24,21 @@ export const homologationsRouter = Router({ mergeParams: true });
 
 homologationsRouter.use(attachUser);
 homologationsRouter.use(rejectVisitorMutations);
-homologationsRouter.use(forbidVisitor);
 
 homologationsRouter.get("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const homCatalog = await readHomologationCatalog(project);
   const testCatalog = await readCatalog(project);
+  const visitor = isVisitor(req);
 
-  const list = homCatalog.homologations.map((h) => ({
-    ...h,
-    progress: computeHomologationProgress(h, testCatalog),
-  }));
+  const list = homCatalog.homologations
+    .filter((h) => !visitor || h.showInPortfolio === true)
+    .map((h) => {
+      const progress = computeHomologationProgress(h, testCatalog);
+      if (!visitor) return { ...h, progress };
+      const pub = sanitizeVisitorHomologation(h, progress, testCatalog);
+      return { ...pub.homologation, progress: pub.progress };
+    });
 
   res.json({ meta: homCatalog.meta, homologations: list });
 });
@@ -86,11 +91,18 @@ homologationsRouter.get("/:homSlug", async (req, res) => {
   if (!homologation) {
     return res.status(404).json({ error: "Homologação não encontrada" });
   }
+  if (isVisitor(req) && homologation.showInPortfolio !== true) {
+    return res.status(404).json({ error: "Homologação não encontrada" });
+  }
 
   const testCatalog = await readCatalog(project);
+  const progress = computeHomologationProgress(homologation, testCatalog);
+  if (isVisitor(req)) {
+    return res.json(sanitizeVisitorHomologation(homologation, progress, testCatalog));
+  }
   res.json({
     homologation,
-    progress: computeHomologationProgress(homologation, testCatalog),
+    progress,
   });
 });
 
@@ -112,6 +124,7 @@ homologationsRouter.put("/:homSlug", requireAdmin, async (req, res) => {
     status?: HomologationCycleStatus;
     changeScope?: HomologationChangeScope;
     testKeys?: string[];
+    showInPortfolio?: boolean;
   };
 
   const updated = {

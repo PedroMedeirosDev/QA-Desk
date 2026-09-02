@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 $maestroRoot = Split-Path -Parent $PSScriptRoot
 if (-not (Test-Path (Join-Path $maestroRoot "config.yaml"))) {
-  $maestroRoot = "c:\Users\pedro\Projetos Portfolio\Qa Desk\projects\polygonus\automation\maestro"
+  throw "Nao achei config.yaml em '$maestroRoot'. Rode este script a partir de projects/polygonus/automation/maestro/scripts."
 }
 Set-Location $maestroRoot
 

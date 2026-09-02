@@ -40,10 +40,12 @@ const record = sanitizeVisitorTestRecord({
   technicalEvidence: "adb log",
   comments: [{ at: "x", author: "A", text: "interno" }],
   showInPortfolio: true,
+  evidence: [{ fileId: "e1", type: "screenshot", filename: "tela.png", mimeType: "image/png", sizeBytes: 1, uploadedAt: "2026-01-01", storageKey: "secret/key.png" }],
   steps: ["abrir app"],
 } as TestRecord);
 
 assert.equal(record.showInPortfolio, true);
+assert.equal(record.evidence.length, 0);
 assert.equal(record.history.length, 0);
 assert.equal(record.automation, undefined);
 assert.equal(record.technicalEvidence, undefined);
@@ -65,7 +67,7 @@ const bugRecord = sanitizeVisitorTestRecord({
   actualResult: "lista vazia",
 } as TestRecord);
 
-assert.equal(bugRecord.description, undefined);
+assert.equal(bugRecord.description, "");
 assert.equal(bugRecord.actualResult, undefined);
 
 console.log("all sanitize-visitor tests passed");
