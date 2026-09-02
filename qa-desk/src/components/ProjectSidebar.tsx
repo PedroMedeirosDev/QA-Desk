@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Lock,
+  MessageSquare,
   Rocket,
   Smartphone,
   PanelTop,
@@ -34,12 +35,14 @@ import { api } from "@/lib/api";
 import {
   isApiSuitePath,
   isDashboardPath,
+  isGestorCasesPath,
   isHomologationPath,
   isImplantacoesPath,
   isKbCurationPath,
   projectApiSuitePath,
   projectBugsListPath,
   projectDashboardPath,
+  projectGestorCasesPath,
   projectHomologationsListPath,
   projectImplantacoesListPath,
   projectKbCurationPath,
@@ -256,11 +259,13 @@ export function ProjectSidebar({
           const dashPath = projectDashboardPath(project.slug);
           const kbCurationPath = projectKbCurationPath(project.slug);
           const implantacoesPath = projectImplantacoesListPath(project.slug);
+          const repassePath = projectGestorCasesPath(project.slug);
           const apiSuitePath = projectApiSuitePath(project.slug);
           const onHomologations = isHomologationPath(project.slug, location.pathname);
           const onDashboard = isDashboardPath(project.slug, location.pathname);
           const onKbCuration = isKbCurationPath(project.slug, location.pathname);
           const onImplantacoes = isImplantacoesPath(project.slug, location.pathname);
+          const onRepasse = isGestorCasesPath(project.slug, location.pathname);
           const onApiSuite = isApiSuitePath(project.slug, location.pathname);
 
           const projectCard = (
@@ -373,6 +378,7 @@ export function ProjectSidebar({
                       !onDashboard &&
                       !onKbCuration &&
                       !onImplantacoes &&
+                      !onRepasse &&
                       !onApiSuite &&
                       !onBugs &&
                       !location.pathname.startsWith(bugsPath) &&
@@ -433,7 +439,6 @@ export function ProjectSidebar({
                       Dashboard
                     </Link>
                     )}
-                    {!visitorMode && (
                     <Link
                       to={homPath}
                       className={cn(
@@ -445,7 +450,6 @@ export function ProjectSidebar({
                       <ListChecks className="size-3.5 shrink-0 opacity-90" />
                       Homologações
                     </Link>
-                    )}
                     {!visitorMode && project.slug === "polygonus" && (
                       <Link
                         to={kbCurationPath}
@@ -470,6 +474,19 @@ export function ProjectSidebar({
                             </span>
                           </PremiumTooltip>
                         )}
+                      </Link>
+                    )}
+                    {!visitorMode && project.slug === "polygonus" && (
+                      <Link
+                        to={repassePath}
+                        className={cn(
+                          "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
+                          homologationsLinkClass(themeSub, onRepasse),
+                        )}
+                        aria-current={onRepasse ? "page" : undefined}
+                      >
+                        <MessageSquare className="size-3.5 shrink-0 opacity-90" />
+                        Repasse
                       </Link>
                     )}
                     {!visitorMode && project.slug === "polygonus" && (

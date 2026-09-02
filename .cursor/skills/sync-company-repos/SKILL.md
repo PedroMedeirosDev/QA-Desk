@@ -18,7 +18,7 @@ Esta skill atualiza **apenas** repositórios de **empresa** definidos no mapa. N
 |--------|------------|
 | Entradas de `scripts/company-repos.json` (ou mapa da empresa ativa) | Repos **pessoais** do Pedro |
 | Clones sob a raiz do QA Desk com `name` no mapa | O próprio **qa-desk**, `projects/`, `shared/`, scripts do portfolio |
-| Org/repos da empresa ativa (hoje **Polygonus** / `polygonus-br`) | Outras pastas em `Projetos Portfolio` fora do mapa |
+| Org/repos da empresa ativa (hoje **Polygonus** / `polygonus-br`) | Outras pastas fora do mapa (repos pessoais, cópias antigas) |
 | | Qualquer `.git` que não esteja no mapa |
 
 **Fonte da verdade:** o JSON do mapa. Se não está no mapa → **não** fetch/pull/clone/checkout via esta skill.

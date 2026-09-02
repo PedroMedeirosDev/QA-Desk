@@ -26,6 +26,7 @@ const ROOT = path.resolve(__dirname, "..");
 dotenv.config({ path: path.join(ROOT, ".env") });
 
 const PROJECT = "polygonus" as const;
+/** One-shot já executado. Path de print da workspace Cursor antiga — não relançar. */
 const EVIDENCE_SRC = "C:\\Users\\pedro\\.cursor\\projects\\c-Users-pedro-Projetos-Portfolio-Qa-Desk\\assets\\c__Users_pedro_AppData_Roaming_Cursor_User_workspaceStorage_88112ba197803e94bc5cbfd9f675b976_images_image-b1eec459-a653-490b-828d-51ad2222bffb.png";
 
 async function createBoletimBug(): Promise<TestRecord> {

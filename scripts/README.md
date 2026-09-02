@@ -1,6 +1,6 @@
 # Scripts — código da empresa
 
-Os repositórios **polygonus-mobile** e **polygonus-react** ficam na raiz do QA Automate como clones locais. Eles estão no `.gitignore` deste projeto: **não commitar** alterações neles aqui; use sempre o GitHub da empresa como fonte.
+Os repositórios **polygonus-mobile** e **polygonus-react** ficam na raiz do QA Desk (`C:\projetos\QA-Desk`) como clones locais. Eles estão no `.gitignore` deste projeto: **não commitar** alterações neles aqui; use sempre o GitHub da empresa como fonte.
 
 **Importante:** estes clones são **somente leitura** para o QA. Use `sync` para **baixar** atualizações (`git pull`). **Não envie** (`git push`) nada para os repositórios da empresa a partir desta máquina/pasta.
 
@@ -59,7 +59,7 @@ Rode o sync uma vez; leva poucos segundos se já estiver clonado.
 4. Argumentos:
 
    ```
-   -NoProfile -ExecutionPolicy Bypass -File "C:\Users\pedro\Projetos Portfolio\Polygonus-QA\scripts\sync-company-repos.ps1"
+   -NoProfile -ExecutionPolicy Bypass -File "C:\projetos\QA-Desk\scripts\sync-company-repos.ps1"
    ```
 
 Ajuste o caminho se o projeto estiver em outra pasta.

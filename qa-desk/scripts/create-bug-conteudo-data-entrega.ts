@@ -32,6 +32,7 @@ const testKey = "academico/bug-app-conteudo-data-entrega";
 const now = new Date().toISOString();
 const reportedAt = now.slice(0, 10);
 
+/** One-shot já executado. Print da workspace Cursor antiga — não relançar. */
 const srcImg = path.resolve(
   "C:/Users/PEDRO/.cursor/projects/c-projetos-QA-DESK-QA-Desk/assets/c__Users_PEDRO_AppData_Roaming_Cursor_User_workspaceStorage_7da2fed2e726108922ad505034e5a436_images_image-0569d330-d9c2-4782-982b-abf8fa73c272.png",
 );

@@ -90,7 +90,7 @@ function Sync-Repo {
     }
 }
 
-Write-Host "QA Automate - sincronizar codigo da empresa" -ForegroundColor White
+Write-Host "QA Desk - sincronizar codigo da empresa" -ForegroundColor White
 Write-Host "Raiz: $Root"
 $empresa = if ($config.empresa) { $config.empresa } else { "(nao informada)" }
 $org = if ($config.org) { $config.org } else { "" }

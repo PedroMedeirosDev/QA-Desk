@@ -23,6 +23,7 @@ const ROOT = path.resolve(__dirname, "..");
 dotenv.config({ path: path.join(ROOT, ".env") });
 
 const PROJECT = "polygonus" as const;
+/** One-shot já executado (criou APP-07). Print da workspace Cursor antiga — não relançar. */
 const EVIDENCE_SRC =
   "C:\\Users\\pedro\\.cursor\\projects\\c-Users-pedro-Projetos-Portfolio-Qa-Desk\\assets\\c__Users_pedro_AppData_Roaming_Cursor_User_workspaceStorage_88112ba197803e94bc5cbfd9f675b976_images_image-c7c7866a-9b4f-4c2c-9ace-77aa993a04fc.png";
 

@@ -1,6 +1,6 @@
 # Registro Sentry + export para suporte / Google Sheets
 
-Esta pasta fica em **`testes/polygonus-sentry-suporte`**, separada do clone do app na raiz do QA Automate (`polygonus-mobile` ou `app-polygonus`), para que o repositório da empresa permaneça só código, sem arquivos extras de QA misturados.
+Esta pasta fica em **`projects/polygonus/polygonus-sentry-suporte`**, separada do clone do app na raiz do QA Desk (`polygonus-mobile`), para que o repositório da empresa permaneça só código, sem arquivos extras de QA misturados.
 
 ## Conteúdo
 
@@ -36,4 +36,4 @@ dart run tool/export_suporte_por_versao.dart --versao=6.05.16
 
 Ao fechar um caso novo: edite o JSON (novo objeto em `correcoes`). Opcionalmente mantenha a tabela “Issues Rastreadas” no skill do repositório da empresa em sincronia manualmente.
 
-No `meta` do JSON, o campo **`codigo_referencia`** aponta para o clone do mobile na raiz do QA Automate (`../../../app-polygonus`). Se você renomear a pasta do app para `polygonus-mobile`, altere para `../../../polygonus-mobile`.
+No `meta` do JSON, o campo **`codigo_referencia`** aponta para o clone do mobile na raiz do QA Desk (`../../../polygonus-mobile`).

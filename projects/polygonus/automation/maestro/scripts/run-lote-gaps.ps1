@@ -5,7 +5,7 @@
 $ErrorActionPreference = "Continue"
 $maestroRoot = Split-Path $PSScriptRoot -Parent
 if (-not (Test-Path (Join-Path $maestroRoot "config.yaml"))) {
-  $maestroRoot = "c:\Users\pedro\Projetos Portfolio\Qa Desk\projects\polygonus\automation\maestro"
+  throw "Nao achei config.yaml em '$maestroRoot'. Rode este script a partir de projects/polygonus/automation/maestro/scripts."
 }
 $maestro = "C:\maestro\bin\maestro.bat"
 $stamp = Get-Date -Format "yyyy-MM-dd_HHmm"

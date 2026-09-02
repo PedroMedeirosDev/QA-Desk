@@ -1,7 +1,7 @@
 {
   "meta": {
-    "descricao": "Registro local (portfolio/QA). Clone do mobile na raiz do QA Automate — não versionar estes arquivos lá.",
-    "codigo_referencia": "../../../app-polygonus",
+    "descricao": "Registro local (portfolio/QA). Clone do mobile na raiz do QA Desk — não versionar estes arquivos lá.",
+    "codigo_referencia": "../../../polygonus-mobile",
     "ultima_atualizacao": "2026-04-29",
     "sentry_issues_url_template": "https://sentry.io/organizations/polygonus/issues/?project=4511175512883200&query={query}",
     "nota_colunas_csv": "O export CSV inclui texto amigável, detalhes técnicos, queries/eventos e link para o mesmo projeto Sentry. Use UTF-8 ao importar no Sheets."

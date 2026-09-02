@@ -28,12 +28,12 @@ const TIPS = [
   {
     icon: MousePointerClick,
     title: "Abra um case publicado",
-    body: "Clique num teste ou bug liberado para ver passos, resultado esperado e evidências. Chamado, logs e PII não entram nesta vista.",
+    body: "Clique num teste ou bug liberado para ver passos e resultado esperado. Prints, chamado, logs e PII não entram nesta vista.",
   },
   {
     icon: ShieldCheck,
     title: "O que fica de fora",
-    body: "Homologações internas, curadoria KB, implantações, suite API e automação. Visitante vê o recorte público, não o painel operacional.",
+    body: "Curadoria KB, implantações, suite API e automação. Homologações só aparecem se o QA marcar a campanha no portfólio.",
   },
 ] as const;
 

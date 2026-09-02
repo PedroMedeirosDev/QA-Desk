@@ -12,7 +12,7 @@ Execute-os manualmente e registre evidência (screenshot / anotação).
 ## Foto / vídeo pequeno (MP4) — AUTOMATIZÁVEL
 
 Use `addMedia` + flow `01_1_comunicado_foto_galeria.yaml` / `01_1_comunicado_video_pequeno.yaml`.  
-Ver `testes/automation/maestro/fixtures/README.md`.
+Ver `projects/polygonus/automation/maestro/fixtures/README.md`.
 
 ---
 

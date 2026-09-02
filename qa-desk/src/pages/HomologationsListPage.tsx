@@ -7,6 +7,7 @@ import {
   Plus,
   RotateCcw,
 } from "lucide-react";
+import { useAuth } from "@/auth/AuthProvider";
 import { api } from "@/lib/api";
 import { useConfirm } from "@/lib/confirm";
 import { toastErrorMessage, useToast } from "@/lib/toast";
@@ -79,6 +80,7 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
   const navigate = useNavigate();
   const toast = useToast();
   const confirm = useConfirm();
+  const { isVisitor } = useAuth();
   const channels = getProjectChannels(project);
   const [homologations, setHomologations] = useState<HomologationWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,13 +192,20 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm text-muted-foreground">
-            Todas as seções do projeto ·{" "}
-            <code className="text-xs">data/projects/{project}/homologations.json</code>
+            {isVisitor
+              ? "Campanhas liberadas neste portfólio"
+              : (
+                <>
+                  Todas as seções do projeto ·{" "}
+                  <code className="text-xs">data/projects/{project}/homologations.json</code>
+                </>
+              )}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {activeCount} em andamento · {homologations.length} no total
           </p>
         </div>
+        {!isVisitor && (
         <div className="flex flex-wrap gap-2">
           {project === "polygonus" && muralHom && (
             <button
@@ -218,6 +227,7 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
             Nova homologação
           </button>
         </div>
+        )}
       </div>
 
       {showCreateForm && (
@@ -433,7 +443,8 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
                             <ExternalLink className="size-4" />
                           </button>
                         </PremiumTooltip>
-                        {h.status !== "concluida" ? (
+                        {!isVisitor &&
+                          (h.status !== "concluida" ? (
                           <PremiumTooltip
                             label={
                               allPassed
@@ -469,7 +480,7 @@ export function HomologationsListPage({ project }: { project: ProjectSlug }) {
                               <RotateCcw className="size-4" />
                             </button>
                           </PremiumTooltip>
-                        )}
+                        ))}
                       </div>
                     </td>
                   </tr>

@@ -2,7 +2,11 @@
 
 O repositório no GitHub é **[QA-Desk](https://github.com/PedroMedeirosDev/QA-Desk)** (público).
 
-## Pasta local (opcional)
+**Pasta local atual:** `C:\projetos\QA-Desk`.
+
+## Pasta local (histórico)
+
+O repo já morou em `Projetos Portfolio\Polygonus-QA` e depois `QA-Desk` nessa pasta. Se precisar repetir o rename:
 
 ```powershell
 cd "C:\Users\pedro\Projetos Portfolio"

@@ -6,9 +6,8 @@ const VISITOR_BLOCKED_VIEWS = new Set([
   "api-suite",
   "implantacoes-list",
   "implantacao",
+  "gestor-cases",
   "dashboard",
-  "homologations-list",
-  "homologation",
 ]);
 
 /** Rotas operacionais: visitante não carrega a página (evita 403 + toast). */

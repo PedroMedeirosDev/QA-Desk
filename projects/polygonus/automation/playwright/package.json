@@ -23,7 +23,9 @@
     "test:ficha:e2e": "playwright test academico/ui/ficha-e2e-novo-aluno.spec.ts --headed --timeout=480000",
     "test:ficha:gravar-keep": "playwright test academico/ui/ficha-gravar-keep.spec.ts --headed --timeout=360000",
     "test:ficha-contexto": "playwright test academico/api/aluno-contexto.spec.ts --headed --timeout=240000",
-    "test:cq": "playwright test academico/cq --headed --workers=1 --timeout=180000"
+    "test:cq": "playwright test academico/cq --headed --workers=1 --timeout=180000",
+    "test:sessao-probe": "playwright test legado/sessao-histescolar-idle.spec.ts --headed --workers=1",
+    "test:sessao-probe:bib": "playwright test legado/sessao-biblioteca-idle.spec.ts --headed --workers=1"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",

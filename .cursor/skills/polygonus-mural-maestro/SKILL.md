@@ -23,7 +23,7 @@ Contrato canônico de auth: `projects/polygonus/automation/maestro/flows/docs/CO
 - Flows: `projects/polygonus/automation/maestro/flows/`
 - Credenciais: `flows/.env` (não commitado) — `LOGIN_*`, `SENHA`, `NOME_PHJESUS`
 - `appId`: `br.com.polygonus.mobile.amostra`
-- Path do repo tem espaço (`Projetos Portfolio`) → rode Maestro com **cwd** em `.../maestro` e path **relativo** do flow (nunca path absoluto com espaço no shell).
+- Rode Maestro com **cwd** em `projects/polygonus/automation/maestro` e path **relativo** do flow (nunca path absoluto no shell — espaços no caminho quebram o CLI).
 - **CLI basta** — Maestro Studio é opcional (só para inspecionar seletores). Emulador ligado + `adb devices` + `maestro test`.
 - Credenciais no CLI: passe `-e LOGIN_PHJESUS=... -e SENHA=...` (sem isso o Maestro digita `undefined`). O `.env` em `flows/` sozinho não cobre o flow em `flows/mural/`.
 - A **qa-desk** também usa CLI (`maestro test` / `maestro.bat`), não o Studio. Injeta o `.env` via `-e` **sem** `shell:true` (valores com espaço como `NOME_PHJESUS=Pedro Jesus` quebravam em `flows\Jesus`).

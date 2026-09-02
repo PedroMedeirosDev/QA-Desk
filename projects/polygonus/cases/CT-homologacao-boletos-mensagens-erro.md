@@ -76,7 +76,7 @@ Só avisar “sumiu mensagem” se **antes** aparecia e agora não; ou se o cód
 
 ---
 
-## Referência no código (`app-polygonus`)
+## Referência no código (`polygonus-mobile`)
 
 - Lista: `lib/portal/bloc/portal_boleto_bloc.dart` → `boletoByAluno`  
 - PDF: `lib/portal/bloc/portal_boleto_bloc.dart` → `boletoPdfByBoleto`  

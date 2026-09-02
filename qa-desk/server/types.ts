@@ -199,6 +199,8 @@ export interface Homologation {
   startedAt: string;
   finishedAt?: string;
   history: HistoryEntry[];
+  /** Visitante autenticado só vê campanhas marcadas. */
+  showInPortfolio?: boolean;
 }
 
 export interface HomologationCatalog {

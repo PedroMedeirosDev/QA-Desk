@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-08-25",
+    "updatedAt": "2026-08-26",
     "project": "polygonus"
   },
   "homologations": [
@@ -47,7 +47,8 @@
       ],
       "startedAt": "2026-08-25T13:04:47.144Z",
       "changeScope": "fullstack",
-      "description": "Homologação dos 8 itens (+ relatório de aulas) do PDF de inconsistências enviado em 24–25/08. Evidência: projects/polygonus/evidence/homologacao-2026-08-24-inconsistencias/POLYGONUS_INCONSISTENCIAS_24_ago_26.pdf"
+      "description": "Homologação dos 8 itens (+ relatório de aulas) do PDF de inconsistências enviado em 24–25/08. Evidência: projects/polygonus/evidence/homologacao-2026-08-24-inconsistencias/POLYGONUS_INCONSISTENCIAS_24_ago_26.pdf",
+      "showInPortfolio": true
     },
     {
       "id": "HOM-2026-003",

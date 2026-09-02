@@ -255,7 +255,7 @@ export function latestFailedRun(
 }
 
 const REPO_PATH_PREFIX =
-  /C:\\Users\\[^\\]+\\Projetos Portfolio\\Polygonus-QA\\/gi;
+  /(?:[A-Za-z]:[\\/]+(?:Users[\\/]+[^\\/]+[\\/]+(?:Documents[\\/]+)?Projetos Portfolio[\\/]+(?:Polygonus-QA|QA-Desk|Qa Desk)|projetos[\\/]+QA-Desk)[\\/]+)/gi;
 
 /** Encurta paths do Windows e remove ruído de marketing do Maestro. */
 export function formatMaestroLog(output: string): {

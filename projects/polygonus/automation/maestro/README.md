@@ -36,11 +36,11 @@ Siga na sequência; no fim você deve conseguir `adb devices` com um emulador **
    Se o comando não for encontrado, reabra o terminal após instalar o Maestro ou confira se o instalador adicionou o Maestro ao PATH.
 
 9. **Primeiro teste**  
-   Ajuste `appId` em `flows/example_launch_app.yaml`, instale o APK no emulador (`adb install "...\app.apk"`) e rode:  
-   `maestro test "...\QA Automate\testes\automation\maestro\flows\example_launch_app.yaml"`
+   Ajuste `appId` em `flows/smoke/example_launch_app.yaml`, instale o APK no emulador (`adb install "...\app.apk"`) e, na pasta `projects/polygonus/automation/maestro`, rode:  
+   `maestro test flows/smoke/example_launch_app.yaml`
 
 10. **Maestro Studio**  
-    Defina o *workspace* para a pasta `QA Automate` (ou `automation\maestro`). Aba **Local** → atualize devices após o emulador estar ligado.
+    Defina o *workspace* para `projects/polygonus/automation/maestro`. Aba **Local** → atualize devices após o emulador estar ligado.
 
 ---
 
@@ -85,8 +85,8 @@ Crie **um** AVD primeiro, homologue nele; depois, se precisar, replique outra AP
 5. **Instale o APK** no emulador (se ainda não estiver):  
    `adb install "C:\caminho\para\seu_app.apk"`
 6. Rode o Maestro (na pasta do projeto ou com caminho absoluto ao YAML):  
-   `maestro test "C:\Users\PEDRO\Documents\Projetos Portfolio\QA Automate\testes\automation\maestro\flows\example_launch_app.yaml"`  
-   *(ajuste o `appId` no YAML antes.)*
+   `maestro test flows/smoke/example_launch_app.yaml`  
+   *(na pasta `projects/polygonus/automation/maestro`; ajuste o `appId` no YAML antes.)*
 
 **Dica:** com **emulador e celular** ligados ao mesmo tempo, o `adb` mostra dois seriais. Aí use `maestro --device emulator-5554 test ...` (troque pelo serial que o `adb devices` mostrar).
 
@@ -135,4 +135,4 @@ Originais protegidos (nunca removidos): arquivos em `fixtures/` (`Foto_1.jpeg`, 
 
 ## Onde guardar os YAML
 
-Este repositório: `testes/automation/maestro/flows/`. O workspace do Maestro Studio pode apontar para esta pasta (ou para `QA Automate` inteiro) para ficar alinhado ao portfolio.
+Este repositório: `projects/polygonus/automation/maestro/flows/`. O workspace do Maestro Studio pode apontar para esta pasta (ou para a raiz `QA-Desk`) para ficar alinhado ao portfolio.

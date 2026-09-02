@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import {
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
+import { DesignCheckbox } from "@/components/DesignCheckbox";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
 import { AreaHeaderRow, ModuleHeaderRow, SuiteHeaderRow } from "@/components/SuiteHeaderRow";
@@ -41,7 +42,6 @@ import {
   projectDetailPath,
   projectHomologationPath,
   projectHomologationsListPath,
-  projectListPath,
 } from "@/lib/project-paths";
 import { cn } from "@/lib/utils";
 import { CHANNEL_LABELS, channelSupportsMaestro } from "@/config/channels";
@@ -148,7 +148,7 @@ export function HomologationPage({
   homSlug: string;
 }) {
   const navigate = useNavigate();
-  const { isVisitor } = useAuth();
+  const { isVisitor, isAdmin } = useAuth();
   const toast = useToast();
   const confirm = useConfirm();
   const { runAutomation, running: liveRunning } = useRunProgress();
@@ -212,7 +212,6 @@ export function HomologationPage({
   }
 
   const reload = useCallback((opts?: { soft?: boolean }) => {
-    if (isVisitor) return;
     if (!opts?.soft) setLoading(true);
     Promise.all([
       api.getHomologation(project, homSlug),
@@ -225,12 +224,11 @@ export function HomologationPage({
       })
       .catch((e) => toast.error(toastErrorMessage(e, "Erro ao carregar")))
       .finally(() => setLoading(false));
-  }, [project, homSlug, toast, isVisitor]);
+  }, [project, homSlug, toast]);
 
   useEffect(() => {
-    if (isVisitor) return;
     reload();
-  }, [reload, isVisitor]);
+  }, [reload]);
 
   async function syncScope() {
     if (homSlug !== MURAL_HOMOLOGATION_SLUG) {
@@ -583,10 +581,6 @@ export function HomologationPage({
     }
   }, [collapsed, areaGroups, homSlug]);
 
-  if (isVisitor) {
-    return <Navigate to={projectListPath(project)} replace />;
-  }
-
   if (loading && !homologation) {
     return <p className="text-muted-foreground">Carregando homologação…</p>;
   }
@@ -719,8 +713,27 @@ export function HomologationPage({
     });
   }
 
+  async function togglePortfolio(next: boolean) {
+    setBusy(true);
+    try {
+      const res = await api.updateHomologation(project, campanha.slug, {
+        showInPortfolio: next,
+      });
+      setHomologation(res.homologation);
+      setProgress(res.progress);
+      toast.success(
+        next ? "Campanha visível no portfólio" : "Campanha oculta do portfólio",
+      );
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Falha ao atualizar portfólio"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {!isVisitor && (
       <div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
         <p className="font-medium text-foreground">Como funciona esta campanha</p>
         <ul className="mt-2 list-inside list-disc space-y-1">
@@ -743,8 +756,9 @@ export function HomologationPage({
           </li>
         </ul>
       </div>
+      )}
 
-      {briefing ? (
+      {!isVisitor && briefing ? (
         <div className="rounded-xl border bg-card p-4">
           <p className="text-sm font-medium text-foreground">Escopo desta campanha</p>
           <pre className="mt-3 max-h-[28rem] overflow-auto whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
@@ -790,8 +804,20 @@ export function HomologationPage({
               <span className="text-xs text-muted-foreground">Build {homologation.build}</span>
             )}
           </div>
+          {isAdmin && (
+            <div className="mt-3 max-w-md">
+              <DesignCheckbox
+                checked={Boolean(homologation.showInPortfolio)}
+                disabled={busy}
+                onChange={(e) => void togglePortfolio(e.target.checked)}
+                label={<span className="font-medium text-foreground">Mostrar no portfólio</span>}
+                description="Visitante vê a campanha (CTs e status), sem prints nem briefing interno."
+              />
+            </div>
+          )}
         </div>
 
+        {!isVisitor && (
         <div className="flex flex-wrap gap-2">
           <PremiumTooltip
             label="HTML enxuto: cabeçalho do produto + um bloco por CT (problema, observação, evidência). Sem briefing."
@@ -873,6 +899,7 @@ export function HomologationPage({
             </PremiumTooltip>
           )}
         </div>
+        )}
       </div>
 
       {batchProgress && (
@@ -1213,7 +1240,9 @@ export function HomologationPage({
                           onClick={(e) => e.stopPropagation()}
                           onKeyDown={(e) => e.stopPropagation()}
                         >
-                          {item.testId && (
+                          {item.testId &&
+                            (!isVisitor ||
+                              catalogTests.some((t) => t.id === item.testId)) && (
                             <div className="flex items-center gap-1">
                               <PremiumTooltip label="Abrir teste" align="end">
                                 <button
@@ -1233,6 +1262,7 @@ export function HomologationPage({
                                   <ExternalLink className="size-4" />
                                 </button>
                               </PremiumTooltip>
+                              {!isVisitor && (
                               <PremiumTooltip
                                 align="end"
                                 label={
@@ -1295,6 +1325,7 @@ export function HomologationPage({
                                     </button>
                                   </PremiumTooltip>
                                 )}
+                              )}
                             </div>
                           )}
                         </td>
@@ -1406,7 +1437,9 @@ export function HomologationPage({
         </div>
       )}
 
-      {homologation.status !== "concluida" && addableTests.length > 0 && (
+      {homologation.status !== "concluida" &&
+        !isVisitor &&
+        addableTests.length > 0 && (
         <div className="rounded-xl border bg-card p-4">
           <p className="text-sm font-medium">Adicionar teste ao escopo</p>
           <p className="mt-1 text-xs text-muted-foreground">

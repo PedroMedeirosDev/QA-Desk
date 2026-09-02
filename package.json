@@ -1,0 +1,9 @@
+{
+  "name": "qa-desk-repo",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix qa-desk",
+    "dev:server": "npm run dev:server --prefix qa-desk",
+    "dev:client": "npm run dev:client --prefix qa-desk"
+  }
+}

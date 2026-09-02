@@ -10,7 +10,12 @@
  */
 
 import { redactPiiDeep } from "./redact-pii.js";
-import type { TestCatalog, TestRecord } from "../types.js";
+import type {
+  Homologation,
+  HomologationProgress,
+  TestCatalog,
+  TestRecord,
+} from "../types.js";
 
 const EMAIL_RE =
   /\b([A-Za-z0-9])[A-Za-z0-9._%+-]*@([A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,})\b/g;
@@ -145,22 +150,60 @@ export function sanitizeVisitorTestRecord(report: TestRecord): TestRecord {
     severity: report.severity,
     build: report.build,
     // Sem device/os/technicalEvidence/comments/automation/history bruto
-    evidence: (report.evidence ?? []).map((ev) => ({
-      fileId: ev.fileId,
-      type: ev.type,
-      filename: scrubString(ev.filename),
-      mimeType: ev.mimeType,
-      sizeBytes: ev.sizeBytes,
-      uploadedAt: ev.uploadedAt,
-      storageKey: ev.storageKey,
-      purpose: ev.purpose,
-    })),
+    // Prints/vídeos não vão ao portfólio (tela do produto / possível PII).
+    evidence: [],
     history: [],
     showInPortfolio: true,
     tags: report.tags,
   };
 
   return scrubActors(scrubDeep(base));
+}
+
+function stripEvidencePath(text: string): string {
+  return text
+    .replace(/\s*Evidência:\s*\S+/gi, "")
+    .replace(/`[^`]*evidence[^`]*`/gi, "")
+    .trim();
+}
+
+/** Campanha pública: KPIs e CTs, sem briefing interno nem anexos. */
+export function sanitizeVisitorHomologation(
+  homologation: Homologation,
+  progress: HomologationProgress,
+  catalog: TestCatalog,
+): { homologation: Homologation; progress: HomologationProgress } {
+  const publicBugIds = new Set(
+    catalog.reports
+      .filter((r) => r.recordType === "bug" && r.showInPortfolio)
+      .map((r) => r.id),
+  );
+  const description = homologation.description
+    ? scrubString(stripEvidencePath(homologation.description))
+    : undefined;
+
+  return {
+    homologation: {
+      id: homologation.id,
+      slug: homologation.slug,
+      title: homologation.title,
+      description: description || undefined,
+      project: homologation.project,
+      channel: homologation.channel,
+      changeScope: homologation.changeScope,
+      status: homologation.status,
+      campaign: homologation.campaign,
+      testKeys: homologation.testKeys,
+      startedAt: homologation.startedAt,
+      finishedAt: homologation.finishedAt,
+      showInPortfolio: true,
+      history: [],
+    },
+    progress: {
+      ...progress,
+      bugs: (progress.bugs ?? []).filter((b) => publicBugIds.has(b.bugId)),
+    },
+  };
 }
 
 export function sanitizeVisitorCatalog(catalog: TestCatalog): TestCatalog {
