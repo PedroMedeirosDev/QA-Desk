@@ -1263,6 +1263,7 @@ export function HomologationPage({
                                 </button>
                               </PremiumTooltip>
                               {!isVisitor && (
+                              <>
                               <PremiumTooltip
                                 align="end"
                                 label={
@@ -1325,6 +1326,7 @@ export function HomologationPage({
                                     </button>
                                   </PremiumTooltip>
                                 )}
+                              </>
                               )}
                             </div>
                           )}
