@@ -1,4 +1,11 @@
-export type UserRole = "admin" | "visitor";
+export type UserRole = "admin" | "visitor" | "bot";
+
+/** Admin só em profiles. Bot em profiles ou app_metadata. */
+export function parseUserRole(profileRole: unknown, appMetaRole?: unknown): UserRole {
+  if (profileRole === "admin") return "admin";
+  if (profileRole === "bot" || appMetaRole === "bot") return "bot";
+  return "visitor";
+}
 
 export interface UserProfile {
   id: string;

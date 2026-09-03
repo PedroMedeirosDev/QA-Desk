@@ -12,6 +12,7 @@ import {
 import { assertProject } from "../storage.js";
 import {
   attachUser,
+  forbidBot,
   forbidVisitor,
   rejectVisitorMutations,
   requireAdmin,
@@ -30,6 +31,7 @@ export const implantacoesRouter = Router({ mergeParams: true });
 implantacoesRouter.use(attachUser);
 implantacoesRouter.use(rejectVisitorMutations);
 implantacoesRouter.use(forbidVisitor);
+implantacoesRouter.use(forbidBot);
 
 implantacoesRouter.get("/", (req, res) => {
   const project = assertProject(param(req, "slug"));

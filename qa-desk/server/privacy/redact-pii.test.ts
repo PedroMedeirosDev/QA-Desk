@@ -26,4 +26,16 @@ assert.deepEqual(deep, {
 });
 console.log("ok  deep");
 
+{
+  const kept = redactPiiDeep({
+    testLogin: "64594815200",
+    description: "Login 64594815200 na unidade",
+    title: "CPF 529.982.247-25",
+  });
+  assert.equal(kept.testLogin, "64594815200");
+  assert.equal(kept.description, "Login 64594815200 na unidade");
+  assert.equal(kept.title, "CPF [CPF]");
+  console.log("ok  skip testLogin e description");
+}
+
 console.log("all redact-pii tests passed");

@@ -26,7 +26,13 @@ import { VisitorWelcomePage } from "@/pages/VisitorWelcomePage";
 import { VisitorShell } from "@/pages/VisitorShell";
 import { ActiveProjectProvider, useActiveProject } from "@/lib/active-project";
 import { parseProjectRoute, projectListPath } from "@/lib/project-paths";
-import { isVisitorBlockedView, VISITOR_HOME_PATH } from "@/lib/visitor";
+import {
+  BOT_HOME_PATH,
+  isBotBlockedView,
+  isVisitorBlockedView,
+  postLoginPath,
+  VISITOR_HOME_PATH,
+} from "@/lib/visitor";
 import { cn } from "@/lib/utils";
 import type { ProjectSlug } from "@/types/test-record";
 
@@ -38,7 +44,7 @@ function ProjectShell() {
   const slug = slugParam as ProjectSlug;
   const { pathname } = useLocation();
   const { theme, project: current } = useActiveProject();
-  const { isVisitor } = useAuth();
+  const { isVisitor, isBot } = useAuth();
   const route = parseProjectRoute(slug, rest);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -95,12 +101,14 @@ function ProjectShell() {
       <ProjectSidebar
         activeChannel={route.channel}
         visitorMode={isVisitor}
+        botMode={isBot}
         className="hidden md:flex"
       />
       <MobileNavDrawer open={menuOpen} onClose={() => setMenuOpen(false)}>
         <ProjectSidebar
           activeChannel={route.channel}
           visitorMode={isVisitor}
+          botMode={isBot}
           forceExpanded
         />
       </MobileNavDrawer>
@@ -203,7 +211,7 @@ function ProjectShell() {
             ) : route.view === "implantacoes-list" ? (
               <ImplantacoesListPage project={slug} />
             ) : route.view === "gestor-cases" ? (
-              <GestorCasesPage project={slug} />
+              <GestorCasesPage project={slug} caseRef={route.id} />
             ) : route.view === "implantacao" && route.impSlug ? (
               <ImplantacaoPage project={slug} impSlug={route.impSlug} />
             ) : route.view === "api-suite" ? (
@@ -232,8 +240,8 @@ function ProjectShell() {
   );
 }
 
-function HomeRedirect() {
-  const { isVisitor, ready, profile } = useAuth();
+function VisitorHomeGate() {
+  const { isBot, ready, profile } = useAuth();
   if (!ready || !profile) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background text-sm text-muted-foreground">
@@ -241,20 +249,35 @@ function HomeRedirect() {
       </div>
     );
   }
-  return (
-    <Navigate
-      to={isVisitor ? VISITOR_HOME_PATH : "/projects/polygonus/app"}
-      replace
-    />
-  );
+  if (isBot) return <Navigate to={BOT_HOME_PATH} replace />;
+  return <VisitorShell />;
+}
+
+function HomeRedirect() {
+  const { ready, profile } = useAuth();
+  if (!ready || !profile) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-background text-sm text-muted-foreground">
+        Carregando…
+      </div>
+    );
+  }
+  return <Navigate to={postLoginPath(profile.role)} replace />;
 }
 
 function ProjectLayout() {
-  const { isVisitor } = useAuth();
+  const { isVisitor, isBot } = useAuth();
   const { project, "*": rest } = useParams();
   const slug = project as ProjectSlug;
   if (!PROJECTS.some((p) => p.slug === slug)) {
     return <Navigate to="/projects/polygonus/app" replace />;
+  }
+
+  if (isBot) {
+    const botRoute = parseProjectRoute(slug, rest);
+    if (slug !== "polygonus" || isBotBlockedView(botRoute.view)) {
+      return <Navigate to={BOT_HOME_PATH} replace />;
+    }
   }
 
   if (isVisitor && slug === "desk") {
@@ -287,7 +310,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<HomeRedirect />} />
-        <Route path="/welcome" element={<VisitorShell />}>
+        <Route path="/welcome" element={<VisitorHomeGate />}>
           <Route index element={<VisitorWelcomePage />} />
         </Route>
         <Route path="/projects/:project/*" element={<ProjectLayout />} />

@@ -403,6 +403,8 @@ export async function applyBugIssueFromWebhook(
 
   catalog.reports[idx] = report;
   await writeCatalog(project, catalog);
+  const { syncGestorCasesForBug } = await import("../gestor-cases.js");
+  syncGestorCasesForBug(project, report.id, report.status);
 
   return {
     ok: true,
@@ -525,6 +527,10 @@ export async function applyBugIssueCommentFromWebhook(
 
   catalog.reports[idx] = report;
   await writeCatalog(project, catalog);
+  if (statusChanged) {
+    const { syncGestorCasesForBug } = await import("../gestor-cases.js");
+    syncGestorCasesForBug(project, report.id, report.status);
+  }
   emitGestorReplyFromReport(project, report, "webhook");
 
   return {

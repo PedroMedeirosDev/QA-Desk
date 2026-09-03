@@ -1,6 +1,6 @@
-import { type ReactNode, type SelectHTMLAttributes, useEffect, useState } from "react";
+import { type ReactNode, type SelectHTMLAttributes, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, Bug, Check, CheckCircle2, ChevronDown, CircleHelp, Clock, Copy, ExternalLink, Loader2, Play, Plus, RefreshCw, Smartphone, Sparkles, Trash2, Upload, Video, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Bug, Check, CheckCircle2, ChevronDown, CircleHelp, Clock, Copy, ExternalLink, Loader2, MessageSquare, Play, Plus, RefreshCw, Smartphone, Sparkles, Trash2, Upload, Video, X } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
@@ -18,6 +18,7 @@ import {
   projectBugDetailPath,
   projectBugsListPath,
   projectDetailPath,
+  projectGestorCasePath,
   projectHomologationPath,
   projectListPath,
   projectNewBugPath,
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { VISITOR_HOME_PATH } from "@/lib/visitor";
 import { QA_GESTOR_REPLY_EVENT, type GestorReplyEvent } from "@/lib/gestor-replies-stream";
 import { channelSupportsMaestro, getProjectChannels, type ProductChannel } from "@/config/channels";
+import { unitDisplayName, unitsForEnv } from "@/lib/polygonus-units";
 import type {
   BugStatus,
   EvidencePurpose,
@@ -36,6 +38,7 @@ import {
   BUG_STATUS_LABELS,
   CHANNEL_LABELS,
   PLATFORM_LABELS,
+  RUNTIME_ENV_LABELS,
   HOMOLOGATION_LABELS,
   PRIORITY_LABELS,
   RECORD_TYPE_LABELS,
@@ -92,6 +95,8 @@ const EDITOR_DRAFT_KEYS = [
   "technicalEvidence",
   "module",
   "testLogin",
+  "runtimeEnv",
+  "unitLabel",
   "build",
   "osVersion",
   "deviceLabel",
@@ -231,6 +236,8 @@ const emptyDraft = (
   deviceLabel: "emulador",
   browser: "",
   testLogin: "",
+  runtimeEnv: kind === "teste" ? "amostra" : undefined,
+  unitLabel: "",
   technicalEvidence: "",
   showInPortfolio: false,
   consolidated: false,
@@ -258,10 +265,14 @@ export function TestEditorPage({
   const [tab, setTab] = useState<"detalhes" | "historico">("detalhes");
   const [stepsMode, setStepsMode] = useState<"resumo" | "detalhado">("resumo");
   const [form, setForm] = useState<Partial<TestRecord>>(emptyDraft(project, channel, editorKind));
+  const formRef = useRef(form);
+  const dirtyRef = useRef(false);
+  formRef.current = form;
   const [saving, setSaving] = useState(false);
   const [githubBusy, setGithubBusy] = useState<"opening" | "syncing" | "closing" | null>(
     null,
   );
+  const [repasseBusy, setRepasseBusy] = useState(false);
   const [githubProgress, setGithubProgress] = useState<{
     message: string;
     percent: number;
@@ -286,7 +297,7 @@ export function TestEditorPage({
   } | null>(null);
   const [removingEvidenceId, setRemovingEvidenceId] = useState<string | null>(null);
   const busyRun = running || liveRunning;
-  const deskBusy = saving || Boolean(githubBusy);
+  const deskBusy = saving || Boolean(githubBusy) || repasseBusy;
 
   const isHomologation = isTestCase(form);
   const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
@@ -354,7 +365,10 @@ export function TestEditorPage({
       api
         .getTest(project, id)
         .then(async (record) => {
-          const withDraft = applyEditorDraft(record, readEditorDraft(project, id));
+          const local = dirtyRef.current
+            ? pickEditorDraft(formRef.current)
+            : readEditorDraft(project, id);
+          const withDraft = applyEditorDraft(record, local);
           setForm(withDraft);
           if (editorKind === "bug" && isAdmin && isGestorReplyUnread(withDraft)) {
             try {
@@ -483,6 +497,7 @@ export function TestEditorPage({
 
   function update<K extends keyof TestRecord>(key: K, value: TestRecord[K]) {
     if (!isAdmin) return;
+    dirtyRef.current = true;
     setForm((f) => ({ ...f, [key]: value }));
   }
 
@@ -502,23 +517,51 @@ export function TestEditorPage({
   /** Grava o formulário atual no servidor (sem toast) — usado antes de anexo. */
   async function persistFormQuiet(): Promise<TestRecord | null> {
     if (!id || isNew || !isAdmin) return null;
-    const updated = await api.updateTest(project, id, buildSavePayload());
+    const updated = await api.updateTest(project, id, buildSavePayload(formRef.current));
     clearEditorDraft(project, id);
+    dirtyRef.current = false;
     setForm(updated);
     return updated;
+  }
+
+  async function generateRepasseFromBug() {
+    if (!id || isNew || !editingBug) return;
+    const login = formRef.current.testLogin?.trim() ?? "";
+    if (!login || isLostLoginToken(login)) {
+      toast.error("Preencha o Login. O gestor precisa do acesso no repasse.");
+      return;
+    }
+    setRepasseBusy(true);
+    try {
+      await persistFormQuiet();
+      const res = await api.createGestorCaseFromBug(project, id);
+      toast.success(
+        res.created
+          ? `Caso ${res.case.number} criado no Repasse — copie e cole no Discord`
+          : `Caso ${res.case.number} atualizado no Repasse`,
+      );
+      navigate(projectGestorCasePath(project, res.case.number));
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Erro ao gerar o repasse"));
+    } finally {
+      setRepasseBusy(false);
+    }
   }
 
   async function save() {
     setSaving(true);
     try {
-      const payload = buildSavePayload();
+      const payload = buildSavePayload(formRef.current);
       if (isNew) {
         const created = await api.createTest(project, payload);
+        dirtyRef.current = false;
         navigate(detailPathFor(created.id, created), { replace: true });
       } else if (id) {
         const updated = await api.updateTest(project, id, payload);
         clearEditorDraft(project, id);
+        dirtyRef.current = false;
         setForm(updated);
+        toast.success("Salvo");
       }
     } catch (e) {
       toast.error(toastErrorMessage(e, "Erro ao salvar"));
@@ -1044,6 +1087,8 @@ export function TestEditorPage({
           deviceLabel: form.deviceLabel,
           browser: form.browser,
           testLogin: form.testLogin,
+          runtimeEnv: form.runtimeEnv,
+          unitLabel: form.unitLabel,
           technicalEvidence: form.technicalEvidence,
           tags: [`origem:${form.id}`],
         },
@@ -1194,9 +1239,10 @@ export function TestEditorPage({
             </Field>
             {editingBug ? (
               isAdmin ? (
+              <>
               <Field
-                label="Citação do chamado"
-                hint="Id ou trecho do chamado Polygonus. Não aparece no portfólio visitante."
+                label="Descrição"
+                hint="Este texto vai ao gestor. Ambiente, unidade e passos ficam no bug e não entram no Repasse."
               >
                 <textarea
                   className={cn(QUIET_INPUT, "min-h-24")}
@@ -1205,6 +1251,29 @@ export function TestEditorPage({
                   onChange={(e) => update("description", e.target.value)}
                 />
               </Field>
+              <Field
+                label="Login"
+                hint="Acesso da reprodução (CPF, PHJESUS…). No Desk o ambiente mostra só CPF. No Repasse o login vai inteiro."
+              >
+                <input
+                  className={QUIET_INPUT}
+                  value={form.testLogin ?? ""}
+                  onChange={(e) => update("testLogin", e.target.value)}
+                  placeholder="Ex.: CPF da responsável ou PHJESUS"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {isLostLoginToken(form.testLogin) ? (
+                  <span className="block text-[0.7rem] text-amber-300/90">
+                    O número se perdeu. Cole o login de novo e Salvar.
+                  </span>
+                ) : looksLikeCpfLogin(form.testLogin) ? (
+                  <span className="block text-[0.7rem] text-muted-foreground">
+                    Na tela do Desk: CPF
+                  </span>
+                ) : null}
+              </Field>
+              </>
               ) : null
             ) : (
               <Field
@@ -1748,6 +1817,27 @@ export function TestEditorPage({
                 >
                   {saving ? "Salvando…" : githubBusy ? "Aguarde o GitHub…" : "Salvar"}
                 </button>
+                {!isNew && (
+                  <PremiumTooltip
+                    label="Cria o caso no Repasse e marca o bug como Enviado ao gestor. Quando o gestor devolver (Corrigido), o caso sai da lista — mesmo se o bug continuar aberto com você."
+                    side="left"
+                    wide
+                  >
+                    <button
+                      type="button"
+                      onClick={() => void generateRepasseFromBug()}
+                      disabled={deskBusy}
+                      className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                    >
+                      {repasseBusy ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <MessageSquare className="size-4" />
+                      )}
+                      {repasseBusy ? "Gerando repasse…" : "Gerar repasse"}
+                    </button>
+                  </PremiumTooltip>
+                )}
                 <PremiumTooltip
                   label="Texto puro (sem Markdown) para colar no chamado Polygonus — título e descrição separados"
                   side="left"
@@ -2056,13 +2146,59 @@ export function TestEditorPage({
                 onChange={(e) => update("module", e.target.value)}
               />
             </Field>
+            {!editingBug && (
             <Field label="Login (report)">
               <input
                 className={QUIET_INPUT}
                 value={form.testLogin ?? ""}
                 onChange={(e) => update("testLogin", e.target.value)}
-                placeholder="Ex.: PHJESUS, ETMENEZES, SUPPETER"
+                placeholder="Ex.: PHJESUS, ETMENEZES, ou CPF do responsável"
               />
+            </Field>
+            )}
+            <Field label="Ambiente">
+              <QuietSelect
+                value={form.runtimeEnv ?? ""}
+                onChange={(e) =>
+                  update(
+                    "runtimeEnv",
+                    e.target.value === ""
+                      ? undefined
+                      : (e.target.value as TestRecord["runtimeEnv"]),
+                  )
+                }
+              >
+                <option value="">Não informado</option>
+                {Object.entries(RUNTIME_ENV_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </QuietSelect>
+              <p className="mt-1 text-[0.7rem] text-muted-foreground">
+                Amostra = CQ / demonstração. Produção = unidade do cliente.
+              </p>
+            </Field>
+            <Field label="Unidade">
+              <input
+                className={QUIET_INPUT}
+                list="polygonus-units"
+                value={form.unitLabel ?? ""}
+                onChange={(e) => update("unitLabel", e.target.value)}
+                placeholder={
+                  form.runtimeEnv === "producao"
+                    ? "Ex.: CENTRO EDUCACIONAL ADALBERTO VALLE"
+                    : "Ex.: Colégio de Demonstração"
+                }
+              />
+              <datalist id="polygonus-units">
+                {unitsForEnv(form.runtimeEnv).map((u) => (
+                  <option
+                    key={`${u.group ?? ""}:${u.label}`}
+                    value={unitDisplayName(u)}
+                  />
+                ))}
+              </datalist>
             </Field>
             <Field
               label={
@@ -2102,12 +2238,12 @@ export function TestEditorPage({
                     placeholder="Ex.: Android API 33 — Medium_Phone"
                   />
                 </Field>
-                <Field label="Dispositivo (report)">
+                <Field label="Aparelho (report)">
                   <input
                     className={QUIET_INPUT}
                     value={form.deviceLabel ?? ""}
                     onChange={(e) => update("deviceLabel", e.target.value)}
-                    placeholder="emulador, celular, emulador + celular"
+                    placeholder="emulador, celular físico — não é a unidade"
                   />
                 </Field>
                 {!isHomologation && (
@@ -2786,6 +2922,15 @@ function GithubIssueProgressCard({
       </div>
     </div>
   );
+}
+
+function isLostLoginToken(value?: string): boolean {
+  return /^\[(CPF|CNPJ|EMAIL|TELEFONE|CONFIDENCIAL)\]$/i.test(value?.trim() ?? "");
+}
+
+function looksLikeCpfLogin(value?: string): boolean {
+  const digits = (value ?? "").replace(/\D/g, "");
+  return digits.length === 11 && !isLostLoginToken(value);
 }
 
 function FormSection({

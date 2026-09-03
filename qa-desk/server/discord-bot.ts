@@ -456,6 +456,8 @@ async function handleReaction(
       });
       catalog.reports[idx] = report;
       await writeCatalog(project, catalog);
+      const { syncGestorCasesForBug } = await import("./gestor-cases.js");
+      syncGestorCasesForBug(project, report.id, report.status);
       const msg = reaction.message;
       if (msg && "reactions" in msg) {
         await clearOtherHumanGestorReactions(msg as Message, emojiKey);
@@ -483,6 +485,8 @@ async function handleReaction(
 
     catalog.reports[idx] = report;
     await writeCatalog(project, catalog);
+    const { syncGestorCasesForBug } = await import("./gestor-cases.js");
+    syncGestorCasesForBug(project, report.id, report.status);
     console.log(
       `${LOG} ${report.id} → ${report.status} (${action} ${emojiKey}) por ${actor}`,
     );

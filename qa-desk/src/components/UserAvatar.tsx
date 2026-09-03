@@ -15,8 +15,8 @@ export function UserAvatar({
   onPickFile?: () => void;
   uploading?: boolean;
 }) {
-  const { profile, isAdmin, isVisitor } = useAuth();
-  const role = isAdmin ? "admin" : isVisitor ? "visitor" : undefined;
+  const { profile, isAdmin } = useAuth();
+  const role = profile?.role;
   const src = resolveAvatarSrc({
     role,
     avatarUrl: profile?.avatarUrl,

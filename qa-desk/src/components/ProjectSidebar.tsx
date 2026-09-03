@@ -98,12 +98,15 @@ function homologationsLinkClass(
 export function ProjectSidebar({
   activeChannel,
   visitorMode = false,
+  botMode = false,
   className,
   forceExpanded = false,
 }: {
   activeChannel?: ProductChannel;
   /** Visitante: só marca + aviso — sem navegação operacional. */
   visitorMode?: boolean;
+  /** Bot Grok: só Polygonus → Repasse. */
+  botMode?: boolean;
   className?: string;
   /** Menu em overlay (mobile): sempre expandido. */
   forceExpanded?: boolean;
@@ -113,7 +116,7 @@ export function ProjectSidebar({
   const activeProjectCfg = getProject(activeSlug!);
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(() =>
-    visitorMode || forceExpanded ? false : readCollapsed,
+    visitorMode || botMode || forceExpanded ? false : readCollapsed,
   );
   const isCollapsed = forceExpanded ? false : collapsed;
   const [kbRereviewCount, setKbRereviewCount] = useState(0);
@@ -123,8 +126,8 @@ export function ProjectSidebar({
   );
 
   useEffect(() => {
-    if (visitorMode) setCollapsed(false);
-  }, [visitorMode]);
+    if (visitorMode || botMode) setCollapsed(false);
+  }, [visitorMode, botMode]);
 
   useEffect(() => {
     setMenuExpandedSlug(activeSlug ?? null);
@@ -140,7 +143,7 @@ export function ProjectSidebar({
   }, [collapsed, forceExpanded]);
 
   useEffect(() => {
-    if (visitorMode || activeSlug !== "polygonus") {
+    if (visitorMode || botMode || activeSlug !== "polygonus") {
       setKbRereviewCount(0);
       return;
     }
@@ -156,7 +159,7 @@ export function ProjectSidebar({
     return () => {
       cancelled = true;
     };
-  }, [activeSlug, location.pathname, visitorMode]);
+  }, [activeSlug, location.pathname, visitorMode, botMode]);
 
   const sub = activeProjectCfg?.accent.subNav;
 
@@ -186,7 +189,7 @@ export function ProjectSidebar({
         )}
       </header>
 
-      {!visitorMode && (
+      {!visitorMode && !botMode && (
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -239,20 +242,23 @@ export function ProjectSidebar({
         aria-label="Selecionar projeto"
       >
         {PROJECTS.map((project) => {
+          if (botMode && project.slug !== "polygonus") return null;
           if (visitorMode && project.slug === "desk") return null;
           const isSelected = project.slug === activeSlug;
           const itemTheme = isSelected
             ? resolveProjectTheme(project.slug)
             : brandTheme;
           const isDesk = project.slug === "desk";
-          const projectHref = isDesk
-            ? projectApiSuitePath(project.slug)
-            : project.slug === "polygonus"
-              ? projectListPath(project.slug, defaultChannel(project.slug))
-              : projectListPath(project.slug);
+          const projectHref = botMode
+            ? projectGestorCasesPath(project.slug)
+            : isDesk
+              ? projectApiSuitePath(project.slug)
+              : project.slug === "polygonus"
+                ? projectListPath(project.slug, defaultChannel(project.slug))
+                : projectListPath(project.slug);
           const menuOpen = isSelected && menuExpandedSlug === project.slug;
           const showChannels =
-            !isCollapsed && menuOpen && channels.length > 0 && !isDesk;
+            !botMode && !isCollapsed && menuOpen && channels.length > 0 && !isDesk;
           const showDeskSuiteOnly = !isCollapsed && menuOpen && isDesk && !visitorMode;
           const themeSub = project.accent.subNav;
           const homPath = projectHomologationsListPath(project.slug);
@@ -426,7 +432,7 @@ export function ProjectSidebar({
                     );
                   })}
                   <div className="mt-6 space-y-1 border-t border-border pt-3 dark:border-zinc-800">
-                    {!visitorMode && (
+                    {!visitorMode && !botMode && (
                     <Link
                       to={dashPath}
                       className={cn(
@@ -439,6 +445,7 @@ export function ProjectSidebar({
                       Dashboard
                     </Link>
                     )}
+                    {!botMode && (
                     <Link
                       to={homPath}
                       className={cn(
@@ -450,7 +457,8 @@ export function ProjectSidebar({
                       <ListChecks className="size-3.5 shrink-0 opacity-90" />
                       Homologações
                     </Link>
-                    {!visitorMode && project.slug === "polygonus" && (
+                    )}
+                    {!visitorMode && !botMode && project.slug === "polygonus" && (
                       <Link
                         to={kbCurationPath}
                         className={cn(
@@ -489,7 +497,7 @@ export function ProjectSidebar({
                         Repasse
                       </Link>
                     )}
-                    {!visitorMode && project.slug === "polygonus" && (
+                    {!visitorMode && !botMode && project.slug === "polygonus" && (
                       <Link
                         to={implantacoesPath}
                         className={cn(
@@ -502,7 +510,7 @@ export function ProjectSidebar({
                         Implantações
                       </Link>
                     )}
-                    {!visitorMode && (
+                    {!visitorMode && !botMode && (
                     <Link
                       to={apiSuitePath}
                       className={cn(

@@ -53,6 +53,9 @@ function ambienteMobile(record: Partial<TestRecord>, opts: DiscordReportOptions)
     .filter(Boolean)
     .join(" — ");
   lines.push(`**SO:** ${so}`);
+  if (record.runtimeEnv === "producao") lines.push("**Ambiente:** Produção");
+  if (record.runtimeEnv === "amostra") lines.push("**Ambiente:** Amostra");
+  if (record.unitLabel?.trim()) lines.push(`**Unidade:** ${record.unitLabel.trim()}`);
   lines.push(`**Dispositivo:** ${opts.deviceLabel?.trim() || "emulador"}`);
   const login = loginLine(record, opts);
   if (login) lines.push(login);
