@@ -11,7 +11,7 @@ import {
 } from "../homologations.js";
 import { MURAL_HOMOLOGATION_SLUG } from "../homologation-config.js";
 import { assertProject, readCatalog, writeCatalog } from "../storage.js";
-import { actorOf, attachUser, isVisitor, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
+import { actorOf, attachUser, forbidBot, isVisitor, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
 import { sanitizeVisitorHomologation } from "../privacy/sanitize-visitor.js";
 import type { HomologationCycleStatus, HomologationChangeScope, ProductChannel } from "../types.js";
 
@@ -24,6 +24,7 @@ export const homologationsRouter = Router({ mergeParams: true });
 
 homologationsRouter.use(attachUser);
 homologationsRouter.use(rejectVisitorMutations);
+homologationsRouter.use(forbidBot);
 
 homologationsRouter.get("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));

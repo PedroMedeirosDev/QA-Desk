@@ -105,6 +105,14 @@ export function projectGestorCasesPath(project: ProjectSlug): string {
   return `${projectRootPath(project)}/repasse`;
 }
 
+/** Um caso só — o Grok / o analista abre este link, não a lista. */
+export function projectGestorCasePath(
+  project: ProjectSlug,
+  ref: string | number,
+): string {
+  return `${projectGestorCasesPath(project)}/${ref}`;
+}
+
 export function isHomologationPath(project: ProjectSlug, pathname: string): boolean {
   const root = projectRootPath(project);
   return (
@@ -133,7 +141,8 @@ export function isApiSuitePath(project: ProjectSlug, pathname: string): boolean 
 }
 
 export function isGestorCasesPath(project: ProjectSlug, pathname: string): boolean {
-  return pathname === projectGestorCasesPath(project);
+  const base = projectGestorCasesPath(project);
+  return pathname === base || pathname.startsWith(`${base}/`);
 }
 
 export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedProjectRoute {
@@ -176,7 +185,9 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
       return { view: "api-suite" };
     }
     if (first === "repasse") {
-      return { view: "gestor-cases" };
+      return second
+        ? { view: "gestor-cases", id: second }
+        : { view: "gestor-cases" };
     }
     if (first === "homologacoes") {
       return { view: "homologations-list" };
@@ -217,7 +228,9 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
 
   // Projetos sem canais (ex.: desk) — suite-api é a casa
   if (first === "suite-api") return { view: "api-suite" };
-  if (first === "repasse") return { view: "gestor-cases" };
+  if (first === "repasse") {
+    return second ? { view: "gestor-cases", id: second } : { view: "gestor-cases" };
+  }
   if (project === "desk") {
     return { view: "api-suite", redirectTo: projectApiSuitePath(project) };
   }

@@ -13,8 +13,8 @@ import { setAccessToken } from "@/lib/auth-token";
 import { getSupabase, isAuthConfigured } from "@/lib/supabase";
 import {
   initialsFromName,
+  parseUserRole,
   type UserProfile,
-  type UserRole,
 } from "@/types/profile";
 
 interface AuthContextValue {
@@ -24,6 +24,7 @@ interface AuthContextValue {
   profile: UserProfile | null;
   isAdmin: boolean;
   isVisitor: boolean;
+  isBot: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   /** Atualiza avatar no estado após upload (admin). */
@@ -41,11 +42,11 @@ const MOCK_PROFILE: UserProfile = {
   initials: CURRENT_USER.initials,
 };
 
-function roleFromRow(raw: unknown): UserRole {
-  return raw === "admin" ? "admin" : "visitor";
-}
-
-async function loadProfile(userId: string, email: string | undefined): Promise<UserProfile> {
+async function loadProfile(
+  userId: string,
+  email: string | undefined,
+  appMetaRole?: unknown,
+): Promise<UserProfile> {
   const supabase = getSupabase();
   if (!supabase) return MOCK_PROFILE;
 
@@ -57,11 +58,12 @@ async function loadProfile(userId: string, email: string | undefined): Promise<U
 
   if (error || !data) {
     const displayName = email?.split("@")[0] ?? "Usuário";
+    const role = parseUserRole(undefined, appMetaRole);
     return {
       id: userId,
       email: email ?? "",
       displayName,
-      role: "visitor",
+      role,
       actor: displayName,
       initials: initialsFromName(displayName),
       avatarPath: null,
@@ -70,7 +72,7 @@ async function loadProfile(userId: string, email: string | undefined): Promise<U
   }
 
   const displayName = (data.display_name as string | null)?.trim() || email?.split("@")[0] || "Usuário";
-  const role = roleFromRow(data.role);
+  const role = parseUserRole(data.role, appMetaRole);
   const avatarPath = (data.avatar_path as string | null)?.trim() || null;
   const base = import.meta.env.VITE_SUPABASE_URL?.trim()?.replace(/\/$/, "") ?? "";
   const avatarUrl =
@@ -129,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       try {
         const p = await Promise.race([
-          loadProfile(next.user.id, next.user.email),
+          loadProfile(next.user.id, next.user.email, next.user.app_metadata?.role),
           new Promise<UserProfile>((_, reject) => {
             window.setTimeout(() => reject(new Error("profile timeout")), 8_000);
           }),
@@ -138,11 +140,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         if (!cancelled) {
           const displayName = next.user.email?.split("@")[0] ?? "Usuário";
+          const role = parseUserRole(undefined, next.user.app_metadata?.role);
           setProfile({
             id: next.user.id,
             email: next.user.email ?? "",
             displayName,
-            role: "visitor",
+            role,
             actor: displayName,
             initials: initialsFromName(displayName),
             avatarPath: null,
@@ -240,6 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       isAdmin: profile?.role === "admin",
       isVisitor: profile?.role === "visitor",
+      isBot: profile?.role === "bot",
       signIn,
       signOut,
       applyAvatar,

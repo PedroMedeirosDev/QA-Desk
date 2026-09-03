@@ -131,6 +131,8 @@ export interface TestRecord {
   build?: string;
   osVersion?: string;
   deviceLabel?: string;
+  runtimeEnv?: "amostra" | "producao";
+  unitLabel?: string;
   /** Ex.: Chrome, Edge, Playwright Chromium — report Web */
   browser?: string;
   /** Login usado no teste (ex.: PHJESUS, ETMENEZES) — report */

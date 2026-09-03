@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-08-26",
+    "updatedAt": "2026-09-03",
     "project": "polygonus"
   },
   "homologations": [
@@ -205,7 +205,6 @@
         "mural/filtro-07",
         "mural/filtro-08",
         "mural/filtro-09",
-        "mural/filtro-10",
         "mural/e2e-99"
       ],
       "startedAt": "2026-07-13T20:35:02.142Z",

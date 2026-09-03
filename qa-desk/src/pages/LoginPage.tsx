@@ -31,7 +31,7 @@ function Spotlight() {
 }
 
 export function LoginPage() {
-  const { ready, authEnabled, session, profile, signIn, isVisitor } = useAuth();
+  const { ready, authEnabled, session, profile, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from;
@@ -64,10 +64,10 @@ export function LoginPage() {
         </div>
       );
     }
-    return <Navigate to={postLoginPath(isVisitor, from)} replace />;
+    return <Navigate to={postLoginPath(profile.role, from)} replace />;
   }
   if (!authEnabled) {
-    return <Navigate to={postLoginPath(false, from)} replace />;
+    return <Navigate to={postLoginPath("admin", from)} replace />;
   }
 
   async function onSubmit(e: FormEvent) {
@@ -76,8 +76,6 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await signIn(email.trim(), password);
-      const visitorEmail = email.trim().toLowerCase() === VISITOR_EMAIL.toLowerCase();
-      navigate(postLoginPath(visitorEmail, from), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha no login");
     } finally {

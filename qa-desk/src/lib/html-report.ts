@@ -10,6 +10,7 @@ import {
   type HomologationStatus,
   type TestRecord,
 } from "@/types/test-record";
+import { maskPii } from "@/lib/redact-pii";
 
 function esc(s: string): string {
   return s
@@ -716,7 +717,7 @@ function evidenceMediaHtml(
 function ctFooterMeta(record?: TestRecord, campaignBuild?: string): string {
   if (!record) return "";
   const bits: string[] = [];
-  if (record.testLogin?.trim()) bits.push(`Login ${esc(record.testLogin.trim())}`);
+  if (record.testLogin?.trim()) bits.push(`Login ${esc(maskPii(record.testLogin.trim()))}`);
   const build = record.build?.trim() || campaignBuild?.trim();
   if (build) bits.push(`Build ${esc(build)}`);
   if (record.deviceLabel?.trim()) bits.push(esc(record.deviceLabel.trim()));

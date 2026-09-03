@@ -7,7 +7,7 @@ import {
   publishDailySummary,
   todaySaoPaulo,
 } from "../daily-summary.js";
-import { attachUser, isVisitor, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
+import { attachUser, forbidBot, isVisitor, rejectVisitorMutations, requireAdmin } from "../middleware/auth.js";
 import { sanitizeVisitorData } from "../privacy/sanitize-visitor.js";
 import { assertProject } from "../storage.js";
 
@@ -20,6 +20,7 @@ export const dailySummaryRouter = Router({ mergeParams: true });
 
 dailySummaryRouter.use(attachUser);
 dailySummaryRouter.use(rejectVisitorMutations);
+dailySummaryRouter.use(forbidBot);
 
 /** Lista dias liberados no portfolio (visitante e admin). */
 dailySummaryRouter.get("/portfolio", async (req, res) => {

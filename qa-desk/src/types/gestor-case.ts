@@ -20,6 +20,18 @@ export interface GestorCase {
   createdAt: string;
   updatedAt: string;
   devolvidoAt?: string;
+  /** Evidências do bug ligado — só na API, para baixar e anexar no Discord. */
+  attachments?: GestorCaseAttachment[];
+  /** Texto já formatado para o Discord (este caso só). */
+  discordMessage?: string;
+}
+
+export interface GestorCaseAttachment {
+  fileId: string;
+  filename: string;
+  type: "screenshot" | "video" | "log";
+  sizeBytes: number;
+  storageKey: string;
 }
 
 export interface GestorCasesListResponse {

@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": "1.0.0",
-    "updatedAt": "2026-08-26",
+    "updatedAt": "2026-09-03",
     "project": "polygonus"
   },
   "reports": [
@@ -1422,6 +1422,109 @@
       "homologationId": "HOM-2026-004",
       "showInPortfolio": false,
       "technicalEvidence": "Print: modal Selecione a data de entrega sem conteúdo no date picker. Regressão só na 6.06.35 (loja OK)."
+    },
+    {
+      "id": "BUG-2026-012",
+      "tags": [
+        "boletim",
+        "app",
+        "responsavel"
+      ],
+      "steps": [
+        "Abrir o App CEAV e autenticar com o login da responsável",
+        "Abrir Boletim / consulta de aluno",
+        "Comparar com o portal web na mesma conta e período"
+      ],
+      "title": "Boletim não aparece no App (Web OK)",
+      "module": "Boletim",
+      "status": "reportado",
+      "bugCode": "APP-09",
+      "channel": "app",
+      "history": [
+        {
+          "at": "2026-09-03T00:09:39.819Z",
+          "actor": "Pedro",
+          "action": "bug_created",
+          "detail": "Caso Celinia — boletim só no portal, App sem aluno"
+        },
+        {
+          "at": "2026-09-03T00:39:34.967Z",
+          "actor": "Pedro",
+          "action": "updated",
+          "detail": "Campos atualizados"
+        },
+        {
+          "at": "2026-09-03T00:40:06.808Z",
+          "actor": "Pedro",
+          "action": "updated",
+          "detail": "Campos atualizados"
+        },
+        {
+          "at": "2026-09-03T00:51:00.745Z",
+          "actor": "Pedro",
+          "action": "updated",
+          "detail": "Campos atualizados"
+        },
+        {
+          "at": "2026-09-03T00:51:12.308Z",
+          "actor": "Pedro",
+          "action": "evidence_uploaded",
+          "detail": "Reprodução Boletim nao aparece.mp4"
+        },
+        {
+          "at": "2026-09-03T00:51:23.522Z",
+          "actor": "Pedro",
+          "action": "updated",
+          "detail": "Campos atualizados"
+        },
+        {
+          "at": "2026-09-03T00:51:38.411Z",
+          "actor": "Pedro",
+          "action": "updated",
+          "detail": "Campos atualizados"
+        },
+        {
+          "at": "2026-09-03T01:00:59.641Z",
+          "actor": "Pedro",
+          "action": "updated",
+          "detail": "Campos atualizados"
+        },
+        {
+          "at": "2026-09-03T01:01:15.981Z",
+          "actor": "Pedro",
+          "action": "updated",
+          "detail": "Campos atualizados"
+        }
+      ],
+      "project": "polygonus",
+      "comments": [],
+      "evidence": [
+        {
+          "type": "video",
+          "fileId": "e4786ee7-055e-4521-8a46-a6[TELEFONE]",
+          "purpose": "contexto",
+          "filename": "Reprodução Boletim nao aparece.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 2476186,
+          "storageKey": "evidence/polygonus/BUG-2026-012/e4786ee7-055e-4521-8a46-a6[TELEFONE]-Reprodu_o Boletim nao aparece.mp4",
+          "uploadedAt": "2026-09-03T00:51:12.308Z"
+        }
+      ],
+      "platform": "android",
+      "priority": "alta",
+      "severity": "alta",
+      "testLogin": "64594815200",
+      "unitLabel": "Centro Educacional Adalberto Valle — Unidade I (Manaus)",
+      "recordType": "bug",
+      "reportedAt": "2026-09-03",
+      "runtimeEnv": "producao",
+      "description": "Erro exibido: \"Nenhum aluno disponível para consulta nesta unidade e ano letivo\"\n\nEscola: Centro Educacional Adalberto Valle - Unidade I (Manaus)\nAluno: Davi Gabriel Cantalice de Araújo\nLogin: 64594815200  |  Período: 2026-EFII-1\n\nConferências OK: Exibição na Web, Funções do Portal e Perfil da Responsável.\nObs: No menu de tarefas/mensalidades o aluno também não é listado (provavelmente o mesmo gatilho).",
+      "deviceLabel": "app amostra",
+      "actualResult": "Mensagem \"Nenhum aluno disponível para consulta nesta unidade e ano letivo\".",
+      "executionMode": "manual",
+      "stepsDetailed": [],
+      "expectedResult": "O App lista o aluno e permite visualizar o boletim, como no portal web.",
+      "showInPortfolio": false
     },
     {
       "id": "TEST-2026-001",
@@ -9738,8 +9841,8 @@
       "stepsDetailed": [],
       "expectedResult": "Permitir acrescentar/editar conteúdo no mesmo dia da aula enquanto a janela de lançamento for válida.",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "homologado",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "homologado"
     },
     {
       "id": "TEST-2026-078",
@@ -9843,8 +9946,8 @@
       "stepsDetailed": [],
       "expectedResult": "Horários exibidos batem com a grade da turma (aula dupla correta).",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "falta_evidencias",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "falta_evidencias"
     },
     {
       "id": "TEST-2026-079",
@@ -9909,8 +10012,8 @@
       "stepsDetailed": [],
       "expectedResult": "Abrir a tarefa selecionada (mesma data/conteúdo), sem pular para outra data.",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "homologado",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "homologado"
     },
     {
       "id": "TEST-2026-080",
@@ -10010,8 +10113,8 @@
       "stepsDetailed": [],
       "expectedResult": "Relatório reflete o lançamento real; não marca não-entrega em dias sem aula/tarefa válida.",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "homologado",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "homologado"
     },
     {
       "id": "TEST-2026-081",
@@ -10097,8 +10200,8 @@
       "stepsDetailed": [],
       "expectedResult": "Interface diferencia claramente entregue no prazo vs entregue com atraso.",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "homologado",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "homologado"
     },
     {
       "id": "TEST-2026-082",
@@ -10162,8 +10265,8 @@
       "stepsDetailed": [],
       "expectedResult": "Tarefa permanece disponível para marcação de entrega; não some ao abrir notas.",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "falta_evidencias",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "falta_evidencias"
     },
     {
       "id": "TEST-2026-083",
@@ -10230,8 +10333,8 @@
       "stepsDetailed": [],
       "expectedResult": "Conteúdo gravado no App permanece visível no App e no acesso de mesa (mesma fonte).",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "homologado",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "homologado"
     },
     {
       "id": "TEST-2026-084",
@@ -10324,8 +10427,8 @@
       "stepsDetailed": [],
       "expectedResult": "Valores de atividade/avaliação persistem após gravar; sem sumiço nem necessidade de lançar duas vezes.",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "falta_evidencias",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "falta_evidencias"
     },
     {
       "id": "TEST-2026-085",
@@ -10419,8 +10522,8 @@
       "stepsDetailed": [],
       "expectedResult": "Relatório lista a quantidade correta de aulas por dia, alinhada à grade.",
       "homologationId": "HOM-2026-004",
-      "homologationStatus": "homologado",
-      "showInPortfolio": true
+      "showInPortfolio": true,
+      "homologationStatus": "homologado"
     }
   ]
 }

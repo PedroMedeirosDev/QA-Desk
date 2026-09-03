@@ -80,15 +80,33 @@ function trimField(label: string, value: string | undefined): AmbienteField | nu
   return { label, value: v };
 }
 
+function loginForDeskView(loginRaw?: string): string | undefined {
+  const raw = loginRaw?.trim();
+  if (!raw) return undefined;
+  const digits = raw.replace(/\D/g, "");
+  const compact = raw.replace(/[.\-\s]/g, "");
+  if (digits.length === 11 && compact === digits && !/^(\d)\1{10}$/.test(digits)) {
+    return "CPF";
+  }
+  return maskPii(raw);
+}
+
 /** Fonte única: Desk (chips) e Markdown da issue. */
 export function ambienteView(record: Partial<TestRecord>): AmbienteView {
   const pl = record.platform;
-  const login = record.testLogin?.trim();
+  const login = loginForDeskView(record.testLogin);
   const browser = record.browser?.trim();
   const device = [record.osVersion?.trim(), record.deviceLabel?.trim()]
     .filter(Boolean)
     .join(" · ");
   const build = record.build?.trim();
+  const envLabel =
+    record.runtimeEnv === "producao"
+      ? "Produção"
+      : record.runtimeEnv === "amostra"
+        ? "Amostra"
+        : undefined;
+  const unit = record.unitLabel?.trim();
 
   if (pl === "app_web") {
     return {
@@ -96,6 +114,8 @@ export function ambienteView(record: Partial<TestRecord>): AmbienteView {
       headline: "Reproduz nos dois",
       surfaces: ["App nativo", "APP versão WEB"],
       fields: [
+        trimField("Ambiente", envLabel),
+        trimField("Unidade", unit),
         trimField("Login", login),
         trimField("APP versão WEB", browser),
         trimField("App nativo", device),
@@ -110,6 +130,8 @@ export function ambienteView(record: Partial<TestRecord>): AmbienteView {
     headline: where,
     surfaces: where ? [where] : [],
     fields: [
+      trimField("Ambiente", envLabel),
+      trimField("Unidade", unit),
       trimField("Login", login),
       trimField("Navegador", browser),
       trimField("Dispositivo", device),

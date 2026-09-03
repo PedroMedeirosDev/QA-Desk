@@ -30,7 +30,7 @@ function summaryDotClass(tone: string) {
 }
 
 export function UserBar({ className }: { className?: string }) {
-  const { profile, isAdmin, isVisitor, authEnabled, signOut, applyAvatar } = useAuth();
+  const { profile, isAdmin, isBot, authEnabled, signOut, applyAvatar } = useAuth();
   const { scheme, toggleScheme } = useColorScheme();
   const navigate = useNavigate();
   const toast = useToast();
@@ -116,7 +116,11 @@ export function UserBar({ className }: { className?: string }) {
   }
 
   const name = profile?.displayName ?? "Usuário";
-  const roleLabel = isAdmin ? "QA · Admin" : "Visitante · Portfólio";
+  const roleLabel = isAdmin
+    ? "QA · Admin"
+    : isBot
+      ? "Grok · Repasse"
+      : "Visitante · Portfólio";
   const isDark = scheme === "dark";
 
   return (
@@ -215,7 +219,7 @@ export function UserBar({ className }: { className?: string }) {
             <p className="mb-[0.5rem] px-[0.625rem] text-[0.75rem] text-red-400">{avatarError}</p>
           )}
 
-          {!isVisitor && <OpsStatusPanel items={items} />}
+          {isAdmin && <OpsStatusPanel items={items} />}
 
           <div className="my-[0.75rem] border-t border-[var(--border)] opacity-60" />
 

@@ -607,6 +607,16 @@ export const api = {
       },
     ),
 
+  createGestorCaseFromBug: (project: ProjectSlug, testId: string) =>
+    request<{ case: GestorCase; message: string; created: boolean }>(
+      `/api/projects/${project}/gestor-cases/from-bug`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ testId }),
+      },
+    ),
+
   composeGestorCase: (
     project: ProjectSlug,
     id: string,

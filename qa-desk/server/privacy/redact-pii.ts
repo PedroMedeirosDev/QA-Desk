@@ -61,6 +61,9 @@ export function redactPii(input: string): string {
   return out;
 }
 
+/** Login e descrição do QA ficam editáveis; o Desk mascara na UI do ambiente. */
+const REDACT_SKIP_KEYS = new Set(["testLogin", "description"]);
+
 /** Aplica redactPii em todas as strings de um valor JSON-like. */
 export function redactPiiDeep<T>(value: T): T {
   if (value == null) return value;
@@ -71,6 +74,10 @@ export function redactPiiDeep<T>(value: T): T {
   if (typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (REDACT_SKIP_KEYS.has(k) && typeof v === "string") {
+        out[k] = v;
+        continue;
+      }
       out[k] = redactPiiDeep(v);
     }
     return out as T;

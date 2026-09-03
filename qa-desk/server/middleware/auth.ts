@@ -2,7 +2,14 @@ import type { NextFunction, Request, Response } from "express";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { CURRENT_USER } from "../config/user.js";
 
-export type AppRole = "admin" | "visitor";
+export type AppRole = "admin" | "visitor" | "bot";
+
+/** Admin só em profiles. Bot em profiles ou app_metadata (não editável pelo usuário). */
+export function parseAppRole(profileRole: unknown, appMetaRole?: unknown): AppRole {
+  if (profileRole === "admin") return "admin";
+  if (profileRole === "bot" || appMetaRole === "bot") return "bot";
+  return "visitor";
+}
 
 export interface AuthUser {
   id: string;
@@ -111,7 +118,7 @@ async function profileForUser(user: User): Promise<AuthUser> {
     if (data) {
       const displayName =
         (data.display_name as string | null)?.trim() || fallbackName;
-      const role: AppRole = data.role === "admin" ? "admin" : "visitor";
+      const role = parseAppRole(data.role, user.app_metadata?.role);
       return {
         id: user.id,
         email: (data.email as string | null) ?? email,
@@ -122,11 +129,12 @@ async function profileForUser(user: User): Promise<AuthUser> {
     }
   }
 
+  const role = parseAppRole(undefined, user.app_metadata?.role);
   return {
     id: user.id,
     email,
     displayName: fallbackName,
-    role: "visitor",
+    role,
     actor: fallbackName,
   };
 }
@@ -174,6 +182,29 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   }
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Apenas admin" });
+  }
+  next();
+}
+
+/** Admin ou bot: leitura do Repasse (lista, compose, evidências do caso). */
+export function requireRepasseRead(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Não autenticado" });
+  }
+  if (req.user.role !== "admin" && req.user.role !== "bot") {
+    return res.status(403).json({ error: "Sem acesso ao Repasse" });
+  }
+  next();
+}
+
+export function isBot(req: Request): boolean {
+  return req.user?.role === "bot";
+}
+
+/** Bloqueia o bot fora de Repasse / evidência. */
+export function forbidBot(req: Request, res: Response, next: NextFunction) {
+  if (isBot(req)) {
+    return res.status(403).json({ error: "Operação não permitida" });
   }
   next();
 }

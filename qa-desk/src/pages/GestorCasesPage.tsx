@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, ExternalLink, MessageSquare, Plus, RotateCcw } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/auth/AuthProvider";
+import { tableRowHoverClass } from "@/components/PremiumTooltip";
+import { Copy, ExternalLink, MessageSquare, Paperclip, Plus, RotateCcw } from "lucide-react";
 import { api } from "@/lib/api";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import {
   POLYGONUS_GESTOR_DISCORD_CHANNEL,
   discordUrlKind,
 } from "@/lib/discord-gestor";
+import { projectBugDetailPath, projectGestorCasePath, projectGestorCasesPath } from "@/lib/project-paths";
 import { toastErrorMessage, useToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { ProjectSlug } from "@/types/test-record";
@@ -17,8 +21,23 @@ async function copyText(text: string) {
   await navigator.clipboard.writeText(text);
 }
 
-export function GestorCasesPage({ project }: { project: ProjectSlug }) {
+function findCaseByRef(cases: GestorCase[], ref: string): GestorCase | undefined {
+  const key = ref.trim();
+  if (/^\d+$/.test(key)) return cases.find((c) => String(c.number) === key);
+  return cases.find((c) => c.id.toLowerCase() === key.toLowerCase());
+}
+
+export function GestorCasesPage({
+  project,
+  caseRef,
+}: {
+  project: ProjectSlug;
+  caseRef?: string;
+}) {
   const toast = useToast();
+  const navigate = useNavigate();
+  const { isBot } = useAuth();
+  const canMutate = !isBot;
   const [cases, setCases] = useState<GestorCase[]>([]);
   const [suggestedNext, setSuggestedNext] = useState(1);
   const [discordChannelUrl, setDiscordChannelUrl] = useState(
@@ -67,6 +86,10 @@ export function GestorCasesPage({ project }: { project: ProjectSlug }) {
   const selected = useMemo(
     () => cases.find((c) => c.id === selectedId) ?? null,
     [cases, selectedId],
+  );
+  const focused = useMemo(
+    () => (caseRef ? findCaseByRef(cases, caseRef) : undefined),
+    [cases, caseRef],
   );
 
   function resetNovo() {
@@ -157,8 +180,10 @@ export function GestorCasesPage({ project }: { project: ProjectSlug }) {
 
   async function recopiarIntro(c: GestorCase) {
     try {
-      const res = await api.composeGestorCase(project, c.id, "intro");
-      await copyText(res.message);
+      const text =
+        c.discordMessage?.trim() ||
+        (await api.composeGestorCase(project, c.id, "intro")).message;
+      await copyText(text);
       toast.success(`Caso ${c.number} copiado`);
     } catch (e) {
       toast.error(toastErrorMessage(e, "Erro ao gerar mensagem"));
@@ -171,11 +196,23 @@ export function GestorCasesPage({ project }: { project: ProjectSlug }) {
         <div className="min-w-0">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
             <MessageSquare className="size-4 shrink-0 opacity-80" />
-            Repasse ao gestor via Discord — numeração pessoal (Caso 1, 2, 3…). Próximo
-            sugerido:{" "}
-            <span className="font-semibold text-foreground">Caso {suggestedNext}</span>
+            {caseRef
+              ? focused
+                ? `Caso ${focused.number} — só este recado e o anexo.`
+                : loading
+                  ? "Carregando…"
+                  : "Caso não encontrado neste Repasse."
+              : isBot
+                ? "Casos com o gestor. Abra o caso para ler o recado e baixar o anexo."
+                : (
+                <>
+                  Só o que está com o gestor (Enviado / Em tratamento). Se ele devolver, sai da
+                  lista — mesmo com o bug ainda aberto com você. Próximo sugerido:{" "}
+                  <span className="font-semibold text-foreground">Caso {suggestedNext}</span>
+                </>
+              )}
           </p>
-          {discordChannelUrl && (
+          {canMutate && discordChannelUrl && (
             <a
               href={discordChannelUrl}
               target="_blank"
@@ -188,19 +225,28 @@ export function GestorCasesPage({ project }: { project: ProjectSlug }) {
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={cn(actionBtnBase, actionBtn.save)}
-            onClick={() => {
-              resetNovo();
-              setMode("novo");
-              setSelectedId(null);
-            }}
-          >
-            <Plus className="size-4" />
-            Novo caso
-          </button>
-          {mode !== "list" && (
+          {caseRef ? (
+            <Link
+              to={projectGestorCasesPath(project)}
+              className={cn(actionBtnBase, actionBtn.ghost)}
+            >
+              Voltar à lista
+            </Link>
+          ) : canMutate ? (
+            <button
+              type="button"
+              className={cn(actionBtnBase, actionBtn.save)}
+              onClick={() => {
+                resetNovo();
+                setMode("novo");
+                setSelectedId(null);
+              }}
+            >
+              <Plus className="size-4" />
+              Novo caso
+            </button>
+          ) : null}
+          {mode !== "list" && !caseRef && (
             <button
               type="button"
               className={cn(actionBtnBase, actionBtn.ghost)}
@@ -215,7 +261,7 @@ export function GestorCasesPage({ project }: { project: ProjectSlug }) {
         </div>
       </div>
 
-      {mode === "novo" && (
+      {mode === "novo" && canMutate && (
         <div className="relative space-y-4 overflow-hidden rounded-lg border border-border bg-background p-5">
           <div
             className="absolute bottom-0 left-0 top-0 w-1 bg-[var(--project-accent)]"
@@ -292,7 +338,7 @@ export function GestorCasesPage({ project }: { project: ProjectSlug }) {
         </div>
       )}
 
-      {mode === "continuacao" && selected && (
+      {mode === "continuacao" && canMutate && selected && (
         <div className="relative space-y-4 overflow-hidden rounded-lg border border-border bg-background p-5">
           <div
             className="absolute bottom-0 left-0 top-0 w-1 bg-[var(--project-accent)]"
@@ -328,38 +374,47 @@ export function GestorCasesPage({ project }: { project: ProjectSlug }) {
         <>
           {loading ? (
             <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : caseRef && !focused ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum caso com essa referência. Volte à lista e abra o Caso pelo número.
+            </p>
+          ) : caseRef && focused ? (
+            <CaseDetail
+              project={project}
+              caseItem={focused}
+              discordChannelUrl={discordChannelUrl}
+              canMutate={canMutate}
+              onContinuacao={(id) => {
+                setSelectedId(id);
+                setPreview("");
+                setContBody("");
+                setMode("continuacao");
+              }}
+              onDevolvido={(id) => void marcarDevolvido(id)}
+              onRecopiar={(c) => void recopiarIntro(c)}
+              onSaveOriginalLink={(id, url) => void salvarLinkOriginal(id, url)}
+            />
           ) : cases.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nenhum caso seu ainda. Crie o Caso 1.
+              Nada com o gestor agora. A lista só mostra Enviado / Em tratamento.
             </p>
           ) : (
             <div className="space-y-6">
               {pendentes.length > 0 && (
-                <CaseSection
-                  title="Pendentes"
-                  discordChannelUrl={discordChannelUrl}
+                <CaseList
+                  title="Com o gestor"
+                  project={project}
                   items={pendentes}
-                  onContinuacao={(id) => {
-                    setSelectedId(id);
-                    setPreview("");
-                    setContBody("");
-                    setMode("continuacao");
-                  }}
-                  onDevolvido={(id) => void marcarDevolvido(id)}
-                  onRecopiar={(c) => void recopiarIntro(c)}
-                  onSaveOriginalLink={(id, url) => void salvarLinkOriginal(id, url)}
+                  onOpen={(c) => navigate(projectGestorCasePath(project, c.number))}
                 />
               )}
               {devolvidos.length > 0 && (
-                <CaseSection
-                  title="Devolvidos"
-                  discordChannelUrl={discordChannelUrl}
+                <CaseList
+                  title="Devolvidos (comigo)"
+                  project={project}
                   items={devolvidos}
-                  onContinuacao={() => undefined}
-                  onDevolvido={() => undefined}
-                  onRecopiar={(c) => void recopiarIntro(c)}
-                  onSaveOriginalLink={(id, url) => void salvarLinkOriginal(id, url)}
                   devolvido
+                  onOpen={(c) => navigate(projectGestorCasePath(project, c.number))}
                 />
               )}
             </div>
@@ -472,97 +527,208 @@ function PreviewBlock({
   );
 }
 
-function CaseSection({
+function CaseList({
   title,
+  project,
   items,
-  discordChannelUrl,
-  onContinuacao,
-  onDevolvido,
-  onRecopiar,
-  onSaveOriginalLink,
   devolvido = false,
+  onOpen,
 }: {
   title: string;
+  project: ProjectSlug;
   items: GestorCase[];
-  discordChannelUrl?: string;
-  onContinuacao: (id: string) => void;
-  onDevolvido: (id: string) => void;
-  onRecopiar: (c: GestorCase) => void;
-  onSaveOriginalLink: (id: string, url: string) => void;
   devolvido?: boolean;
+  onOpen: (c: GestorCase) => void;
 }) {
   return (
     <section className="space-y-2">
       <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-      <ul className="space-y-2">
-        {items.map((c) => (
-          <li
-            key={c.id}
-            className="rounded-lg border border-border bg-background p-4 text-sm"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-medium">
-                  Caso {c.number} — {c.title}
-                </p>
-                {(c.internalRef || c.linkedTestId) && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Ref. interna: {[c.internalRef, c.linkedTestId].filter(Boolean).join(" · ")}
-                  </p>
+      <ul className="overflow-hidden rounded-xl border bg-card">
+        {items.map((c) => {
+          const anexos = c.attachments?.length ?? 0;
+          return (
+            <li key={c.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(c)}
+                className={cn(
+                  "flex w-full items-start justify-between gap-3 border-b px-4 py-3 text-left last:border-b-0",
+                  tableRowHoverClass,
                 )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className={cn(actionBtnBase, actionBtn.ghost)}
-                  onClick={() => onRecopiar(c)}
-                >
-                  <Copy className="size-3.5" />
-                  Copiar intro
-                </button>
-                {!devolvido && (
-                  <>
-                    <button
-                      type="button"
-                      className={cn(actionBtnBase, actionBtn.ghost)}
-                      onClick={() => onContinuacao(c.id)}
-                    >
-                      Continuação
-                    </button>
-                    <button
-                      type="button"
-                      className={cn(actionBtnBase, actionBtn.save)}
-                      onClick={() => onDevolvido(c.id)}
-                    >
-                      <RotateCcw className="size-3.5" />
-                      Devolvido
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-            {!devolvido && (
-              <div className="mt-3 border-t border-border/60 pt-3">
-                <DiscordOriginalLinkField
-                  currentUrl={c.discordUrl}
-                  channelUrl={discordChannelUrl}
-                  onSave={(url) => onSaveOriginalLink(c.id, url)}
-                />
-              </div>
-            )}
-            {devolvido && c.discordUrl.trim() && (
-              <a
-                href={c.discordUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-2 block truncate text-xs text-primary underline"
               >
-                {c.discordUrl}
-              </a>
-            )}
-          </li>
-        ))}
+                <div className="min-w-0">
+                  <p className="font-medium leading-snug">
+                    Caso {c.number} — {c.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {[c.internalRef, c.linkedTestId].filter(Boolean).join(" · ") ||
+                      projectGestorCasePath(project, c.number)}
+                    {anexos > 0
+                      ? ` · ${anexos} anexo${anexos > 1 ? "s" : ""}`
+                      : ""}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full border px-2 py-0.5 text-[0.65rem] font-medium",
+                    devolvido
+                      ? "border-border bg-[#1a1a1a] text-muted-foreground"
+                      : "border-amber-400/20 bg-[#1a1a1a] text-amber-300",
+                  )}
+                >
+                  {devolvido ? "Comigo" : "Com o gestor"}
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </section>
+  );
+}
+
+function CaseDetail({
+  project,
+  caseItem: c,
+  discordChannelUrl,
+  canMutate = true,
+  onContinuacao,
+  onDevolvido,
+  onRecopiar,
+  onSaveOriginalLink,
+}: {
+  project: ProjectSlug;
+  caseItem: GestorCase;
+  discordChannelUrl?: string;
+  canMutate?: boolean;
+  onContinuacao: (id: string) => void;
+  onDevolvido: (id: string) => void;
+  onRecopiar: (c: GestorCase) => void;
+  onSaveOriginalLink: (id: string, url: string) => void;
+}) {
+  const devolvido = c.status === "devolvido";
+  const caseUrl = `${window.location.origin}${projectGestorCasePath(project, c.number)}`;
+
+  return (
+    <article
+      data-qa="caso-detalhe"
+      className="rounded-xl border border-border bg-background p-4 text-sm"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-medium">
+            Caso {c.number} — {c.title}
+          </p>
+          {(c.internalRef || c.linkedTestId) && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {c.linkedTestId && canMutate ? (
+                <Link
+                  to={projectBugDetailPath(project, c.linkedTestId, "app")}
+                  className="text-primary underline"
+                >
+                  {[c.internalRef, c.linkedTestId].filter(Boolean).join(" · ")}
+                </Link>
+              ) : (
+                <>{[c.internalRef, c.linkedTestId].filter(Boolean).join(" · ")}</>
+              )}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={cn(actionBtnBase, actionBtn.ghost)}
+            onClick={() => onRecopiar(c)}
+          >
+            <Copy className="size-3.5" />
+            Copiar
+          </button>
+          {canMutate && !devolvido && (
+            <>
+              <button
+                type="button"
+                className={cn(actionBtnBase, actionBtn.ghost)}
+                onClick={() => onContinuacao(c.id)}
+              >
+                Continuação
+              </button>
+              {!c.linkedTestId && (
+                <button
+                  type="button"
+                  className={cn(actionBtnBase, actionBtn.save)}
+                  onClick={() => onDevolvido(c.id)}
+                >
+                  <RotateCcw className="size-3.5" />
+                  Devolvido
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      {c.discordMessage && (
+        <pre
+          data-qa="discord-message"
+          className="mt-3 max-h-[28rem] overflow-auto whitespace-pre-wrap rounded-md border border-border/60 bg-muted/20 p-3 text-sm leading-relaxed"
+        >
+          {c.discordMessage}
+        </pre>
+      )}
+      {c.attachments && c.attachments.length > 0 && (
+        <div className="mt-3 space-y-1.5 border-t border-border/60 pt-3">
+          <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <Paperclip className="size-3.5" />
+            Anexo — mesma mensagem do Discord
+          </p>
+          <ul className="space-y-1">
+            {c.attachments.map((att) => {
+              const mb = att.sizeBytes / (1024 * 1024);
+              const tooBig = att.sizeBytes > 8 * 1024 * 1024;
+              return (
+                <li key={att.fileId} className="flex flex-wrap items-center gap-2 text-xs">
+                  <a
+                    href={api.evidenceUrl(att.storageKey)}
+                    download={att.filename}
+                    className="text-primary underline"
+                  >
+                    {att.filename}
+                  </a>
+                  <span className="text-muted-foreground">
+                    {mb >= 0.1 ? `${mb.toFixed(1)} MB` : `${att.sizeBytes} B`}
+                  </span>
+                  {tooBig && (
+                    <span className="text-amber-400/90">
+                      Discord recusa acima de ~10 MB — comprima antes
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+      <p className="mt-3 break-all text-xs text-muted-foreground">
+        Link deste caso no Desk (para o Grok abrir):{" "}
+        <span className="text-foreground">{caseUrl}</span>
+      </p>
+      {canMutate ? (
+        <div className="mt-3 border-t border-border/60 pt-3">
+          <DiscordOriginalLinkField
+            currentUrl={c.discordUrl}
+            channelUrl={discordChannelUrl}
+            onSave={(url) => onSaveOriginalLink(c.id, url)}
+          />
+        </div>
+      ) : c.discordUrl.trim() ? (
+        <a
+          href={c.discordUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 block truncate text-xs text-primary underline"
+        >
+          {c.discordUrl}
+        </a>
+      ) : null}
+    </article>
   );
 }

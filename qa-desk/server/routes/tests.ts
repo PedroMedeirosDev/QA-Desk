@@ -22,6 +22,7 @@ import {
   actorOf,
   attachUser,
   filterPortfolioReports,
+  forbidBot,
   isVisitor,
   rejectVisitorMutations,
   requireAdmin,
@@ -139,6 +140,7 @@ export const testsRouter = Router({ mergeParams: true });
 
 testsRouter.use(attachUser);
 testsRouter.use(rejectVisitorMutations);
+testsRouter.use(forbidBot);
 
 testsRouter.get("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
@@ -261,6 +263,8 @@ testsRouter.post("/", requireAdmin, async (req, res) => {
     deviceLabel: body.deviceLabel?.trim(),
     browser: body.browser?.trim(),
     testLogin: body.testLogin?.trim(),
+    runtimeEnv: body.runtimeEnv,
+    unitLabel: body.unitLabel?.trim(),
     bugCode:
       recordType === "bug"
         ? body.bugCode?.trim() || nextBugCode(catalog, channel, platform)
@@ -383,6 +387,16 @@ testsRouter.put("/:id", requireAdmin, async (req, res) => {
 
   catalog.reports[idx] = updated;
   await writeCatalog(project, catalog);
+
+  if (
+    updated.recordType === "bug" &&
+    body.status &&
+    body.status !== prev.status
+  ) {
+    const { syncGestorCasesForBug } = await import("../gestor-cases.js");
+    syncGestorCasesForBug(project, updated.id, updated.status);
+  }
+
   res.json(updated);
 });
 

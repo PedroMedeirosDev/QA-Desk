@@ -129,9 +129,13 @@ export interface TestRecord {
   osVersion?: string;
   /** Ex.: emulador, celular físico, emulador + celular */
   deviceLabel?: string;
+  /** Amostra (CQ) vs app/portal em produção na unidade do cliente. */
+  runtimeEnv?: "amostra" | "producao";
+  /** Escola / unidade (produção ou demonstração). */
+  unitLabel?: string;
   /** Ex.: Chrome, Edge, Playwright Chromium — report Web */
   browser?: string;
-  /** Login usado no teste (ex.: PHJESUS, ETMENEZES) — report */
+  /** Login do acesso (PHJESUS, CPF da responsável…). Desk mascara na UI; Repasse manda inteiro. */
   testLogin?: string;
   /**
    * Código público do bug por canal (APP-01, WEB-02…).
@@ -186,6 +190,14 @@ export const BUG_STATUS_LABELS: Record<BugStatus, string> = {
   homologado: "Homologado",
   nao_reproduzido: "Não reproduzido",
   arquivado: "Arquivado",
+};
+
+export const RUNTIME_ENV_LABELS: Record<
+  NonNullable<TestRecord["runtimeEnv"]>,
+  string
+> = {
+  amostra: "Amostra",
+  producao: "Produção",
 };
 
 export const SEVERITY_LABELS: Record<

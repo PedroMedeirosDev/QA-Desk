@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "project": "polygonus",
+    "updatedAt": "2026-09-03"
+  },
+  "cases": [
+    {
+      "id": "CASO-2026-001",
+      "number": 1,
+      "author": "Pedro",
+      "title": "Boletim não aparece no App (Web OK)",
+      "status": "devolvido",
+      "discordUrl": "",
+      "entries": [
+        {
+          "at": "2026-09-03T01:28:59.768Z",
+          "kind": "intro",
+          "body": "Erro exibido: \"Nenhum aluno disponível para consulta nesta unidade e ano letivo\"\n\nEscola: Centro Educacional Adalberto Valle - Unidade I (Manaus)\nAluno: Davi Gabriel Cantalice de Araújo\nLogin: 64594815200  |  Período: 2026-EFII-1\n\nConferências OK: Exibição na Web, Funções do Portal e Perfil da Responsável.\nObs: No menu de tarefas/mensalidades o aluno também não é listado (provavelmente o mesmo gatilho)."
+        }
+      ],
+      "createdAt": "2026-09-02T18:03:00.000Z",
+      "updatedAt": "2026-09-03T01:28:59.768Z",
+      "linkedTestId": "BUG-2026-012",
+      "internalRef": "APP-09",
+      "devolvidoAt": "2026-09-03T00:51:49.808Z"
+    }
+  ],
+  "lastNumberByAuthor": {
+    "Pedro": 1
+  },
+  "discordChannelUrl": "https://discord.com/channels/1339775689209024612/1524389844153925662"
+}

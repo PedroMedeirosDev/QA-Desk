@@ -56,6 +56,8 @@ export function redactPii(input: string): string {
 /** Alias para uso em UI/exports. */
 export const maskPii = redactPii;
 
+const REDACT_SKIP_KEYS = new Set(["testLogin", "description"]);
+
 export function redactPiiDeep<T>(value: T): T {
   if (value == null) return value;
   if (typeof value === "string") return redactPii(value) as T;
@@ -65,6 +67,10 @@ export function redactPiiDeep<T>(value: T): T {
   if (typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (REDACT_SKIP_KEYS.has(k) && typeof v === "string") {
+        out[k] = v;
+        continue;
+      }
       out[k] = redactPiiDeep(v);
     }
     return out as T;
