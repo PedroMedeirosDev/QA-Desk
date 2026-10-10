@@ -16,7 +16,8 @@ projects/polygonus/homologacao/inbox/*
 projects/anihype/evidence/*
 !projects/anihype/evidence/.gitkeep
 
-# QA Desk — uploads de prints
+# QA Desk — catálogos e uploads locais (casos, bugs, curadoria, prints)
+qa-desk/data/projects/
 qa-desk/data/uploads/
 
 # Código da empresa (clones locais)

@@ -31,7 +31,7 @@ Documento irmão (humano): [`../ARCHITECTURE.md`](../ARCHITECTURE.md) · backlog
 | Front | **React 18 + Vite + TypeScript + Tailwind CSS + React Router** | Next.js, Pages Router, App Router |
 | API | **Express 5** em `qa-desk/server/` (mesmo processo serve `dist/` em prod) | Next API routes, Hono como app principal |
 | Dados (prod) | **Postgres (Supabase sa-east-1) via Prisma** | SQLite como banco principal |
-| Dados (dev fallback) | JSON em `qa-desk/data/projects/{slug}/` | — |
+| Dados (dev fallback) | JSON local em `qa-desk/data/projects/{slug}/`, fora do Git | versionar o catálogo |
 | Auth | **Supabase Auth (JWT Bearer)** + tabela `profiles` (`admin` \| `visitor`) | bcrypt local como auth de produção, cookies de sessão Next |
 | Deploy | **Oracle Always Free** (VM Ubuntu) + **Caddy** + systemd + cron `auto-deploy.sh` | Vercel-only como default |
 | Automação | Maestro + Playwright + Newman; agente Node (`npm run agent`) | — |

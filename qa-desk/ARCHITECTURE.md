@@ -21,7 +21,7 @@ Pasta no repo: `qa-desk/` · package npm: `qa-desk` · remoto: [QA-Desk](https:/
 |--------|------------|
 | Front | React + Vite + Tailwind + React Router |
 | API | Express (`server/`) — serve `dist/` em produção |
-| Dados | Postgres via Prisma (prod) **e** espelho JSON em `data/projects/` a cada `writeCatalog`; sem `DATABASE_URL` = só JSON |
+| Dados | Postgres via Prisma (prod) **e** espelho JSON local em `data/projects/` a cada `writeCatalog` (fora do Git); sem `DATABASE_URL` = só JSON |
 | Auth | Supabase Auth + tabela `profiles` (opcional; sem env = mock admin) |
 | Arquivos | Supabase Storage (`evidence` privado, `avatars` público) via `service_role`; fallback `data/uploads/` |
 | Automação | Maestro + Playwright (flows em `projects/polygonus/automation/`) |
@@ -66,8 +66,8 @@ Visitante (API):
 ## Dados
 
 ```
-data/projects/{slug}/tests.json          # seed / fallback JSON mode
-data/projects/{slug}/homologations.json
+data/projects/{slug}/tests.json          # fallback JSON local, fora do Git
+data/projects/{slug}/homologations.json  # idem; catálogo vazio se o arquivo não existir
 data/uploads/{slug}/{testId}/            # evidências legado (sem SERVICE_ROLE)
 prisma/ → projects, tests, homologations, test_runs, …
 supabase/migrations/004_storage_buckets.sql  # buckets evidence + avatars + profiles.avatar_path

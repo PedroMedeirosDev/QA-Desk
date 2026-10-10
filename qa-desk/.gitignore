@@ -1,6 +1,7 @@
 node_modules/
 dist/
 data/uploads/
+data/projects/
 .env
 .env.e2e
 e2e/test-results/

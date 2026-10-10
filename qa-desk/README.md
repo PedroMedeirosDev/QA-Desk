@@ -69,7 +69,7 @@ E-mail canônico do visitante: `visitante@qa-desk.local` (role `visitor` em `pro
 
 ## Persistência
 
-**JSON** em `data/projects/{slug}/` se não houver `DATABASE_URL`.
+**JSON local** em `data/projects/{slug}/` se não houver `DATABASE_URL`. Esses arquivos não entram no Git: quem clona o repositório não recebe casos, bugs nem curadoria. Sem o arquivo, a API cria um catálogo vazio.
 
 **Postgres (recomendado — Supabase):**
 
