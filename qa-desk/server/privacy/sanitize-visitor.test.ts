@@ -45,7 +45,7 @@ const record = sanitizeVisitorTestRecord({
 } as TestRecord);
 
 assert.equal(record.showInPortfolio, true);
-assert.equal(record.evidence.length, 0);
+assert.equal(record.evidence!.length, 0);
 assert.equal(record.history.length, 0);
 assert.equal(record.automation, undefined);
 assert.equal(record.technicalEvidence, undefined);

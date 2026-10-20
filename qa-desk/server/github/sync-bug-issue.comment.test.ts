@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import {
   isGestorIssueComment,
   statusFromIssueAction,
-} from "./sync-bug-issue.ts";
+} from "./sync-bug-issue.js";
 
 process.env.GITHUB_BUG_ISSUE_ACTORS = "PedroMedeirosDev";
 delete process.env.GITHUB_BUG_COMMENT_ACTORS;

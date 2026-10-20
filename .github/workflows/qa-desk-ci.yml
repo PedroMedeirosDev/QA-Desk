@@ -1,0 +1,44 @@
+name: CI QA Desk
+
+# O deploy da VM (qa-desk/deploy/oracle/auto-deploy.sh) só publica um commit
+# do main depois que este workflow termina verde nele.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: qa-desk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: qa-desk/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Tipos (lint)
+        run: npm run lint
+
+      - name: Testes unitários do servidor
+        run: npm run test:unit
+
+      - name: Build do front
+        run: npm run build
+
+      - name: Testes de API (servidor em modo mock)
+        run: npm run test:api

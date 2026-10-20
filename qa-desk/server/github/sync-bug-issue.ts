@@ -276,7 +276,7 @@ export async function pullGestorCommentsIntoReport(
     (prev === "enviado_gestor" || prev === "reportado")
   ) {
     report.status = "em_tratamento";
-    statusChanged = prev !== report.status;
+    statusChanged = true;
   }
 
   appendHistory(report, {
@@ -502,7 +502,7 @@ export async function applyBugIssueCommentFromWebhook(
     (prev === "enviado_gestor" || prev === "reportado")
   ) {
     nextStatus = "em_tratamento";
-    statusChanged = prev !== nextStatus;
+    statusChanged = true;
     report.status = nextStatus;
   }
 

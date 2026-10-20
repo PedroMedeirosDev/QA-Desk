@@ -2036,7 +2036,7 @@ export function TestEditorPage({
                 update("recordType", v as TestRecord["recordType"]);
                 if (v === "teste") update("homologationStatus", "pendente");
               }}
-              disabled={editorKind === "bug" || (!isNew && isTestCase(form))}
+              disabled={!isNew && isTestCase(form)}
             />
             )}
 

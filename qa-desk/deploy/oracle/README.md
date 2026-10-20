@@ -155,6 +155,8 @@ tail -n 30 ~/QA-Desk/logs/auto-deploy.log
 
 Logs: `~/QA-Desk/logs/auto-deploy.log`. Sem mudança no `main` → exit silencioso.
 
+**Trava de CI.** O cron só publica o commit do `main` depois que o workflow [`CI QA Desk`](../../../.github/workflows/qa-desk-ci.yml) termina verde nele (tipos, testes unitários, build e testes de API). Enquanto o CI roda, o cron espera em silêncio. Com CI vermelho, registra uma linha `bloqueado:` no log e não publica até chegar um commit verde. Deploy de emergência sem CI: `QA_DESK_SKIP_CI=1 bash ~/QA-Desk/qa-desk/deploy/oracle/auto-deploy.sh`.
+
 Se mudou `VITE_SUPABASE_*`, o `npm run build` é obrigatório (valores vão no bundle).
 
 ### Segurança (produção)
