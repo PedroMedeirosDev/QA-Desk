@@ -13,6 +13,10 @@ LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/qa-desk-auto-deploy.lock"
 GH_REPO="${QA_DESK_GH_REPO:-PedroMedeirosDev/QA-Desk}"
 CI_WORKFLOW="${QA_DESK_CI_WORKFLOW:-qa-desk-ci.yml}"
 CI_BLOQUEIO="$LOG_DIR/.ci-bloqueado"
+# O pull acontece antes do build: o HEAD sozinho não diz se o commit chegou ao ar.
+ULTIMO_DEPLOY="$LOG_DIR/.ultimo-deploy"
+DEPLOY_FALHOU="$LOG_DIR/.deploy-falhou"
+ESPERA_FALHA=1800
 
 mkdir -p "$LOG_DIR"
 
@@ -45,13 +49,27 @@ cd "$REPO"
 # Repo limpo o suficiente para pull (não sobrescreve .env)
 git fetch origin "$BRANCH" --quiet
 
-LOCAL=$(git rev-parse HEAD)
+LOCAL=$(cat "$ULTIMO_DEPLOY" 2>/dev/null || git rev-parse HEAD)
 REMOTE=$(git rev-parse "origin/$BRANCH")
 
 if [[ "$LOCAL" == "$REMOTE" ]]; then
   # silencioso quando não há mudança (cron frequente)
   exit 0
 fi
+
+# Depois de uma falha, o mesmo commit só é tentado de novo após ESPERA_FALHA segundos.
+if [[ -f "$DEPLOY_FALHOU" ]]; then
+  read -r SHA_FALHOU QUANDO_FALHOU <"$DEPLOY_FALHOU" || true
+  if [[ "$SHA_FALHOU" == "$REMOTE" ]] && (($(date +%s) - ${QUANDO_FALHOU:-0} < ESPERA_FALHA)); then
+    exit 0
+  fi
+fi
+
+falhou() {
+  echo "$REMOTE $(date +%s)" >"$DEPLOY_FALHOU"
+  log "ERRO: $1 — $REMOTE não foi publicado; nova tentativa em $((ESPERA_FALHA / 60)) min (detalhe em cron-auto-deploy.log)"
+  exit 1
+}
 
 # Só publica commit com CI verde. QA_DESK_SKIP_CI=1 pula a trava (deploy manual de emergência).
 if [[ "${QA_DESK_SKIP_CI:-0}" != "1" ]]; then
@@ -74,17 +92,17 @@ fi
 
 log "deploy: $LOCAL → $REMOTE"
 
-git pull --ff-only origin "$BRANCH"
+git pull --ff-only origin "$BRANCH" || falhou "git pull"
 cd "$APP"
 
 log "npm ci…"
-npm ci
+npm ci || falhou "npm ci"
 
 log "prisma migrate deploy…"
-npx prisma migrate deploy
+npx prisma migrate deploy || falhou "prisma migrate deploy"
 
 log "npm run build…"
-npm run build
+npm run build || falhou "npm run build"
 
 log "restart qa-desk…"
 if sudo -n systemctl restart qa-desk 2>/dev/null; then
@@ -92,16 +110,16 @@ if sudo -n systemctl restart qa-desk 2>/dev/null; then
 elif systemctl --user restart qa-desk 2>/dev/null; then
   :
 else
-  log "ERRO: não consegui reiniciar o serviço (configure sudoers NOPASSWD — ver README)"
-  exit 1
+  falhou "não consegui reiniciar o serviço (configure sudoers NOPASSWD — ver README)"
 fi
 
 for _ in $(seq 1 15); do
   sleep 2
   if curl -sf "http://127.0.0.1:3001/api/health" >/dev/null; then
+    echo "$REMOTE" >"$ULTIMO_DEPLOY"
+    rm -f "$DEPLOY_FALHOU"
     log "ok: health 200 — agora em $(git -C "$REPO" rev-parse --short HEAD)"
     exit 0
   fi
 done
-log "AVISO: serviço reiniciou mas /api/health não respondeu em 30s"
-exit 1
+falhou "serviço reiniciou mas /api/health não respondeu em 30s"
