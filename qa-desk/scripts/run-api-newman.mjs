@@ -133,9 +133,6 @@ try {
     }
   }
 
-  const collectionArg = isWin ? `"${collection}"` : collection;
-  const environmentArg = isWin ? `"${environment}"` : environment;
-
   exitCode = await new Promise((resolve) => {
     const newman = spawnNewman(
       ["run", collection, "-e", environment, ...envVarArgs()],

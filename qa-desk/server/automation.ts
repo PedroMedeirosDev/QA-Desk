@@ -36,8 +36,6 @@ const MAESTRO_WORKSPACE = path.join(
   REPO_ROOT,
   "projects/polygonus/automation/maestro",
 );
-const MAESTRO_OUTPUT_DIR = path.join(MAESTRO_WORKSPACE, ".maestro-output");
-const MAESTRO_CONFIG = path.join(MAESTRO_WORKSPACE, "config.yaml");
 const MAESTRO_CLEANUP_SCRIPT = path.join(
   MAESTRO_WORKSPACE,
   "scripts/cleanup-test-artifacts.mjs",
@@ -443,55 +441,6 @@ export async function runMaestroFlow(
 const MURAL_PREP_ENVIADAS_FLOW =
   "projects/polygonus/automation/maestro/flows/shared/mural/prep_lista_enviadas.yaml";
 const MAESTRO_RUNTIME_ENV = path.join(MAESTRO_ROOT, ".mural-run.env");
-const MAESTRO_FLOWS_ENV = path.join(MAESTRO_ROOT, ".env");
-
-/** Insere/atualiza uma chave no flows/.env (Maestro lê nativamente) e restaura ao final. */
-function upsertMaestroFlowsEnv(key: string, value: string): () => void {
-  const previous = fs.existsSync(MAESTRO_FLOWS_ENV)
-    ? fs.readFileSync(MAESTRO_FLOWS_ENV, "utf8")
-    : "";
-  const lines = previous.length > 0 ? previous.split(/\r?\n/) : [];
-  const out: string[] = [];
-  let found = false;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) {
-      out.push(line);
-      continue;
-    }
-    const eq = trimmed.indexOf("=");
-    const k = eq >= 0 ? trimmed.slice(0, eq).trim() : trimmed;
-    if (k === key) {
-      out.push(`${key}=${value}`);
-      found = true;
-    } else {
-      out.push(line);
-    }
-  }
-
-  if (!found) {
-    if (out.length > 0 && out[out.length - 1]?.trim() !== "") out.push("");
-    out.push(`${key}=${value}`);
-  }
-
-  fs.writeFileSync(
-    MAESTRO_FLOWS_ENV,
-    out.join("\n").replace(/\n*$/u, "\n"),
-    "utf8",
-  );
-
-  return () => {
-    if (previous) fs.writeFileSync(MAESTRO_FLOWS_ENV, previous, "utf8");
-    else {
-      try {
-        fs.unlinkSync(MAESTRO_FLOWS_ENV);
-      } catch {
-        /* ignore */
-      }
-    }
-  };
-}
 
 export function writeMuralRunEnv(idDigits: string) {
   fs.writeFileSync(MAESTRO_RUNTIME_ENV, `ID_COMUNICADO=${idDigits}\n`, "utf8");

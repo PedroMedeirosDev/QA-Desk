@@ -4,8 +4,6 @@
  *   cd qa-desk
  *   npx tsx scripts/seed-inconsistencias-diario-24ago.ts
  */
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { loadEnv } from "../server/load-env.ts";
 
 loadEnv();

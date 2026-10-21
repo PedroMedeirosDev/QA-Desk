@@ -14,12 +14,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const file = path.join(root, "data/projects/polygonus/tests.json");
 const catalog = JSON.parse(fs.readFileSync(file, "utf8"));
 
-const byFlow = new Map(
-  MURAL_HOMOLOGATION_ITEMS.map((i) => [i.flowPath.replace(/\\/g, "/"), i]),
-);
-
 let updated = 0;
-let missing: string[] = [];
+const missing: string[] = [];
 
 for (const item of MURAL_HOMOLOGATION_ITEMS) {
   const hit = catalog.reports.find(

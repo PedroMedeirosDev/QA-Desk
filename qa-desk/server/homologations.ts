@@ -67,7 +67,7 @@ export async function readHomologationCatalog(
   project: ProjectSlug,
 ): Promise<HomologationCatalog> {
   if (isDatabaseEnabled()) {
-    let catalog = await readHomologationCatalogFromDb(project);
+    const catalog = await readHomologationCatalogFromDb(project);
     if (catalog.homologations.length === 0) {
       const fromFile = readHomologationCatalogFromFile(project);
       const { catalog: ensured, changed } = ensureMuralHomologation(project, fromFile);

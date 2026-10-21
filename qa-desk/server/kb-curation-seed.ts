@@ -3,7 +3,6 @@ import type { ProjectSlug } from "./types.js";
 
 const REPOSITORY = "polygonus-br/polygonus-suporte-kb";
 const REVIEWED_AT = "2026-07-21T13:00:00.000Z";
-const REVIEW_SENT_AT = "2026-07-21T16:20:00.000Z";
 
 type SeedInput = Pick<
   KbCurationRecord,

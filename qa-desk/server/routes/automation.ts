@@ -62,7 +62,6 @@ import {
   registerRunSession,
 } from "../maestro-run-session.js";
 import {
-  deriveTestKey,
   findByTestKey,
   nextRunNumber,
   applyAutomationReadinessAfterRun,

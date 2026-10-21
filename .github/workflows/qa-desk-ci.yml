@@ -31,7 +31,10 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
-      - name: Tipos (lint)
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: ESLint
         run: npm run lint
 
       - name: Testes unitários do servidor

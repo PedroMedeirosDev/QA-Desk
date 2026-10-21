@@ -42,10 +42,10 @@ export type NormalizeCtFieldsResult = {
 /** Rótulos: Pré-requisito / Pre-requisito / Precondition / Requisito */
 const PRECOND_LABEL = "(?:Pr[eé]-?requisitos?|Pre-?conditions?|Requisitos?)";
 const PRECOND_IN_DESC = new RegExp(
-  `(?:^|[.\\n])\\s*${PRECOND_LABEL}\\s*:\\s*(.+)\$`,
+  `(?:^|[.\\n])\\s*${PRECOND_LABEL}\\s*:\\s*(.+)$`,
   "isu",
 );
-const PRECOND_INLINE = new RegExp(`\\s*${PRECOND_LABEL}\\s*:\\s*(.+)\$`, "iu");
+const PRECOND_INLINE = new RegExp(`\\s*${PRECOND_LABEL}\\s*:\\s*(.+)$`, "iu");
 const PRECOND_MENTION = new RegExp(PRECOND_LABEL, "i");
 
 function trim(s: string | undefined): string {

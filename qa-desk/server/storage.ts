@@ -88,7 +88,7 @@ async function normalizeAndLinkHomologations(
 
 export async function readCatalog(project: ProjectSlug): Promise<TestCatalog> {
   if (isDatabaseEnabled()) {
-    let catalog = await readCatalogFromDb(project);
+    const catalog = await readCatalogFromDb(project);
     if (catalog.reports.length === 0) {
       const fromFile = readCatalogFromFile(project);
       if (fromFile.reports.length > 0) {
