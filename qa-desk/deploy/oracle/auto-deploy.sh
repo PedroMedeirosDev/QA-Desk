@@ -4,12 +4,23 @@
 # Cron (a cada 5 min): ver README nesta pasta.
 set -euo pipefail
 
+# O `git pull` deste script reescreve o próprio arquivo, e o bash lê o script aos poucos
+# enquanto executa: roda sempre de uma cópia fora do repositório.
+if [[ "${QA_DESK_DEPLOY_COPIA:-}" != "1" ]]; then
+  COPIA="$(mktemp /tmp/qa-desk-auto-deploy.XXXXXX.sh)"
+  cp "$0" "$COPIA"
+  QA_DESK_DEPLOY_COPIA=1 exec bash "$COPIA" "$@"
+fi
+trap 'rm -f "$0"' EXIT
+
 REPO="${QA_DESK_REPO:-$HOME/QA-Desk}"
 APP="$REPO/qa-desk"
 BRANCH="${QA_DESK_BRANCH:-main}"
 LOG_DIR="${QA_DESK_DEPLOY_LOG_DIR:-$HOME/QA-Desk/logs}"
 LOG_FILE="$LOG_DIR/auto-deploy.log"
-LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/qa-desk-auto-deploy.lock"
+# Caminho fixo: o cron não tem XDG_RUNTIME_DIR e uma sessão SSH tem, e um lock em cada
+# lugar deixava dois deploys rodarem juntos (um `npm ci` apagando o node_modules do outro).
+LOCK_FILE="${QA_DESK_DEPLOY_LOCK:-$LOG_DIR/.auto-deploy.lock}"
 GH_REPO="${QA_DESK_GH_REPO:-PedroMedeirosDev/QA-Desk}"
 CI_WORKFLOW="${QA_DESK_CI_WORKFLOW:-qa-desk-ci.yml}"
 CI_BLOQUEIO="$LOG_DIR/.ci-bloqueado"
