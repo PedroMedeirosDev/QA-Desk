@@ -284,7 +284,6 @@ export function TestEditorPage({
     null,
   );
   const [repasseBusy, setRepasseBusy] = useState(false);
-  const [discordBusy, setDiscordBusy] = useState(false);
   const [githubProgress, setGithubProgress] = useState<{
     message: string;
     percent: number;
@@ -309,7 +308,7 @@ export function TestEditorPage({
   } | null>(null);
   const [removingEvidenceId, setRemovingEvidenceId] = useState<string | null>(null);
   const busyRun = running || liveRunning;
-  const deskBusy = saving || Boolean(githubBusy) || repasseBusy || discordBusy;
+  const deskBusy = saving || Boolean(githubBusy) || repasseBusy;
 
   const isHomologation = isTestCase(form);
   const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
@@ -829,32 +828,42 @@ export function TestEditorPage({
 
   async function copyDiscordText() {
     const ok = await copyDiscordReport(formatDiscordReport(form));
-    if (ok) toast.success("Texto para o Discord copiado");
-    else toast.error("Não foi possível copiar (permissão do navegador)");
-  }
-
-  async function sendToDiscord() {
-    if (!id || isNew) {
-      toast.error("Salve o bug antes de enviar ao Discord");
+    if (!ok) {
+      toast.error("Não foi possível copiar (permissão do navegador)");
       return;
     }
-    setDiscordBusy(true);
+    const temAnexos = (form.evidence?.length ?? 0) > 0;
+    const podeConfirmar =
+      !isNew && Boolean(id) && (form.status === "rascunho" || form.status === "reportado");
+    toast.success(
+      `Cole no canal de bugs do Discord${temAnexos ? " e anexe os prints/vídeos à mão" : ""}.`,
+      {
+        title: "Texto copiado",
+        duration: podeConfirmar ? 12000 : undefined,
+        action: podeConfirmar
+          ? { label: "Marcar como Confirmado", onClick: () => void markAsConfirmed() }
+          : undefined,
+      },
+    );
+  }
+
+  /** Repasse manual pelo Discord: o QA registra que o bug foi passado ao gestor. */
+  async function markAsConfirmed() {
+    if (!id || isNew) return;
+    setSaving(true);
     try {
-      // O servidor envia o que está gravado: salva antes o que estiver na tela.
-      await api.updateTest(project, id, buildSavePayload(formRef.current));
+      const updated = await api.updateTest(project, id, {
+        ...buildSavePayload(formRef.current),
+        status: "enviado_gestor",
+      });
       clearEditorDraft(project, id);
       dirtyRef.current = false;
-      const res = await api.sendDiscordReport(project, id);
-      setForm(res.report);
-      const anexos = res.attached.length
-        ? `${res.attached.length} anexo(s)`
-        : "só texto";
-      const pulados = res.skipped.length ? ` · ${res.skipped.length} arquivo(s) grande(s) demais` : "";
-      toast.success(`Enviado ao Discord · ${anexos}${pulados}`, { title: "Discord" });
+      setForm(updated);
+      toast.success("Bug marcado como Confirmado");
     } catch (e) {
-      toast.error(toastErrorMessage(e, "Falha ao enviar ao Discord"), { title: "Discord" });
+      toast.error(toastErrorMessage(e, "Erro ao salvar"));
     } finally {
-      setDiscordBusy(false);
+      setSaving(false);
     }
   }
 
@@ -1870,46 +1879,15 @@ export function TestEditorPage({
                     Copiar para chamado Polygonus
                   </button>
                 </PremiumTooltip>
-                {!isNew && (
-                  <PremiumTooltip
-                    label="Salva e envia o bug ao canal de bugs no Discord, com prints e vídeos anexados. As reações do gestor (🔧 ✅ ⏸️ ❌) atualizam o status aqui."
-                    side="left"
-                    wide
-                  >
-                    <button
-                      type="button"
-                      onClick={() => void sendToDiscord()}
-                      disabled={deskBusy}
-                      className={cn(actionBtnBase, actionBtn.create, "w-full")}
-                    >
-                      {discordBusy ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <MessageSquare className="size-4" />
-                      )}
-                      {discordBusy
-                        ? "Enviando ao Discord…"
-                        : form.discordSentAt
-                          ? "Reenviar ao Discord"
-                          : "Enviar ao Discord"}
-                    </button>
-                  </PremiumTooltip>
-                )}
-                {form.discordSentAt ? (
-                  <p className="text-center text-xs text-muted-foreground">
-                    Enviado ao Discord em{" "}
-                    {new Date(form.discordSentAt).toLocaleDateString("pt-BR")}
-                  </p>
-                ) : null}
                 <PremiumTooltip
-                  label="Copia o mesmo texto da mensagem do Discord, para colar à mão"
+                  label="Copia o bug no formato do canal de bugs. Depois de colar, o aviso oferece marcar o bug como Confirmado."
                   side="left"
                   wide
                 >
                   <button
                     type="button"
                     onClick={() => void copyDiscordText()}
-                    className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                    className={cn(actionBtnBase, actionBtn.create, "w-full")}
                   >
                     <Copy className="size-4" />
                     Copiar para o Discord
