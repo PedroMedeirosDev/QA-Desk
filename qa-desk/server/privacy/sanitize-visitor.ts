@@ -148,6 +148,9 @@ export function sanitizeVisitorTestRecord(report: TestRecord): TestRecord {
     executionMode: report.executionMode,
     priority: report.priority,
     severity: report.severity,
+    reproducibility: report.reproducibility,
+    scenario: report.scenario,
+    linkedTestId: report.linkedTestId,
     build: report.build,
     // Sem device/os/technicalEvidence/comments/automation/history bruto
     // Prints/vídeos não vão ao portfólio (tela do produto / possível PII).

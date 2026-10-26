@@ -258,6 +258,11 @@ testsRouter.post("/", requireAdmin, async (req, res) => {
     executionMode: body.automation?.flowPath ? "automated" : (body.executionMode ?? "manual"),
     priority: body.priority,
     severity: body.severity ?? (recordType === "bug" ? "media" : undefined),
+    reproducibility: recordType === "bug" ? body.reproducibility : undefined,
+    scenario: body.scenario?.trim() || undefined,
+    linkedTestId: recordType === "bug" ? body.linkedTestId?.trim() || undefined : undefined,
+    linkedRunId: recordType === "bug" ? body.linkedRunId?.trim() || undefined : undefined,
+    linkedRunAt: recordType === "bug" ? body.linkedRunAt : undefined,
     build: body.build?.trim(),
     osVersion: body.osVersion?.trim(),
     deviceLabel: body.deviceLabel?.trim(),
@@ -763,10 +768,7 @@ testsRouter.post("/:id/github-issue/close", requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * Envia report Discord (legado — handoff oficial é GitHub Issue).
- * Mantido na API; UI não expõe mais o botão.
- */
+/** Handoff oficial do bug ao time (docs/BUG_REPORT.md): mensagem no canal de bugs do Discord. */
 testsRouter.post("/:id/discord-send", requireAdmin, async (req, res) => {
   const project = assertProject(param(req, "slug"));
   const catalog = await readCatalog(project);

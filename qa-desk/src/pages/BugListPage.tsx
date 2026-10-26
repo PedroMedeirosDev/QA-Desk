@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bug, ExternalLink, Plus } from "lucide-react";
+import { Bug, Plus } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
-import { PremiumTooltip, tableRowHoverClass } from "@/components/PremiumTooltip";
+import { BugCard } from "@/components/BugCard";
 import { api } from "@/lib/api";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import {
@@ -16,13 +16,19 @@ import { CHANNEL_LABELS, getProjectChannels, type ProductChannel } from "@/confi
 import type { BugStatus, ProjectSlug, TestRecord } from "@/types/test-record";
 import {
   BUG_STATUS_LABELS,
+  BUG_STATUS_ORDER,
   PRIORITY_LABELS,
-  displayStatus,
+  SEVERITY_LABELS,
   formatRecordId,
   inferChannel,
   isBugReport,
-  isGestorReplyUnread,
+  isTestCase,
 } from "@/types/test-record";
+
+type Nivel = NonNullable<TestRecord["severity"]>;
+const NIVEIS = Object.keys(SEVERITY_LABELS) as Nivel[];
+
+const FILTRO = "h-9 rounded-md border bg-background px-3 text-sm";
 
 export function BugListPage({
   project,
@@ -35,6 +41,8 @@ export function BugListPage({
   const { isAdmin } = useAuth();
   const [reports, setReports] = useState<TestRecord[]>([]);
   const [statusFilter, setStatusFilter] = useState<BugStatus | "todos">("todos");
+  const [severidadeFilter, setSeveridadeFilter] = useState<Nivel | "todas">("todas");
+  const [prioridadeFilter, setPrioridadeFilter] = useState<Nivel | "todas">("todas");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,31 +57,36 @@ export function BugListPage({
     function reload() {
       void api.listTests(project).then((catalog) => setReports(catalog.reports));
     }
-    function onReply() {
-      reload();
-    }
-    window.addEventListener(QA_GESTOR_REPLY_EVENT, onReply);
+    window.addEventListener(QA_GESTOR_REPLY_EVENT, reload);
     return () => {
-      window.removeEventListener(QA_GESTOR_REPLY_EVENT, onReply);
+      window.removeEventListener(QA_GESTOR_REPLY_EVENT, reload);
     };
   }, [project]);
 
+  const testTitles = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of reports) {
+      if (isTestCase(r)) map.set(r.id, formatRecordId(r.id, r));
+    }
+    return map;
+  }, [reports]);
+
   const filtered = useMemo(() => {
     let list = reports.filter(isBugReport);
-    if (routeChannel) {
-      list = list.filter((r) => inferChannel(r) === routeChannel);
-    }
-    if (statusFilter !== "todos") {
-      list = list.filter((r) => r.status === statusFilter);
+    if (routeChannel) list = list.filter((r) => inferChannel(r) === routeChannel);
+    if (statusFilter !== "todos") list = list.filter((r) => r.status === statusFilter);
+    if (severidadeFilter !== "todas") list = list.filter((r) => r.severity === severidadeFilter);
+    if (prioridadeFilter !== "todas") {
+      list = list.filter((r) => (r.priority ?? r.severity) === prioridadeFilter);
     }
     return list;
-  }, [reports, routeChannel, statusFilter]);
+  }, [reports, routeChannel, statusFilter, severidadeFilter, prioridadeFilter]);
 
   const hasChannels = getProjectChannels(project).length > 0;
 
-  function openDetail(id: string, record: TestRecord) {
+  function openDetail(record: TestRecord) {
     const ch = inferChannel(record) ?? routeChannel;
-    navigate(projectBugDetailPath(project, id, ch));
+    navigate(projectBugDetailPath(project, record.id, ch));
   }
 
   return (
@@ -84,8 +97,8 @@ export function BugListPage({
           <div>
             <p className="font-medium">Bugs reportados</p>
             <p className="mt-1 text-sm opacity-90">
-              Defeitos encontrados durante testes ou exploração manual. Não entram no escopo de
-              homologação — podem ser abertos a partir de um caso de teste que falhou.
+              Defeitos encontrados em testes ou exploração manual. Clique num bug para ver o
+              relatório completo; cada um mostra o teste e a execução em que apareceu.
             </p>
           </div>
         </div>
@@ -93,19 +106,51 @@ export function BugListPage({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm text-muted-foreground">Status</label>
-          <select
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as BugStatus | "todos")}
-          >
-            <option value="todos">Todos</option>
-            {Object.entries(BUG_STATUS_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            Status
+            <select
+              className={FILTRO}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as BugStatus | "todos")}
+            >
+              <option value="todos">Todos</option>
+              {BUG_STATUS_ORDER.map((k) => (
+                <option key={k} value={k}>
+                  {BUG_STATUS_LABELS[k]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            Severidade
+            <select
+              className={FILTRO}
+              value={severidadeFilter}
+              onChange={(e) => setSeveridadeFilter(e.target.value as Nivel | "todas")}
+            >
+              <option value="todas">Todas</option>
+              {NIVEIS.map((k) => (
+                <option key={k} value={k}>
+                  {SEVERITY_LABELS[k]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            Prioridade
+            <select
+              className={FILTRO}
+              value={prioridadeFilter}
+              onChange={(e) => setPrioridadeFilter(e.target.value as Nivel | "todas")}
+            >
+              <option value="todas">Todas</option>
+              {NIVEIS.map((k) => (
+                <option key={k} value={k}>
+                  {PRIORITY_LABELS[k]}
+                </option>
+              ))}
+            </select>
+          </label>
           <span className="text-xs text-muted-foreground">
             {filtered.length} bug(s)
             {routeChannel && hasChannels ? ` · ${CHANNEL_LABELS[routeChannel]}` : ""}
@@ -123,7 +168,7 @@ export function BugListPage({
         )}
       </div>
 
-      <ul className="space-y-2 md:hidden">
+      <ul className="space-y-2">
         {loading ? (
           <li className="rounded-xl border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
             Carregando…
@@ -131,144 +176,21 @@ export function BugListPage({
         ) : filtered.length === 0 ? (
           <li className="rounded-xl border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
             {isAdmin
-              ? "Nenhum bug neste canal."
+              ? "Nenhum bug com esses filtros."
               : "Nenhum bug publicado neste canal. O visitante só vê o que estiver marcado no portfólio."}
           </li>
         ) : (
-          filtered.map((r) => {
-            const { label, tone } = displayStatus(r);
-            return (
-              <li key={r.id}>
-                <button
-                  type="button"
-                  onClick={() => openDetail(r.id, r)}
-                  className="w-full rounded-xl border bg-card px-3 py-3 text-left transition-colors hover:bg-muted/40"
-                >
-                  <p className="font-medium leading-snug">{r.title}</p>
-                  <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                    {formatRecordId(r.id, r)}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full border px-2 py-0.5 font-medium",
-                        tone === "ok" && "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
-                        tone === "warn" && "border-amber-500/40 bg-amber-500/15 text-amber-300",
-                        tone === "neutral" && "border-border bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {label}
-                    </span>
-                    {r.priority ? <span>{PRIORITY_LABELS[r.priority]}</span> : null}
-                    {r.reportedAt ? (
-                      <span className="tabular-nums">
-                        {new Date(r.reportedAt).toLocaleDateString("pt-BR")}
-                      </span>
-                    ) : null}
-                  </div>
-                </button>
-              </li>
-            );
-          })
+          filtered.map((r) => (
+            <BugCard
+              key={r.id}
+              project={project}
+              bug={r}
+              testTitles={testTitles}
+              onOpen={() => openDetail(r)}
+            />
+          ))
         )}
       </ul>
-
-      <div className="hidden overflow-x-auto rounded-xl border bg-card shadow-sm md:block">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted/40 text-left text-muted-foreground">
-              <th className="px-4 py-3 font-medium">Título</th>
-              <th className="w-[1%] whitespace-nowrap px-4 py-3 font-medium">Status</th>
-              <th className="w-[1%] whitespace-nowrap px-4 py-3 font-medium">Prioridade</th>
-              <th className="w-[1%] whitespace-nowrap px-4 py-3 font-medium">Reportado</th>
-              <th className="w-[1%] whitespace-nowrap px-4 py-3 font-medium">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                  Carregando…
-                </td>
-              </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                  <span className="animate-fade-in-up-soft inline-block opacity-0">
-                    {isAdmin
-                      ? "Nenhum bug neste canal."
-                      : "Nenhum bug publicado neste canal. O visitante só vê o que estiver marcado no portfólio."}
-                  </span>
-                </td>
-              </tr>
-            ) : (
-              filtered.map((r) => {
-                const { label, tone } = displayStatus(r);
-                return (
-                  <tr
-                    key={r.id}
-                    className={cn(
-                      "cursor-pointer select-none border-b last:border-0",
-                      tableRowHoverClass,
-                    )}
-                    onClick={() => openDetail(r.id, r)}
-                  >
-                    <td className="min-w-0 px-4 py-3">
-                      <p className="font-medium leading-snug">{r.title}</p>
-                      <p className="font-mono text-xs text-muted-foreground">
-                        {formatRecordId(r.id, r)}
-                      </p>
-                      {r.module && (
-                        <p className="text-xs text-muted-foreground">{r.module}</p>
-                      )}
-                      {isGestorReplyUnread(r) && (
-                        <p className="mt-1 text-[0.65rem] font-medium text-amber-300">
-                          Não lido
-                          {r.githubIssueLastCommentBy
-                            ? ` · @${r.githubIssueLastCommentBy}`
-                            : ""}
-                        </p>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 align-middle">
-                      <span
-                        className={cn(
-                          "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium leading-5",
-                          tone === "ok" && "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
-                          tone === "warn" && "border-amber-500/40 bg-amber-500/15 text-amber-300",
-                          tone === "neutral" && "border-border bg-muted text-muted-foreground",
-                        )}
-                      >
-                        {label}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 align-middle text-muted-foreground">
-                      {r.priority ? PRIORITY_LABELS[r.priority] : "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 align-middle text-xs tabular-nums text-muted-foreground">
-                      {r.reportedAt
-                        ? new Date(r.reportedAt).toLocaleDateString("pt-BR")
-                        : "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
-                      <PremiumTooltip label="Abrir" align="end">
-                        <button
-                          type="button"
-                          aria-label="Abrir"
-                          onClick={() => openDetail(r.id, r)}
-                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        >
-                          <ExternalLink className="size-4" />
-                        </button>
-                      </PremiumTooltip>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
 
       {routeChannel && (
         <p className="text-xs text-muted-foreground">

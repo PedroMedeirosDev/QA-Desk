@@ -9,6 +9,7 @@ Arquivos nesta pasta:
 | [`setup-vm.sh`](setup-vm.sh) | Instala Node 20 + Caddy na Ubuntu |
 | [`qa-desk.service`](qa-desk.service) | systemd (reinicia após reboot) |
 | [`auto-deploy.sh`](auto-deploy.sh) | `git pull` + build + restart (cron) |
+| [`keep-alive.sh`](keep-alive.sh) | 1 consulta por dia no banco para o Supabase não pausar o projeto (cron) |
 | [`sudoers-qa-desk`](sudoers-qa-desk) | NOPASSWD só para `systemctl restart qa-desk` |
 | [`Caddyfile`](Caddyfile) | HTTPS na frente da porta 3001 |
 | [`../../.env.production.example`](../../.env.production.example) | Modelo de secrets |
@@ -154,6 +155,17 @@ tail -n 30 ~/QA-Desk/logs/auto-deploy.log
 ```
 
 Logs: `~/QA-Desk/logs/auto-deploy.log`. Sem mudança no `main` → exit silencioso.
+
+### Keep-alive do Supabase
+
+O plano gratuito do Supabase pausa o projeto depois de 7 dias sem atividade no banco. O `keep-alive.sh` chama `/api/health/db` (um `SELECT 1` via Prisma) uma vez por dia:
+
+```bash
+(crontab -l 2>/dev/null | grep -v keep-alive.sh; echo '17 9 * * * /bin/bash $HOME/QA-Desk/qa-desk/deploy/oracle/keep-alive.sh') | crontab -
+bash ~/QA-Desk/qa-desk/deploy/oracle/keep-alive.sh && tail -n 1 ~/QA-Desk/logs/keep-alive.log
+```
+
+O log fica em `~/QA-Desk/logs/keep-alive.log`: uma linha `ok` por dia, ou `ERRO` quando o banco não respondeu.
 
 **Trava de CI.** O cron só publica o commit do `main` depois que o workflow [`CI QA Desk`](../../../.github/workflows/qa-desk-ci.yml) termina verde nele (tipos, testes unitários, build e testes de API). Enquanto o CI roda, o cron espera em silêncio. Com CI vermelho, registra uma linha `bloqueado:` no log e não publica até chegar um commit verde. Deploy de emergência sem CI: `QA_DESK_SKIP_CI=1 bash ~/QA-Desk/qa-desk/deploy/oracle/auto-deploy.sh`.
 
