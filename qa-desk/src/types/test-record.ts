@@ -14,7 +14,12 @@ export type BugStatus =
   | "cancelado"
   | "homologado"
   | "nao_reproduzido"
-  | "arquivado";
+  | "arquivado"
+  | "em_reteste"
+  | "reaberto";
+
+/** Com que frequência o defeito aparece ao repetir os passos (29119-3). */
+export type Reproducibility = "sempre" | "intermitente" | "uma_vez";
 
 export type HomologationStatus =
   | "pendente"
@@ -122,8 +127,18 @@ export interface TestRecord {
   homologationStatus?: HomologationStatus;
   executionMode?: ExecutionMode;
   homologationId?: string;
+  /** Urgência de corrigir — independente da severidade. */
   priority?: "baixa" | "media" | "alta" | "critica";
+  /** Impacto no usuário/sistema. */
   severity?: "baixa" | "media" | "alta" | "critica";
+  reproducibility?: Reproducibility;
+  /** Cenário Gherkin do caso de teste (Dado / Quando / Então). */
+  scenario?: string;
+  /** Caso de teste que revelou o bug. Legado: tag `origem:<id>` (ver linkedTestIdOf). */
+  linkedTestId?: string;
+  /** `runId` da execução (test_runs) em que o teste falhou. */
+  linkedRunId?: string;
+  linkedRunAt?: string;
   build?: string;
   /** Ex.: API 33 — emulador Medium_Phone */
   osVersion?: string;
@@ -179,18 +194,55 @@ export interface TestCatalog {
   reports: TestRecord[];
 }
 
+/** Rótulos do ciclo de vida v2 (docs/BUG_V2.md); as chaves seguem as do fluxo com o gestor. */
 export const BUG_STATUS_LABELS: Record<BugStatus, string> = {
   rascunho: "Rascunho",
-  reportado: "Reportado",
-  enviado_gestor: "Enviado ao gestor",
-  em_tratamento: "Em tratamento",
-  corrigido_gestor: "Corrigido (gestor)",
-  sem_correcao: "Sem correção agora",
-  cancelado: "Cancelado",
-  homologado: "Homologado",
+  reportado: "Novo",
+  enviado_gestor: "Confirmado",
+  em_tratamento: "Em correção",
+  corrigido_gestor: "Corrigido",
+  em_reteste: "Em reteste",
+  reaberto: "Reaberto",
+  homologado: "Fechado",
   nao_reproduzido: "Não reproduzido",
+  sem_correcao: "Rejeitado · sem correção",
+  cancelado: "Rejeitado · cancelado",
   arquivado: "Arquivado",
 };
+
+/** Ordem do ciclo de vida para selects e filtros. */
+export const BUG_STATUS_ORDER: BugStatus[] = [
+  "rascunho",
+  "reportado",
+  "enviado_gestor",
+  "em_tratamento",
+  "corrigido_gestor",
+  "em_reteste",
+  "reaberto",
+  "homologado",
+  "nao_reproduzido",
+  "sem_correcao",
+  "cancelado",
+  "arquivado",
+];
+
+export const REPRODUCIBILITY_LABELS: Record<Reproducibility, string> = {
+  sempre: "Sempre",
+  intermitente: "Intermitente",
+  uma_vez: "Uma vez",
+};
+
+const ORIGEM_TAG = /^origem:(.+)$/;
+
+/** Caso de teste de origem: campo v2 ou, nos bugs antigos, a tag `origem:<id>`. */
+export function linkedTestIdOf(record: Pick<TestRecord, "linkedTestId" | "tags">): string | undefined {
+  if (record.linkedTestId?.trim()) return record.linkedTestId.trim();
+  for (const tag of record.tags ?? []) {
+    const m = ORIGEM_TAG.exec(tag);
+    if (m) return m[1].trim();
+  }
+  return undefined;
+}
 
 export const RUNTIME_ENV_LABELS: Record<
   NonNullable<TestRecord["runtimeEnv"]>,
@@ -394,8 +446,13 @@ export function displayStatus(
   const tone =
     s === "homologado" || s === "corrigido_gestor"
       ? "ok"
-      : s === "reportado" || s === "enviado_gestor" || s === "em_tratamento"
-        ? "warn"
-        : "neutral";
+      : s === "reaberto"
+        ? "fail"
+        : s === "reportado" ||
+            s === "enviado_gestor" ||
+            s === "em_tratamento" ||
+            s === "em_reteste"
+          ? "warn"
+          : "neutral";
   return { label: BUG_STATUS_LABELS[s], tone };
 }

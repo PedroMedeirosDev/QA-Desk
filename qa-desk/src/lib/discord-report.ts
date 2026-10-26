@@ -1,5 +1,10 @@
 import type { TestRecord } from "../types/test-record";
-import { SEVERITY_LABELS } from "../types/test-record";
+import {
+  PRIORITY_LABELS,
+  REPRODUCIBILITY_LABELS,
+  SEVERITY_LABELS,
+  linkedTestIdOf,
+} from "../types/test-record";
 import { maskPii } from "./redact-pii";
 import { formatAmbienteBlock } from "./bug-report-markdown";
 
@@ -130,13 +135,23 @@ export function formatDiscordReport(
     technicalEvidence: evidence,
   };
 
+  const severity = record.severity ? SEVERITY_LABELS[record.severity] : "(informar)";
+  const prioridade = record.priority ?? record.severity;
+  const gravidade = [
+    `**Severidade:** ${severity}`,
+    `**Prioridade:** ${prioridade ? PRIORITY_LABELS[prioridade] : "(informar)"}`,
+    record.reproducibility
+      ? `**Reproduz:** ${REPRODUCIBILITY_LABELS[record.reproducibility].toLowerCase()}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const origem = linkedTestIdOf(record);
+
   const blocks = [
     titleLine,
-    `**Gravidade:** ${
-      record.severity
-        ? SEVERITY_LABELS[record.severity]
-        : "(informar)"
-    }`,
+    gravidade,
+    ...(origem ? [`**Teste de origem:** ${origem}`] : []),
     ...(ticketCitation ? ["", `**Chamado:** ${ticketCitation}`] : []),
     "",
     "**Passo a passo:**",
@@ -144,6 +159,7 @@ export function formatDiscordReport(
     steps,
     "",
     `**Resultado atual:** ${actual}`,
+    `**Resultado esperado:** ${expected}`,
   ];
 
   if (record.platform === "app_web") {
@@ -166,8 +182,6 @@ export function formatDiscordReport(
     if (login) blocks.push("", login);
     if (evidence) blocks.push("", `**Console:** ${evidence}`);
   }
-
-  blocks.push("", `**Resultado esperado:** ${expected}`);
 
   return maskPii(blocks.join("\n"));
 }

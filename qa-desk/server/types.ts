@@ -15,7 +15,9 @@ export type BugStatus =
   | "cancelado"
   | "homologado"
   | "nao_reproduzido"
-  | "arquivado";
+  | "arquivado"
+  | "em_reteste"
+  | "reaberto";
 
 /** Resultado do teste dentro de uma homologação */
 export type TestHomologationStatus =
@@ -126,8 +128,18 @@ export interface TestRecord {
   executionMode?: ExecutionMode;
   /** Homologação à qual este teste pertence */
   homologationId?: string;
+  /** Urgência de corrigir — independente da severidade. */
   priority?: "baixa" | "media" | "alta" | "critica";
+  /** Impacto no usuário/sistema. */
   severity?: "baixa" | "media" | "alta" | "critica";
+  reproducibility?: "sempre" | "intermitente" | "uma_vez";
+  /** Cenário Gherkin do caso de teste (Dado / Quando / Então). */
+  scenario?: string;
+  /** Caso de teste que revelou o bug (legado: tag `origem:<id>`). */
+  linkedTestId?: string;
+  /** `runId` da execução (test_runs) em que o teste falhou. */
+  linkedRunId?: string;
+  linkedRunAt?: string;
   build?: string;
   osVersion?: string;
   deviceLabel?: string;

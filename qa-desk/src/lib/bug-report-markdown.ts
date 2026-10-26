@@ -5,7 +5,13 @@
  *   Sintoma → Gravidade/meta → Evidências → Passos → Atual/Esperado → Notas → Referências
  */
 import type { TestRecord } from "../types/test-record";
-import { CHANNEL_LABELS, SEVERITY_LABELS } from "../types/test-record";
+import {
+  CHANNEL_LABELS,
+  PRIORITY_LABELS,
+  REPRODUCIBILITY_LABELS,
+  SEVERITY_LABELS,
+  linkedTestIdOf,
+} from "../types/test-record";
 import { maskPii } from "./redact-pii";
 
 function formatSteps(steps: string[]): string {
@@ -220,9 +226,17 @@ export function formatBugReportMarkdown(
   }
 
   // 2) Gravidade + meta compacta
+  const priority = record.priority ? PRIORITY_LABELS[record.priority] : severity;
+  const gravidade = [
+    `- **Severidade (impacto):** ${severity}`,
+    `- **Prioridade (urgência):** ${priority}`,
+  ];
+  if (record.reproducibility) {
+    gravidade.push(`- **Reprodutibilidade:** ${REPRODUCIBILITY_LABELS[record.reproducibility]}`);
+  }
   sections.push(
     `## Gravidade`,
-    severity,
+    gravidade.join("\n"),
     ``,
     `## Ambiente`,
     formatAmbienteBlock(record),
@@ -256,6 +270,8 @@ export function formatBugReportMarkdown(
     `- **Público:** \`${code}\``,
     `- **Interno:** \`${internalId}\``,
   );
+  const origem = linkedTestIdOf(record);
+  if (origem) sections.push(`- **Teste de origem:** \`${origem}\``);
 
   return maskPii(sections.join("\n").trimEnd() + "\n");
 }

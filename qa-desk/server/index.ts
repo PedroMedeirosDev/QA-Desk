@@ -5,7 +5,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import helmet from "helmet";
 import { loadEnv } from "./load-env.js";
-import { storageMode } from "./db/config.js";
+import { isDatabaseEnabled, storageMode } from "./db/config.js";
+import { getPrisma } from "./db/prisma.js";
 import { isServerAuthConfigured } from "./middleware/auth.js";
 import {
   apiRateLimiter,
@@ -126,6 +127,24 @@ app.get("/api/health", (_req, res) => {
     agentOnline: agent.online,
     agentHostname: agent.hostname,
   });
+});
+
+// O Supabase gratuito pausa o projeto após 7 dias sem atividade no banco; o cron
+// da VM chama esta rota 1×/dia (keep-alive.sh). /api/health fica sem banco de
+// propósito: o auto-deploy faz polling nele a cada 2 s.
+app.get("/api/health/db", async (_req, res) => {
+  if (!isDatabaseEnabled()) {
+    res.json({ ok: true, db: "json" });
+    return;
+  }
+  const inicio = Date.now();
+  try {
+    await getPrisma().$queryRaw`SELECT 1`;
+    res.json({ ok: true, db: "ok", ms: Date.now() - inicio });
+  } catch (err) {
+    console.error("[health/db] falha ao consultar o banco:", err);
+    res.status(503).json({ ok: false, db: "erro" });
+  }
 });
 
 app.get("/api/projects", (_req, res) => {

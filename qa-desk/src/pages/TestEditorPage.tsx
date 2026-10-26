@@ -1,6 +1,6 @@
 import { type ReactNode, type SelectHTMLAttributes, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, Bug, Check, CheckCircle2, ChevronDown, CircleHelp, Clock, Copy, ExternalLink, Loader2, MessageSquare, Play, Plus, RefreshCw, Smartphone, Sparkles, Trash2, Upload, Video, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Bug, Check, CheckCircle2, ChevronDown, CircleHelp, Clock, Copy, Loader2, MessageSquare, Play, Plus, RefreshCw, Smartphone, Sparkles, Trash2, Upload, Video, X } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { ExecutionModeBadge } from "@/components/ExecutionModeBadge";
 import { AutomationReadinessBadge } from "@/components/AutomationReadinessBadge";
@@ -13,6 +13,7 @@ import { useConfirm } from "@/lib/confirm";
 import { useRunProgress, QA_RUN_FINISHED_EVENT, type LiveRunState } from "@/lib/run-progress";
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { HistoryTimeline } from "@/components/HistoryTimeline";
+import { LinkedTestPanel, TestBugsPanel, gherkinTemplate } from "@/components/BugTraceability";
 import { countTestRuns, historyRunFailure, activeFailedRun } from "@/lib/history";
 import {
   projectBugDetailPath,
@@ -32,10 +33,15 @@ import type {
   BugStatus,
   EvidencePurpose,
   ProjectSlug,
+  Reproducibility,
   TestRecord,
 } from "@/types/test-record";
 import {
   BUG_STATUS_LABELS,
+  BUG_STATUS_ORDER,
+  REPRODUCIBILITY_LABELS,
+  SEVERITY_LABELS,
+  linkedTestIdOf,
   CHANNEL_LABELS,
   PLATFORM_LABELS,
   RUNTIME_ENV_LABELS,
@@ -50,7 +56,7 @@ import {
   isGestorReplyUnread,
   isTestCase,
 } from "@/types/test-record";
-import { copyDiscordReport } from "@/lib/discord-report";
+import { copyDiscordReport, formatDiscordReport } from "@/lib/discord-report";
 import {
   formatBugReportMarkdown,
   formatChamadoPolygonus,
@@ -105,6 +111,11 @@ const EDITOR_DRAFT_KEYS = [
   "status",
   "priority",
   "severity",
+  "reproducibility",
+  "scenario",
+  "linkedTestId",
+  "linkedRunId",
+  "linkedRunAt",
   "platform",
   "channel",
   "showInPortfolio",
@@ -273,6 +284,7 @@ export function TestEditorPage({
     null,
   );
   const [repasseBusy, setRepasseBusy] = useState(false);
+  const [discordBusy, setDiscordBusy] = useState(false);
   const [githubProgress, setGithubProgress] = useState<{
     message: string;
     percent: number;
@@ -297,7 +309,7 @@ export function TestEditorPage({
   } | null>(null);
   const [removingEvidenceId, setRemovingEvidenceId] = useState<string | null>(null);
   const busyRun = running || liveRunning;
-  const deskBusy = saving || Boolean(githubBusy) || repasseBusy;
+  const deskBusy = saving || Boolean(githubBusy) || repasseBusy || discordBusy;
 
   const isHomologation = isTestCase(form);
   const editingBug = editorKind === "bug" || isBugReport(form as TestRecord);
@@ -815,6 +827,37 @@ export function TestEditorPage({
     else toast.error("Não foi possível copiar (permissão do navegador)");
   }
 
+  async function copyDiscordText() {
+    const ok = await copyDiscordReport(formatDiscordReport(form));
+    if (ok) toast.success("Texto para o Discord copiado");
+    else toast.error("Não foi possível copiar (permissão do navegador)");
+  }
+
+  async function sendToDiscord() {
+    if (!id || isNew) {
+      toast.error("Salve o bug antes de enviar ao Discord");
+      return;
+    }
+    setDiscordBusy(true);
+    try {
+      // O servidor envia o que está gravado: salva antes o que estiver na tela.
+      await api.updateTest(project, id, buildSavePayload(formRef.current));
+      clearEditorDraft(project, id);
+      dirtyRef.current = false;
+      const res = await api.sendDiscordReport(project, id);
+      setForm(res.report);
+      const anexos = res.attached.length
+        ? `${res.attached.length} anexo(s)`
+        : "só texto";
+      const pulados = res.skipped.length ? ` · ${res.skipped.length} arquivo(s) grande(s) demais` : "";
+      toast.success(`Enviado ao Discord · ${anexos}${pulados}`, { title: "Discord" });
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Falha ao enviar ao Discord"), { title: "Discord" });
+    } finally {
+      setDiscordBusy(false);
+    }
+  }
+
   async function copyChamadoPolygonus() {
     const text = formatChamadoPolygonus(form);
     const ok = await copyDiscordReport(text);
@@ -824,74 +867,6 @@ export function TestEditorPage({
       );
     } else {
       toast.error("Não foi possível copiar (permissão do navegador)");
-    }
-  }
-
-  async function openGithubIssue() {
-    if (!id || isNew) {
-      toast.error("Salve o bug antes de abrir a issue");
-      return;
-    }
-    setGithubBusy("opening");
-    setGithubProgress({ message: "Abrindo issue no GitHub…", percent: 6 });
-    const toastId = toast.info("Abrindo issue no GitHub…", {
-      title: "GitHub",
-      duration: 0,
-      progress: 6,
-    });
-    try {
-      const res = await api.openGithubIssue(project, id, (ev) => {
-        const percent = githubIssueProgressPercent(ev);
-        setGithubProgress({
-          message: ev.message,
-          percent,
-          filename: ev.filename,
-        });
-        toast.update(toastId, { message: ev.message, progress: percent });
-      });
-      setForm(res.report);
-      if (res.alreadyLinked) {
-        toast.update(toastId, {
-          variant: "info",
-          title: "GitHub",
-          message: `Issue já vinculada: #${res.number}`,
-          progress: 100,
-          duration: 5000,
-        });
-      } else {
-        const n = res.evidenceUploaded ?? 0;
-        const skip = res.evidenceSkipped?.length ?? 0;
-        const evHint =
-          n > 0
-            ? ` · ${n} evidência${n === 1 ? "" : "s"}`
-            : skip > 0
-              ? " · sem evidências anexadas"
-              : "";
-        toast.update(toastId, {
-          variant: "success",
-          title: "GitHub",
-          message: `Issue #${res.number} aberta${evHint}`,
-          progress: 100,
-          duration: 6000,
-          action: res.url
-            ? { label: "Abrir issue", onClick: () => window.open(res.url, "_blank", "noopener,noreferrer") }
-            : undefined,
-        });
-        if (skip > 0) {
-          toast.info(
-            `${skip} arquivo(s) não anexado(s): ${res.evidenceSkipped
-              .map((s) => s.filename)
-              .join(", ")}`,
-          );
-        }
-      }
-      if (res.url) window.open(res.url, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      toast.dismiss(toastId);
-      toast.error(toastErrorMessage(e, "Falha ao abrir issue"), { title: "GitHub" });
-    } finally {
-      setGithubBusy(null);
-      setGithubProgress(null);
     }
   }
 
@@ -1083,6 +1058,11 @@ export function TestEditorPage({
           platform: form.platform,
           build: form.build,
           severity: form.severity ?? "media",
+          priority: "media",
+          linkedTestId: form.id,
+          linkedRunId:
+            typeof failed?.meta?.runId === "string" ? failed.meta.runId : undefined,
+          linkedRunAt: failed?.at,
           osVersion: form.osVersion,
           deviceLabel: form.deviceLabel,
           browser: form.browser,
@@ -1162,9 +1142,14 @@ export function TestEditorPage({
                   </span>
                 );
               })()}
+              {form.severity && (
+                <span className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground">
+                  Severidade {SEVERITY_LABELS[form.severity].toLowerCase()}
+                </span>
+              )}
               {(form.priority ?? form.severity) && (
                 <span className="rounded-full border border-border bg-[#1a1a1a] px-2 py-0.5 text-[0.65rem] text-muted-foreground">
-                  {PRIORITY_LABELS[(form.priority ?? form.severity)!]}
+                  Prioridade {PRIORITY_LABELS[(form.priority ?? form.severity)!].toLowerCase()}
                 </span>
               )}
               {form.platform === "app_web" ? (
@@ -1311,6 +1296,31 @@ export function TestEditorPage({
               />
             </Field>
             </FormSection>
+            {!editingBug && (
+              <FormSection title="Cenário (Gherkin)">
+                <Field
+                  label="Cenário"
+                  hint="Dado = estado inicial · Quando = ação · Então = resultado observável. Um cenário = um comportamento; cliques ficam nos passos."
+                >
+                  <textarea
+                    className={cn(QUIET_INPUT, "min-h-32 font-mono text-xs leading-relaxed")}
+                    placeholder={"Funcionalidade: Envio de comunicado no Mural\n\n  Cenário: Coordenador envia comunicado com PDF\n    Dado que estou logado como coordenador\n    Quando envio um comunicado com o anexo \"pauta.pdf\"\n    Então o comunicado aparece em \"Enviadas\" com o anexo"}
+                    value={form.scenario ?? ""}
+                    onChange={(e) => update("scenario", e.target.value)}
+                    spellCheck={false}
+                  />
+                </Field>
+                {isAdmin && !form.scenario?.trim() ? (
+                  <button
+                    type="button"
+                    onClick={() => update("scenario", gherkinTemplate(form))}
+                    className={cn(actionBtnBase, actionBtn.secondary)}
+                  >
+                    Começar pelo modelo
+                  </button>
+                ) : null}
+              </FormSection>
+            )}
             <FormSection title={editingBug ? "Reprodução" : "Passos"}>
             <div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -1804,6 +1814,14 @@ export function TestEditorPage({
             </div>
             )}
             </FormSection>
+            {!isNew && editingBug && linkedTestIdOf(form) ? (
+              <FormSection title="Rastreabilidade">
+                <LinkedTestPanel project={project} bug={form} />
+              </FormSection>
+            ) : null}
+            {!isNew && !editingBug && form.id ? (
+              <TestBugsPanel project={project} testId={form.id} />
+            ) : null}
           </div>
 
           <aside className="sticky top-8 flex max-h-[calc(100vh-4rem)] min-w-0 flex-col gap-6 self-start overflow-y-auto rounded-xl border bg-card p-4 scrollbar-thin">
@@ -1852,41 +1870,51 @@ export function TestEditorPage({
                     Copiar para chamado Polygonus
                   </button>
                 </PremiumTooltip>
-                <PremiumTooltip
-                  label="Copia o Markdown estruturado (mesmo body da issue)"
-                  side="left"
-                  wide
-                >
-                  <button
-                    type="button"
-                    onClick={() => void copyBugReportMarkdown()}
-                    className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
-                  >
-                    <Copy className="size-4" />
-                    Copiar report Markdown
-                  </button>
-                </PremiumTooltip>
-                {!isNew && !form.githubIssueUrl && (
+                {!isNew && (
                   <PremiumTooltip
-                    label="Abre issue em polygonus-suporte-kb com label bug (handoff ao time)"
+                    label="Salva e envia o bug ao canal de bugs no Discord, com prints e vídeos anexados. As reações do gestor (🔧 ✅ ⏸️ ❌) atualizam o status aqui."
                     side="left"
                     wide
                   >
                     <button
                       type="button"
-                      onClick={() => void openGithubIssue()}
+                      onClick={() => void sendToDiscord()}
                       disabled={deskBusy}
                       className={cn(actionBtnBase, actionBtn.create, "w-full")}
                     >
-                      {githubBusy === "opening" ? (
+                      {discordBusy ? (
                         <Loader2 className="size-4 animate-spin" />
                       ) : (
-                        <ExternalLink className="size-4" />
+                        <MessageSquare className="size-4" />
                       )}
-                      {githubBusy === "opening" ? "Abrindo issue…" : "Abrir issue GitHub"}
+                      {discordBusy
+                        ? "Enviando ao Discord…"
+                        : form.discordSentAt
+                          ? "Reenviar ao Discord"
+                          : "Enviar ao Discord"}
                     </button>
                   </PremiumTooltip>
                 )}
+                {form.discordSentAt ? (
+                  <p className="text-center text-xs text-muted-foreground">
+                    Enviado ao Discord em{" "}
+                    {new Date(form.discordSentAt).toLocaleDateString("pt-BR")}
+                  </p>
+                ) : null}
+                <PremiumTooltip
+                  label="Copia o mesmo texto da mensagem do Discord, para colar à mão"
+                  side="left"
+                  wide
+                >
+                  <button
+                    type="button"
+                    onClick={() => void copyDiscordText()}
+                    className={cn(actionBtnBase, actionBtn.ghost, "w-full")}
+                  >
+                    <Copy className="size-4" />
+                    Copiar para o Discord
+                  </button>
+                </PremiumTooltip>
                 {!isNew && form.githubIssueUrl && (
                   <PremiumTooltip
                     label={`Envia título, body e evidências do Desk para a issue #${form.githubIssueNumber} (não cria issue nova). Também busca comentários do gestor perdidos pelo webhook.`}
@@ -2056,14 +2084,29 @@ export function TestEditorPage({
               <PropSelect
                 label="Status do bug"
                 value={form.status ?? "rascunho"}
-                options={Object.entries(BUG_STATUS_LABELS).map(([k, v]) => ({
+                options={BUG_STATUS_ORDER.map((k) => ({
                   value: k,
-                  label: v,
+                  label: BUG_STATUS_LABELS[k],
                 }))}
                 onChange={(v) => update("status", v as BugStatus)}
               />
               <PropSelect
-                label="Prioridade"
+                label="Severidade (impacto)"
+                value={form.severity ?? "media"}
+                options={(
+                  Object.keys(SEVERITY_LABELS) as Array<
+                    NonNullable<TestRecord["severity"]>
+                  >
+                ).map((k) => ({
+                  value: k,
+                  label: SEVERITY_LABELS[k],
+                }))}
+                onChange={(v) =>
+                  update("severity", v as NonNullable<TestRecord["severity"]>)
+                }
+              />
+              <PropSelect
+                label="Prioridade (urgência)"
                 value={form.priority ?? form.severity ?? "media"}
                 options={(
                   Object.keys(PRIORITY_LABELS) as Array<
@@ -2073,10 +2116,23 @@ export function TestEditorPage({
                   value: k,
                   label: PRIORITY_LABELS[k],
                 }))}
-                onChange={(v) => {
-                  const level = v as NonNullable<TestRecord["priority"]>;
-                  setForm((f) => ({ ...f, priority: level, severity: level }));
-                }}
+                onChange={(v) =>
+                  update("priority", v as NonNullable<TestRecord["priority"]>)
+                }
+              />
+              <PropSelect
+                label="Reprodutibilidade"
+                value={form.reproducibility ?? ""}
+                options={[
+                  { value: "", label: "Não informada" },
+                  ...(Object.keys(REPRODUCIBILITY_LABELS) as Reproducibility[]).map((k) => ({
+                    value: k,
+                    label: REPRODUCIBILITY_LABELS[k],
+                  })),
+                ]}
+                onChange={(v) =>
+                  update("reproducibility", (v || undefined) as Reproducibility | undefined)
+                }
               />
               </>
             )}
@@ -2659,27 +2715,6 @@ export function TestEditorPage({
                 Copiar report Markdown
               </button>
               </PremiumTooltip>
-              {isAdmin && !isNew && isBugReport(form) && !form.githubIssueUrl && (
-                <PremiumTooltip
-                  label="Abre issue em polygonus-suporte-kb com label bug (handoff ao time)"
-                  side="left"
-                  wide
-                >
-                  <button
-                    type="button"
-                    onClick={() => void openGithubIssue()}
-                    disabled={deskBusy}
-                    className={cn(actionBtnBase, actionBtn.create, "w-full")}
-                  >
-                    {githubBusy === "opening" ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <ExternalLink className="size-4" />
-                    )}
-                    {githubBusy === "opening" ? "Abrindo issue…" : "Abrir issue GitHub"}
-                  </button>
-                </PremiumTooltip>
-              )}
               {isAdmin && !isNew && isBugReport(form) && form.githubIssueUrl && (
                 <PremiumTooltip
                   label={`Envia título, body e evidências do Desk para a issue #${form.githubIssueNumber} (não cria issue nova). Também busca comentários do gestor perdidos pelo webhook.`}
