@@ -9,8 +9,9 @@ Operacional (admin) + handoff GitHub Issue + visitante. Este doc é a fonte do p
 | CT falho → bug | **Não** automático enquanto o script puder falhar por flakiness/mapeamento |
 | Script apto a sugerir bug | Só com flag **`consolidated`** marcada **manualmente** pelo QA. Diferente de `readiness` (auto após 2 passes Maestro = “estável na suite”). No futuro o passo pode ser reduzido; hoje é essencial. |
 | Chamado Polygonus | Só **citação** (texto/id no registro); sem integração com Registro de Solicitações |
-| Handoff ao time | **Discord**, no canal de bugs (bot `DISCORD_BOT_TOKEN` + `DISCORD_BUG_CHANNEL_ID`, ou webhook `DISCORD_BUG_WEBHOOK_URL`). Desde 26/10/2026 a empresa não usa mais GitHub Issues |
-| Gatilho | **Manual** (admin) — botão **Enviar ao Discord**; sem spam a cada falha de script |
+| Handoff ao time | **Discord**, no canal de bugs, **colado à mão** (botão **Copiar para o Discord**). Desde 26/10/2026 a empresa não usa mais GitHub Issues |
+| Gatilho | **Manual** (admin); sem spam a cada falha de script |
+| Status | Atualizado pelo QA no Desk, conforme o retorno do gestor. O aviso de cópia oferece **Marcar como Confirmado** |
 | GitHub Issues | **Desativado.** Bugs antigos com issue mantêm o link e os botões Sync/Fechar; não se abre issue nova |
 | Visitante | Métricas + cases com `showInPortfolio`; **zero PII** em qualquer hipótese |
 | Evidência Playwright | Screenshot `only-on-failure` em `test-results/`; após falha do run PW no Desk, o PNG mais recente sobe para `evidence[]` (sem criar bug). |
@@ -53,15 +54,13 @@ Espelham [`TestRecord`](../src/types/test-record.ts):
 
 **Exemplo-ouro (sanitizado):** App — eletivas ausentes no filtro de disciplina; homologado na build `6.06.13`.
 
-## Handoff Discord (oficial)
+## Handoff Discord (oficial, manual)
 
-- Botão **Enviar ao Discord** no bug → salva o que está na tela e chama `POST .../discord-send` ([`discord-send.ts`](../server/discord-send.ts)).
-- Texto: [`formatDiscordReport`](../src/lib/discord-report.ts) — título `[APP-07] Sintoma`, severidade · prioridade · reprodutibilidade, teste de origem, chamado, passos, atual e esperado, ambiente. Limite de 2000 caracteres (corta com aviso no histórico).
-- Anexos: prints e vídeos do `evidence[]`, até 8 arquivos de 9 MB.
-- Grava `discordMessageId` / `discordSentAt`, histórico `discord_sent` e status **Confirmado** (`enviado_gestor`), se o bug ainda estava antes disso.
-- **Volta (reações do gestor na mensagem):** 🔧 Em correção · ✅ Corrigido · ⏸️ Rejeitado (sem correção) · ❌ Rejeitado (cancelado). Tirar a reação volta para Confirmado. Opcional: `DISCORD_GESTOR_USER_IDS` limita quem pode reagir.
-- Ao **Fechar** o bug no Desk (`homologado`), o bot reage 💯 na mensagem.
-- **Copiar para o Discord** — o mesmo texto no clipboard, para colar à mão quando o bot estiver fora.
+- Botão **Copiar para o Discord** no bug → clipboard com [`formatDiscordReport`](../src/lib/discord-report.ts): título `[APP-07] Sintoma`, severidade · prioridade · reprodutibilidade, teste de origem, chamado, passos, atual e esperado, ambiente.
+- Prints e vídeos vão **anexados à mão** na mensagem (o aviso de cópia lembra quando o bug tem evidência).
+- O aviso oferece **Marcar como Confirmado** (`enviado_gestor`) enquanto o bug está em Rascunho ou Novo. Daí em diante o QA atualiza o status pelo retorno do gestor.
+
+**Envio automático (fora da UI por decisão de 26/10/2026):** o servidor ainda tem `POST .../discord-send` ([`discord-send.ts`](../server/discord-send.ts)) com bot/webhook, anexos e sincronização de status por reações (🔧 ✅ ⏸️ ❌, 💯 ao fechar). Não está em uso: depende do bot configurado e de o gestor reagir às mensagens.
 
 ## Handoff GitHub (desativado em 26/10/2026)
 
