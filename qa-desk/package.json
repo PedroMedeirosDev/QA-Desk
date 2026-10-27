@@ -12,6 +12,7 @@
     "start": "cross-env NODE_ENV=production tsx server/index.ts",
     "start:prod": "npm run build && npm run start",
     "lint": "eslint .",
+    "lint:ci": "node scripts/lint-catraca.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",

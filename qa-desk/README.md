@@ -29,9 +29,10 @@ Estratégia, matriz de riscos e limitações: [`docs/ESTRATEGIA_TESTES.md`](docs
 
 | O quê | Comando | No CI |
 |---|---|---|
+| ESLint com catraca | `npm run lint:ci` | todo PR · avisos viram anotação no PR; passar do limite em `eslint-limite.json` reprova |
 | Unitários | `npm run test:unit` | todo PR |
 | API | `npm run test:api` | todo PR |
-| E2E + acessibilidade (axe) | `npm run e2e -- --grep-invert "@local"` | todo PR · relatório HTML como artefato |
+| E2E + acessibilidade (axe) | `npm run e2e -- --grep-invert "@local"` | todo PR · relatório no GitHub Pages, com link no resumo da execução |
 | Carga (k6) | `npm run e2e:api:carga` e, em outro terminal, `npm run test:carga` | todo PR · resumo na página do workflow |
 | Estabilidade | `npm run e2e -- --grep-invert "@local" --repeat-each=5 --retries=0` | toda segunda-feira |
 
@@ -39,6 +40,7 @@ Estratégia, matriz de riscos e limitações: [`docs/ESTRATEGIA_TESTES.md`](docs
 - Os testes rodam com dados isolados em `e2e/.dados` (`QA_DATA_DIR`), recriados a cada subida: cada um cria a própria massa pela API e nenhum grava nos projetos reais. Os specs `@local`, que precisam dos dados de verdade, rodam com `npm run e2e:local`.
 - O axe reprova só violação crítica ou grave, para o CI barrar o que impede o uso sem travar em detalhe.
 - O teste de carga sobe a API com o limitador ampliado (`QA_RATE_LIMIT_API`): mede desempenho, não a proteção.
+- Avisos do ESLint não reprovam, mas também não podem crescer: a catraca (`scripts/lint-catraca.mjs`) compara com `eslint-limite.json` e pede para baixar o limite sempre que alguém corrige um.
 
 **Próximos passos**
 - Teste de 403 para visitante e anônimo nas rotas de escrita (risco 3 da matriz).

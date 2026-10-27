@@ -16,6 +16,9 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # contents: write só para publicar o relatório no ramo gh-pages.
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: qa-desk
@@ -34,8 +37,9 @@ jobs:
       - name: Tipos
         run: npm run typecheck
 
-      - name: ESLint
-        run: npm run lint
+      # Avisos viram anotação no PR; passar do limite em eslint-limite.json reprova.
+      - name: ESLint (com catraca de avisos)
+        run: npm run lint:ci
 
       - name: Testes unitários do servidor
         run: npm run test:unit
@@ -60,6 +64,26 @@ jobs:
           name: relatorio-playwright
           path: qa-desk/e2e/playwright-report
           retention-days: 14
+
+      # Uma pasta por execução no GitHub Pages: o relatório abre no navegador pelo link do resumo.
+      - name: Publicar relatório no GitHub Pages
+        if: always() && hashFiles('qa-desk/e2e/playwright-report/index.html') != ''
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: qa-desk/e2e/playwright-report
+          destination_dir: relatorios/${{ github.run_number }}
+          keep_files: true
+
+      - name: Link do relatório no resumo
+        if: always() && hashFiles('qa-desk/e2e/playwright-report/index.html') != ''
+        run: |
+          {
+            echo "## Relatório do Playwright"
+            echo ""
+            echo "[Abrir o relatório da execução ${{ github.run_number }}](https://pedromedeirosdev.github.io/QA-Desk/relatorios/${{ github.run_number }}/)"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: grafana/setup-k6-action@v1
 

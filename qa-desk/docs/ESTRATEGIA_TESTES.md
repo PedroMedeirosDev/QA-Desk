@@ -33,7 +33,7 @@ Impacto e probabilidade de 1 (baixo) a 3 (alto). Risco = impacto × probabilidad
 
 ## Critérios
 
-- **Entrada no `main`:** tipos, lint, unitários, build, API, E2E, axe e k6 verdes (check `ci`).
+- **Entrada no `main`:** tipos, lint, unitários, build, API, E2E, axe e k6 verdes (check `ci`). Avisos do ESLint não podem passar do limite em `eslint-limite.json` (hoje 11, todos `react-hooks/exhaustive-deps`).
 - **Publicação:** o auto-deploy só usa commit com CI verde; falha de saúde após o restart bloqueia e tenta de novo em 30 min.
 - **Massa de dados:** API, E2E e carga rodam com `QA_DATA_DIR=e2e/.dados`, apagado a cada subida (`e2e/api-server.mjs`). Cada teste cria a própria massa pela API e nenhum grava nos projetos reais. Specs que dependem dos dados de verdade marcam `@local`, rodam com `npm run e2e:local` e o CI pula.
 
