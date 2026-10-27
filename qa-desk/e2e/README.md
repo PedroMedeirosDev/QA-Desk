@@ -37,11 +37,17 @@ Não precisa parar o `npm run dev` — o E2E sobe stack própria (5175 / 3011).
 - Postman collection / Newman: [`../postman/`](../postman/)
 - Specs Playwright: [`api/`](api/) · config [`api.playwright.config.ts`](api.playwright.config.ts)
 
+## No CI
+
+- `bugs-v2.spec.ts` cria a própria massa pela API (projeto Anihype) e roda em todo PR, com axe (WCAG 2 A/AA).
+- `smoke.spec.ts` é `@local`: depende de `data/projects/polygonus` (fora do Git). O CI roda `--grep-invert "@local"`.
+- Relatório HTML: artefato `relatorio-playwright` do workflow.
+- Carga: [`carga/api-leitura.js`](carga/api-leitura.js) (k6), com a API subida por `npm run e2e:api:carga`.
+
 ## Próximos passos (quando quiser evoluir)
 
 1. Mock de `/api/.../run` com `page.route` — validar UI do Play **sem** Maestro
 2. Auth real com `storageState` (admin vs visitor) — UI e API
-3. CI no GitHub Actions (E2E + Newman)
 
 ## Estrutura
 

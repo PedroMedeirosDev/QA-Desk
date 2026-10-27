@@ -10,3 +10,5 @@ e2e/blob-report/
 e2e/playwright/.cache/
 test-results/
 .maestro-*.txt
+e2e/carga/resultado.json
+e2e/carga/resumo.md

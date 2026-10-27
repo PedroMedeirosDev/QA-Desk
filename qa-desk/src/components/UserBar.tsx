@@ -132,6 +132,7 @@ export function UserBar({ className }: { className?: string }) {
           accept="image/png,image/jpeg,image/webp"
           className="sr-only"
           tabIndex={-1}
+          aria-label="Enviar foto de perfil"
           onChange={(e) => void onAvatarSelected(e.target.files?.[0])}
         />
       )}

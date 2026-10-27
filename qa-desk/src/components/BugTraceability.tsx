@@ -125,10 +125,10 @@ export function TestBugsPanel({ project, testId }: { project: ProjectSlug; testI
               <span
                 className={cn(
                   "shrink-0 rounded-full border px-2 py-0.5 text-[0.65rem]",
-                  tone === "ok" && "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
-                  tone === "warn" && "border-amber-500/40 bg-amber-500/15 text-amber-300",
-                  tone === "fail" && "border-red-500/40 bg-red-500/15 text-red-300",
-                  tone === "neutral" && "border-border bg-muted text-muted-foreground",
+                  tone === "ok" && "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400",
+                  tone === "warn" && "border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-300",
+                  tone === "fail" && "border-red-500/40 bg-red-500/10 text-red-800 dark:text-red-300",
+                  tone === "neutral" && "border-border bg-muted text-foreground",
                 )}
               >
                 {label}

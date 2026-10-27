@@ -23,6 +23,28 @@ Aplicação web do **QA Desk** — registro de testes e homologação multi-proj
 | [`e2e/`](e2e/) | E2E UI + `npm run test:api` |
 | [`SPEC.md`](SPEC.md) | Aposentado — não usar |
 
+## Qualidade
+
+Estratégia, matriz de riscos e limitações: [`docs/ESTRATEGIA_TESTES.md`](docs/ESTRATEGIA_TESTES.md).
+
+| O quê | Comando | No CI |
+|---|---|---|
+| Unitários | `npm run test:unit` | todo PR |
+| API | `npm run test:api` | todo PR |
+| E2E + acessibilidade (axe) | `npm run e2e -- --grep-invert "@local"` | todo PR · relatório HTML como artefato |
+| Carga (k6) | `npm run e2e:api:carga` e, em outro terminal, `npm run test:carga` | todo PR · resumo na página do workflow |
+| Estabilidade | `npm run e2e -- --grep-invert "@local" --repeat-each=5 --retries=0` | toda segunda-feira |
+
+**Decisões**
+- A massa dos E2E é criada pela própria API, no projeto Anihype: roda igual no PC e no CI, sem dado real.
+- O axe reprova só violação crítica ou grave, para o CI barrar o que impede o uso sem travar em detalhe.
+- O teste de carga sobe a API com o limitador ampliado (`QA_RATE_LIMIT_API`): mede desempenho, não a proteção.
+
+**Próximos passos**
+- Teste de 403 para visitante e anônimo nas rotas de escrita (risco 3 da matriz).
+- E2E do login real e do portfólio do visitante.
+- axe no editor de bug e no portfólio; revisar o contraste do tema claro nas outras telas.
+
 ## Suite API (Newman / Postman)
 
 No app: projeto → menu **Suite API** (`/projects/:slug/suite-api`).

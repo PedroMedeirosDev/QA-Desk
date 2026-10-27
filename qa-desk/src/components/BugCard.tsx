@@ -16,18 +16,19 @@ import {
 
 const CHIP = "inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[0.7rem] font-medium";
 
+// Texto escuro no tema claro e claro no escuro: contraste AA nos dois (axe color-contrast).
 const SEVERITY_TONE: Record<NonNullable<TestRecord["severity"]>, string> = {
-  critica: "border-red-500/40 bg-red-500/15 text-red-300",
-  alta: "border-orange-500/40 bg-orange-500/15 text-orange-300",
-  media: "border-amber-500/30 bg-amber-500/10 text-amber-200",
-  baixa: "border-border bg-muted text-muted-foreground",
+  critica: "border-red-500/40 bg-red-500/10 text-red-800 dark:bg-red-500/15 dark:text-red-300",
+  alta: "border-orange-500/40 bg-orange-500/10 text-orange-800 dark:bg-orange-500/15 dark:text-orange-300",
+  media: "border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200",
+  baixa: "border-border bg-muted text-foreground",
 };
 
 const STATUS_TONE = {
-  ok: "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
-  warn: "border-amber-500/40 bg-amber-500/15 text-amber-300",
-  fail: "border-red-500/40 bg-red-500/15 text-red-300",
-  neutral: "border-border bg-muted text-muted-foreground",
+  ok: "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400",
+  warn: "border-amber-500/40 bg-amber-500/10 text-amber-900 dark:bg-amber-500/15 dark:text-amber-300",
+  fail: "border-red-500/40 bg-red-500/10 text-red-800 dark:bg-red-500/15 dark:text-red-300",
+  neutral: "border-border bg-muted text-foreground",
 } as const;
 
 function fmtData(iso?: string) {
@@ -111,7 +112,7 @@ export function BugCard({
               </span>
             ) : null}
             {prioridade ? (
-              <span className={cn(CHIP, "border-border bg-[#1a1a1a] text-muted-foreground")}>
+              <span className={cn(CHIP, "border-border bg-muted text-foreground")}>
                 Prioridade {PRIORITY_LABELS[prioridade].toLowerCase()}
               </span>
             ) : null}

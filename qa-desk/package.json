@@ -25,8 +25,10 @@
     "e2e:ui": "playwright test -c e2e/playwright.config.ts --ui",
     "e2e:headed": "playwright test -c e2e/playwright.config.ts --headed",
     "e2e:api": "cross-env DATABASE_URL= QA_APP_PORT=3011 QA_AUTOMATION_RUN=0 QA_E2E_MOCK=1 tsx server/index.ts",
-    "e2e:ui-server": "cross-env QA_APP_PORT=3011 QA_VITE_API_TARGET=http://127.0.0.1:3011 vite --mode e2e --host 127.0.0.1 --port 5175 --strictPort",
+    "e2e:ui-server": "cross-env VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= QA_APP_PORT=3011 QA_VITE_API_TARGET=http://127.0.0.1:3011 vite --mode e2e --host 127.0.0.1 --port 5175 --strictPort",
     "test:api": "playwright test -c e2e/api.playwright.config.ts",
+    "e2e:api:carga": "cross-env QA_RATE_LIMIT_API=100000 npm run e2e:api",
+    "test:carga": "k6 run e2e/carga/api-leitura.js",
     "test:unit": "tsx server/gestor-cases.test.ts && tsx server/playwright-failure-screenshot.test.ts && tsx server/github/sync-bug-issue.comment.test.ts && tsx server/privacy/redact-pii.test.ts && tsx server/privacy/sanitize-visitor.test.ts && tsx server/bug-v2.test.ts",
     "test:api:postman": "node scripts/run-api-newman.mjs desk",
     "test:api:postman:polygonus": "node scripts/run-api-newman.mjs polygonus-auth",
@@ -53,6 +55,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.54.1",
     "@tailwindcss/vite": "^4.1.8",

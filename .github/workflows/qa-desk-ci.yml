@@ -45,3 +45,36 @@ jobs:
 
       - name: Testes de API (servidor em modo mock)
         run: npm run test:api
+
+      - name: Navegador do Playwright
+        run: npx playwright install --with-deps chromium
+
+      # @local = specs que dependem de data/projects (fora do Git); a massa dos outros é criada pela API.
+      - name: E2E de interface e acessibilidade (axe)
+        run: npm run e2e -- --grep-invert "@local"
+
+      - name: Publicar relatório do Playwright
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorio-playwright
+          path: qa-desk/e2e/playwright-report
+          retention-days: 14
+
+      - uses: grafana/setup-k6-action@v1
+
+      - name: Teste de carga da API (k6)
+        run: |
+          npm run e2e:api:carga > /tmp/api-carga.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3011/api/health > /dev/null && break; sleep 1; done
+          npm run test:carga
+          cat e2e/carga/resumo.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publicar resultado da carga
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: resultado-carga
+          path: qa-desk/e2e/carga/resultado.json
+          if-no-files-found: ignore
+          retention-days: 14

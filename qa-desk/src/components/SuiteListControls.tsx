@@ -43,7 +43,7 @@ export function SuiteListControls({
         <button
           type="button"
           onClick={onCollapseGreens}
-          className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 px-2 py-1 text-xs text-emerald-400/90 transition-colors hover:bg-emerald-500/10"
+          className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 px-2 py-1 text-xs text-emerald-800 transition-colors hover:bg-emerald-500/10 dark:text-emerald-400/90"
         >
           <Leaf className="size-3.5" />
           <span className="sm:hidden">Verdes</span>

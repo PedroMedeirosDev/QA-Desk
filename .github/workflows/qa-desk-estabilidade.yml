@@ -1,0 +1,41 @@
+name: Estabilidade QA Desk
+
+# A suíte E2E 5 vezes seguidas, sem nova tentativa: teste instável aparece aqui
+# antes de virar falso alarme no CI de cada pull request.
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  estabilidade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: qa-desk
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: qa-desk/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Navegador do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E 5 vezes seguidas, sem retry
+        run: npm run e2e -- --grep-invert "@local" --repeat-each=5 --retries=0
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorio-estabilidade
+          path: qa-desk/e2e/playwright-report
+          retention-days: 14
