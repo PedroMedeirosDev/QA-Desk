@@ -11,6 +11,8 @@ jobs:
   estabilidade:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: qa-desk
@@ -39,3 +41,22 @@ jobs:
           name: relatorio-estabilidade
           path: qa-desk/e2e/playwright-report
           retention-days: 14
+
+      - name: Publicar relatório no GitHub Pages
+        if: always() && hashFiles('qa-desk/e2e/playwright-report/index.html') != ''
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: qa-desk/e2e/playwright-report
+          destination_dir: relatorios/estabilidade-${{ github.run_number }}
+          keep_files: true
+
+      - name: Link do relatório no resumo
+        if: always() && hashFiles('qa-desk/e2e/playwright-report/index.html') != ''
+        run: |
+          {
+            echo "## Relatório de estabilidade"
+            echo ""
+            echo "[Abrir o relatório da execução ${{ github.run_number }}](https://pedromedeirosdev.github.io/QA-Desk/relatorios/estabilidade-${{ github.run_number }}/)"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
