@@ -4,8 +4,9 @@ import { readFile } from "node:fs/promises";
 /**
  * Smoke: app sobe em modo mock, lista de testes do Polygonus App carrega.
  * Não dispara Maestro (QA_AUTOMATION_RUN=0 no webServer).
+ * @local: depende dos dados de data/projects/polygonus (fora do Git); o CI pula.
  */
-test.describe("QA Desk — smoke", () => {
+test.describe("QA Desk — smoke @local", () => {
   test("abre a lista de testes do Polygonus App (mock)", async ({ page }) => {
     await page.goto("/projects/polygonus/app");
 

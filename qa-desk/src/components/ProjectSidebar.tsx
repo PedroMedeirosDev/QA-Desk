@@ -562,8 +562,9 @@ export function ProjectSidebar({
                             ),
                       )}
                       aria-current={onDashboard ? "page" : undefined}
+                      aria-label="Dashboard"
                     >
-                      <LayoutDashboard className="size-4" />
+                      <LayoutDashboard className="size-4" aria-hidden />
                     </Link>
                   </CollapsedTooltip>
                   <CollapsedTooltip label="Homologações">
@@ -579,8 +580,9 @@ export function ProjectSidebar({
                             ),
                       )}
                       aria-current={onHomologations ? "page" : undefined}
+                      aria-label="Homologações"
                     >
-                      <ListChecks className="size-4" />
+                      <ListChecks className="size-4" aria-hidden />
                     </Link>
                   </CollapsedTooltip>
                   {project.slug === "polygonus" && (

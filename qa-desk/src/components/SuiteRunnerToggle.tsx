@@ -10,12 +10,12 @@ const RUNNER_META = {
   maestro: {
     icon: Smartphone,
     tip: "Emulador / Maestro",
-    activeClass: "bg-emerald-500/20 text-emerald-300",
+    activeClass: "bg-emerald-500/15 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
   },
   playwright: {
     icon: MonitorSmartphone,
     tip: "Web / Playwright",
-    activeClass: "bg-sky-500/20 text-sky-300",
+    activeClass: "bg-sky-500/15 text-sky-800 dark:bg-sky-500/20 dark:text-sky-300",
   },
 } as const;
 

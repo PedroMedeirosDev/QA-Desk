@@ -29,13 +29,13 @@ function badgeClass(tone: Tone) {
   return cn(
     "inline-flex items-center gap-[0.375rem] rounded-full border px-[0.5rem] py-[0.125rem] text-[0.6875rem] font-semibold",
     tone === "ok" &&
-      "border-emerald-500/30 bg-emerald-500/15 text-emerald-300",
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
     tone === "warn" &&
-      "border-amber-500/35 bg-amber-500/15 text-amber-200",
+      "border-amber-500/35 bg-amber-500/10 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200",
     tone === "off" &&
-      "border-slate-500/40 bg-slate-500/15 text-slate-300",
+      "border-slate-500/40 bg-slate-500/10 text-slate-700 dark:bg-slate-500/15 dark:text-slate-300",
     tone === "muted" &&
-      "border-slate-600/50 bg-slate-700/40 text-slate-400",
+      "border-slate-600/50 bg-slate-500/10 text-slate-700 dark:bg-slate-700/40 dark:text-slate-400",
   );
 }
 

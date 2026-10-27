@@ -253,6 +253,11 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
     }
     return { view: "homologation", homSlug: second };
   }
+  if (first === "bugs") {
+    if (!second) return { view: "bugs-list" };
+    if (second === "novo") return { view: "editor", isNew: true, editorKind: "bug" };
+    return { view: "editor", id: second, editorKind: "bug" };
+  }
   if (first === "novo") return { view: "editor", isNew: true };
   return { view: "editor", id: first };
 }
