@@ -13,9 +13,9 @@ import { getPrisma } from "./db/prisma.js";
 import { initialKbCurationCatalog } from "./kb-curation-seed.js";
 import { redactPiiDeep } from "./privacy/redact-pii.js";
 import { PROJECTS, type ProjectSlug } from "./types.js";
+import { DATA_ROOT } from "./data-paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_ROOT = path.join(__dirname, "../data/projects");
 
 function catalogPath(project: ProjectSlug) {
   return path.join(DATA_ROOT, project, "kb-curation.json");

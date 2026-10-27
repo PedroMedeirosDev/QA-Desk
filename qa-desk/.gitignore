@@ -12,3 +12,4 @@ test-results/
 .maestro-*.txt
 e2e/carga/resultado.json
 e2e/carga/resumo.md
+e2e/.dados/

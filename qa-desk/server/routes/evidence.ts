@@ -11,9 +11,9 @@ import {
   localEvidenceAbsPath,
 } from "../supabase-storage.js";
 import type { ProjectSlug } from "../types.js";
+import { UPLOADS_ROOT } from "../data-paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const UPLOADS_ROOT = path.resolve(path.join(__dirname, "../../data/uploads"));
 
 export const evidenceRouter = Router();
 

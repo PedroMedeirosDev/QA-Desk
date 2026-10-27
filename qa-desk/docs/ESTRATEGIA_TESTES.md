@@ -35,11 +35,11 @@ Impacto e probabilidade de 1 (baixo) a 3 (alto). Risco = impacto × probabilidad
 
 - **Entrada no `main`:** tipos, lint, unitários, build, API, E2E, axe e k6 verdes (check `ci`).
 - **Publicação:** o auto-deploy só usa commit com CI verde; falha de saúde após o restart bloqueia e tenta de novo em 30 min.
-- **Massa de dados:** E2E e carga não dependem de `data/projects` (fora do Git). Specs que dependem marcam `@local` e o CI pula.
+- **Massa de dados:** API, E2E e carga rodam com `QA_DATA_DIR=e2e/.dados`, apagado a cada subida (`e2e/api-server.mjs`). Cada teste cria a própria massa pela API e nenhum grava nos projetos reais. Specs que dependem dos dados de verdade marcam `@local`, rodam com `npm run e2e:local` e o CI pula.
 
 ## Limitações conhecidas
 
 - A autenticação nos E2E é mock (admin). O fluxo de login real e o perfil visitante não têm E2E.
 - O axe cobre duas telas e reprova só em violação crítica ou grave; as moderadas ficam no relatório.
 - O k6 mede rotas de leitura em modo JSON, não o Postgres de produção.
-- `npm run test:api` grava casos de teste no catálogo local do Polygonus (não há rota de exclusão).
+- O Repasse (`gestor-cases.ts`) ainda usa `data/` fixo; nenhum teste automático passa por ele hoje.

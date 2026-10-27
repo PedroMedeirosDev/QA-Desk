@@ -23,9 +23,9 @@ import { readHomologationCatalog } from "./homologations.js";
 import { readKbCurationCatalog } from "./kb-curation.js";
 import { readCatalog } from "./storage.js";
 import type { HistoryEntry, ProjectSlug, TestRecord } from "./types.js";
+import { DATA_ROOT } from "./data-paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_ROOT = path.join(__dirname, "../data/projects");
 
 type JsonStore = {
   days: Array<{

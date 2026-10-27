@@ -541,8 +541,9 @@ export function ProjectSidebar({
                           ),
                     )}
                     aria-current={onApiSuite ? "page" : undefined}
+                    aria-label="Suite API"
                   >
-                    <FlaskConical className="size-4" />
+                    <FlaskConical className="size-4" aria-hidden />
                   </Link>
                 </CollapsedTooltip>
               )}
@@ -605,8 +606,13 @@ export function ProjectSidebar({
                               ),
                         )}
                         aria-current={onKbCuration ? "page" : undefined}
+                        aria-label={
+                          kbRereviewCount > 0
+                            ? `Curadoria KB · ${kbRereviewCount} para re-revisar`
+                            : "Curadoria KB"
+                        }
                       >
-                        <GitPullRequest className="size-4" />
+                        <GitPullRequest className="size-4" aria-hidden />
                         {kbRereviewCount > 0 && (
                           <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-orange-500" />
                         )}
@@ -627,8 +633,9 @@ export function ProjectSidebar({
                               ),
                         )}
                         aria-current={onImplantacoes ? "page" : undefined}
+                        aria-label="Implantações"
                       >
-                        <Rocket className="size-4" />
+                        <Rocket className="size-4" aria-hidden />
                       </Link>
                     </CollapsedTooltip>
                   )}
