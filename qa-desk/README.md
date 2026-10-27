@@ -36,7 +36,7 @@ Estratégia, matriz de riscos e limitações: [`docs/ESTRATEGIA_TESTES.md`](docs
 | Estabilidade | `npm run e2e -- --grep-invert "@local" --repeat-each=5 --retries=0` | toda segunda-feira |
 
 **Decisões**
-- A massa dos E2E é criada pela própria API, no projeto Anihype: roda igual no PC e no CI, sem dado real.
+- Os testes rodam com dados isolados em `e2e/.dados` (`QA_DATA_DIR`), recriados a cada subida: cada um cria a própria massa pela API e nenhum grava nos projetos reais. Os specs `@local`, que precisam dos dados de verdade, rodam com `npm run e2e:local`.
 - O axe reprova só violação crítica ou grave, para o CI barrar o que impede o uso sem travar em detalhe.
 - O teste de carga sobe a API com o limitador ampliado (`QA_RATE_LIMIT_API`): mede desempenho, não a proteção.
 

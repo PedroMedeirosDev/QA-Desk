@@ -2,9 +2,9 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type APIRequestContext } from "@playwright/test";
 
 /**
- * Bug v2 (docs/BUG_V2.md) + acessibilidade. A massa é criada pela API no
- * projeto `anihype` (sem dados no repositório), então roda igual no PC e no CI.
- * O `desk` não serve: só tem a tela da Suite API.
+ * Bug v2 (docs/BUG_V2.md) + acessibilidade. A massa é criada pela API, com os
+ * dados isolados em e2e/.dados (api-server.mjs). Projeto `anihype` porque não
+ * tem canais (cobre a rota /projects/<projeto>/bugs); o `desk` só tem a Suite API.
  */
 const API = "http://127.0.0.1:3011";
 const PROJECT = "anihype";

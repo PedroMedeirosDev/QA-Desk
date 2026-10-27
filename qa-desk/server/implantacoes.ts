@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ProjectSlug } from "./types.js";
+import { DATA_ROOT } from "./data-paths.js";
 
 export type ImplantacaoRequisitoTipo =
   | "sql"
@@ -48,7 +49,6 @@ export interface ImplantacaoCatalog {
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_ROOT = path.join(__dirname, "../data/projects");
 
 function catalogPath(project: ProjectSlug) {
   return path.join(DATA_ROOT, project, "implantacoes.json");

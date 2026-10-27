@@ -20,9 +20,9 @@ import type {
 } from "./types.js";
 import { readCatalog } from "./storage.js";
 import { findByTestKey } from "./test-key.js";
+import { DATA_ROOT } from "./data-paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_ROOT = path.join(__dirname, "../data/projects");
 
 const SUITE_FROM_PREFIX: Record<string, string> = {
   crud: "CRUD",

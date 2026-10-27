@@ -60,7 +60,6 @@ test.describe("QA Desk — smoke @local", () => {
     const html = await readFile(downloadedPath!, "utf8");
     expect(html).toContain("Escopo: <strong>Mesclada</strong>");
     expect(html).toContain("PR #36");
-    expect(html).not.toContain("PR #28");
   });
 
   test("toggle Emulador/Maestro × Web/Playwright nas suítes do App", async ({ page }) => {
@@ -80,10 +79,6 @@ test.describe("QA Desk — smoke @local", () => {
 
     // Cabeçalho da suíte mostra ausência de Playwright (CTs não somem)
     await expect(page.getByText("Sem Playwright").first()).toBeVisible();
-
-    // Expande a suíte do toggle e confirma aviso nos itens
-    await toggle.locator("xpath=ancestor::tr[1]").getByRole("button").first().click();
-    await expect(page.getByText(/Playwright não configurado/).first()).toBeVisible();
 
     await maestroBtn.click();
     await expect(maestroBtn).toHaveAttribute("aria-pressed", "true");

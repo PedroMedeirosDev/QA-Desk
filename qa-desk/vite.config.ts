@@ -24,6 +24,7 @@ export default defineConfig({
       ignored: [
         "**/data/projects/**",
         "**/data/uploads/**",
+        "**/e2e/.dados/**",
         "**/tmp-*.json",
         "**/tmp-*.mts",
       ],

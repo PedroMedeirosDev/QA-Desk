@@ -39,8 +39,9 @@ Não precisa parar o `npm run dev` — o E2E sobe stack própria (5175 / 3011).
 
 ## No CI
 
-- `bugs-v2.spec.ts` cria a própria massa pela API (projeto Anihype) e roda em todo PR, com axe (WCAG 2 A/AA).
-- `smoke.spec.ts` é `@local`: depende de `data/projects/polygonus` (fora do Git). O CI roda `--grep-invert "@local"`.
+- A API dos testes sobe com dados isolados em `e2e/.dados` ([`api-server.mjs`](api-server.mjs)), apagados a cada subida.
+- `bugs-v2.spec.ts` cria a própria massa pela API e roda em todo PR, com axe (WCAG 2 A/AA).
+- `smoke.spec.ts` é `@local`: depende de `data/projects/polygonus` (fora do Git). Rode com `npm run e2e:local`; o CI roda `--grep-invert "@local"`.
 - Relatório HTML: artefato `relatorio-playwright` do workflow.
 - Carga: [`carga/api-leitura.js`](carga/api-leitura.js) (k6), com a API subida por `npm run e2e:api:carga`.
 

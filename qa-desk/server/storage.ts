@@ -8,10 +8,9 @@ import { redactPiiDeep } from "./privacy/redact-pii.js";
 import { normalizeCatalog } from "./test-key.js";
 import { fixUtf8Mojibake } from "./utf8-mojibake.js";
 import type { HistoryEntry, ProductChannel, ProjectSlug, TestCatalog, TestRecord } from "./types.js";
+import { DATA_ROOT, UPLOADS_ROOT } from "./data-paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_ROOT = path.join(__dirname, "../data/projects");
-const UPLOADS_ROOT = path.join(__dirname, "../data/uploads");
 
 const VALID_PROJECTS = new Set<ProjectSlug>(["polygonus", "anihype", "desk"]);
 
