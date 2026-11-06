@@ -20,6 +20,7 @@ import { agentRouter } from "./routes/agent.js";
 import { kbCurationRouter } from "./routes/kb-curation.js";
 import { implantacoesRouter } from "./routes/implantacoes.js";
 import { gestorCasesRouter } from "./routes/gestor-cases.js";
+import { demandasRouter } from "./routes/demandas.js";
 import { dailySummaryRouter } from "./routes/daily-summary.js";
 import { apiSuiteRouter } from "./routes/api-suite.js";
 import { evidenceRouter } from "./routes/evidence.js";
@@ -159,6 +160,7 @@ app.use("/api/projects/:slug/homologations", homologationsRouter);
 app.use("/api/projects/:slug/kb-curation", kbCurationRouter);
 app.use("/api/projects/:slug/implantacoes", implantacoesRouter);
 app.use("/api/projects/:slug/gestor-cases", gestorCasesRouter);
+app.use("/api/projects/:slug/demandas", demandasRouter);
 app.use("/api/projects/:slug/daily-summary", dailySummaryRouter);
 
 app.use("/api/projects/:slug/automation", automationRouter);
@@ -228,5 +230,11 @@ app.listen(PORT, HOST, () => {
         "[discord-bot] falha ao iniciar:",
         err instanceof Error ? err.message : err,
       );
+    });
+
+  void import("./discord-captura.js")
+    .then(({ startCaptura }) => startCaptura())
+    .catch((err) => {
+      console.error("[discord-captura] falha ao iniciar:", err instanceof Error ? err.message : err);
     });
 });

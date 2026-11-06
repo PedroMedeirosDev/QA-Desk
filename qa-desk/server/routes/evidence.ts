@@ -73,10 +73,11 @@ evidenceRouter.get("/{*path}", async (req, res) => {
     return res.status(404).json({ error: "Arquivo não encontrado" });
   }
 
+  // Relativo ao root: o send recusa caminho com pasta iniciada por ponto (ex.: QA_DATA_DIR=e2e/.dados).
   const sendLocal = (absPath: string) => {
     const mime = mimeFromName(absPath);
     if (mime) res.type(mime);
-    return res.sendFile(absPath);
+    return res.sendFile(path.relative(UPLOADS_ROOT, absPath), { root: UPLOADS_ROOT });
   };
 
   // 1) Disco legado

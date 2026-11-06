@@ -12,4 +12,6 @@ test-results/
 .maestro-*.txt
 e2e/carga/resultado.json
 e2e/carga/resumo.md
-e2e/.dados/
+e2e/.dados*/
+# OCR (tesseract) — idioma baixado em tempo de execução
+*.traineddata

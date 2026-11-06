@@ -12,6 +12,7 @@ const VISITOR_BLOCKED_VIEWS = new Set([
   "implantacoes-list",
   "implantacao",
   "gestor-cases",
+  "demandas",
   "dashboard",
 ]);
 
