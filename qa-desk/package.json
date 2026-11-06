@@ -5,6 +5,7 @@
   "description": "QA Desk — homologação e registro de testes multi-projeto",
   "type": "module",
   "scripts": {
+    "importar:playwright": "tsx scripts/importar-playwright.ts --apelidos scripts/importar-playwright.apelidos.json",
     "dev": "concurrently -k -r -n api,ui -c blue,green \"tsx watch server/index.ts\" \"vite\"",
     "dev:server": "tsx watch server/index.ts",
     "dev:client": "vite",
@@ -31,7 +32,7 @@
     "test:api": "playwright test -c e2e/api.playwright.config.ts",
     "e2e:api:carga": "cross-env QA_RATE_LIMIT_API=100000 npm run e2e:api",
     "test:carga": "k6 run e2e/carga/api-leitura.js",
-    "test:unit": "tsx server/gestor-cases.test.ts && tsx server/playwright-failure-screenshot.test.ts && tsx server/github/sync-bug-issue.comment.test.ts && tsx server/privacy/redact-pii.test.ts && tsx server/privacy/sanitize-visitor.test.ts && tsx server/bug-v2.test.ts && tsx server/demandas.test.ts && tsx server/discord-captura.test.ts",
+    "test:unit": "tsx server/gestor-cases.test.ts && tsx server/playwright-failure-screenshot.test.ts && tsx server/github/sync-bug-issue.comment.test.ts && tsx server/privacy/redact-pii.test.ts && tsx server/privacy/sanitize-visitor.test.ts && tsx server/bug-v2.test.ts && tsx server/demandas.test.ts && tsx server/discord-captura.test.ts && tsx server/test-ficha.test.ts && tsx server/metricas.test.ts && tsx server/slack-bot.test.ts",
     "test:api:postman": "node scripts/run-api-newman.mjs desk",
     "test:api:postman:polygonus": "node scripts/run-api-newman.mjs polygonus-auth",
     "agent": "tsx agent/index.ts"
@@ -40,6 +41,8 @@
     "@prisma/client": "^6.12.0",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
+    "@slack/bolt": "^5.1.0",
+    "@slack/web-api": "^8.3.0",
     "@supabase/supabase-js": "^2.110.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

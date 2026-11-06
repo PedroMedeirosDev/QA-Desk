@@ -150,6 +150,9 @@ export function sanitizeVisitorTestRecord(report: TestRecord): TestRecord {
     severity: report.severity,
     reproducibility: report.reproducibility,
     scenario: report.scenario,
+    objective: report.objective,
+    testType: report.testType,
+    testLevel: report.testLevel,
     linkedTestId: report.linkedTestId,
     build: report.build,
     // Sem device/os/technicalEvidence/comments/automation/history bruto

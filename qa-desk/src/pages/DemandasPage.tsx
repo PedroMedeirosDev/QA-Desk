@@ -10,9 +10,12 @@ import type { ProjectSlug } from "@/types/test-record";
 import {
   DEMANDA_STATUS_LABELS,
   DEMANDA_STATUS_ORDER,
+  SUGESTAO_STATUS_LABELS,
   type Demanda,
   type DemandaStatus,
+  type DemandaTipo,
   type PendenciaItem,
+  type SugestaoStatus,
 } from "@/types/demanda";
 
 type Filtro = "abertas" | DemandaStatus;
@@ -37,6 +40,35 @@ function StatusBadge({ status }: { status: DemandaStatus }) {
   );
 }
 
+function hojeIso() {
+  return new Date().toLocaleDateString("en-CA");
+}
+
+/** Rascunho de artigo da KB a partir de uma demanda concluída. */
+function rascunhoKb(d: Demanda): string {
+  return [
+    `# ${d.titulo}`,
+    "",
+    "## Sintoma",
+    "O que o cliente vê ou relata: [preencher]",
+    "",
+    "## Causa",
+    "[preencher]",
+    "",
+    "## Solução",
+    "Passo a passo, com o caminho de menu: [preencher]",
+    "",
+    "## O que não fazer",
+    "[preencher]",
+    "",
+    "---",
+    `Origem: ${d.codigo}${d.solicitante ? ` · ${d.solicitante}` : ""}`,
+    "",
+    "Contexto registrado:",
+    d.texto,
+  ].join("\n");
+}
+
 function dataCurta(iso?: string) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
@@ -51,8 +83,15 @@ export function DemandasPage({ project, demandaRef }: { project: ProjectSlug; de
   const [filtro, setFiltro] = useState<Filtro>("abertas");
   const [comQuemFiltro, setComQuemFiltro] = useState("");
 
+  const [tipoFiltro, setTipoFiltro] = useState<"" | DemandaTipo>("");
+
   const [showCreate, setShowCreate] = useState(false);
   const [novoTexto, setNovoTexto] = useState("");
+  const [novoTipo, setNovoTipo] = useState<DemandaTipo>("demanda");
+  const [novoPrazo, setNovoPrazo] = useState("");
+  const [novaReuniao, setNovaReuniao] = useState("");
+  const [novoComQuem, setNovoComQuem] = useState("");
+  const [novoSolicitante, setNovoSolicitante] = useState("");
   const [creating, setCreating] = useState(false);
 
   const [pessoaLista, setPessoaLista] = useState("Moacir");
@@ -87,9 +126,10 @@ export function DemandasPage({ project, demandaRef }: { project: ProjectSlug; de
     () =>
       demandas.filter((d) => {
         if (filtro === "abertas" ? d.status === "feito" : d.status !== filtro) return false;
+        if (tipoFiltro && (d.tipo ?? "demanda") !== tipoFiltro) return false;
         return !comQuemFiltro || d.comQuem === comQuemFiltro;
       }),
-    [demandas, filtro, comQuemFiltro],
+    [demandas, filtro, comQuemFiltro, tipoFiltro],
   );
 
   const selecionada = useMemo(() => {
@@ -106,9 +146,20 @@ export function DemandasPage({ project, demandaRef }: { project: ProjectSlug; de
     if (!novoTexto.trim()) return;
     setCreating(true);
     try {
-      const d = await api.createDemanda(project, { texto: novoTexto });
+      const comQuem = novoComQuem.trim();
+      const d = await api.createDemanda(project, {
+        texto: novoTexto,
+        tipo: novoTipo,
+        prazo: novoPrazo || undefined,
+        reuniao: novaReuniao.trim() || undefined,
+        solicitante: novoSolicitante.trim() || undefined,
+        comQuem: comQuem || undefined,
+        status: comQuem && novoTipo === "demanda" ? "aguardando" : undefined,
+      });
       setDemandas((todas) => [d, ...todas]);
       setNovoTexto("");
+      setNovoPrazo("");
+      setNovoComQuem("");
       setShowCreate(false);
       toast.success(`${d.codigo} criada`);
     } catch (e) {
@@ -165,6 +216,56 @@ export function DemandasPage({ project, demandaRef }: { project: ProjectSlug; de
               placeholder="Ex.: Ver com o Moacir o limite de 4 lançamentos na composição"
             />
           </label>
+          <div className="grid gap-3 pl-2 sm:grid-cols-2 lg:grid-cols-5">
+            <label className="space-y-1 text-sm">
+              <span className="block font-medium text-muted-foreground">Tipo</span>
+              <select
+                className="w-full rounded-md border border-border bg-background px-3 py-2"
+                value={novoTipo}
+                onChange={(e) => setNovoTipo(e.target.value as DemandaTipo)}
+              >
+                <option value="demanda">Demanda</option>
+                <option value="sugestao">Sugestão de melhoria</option>
+              </select>
+            </label>
+            <label className="space-y-1 text-sm">
+              <span className="block font-medium text-muted-foreground">Prazo de entrega</span>
+              <input
+                type="date"
+                className="w-full rounded-md border border-border bg-background px-3 py-2"
+                value={novoPrazo}
+                onChange={(e) => setNovoPrazo(e.target.value)}
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span className="block font-medium text-muted-foreground">Com quem</span>
+              <input
+                list="demandas-pessoas"
+                className="w-full rounded-md border border-border bg-background px-3 py-2"
+                value={novoComQuem}
+                onChange={(e) => setNovoComQuem(e.target.value)}
+                placeholder="Ex.: dev responsável"
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span className="block font-medium text-muted-foreground">Solicitante</span>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2"
+                value={novoSolicitante}
+                onChange={(e) => setNovoSolicitante(e.target.value)}
+                placeholder="Ex.: escola A"
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span className="block font-medium text-muted-foreground">Reunião</span>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2"
+                value={novaReuniao}
+                onChange={(e) => setNovaReuniao(e.target.value)}
+                placeholder="Ex.: Reunião escola A · 05/11"
+              />
+            </label>
+          </div>
           <div className="flex gap-2 pl-2">
             <button
               type="button"
@@ -223,8 +324,18 @@ export function DemandasPage({ project, demandaRef }: { project: ProjectSlug; de
           </button>
         ))}
         <select
-          aria-label="Filtrar por com quem"
+          aria-label="Filtrar por tipo"
           className="ml-auto rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+          value={tipoFiltro}
+          onChange={(e) => setTipoFiltro(e.target.value as "" | DemandaTipo)}
+        >
+          <option value="">Tipo: todos</option>
+          <option value="demanda">Demandas</option>
+          <option value="sugestao">Sugestões</option>
+        </select>
+        <select
+          aria-label="Filtrar por com quem"
+          className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
           value={comQuemFiltro}
           onChange={(e) => setComQuemFiltro(e.target.value)}
         >
@@ -263,8 +374,25 @@ export function DemandasPage({ project, demandaRef }: { project: ProjectSlug; de
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-foreground">{d.titulo}</span>
                       <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.6875rem] text-muted-foreground">
-                        <StatusBadge status={d.status} />
+                        {d.tipo === "sugestao" && d.sugestaoStatus ? (
+                          <span className="rounded-md border border-violet-400/20 bg-[#1a1a1a] px-2 py-0.5 font-medium text-violet-300">
+                            {SUGESTAO_STATUS_LABELS[d.sugestaoStatus]}
+                          </span>
+                        ) : (
+                          <StatusBadge status={d.status} />
+                        )}
                         {d.comQuem && <span>com {d.comQuem}</span>}
+                        {d.prazo && (
+                          <span
+                            className={cn(
+                              "tabular-nums",
+                              d.status !== "feito" && d.prazo < hojeIso() ? "font-medium text-red-400" : undefined,
+                            )}
+                          >
+                            prazo {dataCurta(`${d.prazo}T12:00:00`)}
+                          </span>
+                        )}
+                        {d.reuniao && <span className="truncate">{d.reuniao}</span>}
                         {d.anexos.length > 0 && (
                           <span className="inline-flex items-center gap-1">
                             <Paperclip className="size-3" />
@@ -313,7 +441,38 @@ function DemandaDetalhe({
 }) {
   const toast = useToast();
   const [comQuem, setComQuem] = useState(demanda.comQuem ?? "");
+  const [prazo, setPrazo] = useState(demanda.prazo ?? "");
+  const [reuniao, setReuniao] = useState(demanda.reuniao ?? "");
   const [salvando, setSalvando] = useState(false);
+  const ehSugestao = demanda.tipo === "sugestao";
+
+  async function salvar(dados: Parameters<typeof api.updateDemanda>[2], ok: string) {
+    setSalvando(true);
+    try {
+      const d = await api.updateDemanda(project, demanda.codigo, dados);
+      onSalva(d);
+      toast.success(ok);
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Erro ao atualizar"));
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function cobrar() {
+    try {
+      const d = await api.cobrarDemanda(project, demanda.codigo);
+      onSalva(d);
+      toast.success(`${d.codigo}: cobrança registrada`);
+    } catch (e) {
+      toast.error(toastErrorMessage(e, "Erro ao registrar cobrança"));
+    }
+  }
+
+  async function copiarRascunhoKb() {
+    await navigator.clipboard.writeText(rascunhoKb(demanda));
+    toast.success("Rascunho de artigo copiado");
+  }
 
   async function mudarStatus(status: DemandaStatus) {
     if (status === "aguardando" && !comQuem.trim()) {
@@ -408,6 +567,67 @@ function DemandaDetalhe({
             ),
           )}
         </div>
+      )}
+
+      <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+        <label className="block space-y-1 text-sm">
+          <span className="font-medium text-muted-foreground">Prazo de entrega</span>
+          <input
+            type="date"
+            className="w-full rounded-md border border-border bg-background px-3 py-2"
+            value={prazo}
+            onChange={(e) => setPrazo(e.target.value)}
+          />
+        </label>
+        <label className="block space-y-1 text-sm">
+          <span className="font-medium text-muted-foreground">Reunião</span>
+          <input
+            className="w-full rounded-md border border-border bg-background px-3 py-2"
+            value={reuniao}
+            onChange={(e) => setReuniao(e.target.value)}
+            placeholder="Ex.: Reunião escola A · 05/11"
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+          <button
+            type="button"
+            disabled={salvando || (prazo === (demanda.prazo ?? "") && reuniao === (demanda.reuniao ?? ""))}
+            className={cn(actionBtnBase, actionBtn.save)}
+            onClick={() => void salvar({ prazo, reuniao }, `${demanda.codigo}: prazo e reunião salvos`)}
+          >
+            Salvar
+          </button>
+          {!ehSugestao && demanda.status !== "feito" && (
+            <button type="button" className={cn(actionBtnBase, actionBtn.ghost)} onClick={() => void cobrar()}>
+              Cobrei{demanda.cobrancas?.length ? ` (${demanda.cobrancas.length})` : ""}
+            </button>
+          )}
+          {demanda.status === "feito" && (
+            <button type="button" className={cn(actionBtnBase, actionBtn.ghost)} onClick={() => void copiarRascunhoKb()}>
+              Rascunho de artigo (KB)
+            </button>
+          )}
+        </div>
+      </div>
+
+      {ehSugestao && (
+        <label className="block space-y-1 border-t border-border pt-4 text-sm">
+          <span className="font-medium text-muted-foreground">Retorno da sugestão</span>
+          <select
+            className="w-full rounded-md border border-border bg-background px-3 py-2"
+            value={demanda.sugestaoStatus ?? "enviada"}
+            disabled={salvando}
+            onChange={(e) =>
+              void salvar({ sugestaoStatus: e.target.value as SugestaoStatus }, `${demanda.codigo}: retorno atualizado`)
+            }
+          >
+            {(Object.keys(SUGESTAO_STATUS_LABELS) as SugestaoStatus[]).map((s) => (
+              <option key={s} value={s}>
+                {SUGESTAO_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
 
       <div className="space-y-3 border-t border-border pt-4">

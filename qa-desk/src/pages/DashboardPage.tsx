@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { DailySummaryPanel } from "@/components/DailySummaryPanel";
+import { MetricasPanel } from "@/components/MetricasPanel";
 import { PremiumTooltip } from "@/components/PremiumTooltip";
 import { api } from "@/lib/api";
 import { computeDashboardMetrics } from "@/lib/dashboard-metrics";
@@ -131,6 +132,7 @@ export function DashboardPage({ project }: { project: ProjectSlug }) {
           </p>
         </div>
         <DailySummaryPanel project={project} />
+        <MetricasPanel project={project} />
       </div>
     );
   }
@@ -170,6 +172,8 @@ export function DashboardPage({ project }: { project: ProjectSlug }) {
       </div>
 
       <DailySummaryPanel project={project} />
+
+      <MetricasPanel project={project} />
 
       {hom && (
         <div className="surface-brand rounded-xl border p-5">

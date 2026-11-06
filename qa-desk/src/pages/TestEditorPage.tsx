@@ -14,6 +14,7 @@ import { useRunProgress, QA_RUN_FINISHED_EVENT, type LiveRunState } from "@/lib/
 import { actionBtn, actionBtnBase } from "@/lib/button-styles";
 import { HistoryTimeline } from "@/components/HistoryTimeline";
 import { LinkedTestPanel, TestBugsPanel, gherkinTemplate } from "@/components/BugTraceability";
+import { FichaCasoTeste } from "@/components/FichaCasoTeste";
 import { countTestRuns, historyRunFailure, activeFailedRun } from "@/lib/history";
 import {
   projectBugDetailPath,
@@ -1218,6 +1219,9 @@ export function TestEditorPage({
         >
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
           <div className="min-w-0 space-y-6 rounded-xl border bg-card p-4 sm:p-6">
+            {!editingBug && !isNew && form.id && (
+              <FichaCasoTeste project={project} test={form as TestRecord} />
+            )}
             <FormSection title={editingBug ? "Chamado" : "Caso"}>
             <Field label="Título *">
               <input
@@ -1304,6 +1308,43 @@ export function TestEditorPage({
                 onChange={(e) => update("preconditions", e.target.value)}
               />
             </Field>
+            {!editingBug && (
+              <>
+                <Field label="Objetivo" hint="Qual risco este teste cobre. Aparece na ficha e no portfólio.">
+                  <input
+                    className={QUIET_INPUT}
+                    placeholder="Ex.: Garantir que o comunicado chega às turmas escolhidas"
+                    value={form.objective ?? ""}
+                    onChange={(e) => update("objective", e.target.value)}
+                  />
+                </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Tipo">
+                    <select
+                      className={QUIET_INPUT}
+                      value={form.testType ?? ""}
+                      onChange={(e) => update("testType", (e.target.value || undefined) as TestRecord["testType"])}
+                    >
+                      <option value="">—</option>
+                      <option value="funcional">Funcional</option>
+                      <option value="regressao">Regressão</option>
+                      <option value="smoke">Smoke</option>
+                    </select>
+                  </Field>
+                  <Field label="Nível">
+                    <select
+                      className={QUIET_INPUT}
+                      value={form.testLevel ?? ""}
+                      onChange={(e) => update("testLevel", (e.target.value || undefined) as TestRecord["testLevel"])}
+                    >
+                      <option value="">—</option>
+                      <option value="interface">Interface (E2E)</option>
+                      <option value="api">API</option>
+                    </select>
+                  </Field>
+                </div>
+              </>
+            )}
             </FormSection>
             {!editingBug && (
               <FormSection title="Cenário (Gherkin)">
