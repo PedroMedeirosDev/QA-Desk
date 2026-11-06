@@ -25,6 +25,8 @@ import type {
 } from "@/types/implantacao";
 import type { GestorCase, GestorCasesListResponse } from "@/types/gestor-case";
 import type { Demanda, DemandaStatus, PendenciaItem } from "@/types/demanda";
+import type { HistoricoExecucoes, ScriptDoCaso } from "@/types/ficha";
+import type { MetricasQa } from "@/types/metricas";
 import type { DailyIntent, DailyPortfolioCard, DailySummary } from "@/types/daily-summary";
 import type {
   GithubIssueDoneEvent,
@@ -666,6 +668,15 @@ export const api = {
         body: JSON.stringify({ discordUrl }),
       },
     ),
+
+  getMetricas: (project: ProjectSlug, dias = 30) =>
+    request<MetricasQa>(`/api/projects/${project}/metricas?dias=${dias}`),
+
+  getTestRuns: (project: ProjectSlug, id: string, limite = 20) =>
+    request<HistoricoExecucoes>(`/api/projects/${project}/tests/${id}/runs?limite=${limite}`),
+
+  getTestScripts: (project: ProjectSlug, id: string) =>
+    request<{ scripts: ScriptDoCaso[] }>(`/api/projects/${project}/tests/${id}/script`),
 
   listDemandas: (project: ProjectSlug) =>
     request<{ demandas: Demanda[]; pessoas: string[] }>(`/api/projects/${project}/demandas`),

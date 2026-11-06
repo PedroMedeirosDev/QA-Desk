@@ -21,7 +21,7 @@ export interface DemandaAnexo {
 }
 
 export interface DemandaOrigem {
-  tipo: "discord" | "manual";
+  tipo: "discord" | "slack" | "manual";
   /** Mensagem original no servidor de onde veio (o que vai na lista para a pessoa). */
   linkOriginal?: string;
   /** Mensagem no servidor pessoal (a cópia encaminhada). */

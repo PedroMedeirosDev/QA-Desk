@@ -32,6 +32,7 @@ import {
   sanitizeVisitorTestRecord,
 } from "../privacy/sanitize-visitor.js";
 import type { EvidenceFile, TestRecord } from "../types.js";
+import { lerHistorico, lerScripts } from "../test-ficha.js";
 import { emitGestorReplyFromReport } from "../gestor-replies-sse.js";
 import {
   CT_DRAFT_EXAMPLE,
@@ -188,6 +189,27 @@ testsRouter.get("/:id", async (req, res) => {
   res.json(test);
 });
 
+/** Ficha do caso: histórico de execuções (visitante: sem mensagens de erro). */
+testsRouter.get("/:id/runs", async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const test = (await readCatalog(project)).reports.find((r) => r.id === param(req, "id"));
+  if (!test || (isVisitor(req) && !test.showInPortfolio)) {
+    return res.status(404).json({ error: "Teste não encontrado" });
+  }
+  const limite = Math.min(Number(req.query.limite) || 20, 100);
+  res.json(await lerHistorico(project, test.id, limite, isVisitor(req)));
+});
+
+/** Ficha do caso: script de automação (admin completo; visitante, trecho sanitizado). */
+testsRouter.get("/:id/script", async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const test = (await readCatalog(project)).reports.find((r) => r.id === param(req, "id"));
+  if (!test || (isVisitor(req) && !test.showInPortfolio)) {
+    return res.status(404).json({ error: "Teste não encontrado" });
+  }
+  res.json({ scripts: lerScripts(test, isVisitor(req)) });
+});
+
 /** Marca o último comentário do gestor como lido (some o “não lido”). */
 testsRouter.post("/:id/gestor-comment/seen", requireAdmin, async (req, res) => {
   const project = assertProject(param(req, "slug"));
@@ -260,6 +282,9 @@ testsRouter.post("/", requireAdmin, async (req, res) => {
     severity: body.severity ?? (recordType === "bug" ? "media" : undefined),
     reproducibility: recordType === "bug" ? body.reproducibility : undefined,
     scenario: body.scenario?.trim() || undefined,
+    objective: recordType === "teste" ? body.objective?.trim() || undefined : undefined,
+    testType: recordType === "teste" ? body.testType : undefined,
+    testLevel: recordType === "teste" ? body.testLevel : undefined,
     linkedTestId: recordType === "bug" ? body.linkedTestId?.trim() || undefined : undefined,
     linkedRunId: recordType === "bug" ? body.linkedRunId?.trim() || undefined : undefined,
     linkedRunAt: recordType === "bug" ? body.linkedRunAt : undefined,

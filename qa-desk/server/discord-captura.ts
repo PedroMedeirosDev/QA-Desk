@@ -3,21 +3,14 @@
  * mensagem encaminhada (ou escrita) em #demandas vira demanda; em #capturas, bug em rascunho.
  * Só liga com DISCORD_CAPTURA_ATIVA=1 — uma instância só, senão cada mensagem vira duas.
  */
-import { randomUUID } from "node:crypto";
 import { Client, Events, GatewayIntentBits, type Message } from "discord.js";
-import { tituloDoTexto, type DemandaAnexo } from "../src/types/demanda.js";
-import { criarDemanda } from "./demandas.js";
-import { appendHistory, nextBugCode, nextBugId, readCatalog, writeCatalog } from "./storage.js";
-import { ehImagem, lerTextoDosPrints } from "./ocr.js";
-import { makeStoredEvidenceFilename, uploadEvidenceBuffer } from "./supabase-storage.js";
-import type { EvidenceFile, ProjectSlug, TestRecord } from "./types.js";
+import { capturarBug, capturarDemanda, type AnexoCaptura } from "./captura-core.js";
+
+export { montarTexto } from "./captura-core.js";
 
 const LOG = "[discord-captura]";
-const PROJETO: ProjectSlug = "polygonus";
-const MAX_ANEXOS = 10;
-const MAX_BYTES = 20 * 1024 * 1024;
 
-type AnexoDiscord = { url: string; name: string; contentType?: string | null; size: number };
+type AnexoDiscord = AnexoCaptura;
 
 export type ConteudoCapturado = {
   texto: string;
@@ -86,134 +79,6 @@ export function isCapturaAtiva(): boolean {
   return process.env.DISCORD_CAPTURA_ATIVA === "1" && Boolean(process.env.DISCORD_BOT_TOKEN?.trim() && c.demandas && c.bugs);
 }
 
-function urlPublica(caminho: string): string {
-  const base = (process.env.QA_DESK_PUBLIC_URL?.trim() || "https://qa-desk-pedro.duckdns.org").replace(/\/$/, "");
-  return `${base}${caminho}`;
-}
-
-function tipoEvidencia(mime: string, nome: string): EvidenceFile["type"] {
-  if (/^video\//.test(mime) || /\.(mp4|webm|mov|mkv)$/i.test(nome)) return "video";
-  if (/^image\//.test(mime) || /\.(png|jpe?g|webp|gif)$/i.test(nome)) return "screenshot";
-  return "log";
-}
-
-/** Baixa do CDN do Discord (o link expira) e guarda no Storage do QA Desk. */
-async function guardarAnexos(pasta: string, anexos: AnexoDiscord[]) {
-  const guardados: Array<DemandaAnexo & { type: EvidenceFile["type"] }> = [];
-  const imagens: Buffer[] = [];
-  const pulados: string[] = [];
-  for (const a of anexos.slice(0, MAX_ANEXOS)) {
-    if (a.size > MAX_BYTES) {
-      pulados.push(a.name);
-      continue;
-    }
-    const resp = await fetch(a.url);
-    if (!resp.ok) {
-      pulados.push(a.name);
-      continue;
-    }
-    const buffer = Buffer.from(await resp.arrayBuffer());
-    const fileId = randomUUID();
-    const mimeType = a.contentType || "application/octet-stream";
-    const storedFilename = makeStoredEvidenceFilename(a.name, fileId);
-    const { storageKey } = await uploadEvidenceBuffer({
-      project: PROJETO,
-      testId: pasta,
-      buffer,
-      originalName: a.name,
-      mimeType,
-      storedFilename,
-    });
-    guardados.push({ fileId, filename: a.name, mimeType, sizeBytes: buffer.length, storageKey, type: tipoEvidencia(mimeType, a.name) });
-    if (ehImagem(mimeType, a.name)) imagens.push(buffer);
-  }
-  return { guardados, imagens, pulados: [...pulados, ...anexos.slice(MAX_ANEXOS).map((a) => a.name)] };
-}
-
-/** Junta o texto escrito com o lido dos prints; o lido vem marcado porque o OCR troca dígitos. */
-export function montarTexto(escrito: string, lido: string): string {
-  if (!lido) return escrito;
-  if (!escrito) return lido;
-  return `${escrito}\n\n--- Texto lido do print ---\n${lido}`;
-}
-
-async function lerPrintsComSeguranca(imagens: Buffer[]): Promise<string> {
-  try {
-    return await lerTextoDosPrints(imagens);
-  } catch (err) {
-    console.error(`${LOG} OCR falhou (segue só com o anexo):`, err instanceof Error ? err.message : err);
-    return "";
-  }
-}
-
-async function capturarDemanda(conteudo: ConteudoCapturado) {
-  const { guardados, imagens, pulados } = await guardarAnexos(`demanda-${randomUUID()}`, conteudo.anexos);
-  const lido = await lerPrintsComSeguranca(imagens);
-  const demanda = await criarDemanda(
-    PROJETO,
-    {
-      texto: montarTexto(conteudo.texto, lido),
-      origem: {
-        tipo: "discord",
-        linkOriginal: conteudo.linkOriginal,
-        linkCaptura: conteudo.linkCaptura,
-        dataOriginal: conteudo.dataOriginal,
-        ...(lido ? { textoDoPrint: true } : {}),
-      },
-      anexos: guardados.map(({ type: _t, ...a }) => a),
-    },
-    "discord",
-  );
-  const avisoOcr = lido ? "\nTexto lido do print: confira números e nomes." : "";
-  return {
-    resposta: `${demanda.codigo} · ${demanda.titulo}${avisoOcr}\n${urlPublica(`/projects/${PROJETO}/demandas/${demanda.codigo}`)}`,
-    pulados,
-  };
-}
-
-async function capturarBug(conteudo: ConteudoCapturado) {
-  const catalogo = await readCatalog(PROJETO);
-  const id = nextBugId(PROJETO, catalogo);
-  const { guardados, imagens, pulados } = await guardarAnexos(id, conteudo.anexos);
-  // Print de bug costuma ser tela do app: só vale ler quando não veio texto nenhum.
-  const lido = conteudo.texto ? "" : await lerPrintsComSeguranca(imagens);
-  const texto = montarTexto(conteudo.texto, lido);
-  const agora = new Date().toISOString();
-  const origem = conteudo.linkOriginal ? `\n\nOrigem: ${conteudo.linkOriginal}` : "";
-  const bug: TestRecord = {
-    id,
-    recordType: "bug",
-    bugCode: nextBugCode(catalogo, "app", "android"),
-    title: tituloDoTexto(texto) || "Bug capturado pelo Discord",
-    description: `${texto}${origem}`,
-    steps: [],
-    reportedAt: agora.slice(0, 10),
-    project: PROJETO,
-    channel: "app",
-    platform: "android",
-    status: "rascunho",
-    severity: "media",
-    priority: "media",
-    evidence: guardados.map((a) => ({
-      fileId: a.fileId,
-      type: a.type,
-      filename: a.filename,
-      mimeType: a.mimeType,
-      sizeBytes: a.sizeBytes,
-      uploadedAt: agora,
-      storageKey: a.storageKey,
-    })),
-    comments: [],
-    history: [],
-    showInPortfolio: false,
-    tags: ["captura:discord"],
-  };
-  appendHistory(bug, { actor: "discord", action: "test_created", detail: "Bug capturado pelo Discord (rascunho)" });
-  catalogo.reports.unshift(bug);
-  await writeCatalog(PROJETO, catalogo);
-  return { resposta: `${bug.bugCode} · rascunho · ${bug.title}\n${urlPublica(`/projects/${PROJETO}/app/bugs/${id}`)}`, pulados };
-}
-
 async function tratarMensagem(msg: Message, donoId: string) {
   const c = canais();
   if (msg.author.bot) return;
@@ -227,7 +92,7 @@ async function tratarMensagem(msg: Message, donoId: string) {
     return;
   }
   try {
-    const { resposta, pulados } = msg.channelId === c.demandas ? await capturarDemanda(conteudo) : await capturarBug(conteudo);
+    const { resposta, pulados } = msg.channelId === c.demandas ? await capturarDemanda(conteudo, "discord") : await capturarBug(conteudo, "discord");
     const aviso = pulados.length ? `\nNão guardei: ${pulados.join(", ")} (grande demais ou indisponível).` : "";
     await msg.react("✅").catch(() => undefined);
     await msg.reply(`${resposta}${aviso}`);

@@ -21,6 +21,7 @@ import { kbCurationRouter } from "./routes/kb-curation.js";
 import { implantacoesRouter } from "./routes/implantacoes.js";
 import { gestorCasesRouter } from "./routes/gestor-cases.js";
 import { demandasRouter } from "./routes/demandas.js";
+import { metricasRouter } from "./routes/metricas.js";
 import { dailySummaryRouter } from "./routes/daily-summary.js";
 import { apiSuiteRouter } from "./routes/api-suite.js";
 import { evidenceRouter } from "./routes/evidence.js";
@@ -161,6 +162,7 @@ app.use("/api/projects/:slug/kb-curation", kbCurationRouter);
 app.use("/api/projects/:slug/implantacoes", implantacoesRouter);
 app.use("/api/projects/:slug/gestor-cases", gestorCasesRouter);
 app.use("/api/projects/:slug/demandas", demandasRouter);
+app.use("/api/projects/:slug/metricas", metricasRouter);
 app.use("/api/projects/:slug/daily-summary", dailySummaryRouter);
 
 app.use("/api/projects/:slug/automation", automationRouter);
@@ -236,5 +238,11 @@ app.listen(PORT, HOST, () => {
     .then(({ startCaptura }) => startCaptura())
     .catch((err) => {
       console.error("[discord-captura] falha ao iniciar:", err instanceof Error ? err.message : err);
+    });
+
+  void import("./slack-bot.js")
+    .then(({ startSlack }) => startSlack())
+    .catch((err) => {
+      console.error("[slack] falha ao iniciar:", err instanceof Error ? err.message : err);
     });
 });

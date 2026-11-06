@@ -12,7 +12,12 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   workers: 1,
-  reporter: [["list"]],
+  // O JSON alimenta o histórico do QA Desk (qa-desk/scripts/importar-playwright.ts).
+  reporter: [
+    ["list"],
+    ["html", { open: "never" }],
+    ["json", { outputFile: "resultados/ultima-execucao.json" }],
+  ],
   use: {
     locale: "pt-BR",
     trace: "retain-on-failure",

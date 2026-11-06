@@ -135,6 +135,10 @@ export interface TestRecord {
   reproducibility?: "sempre" | "intermitente" | "uma_vez";
   /** Cenário Gherkin do caso de teste (Dado / Quando / Então). */
   scenario?: string;
+  /** Caso de teste: risco que o teste cobre (ficha / portfólio). */
+  objective?: string;
+  testType?: "funcional" | "regressao" | "smoke";
+  testLevel?: "interface" | "api";
   /** Caso de teste que revelou o bug (legado: tag `origem:<id>`). */
   linkedTestId?: string;
   /** `runId` da execução (test_runs) em que o teste falhou. */
