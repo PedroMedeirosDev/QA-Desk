@@ -13,7 +13,8 @@ export type ProjectRouteView =
   | "api-suite"
   | "implantacoes-list"
   | "implantacao"
-  | "gestor-cases";
+  | "gestor-cases"
+  | "demandas";
 
 export interface ParsedProjectRoute {
   view: ProjectRouteView;
@@ -113,6 +114,20 @@ export function projectGestorCasePath(
   return `${projectGestorCasesPath(project)}/${ref}`;
 }
 
+export function projectDemandasPath(project: ProjectSlug): string {
+  return `${projectRootPath(project)}/demandas`;
+}
+
+/** Link que o bot manda no Discord (ex.: …/demandas/D-001). */
+export function projectDemandaPath(project: ProjectSlug, ref: string): string {
+  return `${projectDemandasPath(project)}/${ref}`;
+}
+
+export function isDemandasPath(project: ProjectSlug, pathname: string): boolean {
+  const base = projectDemandasPath(project);
+  return pathname === base || pathname.startsWith(`${base}/`);
+}
+
 export function isHomologationPath(project: ProjectSlug, pathname: string): boolean {
   const root = projectRootPath(project);
   return (
@@ -189,6 +204,9 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
         ? { view: "gestor-cases", id: second }
         : { view: "gestor-cases" };
     }
+    if (first === "demandas") {
+      return second ? { view: "demandas", id: second } : { view: "demandas" };
+    }
     if (first === "homologacoes") {
       return { view: "homologations-list" };
     }
@@ -230,6 +248,9 @@ export function parseProjectRoute(project: ProjectSlug, rest?: string): ParsedPr
   if (first === "suite-api") return { view: "api-suite" };
   if (first === "repasse") {
     return second ? { view: "gestor-cases", id: second } : { view: "gestor-cases" };
+  }
+  if (first === "demandas") {
+    return second ? { view: "demandas", id: second } : { view: "demandas" };
   }
   if (project === "desk") {
     return { view: "api-suite", redirectTo: projectApiSuitePath(project) };

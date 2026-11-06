@@ -24,6 +24,7 @@ import type {
   ImplantacaoTipo,
 } from "@/types/implantacao";
 import type { GestorCase, GestorCasesListResponse } from "@/types/gestor-case";
+import type { Demanda, DemandaStatus, PendenciaItem } from "@/types/demanda";
 import type { DailyIntent, DailyPortfolioCard, DailySummary } from "@/types/daily-summary";
 import type {
   GithubIssueDoneEvent,
@@ -665,6 +666,35 @@ export const api = {
         body: JSON.stringify({ discordUrl }),
       },
     ),
+
+  listDemandas: (project: ProjectSlug) =>
+    request<{ demandas: Demanda[]; pessoas: string[] }>(`/api/projects/${project}/demandas`),
+
+  listPendencias: (project: ProjectSlug, comQuem: string) =>
+    request<{ comQuem: string; itens: PendenciaItem[]; texto: string }>(
+      `/api/projects/${project}/demandas/pendencias?comQuem=${encodeURIComponent(comQuem)}`,
+    ),
+
+  createDemanda: (
+    project: ProjectSlug,
+    data: { texto: string; titulo?: string; status?: DemandaStatus; comQuem?: string },
+  ) =>
+    request<Demanda>(`/api/projects/${project}/demandas`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+
+  updateDemanda: (
+    project: ProjectSlug,
+    ref: string,
+    data: { titulo?: string; texto?: string; status?: DemandaStatus; comQuem?: string; bugId?: string },
+  ) =>
+    request<Demanda>(`/api/projects/${project}/demandas/${encodeURIComponent(ref)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
 
   getDailySummary: (project: ProjectSlug, date?: string) => {
     const q = date ? `?date=${encodeURIComponent(date)}` : "";

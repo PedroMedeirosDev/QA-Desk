@@ -20,6 +20,7 @@ model Project {
   runs          TestRun[]
   kbCurations   KbCuration[]
   dailyMetrics  DailyMetric[]
+  demandas      Demanda[]
 
   @@map("projects")
 }
@@ -113,6 +114,24 @@ model KbCuration {
   @@index([projectSlug, status])
   @@index([verdict])
   @@map("kb_curations")
+}
+
+/// Demandas capturadas (Discord ou manual) — payload JSON = Demanda completa
+model Demanda {
+  id          String   @id
+  projectSlug String   @map("project_slug")
+  numero      Int
+  status      String
+  comQuem     String?  @map("com_quem")
+  payload     Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectSlug], references: [slug], onDelete: Cascade)
+
+  @@unique([projectSlug, numero])
+  @@index([projectSlug, status])
+  @@map("demandas")
 }
 
 /// Snapshot / meta do resumo diário de atividade QA (portfolio + consulta)

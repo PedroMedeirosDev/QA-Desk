@@ -31,7 +31,7 @@
     "test:api": "playwright test -c e2e/api.playwright.config.ts",
     "e2e:api:carga": "cross-env QA_RATE_LIMIT_API=100000 npm run e2e:api",
     "test:carga": "k6 run e2e/carga/api-leitura.js",
-    "test:unit": "tsx server/gestor-cases.test.ts && tsx server/playwright-failure-screenshot.test.ts && tsx server/github/sync-bug-issue.comment.test.ts && tsx server/privacy/redact-pii.test.ts && tsx server/privacy/sanitize-visitor.test.ts && tsx server/bug-v2.test.ts",
+    "test:unit": "tsx server/gestor-cases.test.ts && tsx server/playwright-failure-screenshot.test.ts && tsx server/github/sync-bug-issue.comment.test.ts && tsx server/privacy/redact-pii.test.ts && tsx server/privacy/sanitize-visitor.test.ts && tsx server/bug-v2.test.ts && tsx server/demandas.test.ts && tsx server/discord-captura.test.ts",
     "test:api:postman": "node scripts/run-api-newman.mjs desk",
     "test:api:postman:polygonus": "node scripts/run-api-newman.mjs polygonus-auth",
     "agent": "tsx agent/index.ts"
@@ -53,7 +53,9 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",
+    "sharp": "^0.35.5",
     "tailwind-merge": "^3.3.0",
+    "tesseract.js": "^7.0.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

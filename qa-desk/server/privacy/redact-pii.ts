@@ -31,10 +31,19 @@ function isLikelyCnpj(digits: string): boolean {
   return digits.length === 14 && !/^(\d)\1{13}$/.test(digits);
 }
 
+/** IDs de link (Discord tem 17–20 dígitos) não são telefone nem CPF. */
+const URL_RE = /https?:\/\/[^\s<>"')\]]+/g;
+
 /** Redige CPF/CNPJ/telefone/e-mail em uma string. */
 export function redactPii(input: string): string {
   if (!input) return input;
+  const links: string[] = [];
+  const semLinks = input.replace(URL_RE, (url) => `\uE000${links.push(url) - 1}\uE000`);
+  if (links.length === 0) return redactTexto(input);
+  return redactTexto(semLinks).replace(/\uE000(\d+)\uE000/g, (_, i: string) => links[Number(i)]!);
+}
 
+function redactTexto(input: string): string {
   let out = input.replace(EMAIL_RE, "[EMAIL]");
 
   out = out.replace(CNPJ_FMT_RE, (match) => {

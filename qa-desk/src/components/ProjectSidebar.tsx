@@ -9,6 +9,7 @@ import {
   GitPullRequest,
   Globe,
   Home,
+  Inbox,
   LayoutDashboard,
   ListChecks,
   Lock,
@@ -35,6 +36,7 @@ import { api } from "@/lib/api";
 import {
   isApiSuitePath,
   isDashboardPath,
+  isDemandasPath,
   isGestorCasesPath,
   isHomologationPath,
   isImplantacoesPath,
@@ -42,6 +44,7 @@ import {
   projectApiSuitePath,
   projectBugsListPath,
   projectDashboardPath,
+  projectDemandasPath,
   projectGestorCasesPath,
   projectHomologationsListPath,
   projectImplantacoesListPath,
@@ -266,12 +269,14 @@ export function ProjectSidebar({
           const kbCurationPath = projectKbCurationPath(project.slug);
           const implantacoesPath = projectImplantacoesListPath(project.slug);
           const repassePath = projectGestorCasesPath(project.slug);
+          const demandasPath = projectDemandasPath(project.slug);
           const apiSuitePath = projectApiSuitePath(project.slug);
           const onHomologations = isHomologationPath(project.slug, location.pathname);
           const onDashboard = isDashboardPath(project.slug, location.pathname);
           const onKbCuration = isKbCurationPath(project.slug, location.pathname);
           const onImplantacoes = isImplantacoesPath(project.slug, location.pathname);
           const onRepasse = isGestorCasesPath(project.slug, location.pathname);
+          const onDemandas = isDemandasPath(project.slug, location.pathname);
           const onApiSuite = isApiSuitePath(project.slug, location.pathname);
 
           const projectCard = (
@@ -385,6 +390,7 @@ export function ProjectSidebar({
                       !onKbCuration &&
                       !onImplantacoes &&
                       !onRepasse &&
+                      !onDemandas &&
                       !onApiSuite &&
                       !onBugs &&
                       !location.pathname.startsWith(bugsPath) &&
@@ -495,6 +501,19 @@ export function ProjectSidebar({
                       >
                         <MessageSquare className="size-3.5 shrink-0 opacity-90" />
                         Repasse
+                      </Link>
+                    )}
+                    {!visitorMode && !botMode && project.slug === "polygonus" && (
+                      <Link
+                        to={demandasPath}
+                        className={cn(
+                          "sidebar-subitem flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors",
+                          homologationsLinkClass(themeSub, onDemandas),
+                        )}
+                        aria-current={onDemandas ? "page" : undefined}
+                      >
+                        <Inbox className="size-3.5 shrink-0 opacity-90" />
+                        Demandas
                       </Link>
                     )}
                     {!visitorMode && !botMode && project.slug === "polygonus" && (
@@ -636,6 +655,26 @@ export function ProjectSidebar({
                         aria-label="Implantações"
                       >
                         <Rocket className="size-4" aria-hidden />
+                      </Link>
+                    </CollapsedTooltip>
+                  )}
+                  {project.slug === "polygonus" && (
+                    <CollapsedTooltip label="Demandas">
+                      <Link
+                        to={demandasPath}
+                        className={cn(
+                          "flex justify-center rounded-xl border px-2 py-2 transition-colors",
+                          onDemandas
+                            ? cn(project.accent.subNav.homologationsActive)
+                            : cn(
+                                "border-transparent text-muted-foreground",
+                                project.accent.subNav.homologationsHover,
+                              ),
+                        )}
+                        aria-current={onDemandas ? "page" : undefined}
+                        aria-label="Demandas"
+                      >
+                        <Inbox className="size-4" aria-hidden />
                       </Link>
                     </CollapsedTooltip>
                   )}

@@ -19,6 +19,7 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { KbCurationPage } from "@/pages/KbCurationPage";
 import { ImplantacoesListPage } from "@/pages/ImplantacoesListPage";
 import { GestorCasesPage } from "@/pages/GestorCasesPage";
+import { DemandasPage } from "@/pages/DemandasPage";
 import { ImplantacaoPage } from "@/pages/ImplantacaoPage";
 import { ApiSuitePage } from "@/pages/ApiSuitePage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -66,6 +67,8 @@ function ProjectShell() {
           ? "Implantações"
           : route.view === "gestor-cases"
             ? "Repasse"
+            : route.view === "demandas"
+              ? "Demandas"
             : route.view === "api-suite"
               ? "Suite API"
               : route.view === "homologations-list" || route.view === "homologation"
@@ -84,6 +87,8 @@ function ProjectShell() {
           ? "Tipos e requisitos operacionais"
           : route.view === "gestor-cases"
             ? "Casos para o gestor (Discord)"
+            : route.view === "demandas"
+              ? "Captura do Discord e pendências"
             : route.view === "implantacao"
             ? "Checklist do tipo"
             : route.view === "api-suite"
@@ -195,6 +200,7 @@ function ProjectShell() {
               route.view === "implantacoes-list" ||
               route.view === "implantacao" ||
               route.view === "gestor-cases" ||
+              route.view === "demandas" ||
               route.view === "dashboard") ? (
               <Navigate
                 to={
@@ -212,6 +218,8 @@ function ProjectShell() {
               <ImplantacoesListPage project={slug} />
             ) : route.view === "gestor-cases" ? (
               <GestorCasesPage project={slug} caseRef={route.id} />
+            ) : route.view === "demandas" ? (
+              <DemandasPage project={slug} demandaRef={route.id} />
             ) : route.view === "implantacao" && route.impSlug ? (
               <ImplantacaoPage project={slug} impSlug={route.impSlug} />
             ) : route.view === "api-suite" ? (
