@@ -26,7 +26,71 @@ export type MetricasQa = {
     porOrigem: { automacao: number; manual: number };
     diasMedioAteHomologar: number | null;
   };
+  trabalho: {
+    reunioes: number;
+    prometidas: number;
+    entregues: number;
+    entreguesNoPrazo: number;
+    atrasoMedioDias: number | null;
+    sugestoes: { total: number; comRetorno: number; aceitas: number; implementadas: number };
+    /** Dias do período marcados com a intenção (resumo do dia). */
+    diasPorIntencao: { reuniao_cliente: number; orientacao_n1: number; suporte_n2: number };
+  };
 };
+
+export type DemandaLeve = {
+  tipo?: string;
+  prazo?: string;
+  reuniao?: string;
+  concluidaEm?: string;
+  criadaEm: string;
+  sugestaoStatus?: string;
+};
+
+/** Prometido × entregue: só demandas com prazo criadas no período. */
+export function calcularTrabalho(
+  demandas: DemandaLeve[],
+  intencoesPorDia: string[][],
+  desdeIso: string,
+): MetricasQa["trabalho"] {
+  const doPeriodo = demandas.filter((d) => d.criadaEm >= desdeIso);
+  const comPrazo = doPeriodo.filter((d) => (d.tipo ?? "demanda") === "demanda" && d.prazo);
+  const entregues = comPrazo.filter((d) => d.concluidaEm);
+  const noPrazo = entregues.filter((d) => d.concluidaEm!.slice(0, 10) <= d.prazo!);
+  const atrasos = entregues
+    .map((d) => (new Date(d.concluidaEm!.slice(0, 10)).getTime() - new Date(d.prazo!).getTime()) / 86_400_000)
+    .filter((x) => x > 0);
+  const sugestoes = doPeriodo.filter((d) => d.tipo === "sugestao");
+  const conta = (i: string) => intencoesPorDia.filter((dia) => dia.includes(i)).length;
+  return {
+    reunioes: new Set(doPeriodo.map((d) => d.reuniao).filter(Boolean)).size,
+    prometidas: comPrazo.length,
+    entregues: entregues.length,
+    entreguesNoPrazo: noPrazo.length,
+    atrasoMedioDias: atrasos.length ? Math.round((atrasos.reduce((a, b) => a + b, 0) / atrasos.length) * 10) / 10 : null,
+    sugestoes: {
+      total: sugestoes.length,
+      comRetorno: sugestoes.filter((s) => s.sugestaoStatus && !["enviada", "sem_retorno"].includes(s.sugestaoStatus)).length,
+      aceitas: sugestoes.filter((s) => s.sugestaoStatus === "aceita" || s.sugestaoStatus === "implementada").length,
+      implementadas: sugestoes.filter((s) => s.sugestaoStatus === "implementada").length,
+    },
+    diasPorIntencao: {
+      reuniao_cliente: conta("reuniao_cliente"),
+      orientacao_n1: conta("orientacao_n1"),
+      suporte_n2: conta("suporte_n2"),
+    },
+  };
+}
+
+export async function lerIntencoesDoPeriodo(project: ProjectSlug, dias: number): Promise<string[][]> {
+  if (!isDatabaseEnabled()) return [];
+  const desde = new Date(Date.now() - dias * 86_400_000).toISOString().slice(0, 10);
+  const rows = await getPrisma().dailyMetric.findMany({
+    where: { projectSlug: project, date: { gte: desde } },
+    select: { intents: true },
+  });
+  return rows.map((r) => (Array.isArray(r.intents) ? (r.intents as unknown[]).map(String) : []));
+}
 
 const FECHADOS = new Set(["homologado", "cancelado", "sem_correcao"]);
 
@@ -34,7 +98,12 @@ function automatizado(r: TestRecord): boolean {
   return r.executionMode === "automated" || Boolean(r.automation?.flowPath || r.automation?.playwright?.specPath);
 }
 
-export function calcularMetricas(reports: TestRecord[], runs: RunLeve[], periodoDias: number): MetricasQa {
+export function calcularMetricas(
+  reports: TestRecord[],
+  runs: RunLeve[],
+  periodoDias: number,
+  trabalho: MetricasQa["trabalho"] = calcularTrabalho([], [], ""),
+): MetricasQa {
   const testes = reports.filter((r) => (r.recordType ?? "teste") === "teste");
   const bugs = reports.filter((r) => r.recordType === "bug");
 
@@ -97,6 +166,7 @@ export function calcularMetricas(reports: TestRecord[], runs: RunLeve[], periodo
         ? Math.round((diasHomologar.reduce((a, b) => a + b, 0) / diasHomologar.length) * 10) / 10
         : null,
     },
+    trabalho,
   };
 }
 

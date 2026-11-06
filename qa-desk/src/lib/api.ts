@@ -24,7 +24,7 @@ import type {
   ImplantacaoTipo,
 } from "@/types/implantacao";
 import type { GestorCase, GestorCasesListResponse } from "@/types/gestor-case";
-import type { Demanda, DemandaStatus, PendenciaItem } from "@/types/demanda";
+import type { Demanda, DemandaStatus, DemandaTipo, PendenciaItem, SugestaoStatus } from "@/types/demanda";
 import type { HistoricoExecucoes, ScriptDoCaso } from "@/types/ficha";
 import type { MetricasQa } from "@/types/metricas";
 import type { DailyIntent, DailyPortfolioCard, DailySummary } from "@/types/daily-summary";
@@ -688,7 +688,16 @@ export const api = {
 
   createDemanda: (
     project: ProjectSlug,
-    data: { texto: string; titulo?: string; status?: DemandaStatus; comQuem?: string },
+    data: {
+      texto: string;
+      titulo?: string;
+      status?: DemandaStatus;
+      comQuem?: string;
+      tipo?: DemandaTipo;
+      prazo?: string;
+      reuniao?: string;
+      solicitante?: string;
+    },
   ) =>
     request<Demanda>(`/api/projects/${project}/demandas`, {
       method: "POST",
@@ -699,13 +708,25 @@ export const api = {
   updateDemanda: (
     project: ProjectSlug,
     ref: string,
-    data: { titulo?: string; texto?: string; status?: DemandaStatus; comQuem?: string; bugId?: string },
+    data: {
+      titulo?: string;
+      texto?: string;
+      status?: DemandaStatus;
+      comQuem?: string;
+      bugId?: string;
+      prazo?: string;
+      reuniao?: string;
+      sugestaoStatus?: SugestaoStatus;
+    },
   ) =>
     request<Demanda>(`/api/projects/${project}/demandas/${encodeURIComponent(ref)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     }),
+
+  cobrarDemanda: (project: ProjectSlug, ref: string) =>
+    request<Demanda>(`/api/projects/${project}/demandas/${encodeURIComponent(ref)}/cobranca`, { method: "POST" }),
 
   getDailySummary: (project: ProjectSlug, date?: string) => {
     const q = date ? `?date=${encodeURIComponent(date)}` : "";

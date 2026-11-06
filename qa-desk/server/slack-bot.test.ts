@@ -2,7 +2,16 @@ import assert from "node:assert/strict";
 import process from "node:process";
 
 process.env.DATABASE_URL = "";
-const { linkDiscordNoTexto, textoDoSlack } = await import("./slack-bot.js");
+const { blocosLembrete, linkDiscordNoTexto, textoDoSlack } = await import("./slack-bot.js");
+
+// Lembrete: nada a avisar → sem mensagem; com itens → um conjunto de botões por demanda.
+assert.equal(blocosLembrete({ vencemHoje: [], atrasadas: [], proximos: [] }), null);
+const dem = { codigo: "D-012", titulo: "Relatório de frequência", comQuem: "Dev", prazo: "2026-11-12", cobrancas: ["x"] } as never;
+const lembrete = blocosLembrete({ vencemHoje: [dem], atrasadas: [], proximos: [] })!;
+assert.match(lembrete.texto, /1 hoje/);
+const json = JSON.stringify(lembrete.blocos);
+assert.ok(json.includes("demanda_cobrei") && json.includes("demanda_entregue") && json.includes("demanda_adiar"));
+assert.ok(json.includes("prazo 12/11") && json.includes("cobrado 1x"));
 
 assert.equal(textoDoSlack("ver <https://x.com/a|aqui> &amp; <https://y.com/b>"), "ver aqui (https://x.com/a) & https://y.com/b");
 assert.equal(

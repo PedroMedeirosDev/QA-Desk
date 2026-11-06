@@ -14,6 +14,9 @@ const DAILY_INTENT_SET = new Set<string>([
   "smoke",
   "exploratorio",
   "curadoria_kb",
+  "reuniao_cliente",
+  "orientacao_n1",
+  "suporte_n2",
 ]);
 
 export function normalizeIntents(raw: unknown): DailyIntent[] {

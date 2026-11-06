@@ -1,9 +1,12 @@
 import { Router, type Request } from "express";
-import { formatarListaPendencias, type DemandaStatus } from "../../src/types/demanda.js";
+import { formatarListaPendencias } from "../../src/types/demanda.js";
 import {
   DemandaInvalidaError,
   atualizarDemanda,
   criarDemanda,
+  registrarCobranca,
+  type AlteracaoDemanda,
+  type NovaDemanda,
   listarDemandas,
   listarPendencias,
   pessoasConhecidas,
@@ -48,11 +51,20 @@ demandasRouter.get("/pendencias", async (req, res) => {
 
 demandasRouter.post("/", async (req, res) => {
   const project = assertProject(param(req, "slug"));
-  const body = req.body as { texto?: string; titulo?: string; comQuem?: string; status?: DemandaStatus };
+  const body = req.body as NovaDemanda;
   try {
     const demanda = await criarDemanda(
       project,
-      { texto: body.texto ?? "", titulo: body.titulo, comQuem: body.comQuem, status: body.status },
+      {
+        texto: body.texto ?? "",
+        titulo: body.titulo,
+        comQuem: body.comQuem,
+        status: body.status,
+        solicitante: body.solicitante,
+        tipo: body.tipo,
+        prazo: body.prazo,
+        reuniao: body.reuniao,
+      },
       actor(req),
     );
     res.status(201).json(demanda);
@@ -63,18 +75,21 @@ demandasRouter.post("/", async (req, res) => {
 
 demandasRouter.patch("/:id", async (req, res) => {
   const project = assertProject(param(req, "slug"));
-  const body = req.body as {
-    titulo?: string;
-    texto?: string;
-    status?: DemandaStatus;
-    comQuem?: string;
-    bugId?: string;
-  };
+  const body = req.body as AlteracaoDemanda;
   try {
     const demanda = await atualizarDemanda(
       project,
       param(req, "id"),
-      { titulo: body.titulo, texto: body.texto, status: body.status, comQuem: body.comQuem, bugId: body.bugId },
+      {
+        titulo: body.titulo,
+        texto: body.texto,
+        status: body.status,
+        comQuem: body.comQuem,
+        bugId: body.bugId,
+        prazo: body.prazo,
+        reuniao: body.reuniao,
+        sugestaoStatus: body.sugestaoStatus,
+      },
       actor(req),
     );
     if (!demanda) return res.status(404).json({ error: "Demanda não encontrada" });
@@ -82,4 +97,11 @@ demandasRouter.patch("/:id", async (req, res) => {
   } catch (e) {
     erro(res, e);
   }
+});
+
+demandasRouter.post("/:id/cobranca", async (req, res) => {
+  const project = assertProject(param(req, "slug"));
+  const demanda = await registrarCobranca(project, param(req, "id"), actor(req));
+  if (!demanda) return res.status(404).json({ error: "Demanda não encontrada" });
+  res.json(demanda);
 });

@@ -36,4 +36,27 @@ assert.equal(m.bugs.porSeveridade.alta, 1);
 assert.deepEqual(m.bugs.porOrigem, { automacao: 1, manual: 1 });
 assert.equal(m.bugs.diasMedioAteHomologar, 3);
 
+// Trabalho: prometido × entregue no prazo, sugestões e intenções do dia.
+const { calcularTrabalho } = await import("./metricas.js");
+const t = calcularTrabalho(
+  [
+    { criadaEm: "2026-11-05T10:00:00Z", prazo: "2026-11-12", concluidaEm: "2026-11-10T15:00:00Z", reuniao: "R1" },
+    { criadaEm: "2026-11-05T10:00:00Z", prazo: "2026-11-12", concluidaEm: "2026-11-14T15:00:00Z", reuniao: "R1" },
+    { criadaEm: "2026-11-05T10:00:00Z", prazo: "2026-11-20", reuniao: "R2" },
+    { criadaEm: "2026-11-05T10:00:00Z" },
+    { criadaEm: "2026-11-06T10:00:00Z", tipo: "sugestao", sugestaoStatus: "implementada" },
+    { criadaEm: "2026-11-06T10:00:00Z", tipo: "sugestao", sugestaoStatus: "sem_retorno" },
+    { criadaEm: "2026-09-01T10:00:00Z", prazo: "2026-09-02" },
+  ],
+  [["reuniao_cliente", "suporte_n2"], ["suporte_n2"], ["homologacao"]],
+  "2026-10-07T00:00:00Z",
+);
+assert.equal(t.reunioes, 2);
+assert.equal(t.prometidas, 3, "fora do período e sem prazo não contam");
+assert.equal(t.entregues, 2);
+assert.equal(t.entreguesNoPrazo, 1);
+assert.equal(t.atrasoMedioDias, 2);
+assert.deepEqual(t.sugestoes, { total: 2, comRetorno: 1, aceitas: 1, implementadas: 1 });
+assert.deepEqual(t.diasPorIntencao, { reuniao_cliente: 1, orientacao_n1: 0, suporte_n2: 2 });
+
 console.log("metricas: ok");

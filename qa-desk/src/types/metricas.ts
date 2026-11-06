@@ -17,4 +17,13 @@ export type MetricasQa = {
     porOrigem: { automacao: number; manual: number };
     diasMedioAteHomologar: number | null;
   };
+  trabalho: {
+    reunioes: number;
+    prometidas: number;
+    entregues: number;
+    entreguesNoPrazo: number;
+    atrasoMedioDias: number | null;
+    sugestoes: { total: number; comRetorno: number; aceitas: number; implementadas: number };
+    diasPorIntencao: { reuniao_cliente: number; orientacao_n1: number; suporte_n2: number };
+  };
 };

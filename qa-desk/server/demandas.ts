@@ -15,6 +15,7 @@ import {
   type DemandaOrigem,
   type DemandasCatalog,
   type DemandaStatus,
+  type DemandaTipo,
   type PendenciaItem,
 } from "../src/types/demanda.js";
 import { DATA_ROOT } from "./data-paths.js";
@@ -109,7 +110,7 @@ export async function buscarDemanda(project: ProjectSlug, ref: string): Promise<
   const demandas = await listarDemandas(project);
   const porId = demandas.find((d) => d.id === ref);
   if (porId) return porId;
-  const numero = Number(ref.replace(/^d-?/i, ""));
+  const numero = Number(ref.replace(/^[ds]-?/i, ""));
   return Number.isFinite(numero) ? demandas.find((d) => d.numero === numero) : undefined;
 }
 
@@ -121,7 +122,16 @@ export type NovaDemanda = {
   solicitante?: string;
   origem?: DemandaOrigem;
   anexos?: DemandaAnexo[];
+  tipo?: DemandaTipo;
+  prazo?: string;
+  reuniao?: string;
 };
+
+const PRAZO_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function validarPrazo(prazo?: string) {
+  if (prazo && !PRAZO_RE.test(prazo)) throw new DemandaInvalidaError("prazo deve ser AAAA-MM-DD");
+}
 
 function validarStatus(status: DemandaStatus, comQuem?: string) {
   if (!STATUS_VALIDOS.includes(status)) throw new DemandaInvalidaError(`status inválido: ${status}`);
@@ -136,13 +146,20 @@ export async function criarDemanda(project: ProjectSlug, input: NovaDemanda, act
   const status = input.status ?? "a_fazer";
   const comQuem = input.comQuem?.trim() || undefined;
   validarStatus(status, comQuem);
+  validarPrazo(input.prazo);
+  const tipo = input.tipo ?? "demanda";
 
   const agora = new Date().toISOString();
   const numero = (await lerCatalogo(project)).meta.ultimoNumero + 1;
   const demanda: Demanda = redactPiiDeep({
     id: randomUUID(),
     numero,
-    codigo: codigoDemanda(numero),
+    codigo: codigoDemanda(numero, tipo),
+    tipo,
+    prazo: input.prazo || undefined,
+    reuniao: input.reuniao?.trim() || undefined,
+    sugestaoStatus: tipo === "sugestao" ? "enviada" : undefined,
+    concluidaEm: status === "feito" ? agora : undefined,
     titulo: input.titulo?.trim() || tituloDoTexto(texto),
     texto,
     status,
@@ -167,7 +184,7 @@ export async function criarDemanda(project: ProjectSlug, input: NovaDemanda, act
 }
 
 export type AlteracaoDemanda = Partial<
-  Pick<Demanda, "titulo" | "texto" | "status" | "comQuem" | "bugId" | "rascunhoIa">
+  Pick<Demanda, "titulo" | "texto" | "status" | "comQuem" | "bugId" | "rascunhoIa" | "prazo" | "reuniao" | "sugestaoStatus">
 >;
 
 export async function atualizarDemanda(
@@ -182,15 +199,25 @@ export async function atualizarDemanda(
   const status = alteracao.status ?? atual.status;
   const comQuem = alteracao.comQuem !== undefined ? alteracao.comQuem.trim() || undefined : atual.comQuem;
   validarStatus(status, comQuem);
+  validarPrazo(alteracao.prazo);
 
   const proxima: Demanda = { ...atual, ...alteracao, status, comQuem, atualizadaEm: agora };
+  if (alteracao.prazo === "") proxima.prazo = undefined;
+  if (status === "feito" && atual.status !== "feito") proxima.concluidaEm = agora;
+  if (status !== "feito") proxima.concluidaEm = undefined;
+  if (alteracao.sugestaoStatus && alteracao.sugestaoStatus !== atual.sugestaoStatus) {
+    proxima.historico = [
+      ...(proxima.historico ?? atual.historico),
+      { at: agora, actor, action: "sugestao_status", detail: `${atual.sugestaoStatus ?? "—"} → ${alteracao.sugestaoStatus}` },
+    ];
+  }
   const passouAAguardar = status === "aguardando" && (atual.status !== "aguardando" || comQuem !== atual.comQuem);
   if (passouAAguardar) proxima.aguardandoDesde = agora;
   if (status !== "aguardando") proxima.aguardandoDesde = undefined;
 
   if (status !== atual.status || comQuem !== atual.comQuem) {
     proxima.historico = [
-      ...atual.historico,
+      ...(proxima.historico ?? atual.historico),
       {
         at: agora,
         actor,
@@ -202,6 +229,21 @@ export async function atualizarDemanda(
   const segura = redactPiiDeep(proxima);
   await gravarDemanda(project, segura);
   return segura;
+}
+
+/** Registra uma cobrança (botão "Cobrei"). */
+export async function registrarCobranca(project: ProjectSlug, ref: string, actor: string): Promise<Demanda | undefined> {
+  const atual = await buscarDemanda(project, ref);
+  if (!atual) return undefined;
+  const agora = new Date().toISOString();
+  const proxima: Demanda = {
+    ...atual,
+    cobrancas: [...(atual.cobrancas ?? []), agora],
+    atualizadaEm: agora,
+    historico: [...atual.historico, { at: agora, actor, action: "demanda_cobrada", detail: atual.comQuem ? `Cobrado com ${atual.comQuem}` : "Cobrado" }],
+  };
+  await gravarDemanda(project, proxima);
+  return proxima;
 }
 
 /** Pessoas já usadas em `comQuem`, mais o gestor (Repasse). */

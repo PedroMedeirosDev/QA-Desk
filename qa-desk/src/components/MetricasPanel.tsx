@@ -115,6 +115,39 @@ export function MetricasPanel({ project }: { project: ProjectSlug }) {
             Origem: {m.bugs.porOrigem.automacao} pela automação · {m.bugs.porOrigem.manual} por teste manual ou suporte
           </p>
         </div>
+        <div className="rounded-xl border bg-card p-4 lg:col-span-2">
+          <p className="text-[0.75rem] uppercase tracking-wider text-gray-400">Trabalho com clientes e time</p>
+          <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-xs text-muted-foreground">Prometido × entregue no prazo</dt>
+              <dd className="tabular-nums text-foreground">
+                {m.trabalho.entreguesNoPrazo}/{m.trabalho.prometidas}
+                {m.trabalho.atrasoMedioDias != null && (
+                  <span className="text-amber-300"> · atraso médio {m.trabalho.atrasoMedioDias} dias</span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Reuniões com cliente</dt>
+              <dd className="tabular-nums text-foreground">
+                {m.trabalho.reunioes} registradas · {m.trabalho.diasPorIntencao.reuniao_cliente} dias
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Orientação ao N1 · Suporte N2</dt>
+              <dd className="tabular-nums text-foreground">
+                {m.trabalho.diasPorIntencao.orientacao_n1} dias · {m.trabalho.diasPorIntencao.suporte_n2} dias
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Sugestões de melhoria</dt>
+              <dd className="tabular-nums text-foreground">
+                {m.trabalho.sugestoes.total} enviadas · {m.trabalho.sugestoes.comRetorno} com retorno ·{" "}
+                {m.trabalho.sugestoes.implementadas} implementadas
+              </dd>
+            </div>
+          </dl>
+        </div>
         <div className="rounded-xl border bg-card p-4">
           <p className="text-[0.75rem] uppercase tracking-wider text-gray-400">Cobertura por módulo</p>
           <ul className="mt-3 space-y-2">

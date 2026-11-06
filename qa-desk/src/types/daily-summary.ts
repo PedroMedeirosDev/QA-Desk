@@ -3,7 +3,10 @@ export type DailyIntent =
   | "bugfix"
   | "smoke"
   | "exploratorio"
-  | "curadoria_kb";
+  | "curadoria_kb"
+  | "reuniao_cliente"
+  | "orientacao_n1"
+  | "suporte_n2";
 
 export const DAILY_INTENT_LABELS: Record<DailyIntent, string> = {
   homologacao: "Homologação",
@@ -11,6 +14,9 @@ export const DAILY_INTENT_LABELS: Record<DailyIntent, string> = {
   smoke: "Smoke",
   exploratorio: "Exploratório",
   curadoria_kb: "Curadoria KB",
+  reuniao_cliente: "Reunião com cliente",
+  orientacao_n1: "Orientação ao N1",
+  suporte_n2: "Suporte N2",
 };
 
 export const DAILY_INTENTS: DailyIntent[] = [
@@ -19,6 +25,9 @@ export const DAILY_INTENTS: DailyIntent[] = [
   "smoke",
   "exploratorio",
   "curadoria_kb",
+  "reuniao_cliente",
+  "orientacao_n1",
+  "suporte_n2",
 ];
 
 export type DailyTool = "maestro" | "playwright" | "manual" | "other";

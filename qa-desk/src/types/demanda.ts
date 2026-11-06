@@ -40,8 +40,32 @@ export interface RascunhoIa {
   geradoEm: string;
 }
 
+export type DemandaTipo = "demanda" | "sugestao";
+
+/** Sugestão de melhoria: o ciclo é o do retorno, não o da execução. */
+export type SugestaoStatus = "enviada" | "sem_retorno" | "aceita" | "recusada" | "implementada";
+
+export const SUGESTAO_STATUS_LABELS: Record<SugestaoStatus, string> = {
+  enviada: "Enviada",
+  sem_retorno: "Sem retorno",
+  aceita: "Aceita",
+  recusada: "Recusada",
+  implementada: "Implementada",
+};
+
 export interface Demanda {
   id: string;
+  /** Ausente = demanda (registros antigos). */
+  tipo?: DemandaTipo;
+  /** Data de entrega combinada (YYYY-MM-DD). */
+  prazo?: string;
+  /** Agrupador: "Reunião com escola A · 05/11". */
+  reuniao?: string;
+  /** Quando passou para "feito" (prometido × entregue no prazo). */
+  concluidaEm?: string;
+  sugestaoStatus?: SugestaoStatus;
+  /** Datas em que o Pedro cobrou (botão "Cobrei" no Slack ou na tela). */
+  cobrancas?: string[];
   /** Sequencial por projeto; `codigo` é o formato público (D-001). */
   numero: number;
   codigo: string;
@@ -76,8 +100,24 @@ export interface PendenciaItem {
   desde: string;
 }
 
-export function codigoDemanda(numero: number): string {
-  return `D-${String(numero).padStart(3, "0")}`;
+export function codigoDemanda(numero: number, tipo: DemandaTipo = "demanda"): string {
+  return `${tipo === "sugestao" ? "S" : "D"}-${String(numero).padStart(3, "0")}`;
+}
+
+export type ResumoPrazos = { vencemHoje: Demanda[]; atrasadas: Demanda[]; proximos: Demanda[] };
+
+/** Demandas abertas com prazo: vencem hoje, atrasadas e nos próximos `dias` dias. `hoje` em YYYY-MM-DD. */
+export function resumirPrazos(demandas: Demanda[], hoje: string, dias = 3): ResumoPrazos {
+  const limite = new Date(`${hoje}T00:00:00Z`);
+  limite.setUTCDate(limite.getUTCDate() + dias);
+  const ate = limite.toISOString().slice(0, 10);
+  const abertas = demandas.filter((d) => d.prazo && d.status !== "feito" && (d.tipo ?? "demanda") === "demanda");
+  const ordenar = (lista: Demanda[]) => lista.sort((a, b) => (a.prazo ?? "").localeCompare(b.prazo ?? ""));
+  return {
+    vencemHoje: ordenar(abertas.filter((d) => d.prazo === hoje)),
+    atrasadas: ordenar(abertas.filter((d) => d.prazo! < hoje)),
+    proximos: ordenar(abertas.filter((d) => d.prazo! > hoje && d.prazo! <= ate)),
+  };
 }
 
 /** Primeira linha com texto, até 120 caracteres. */
