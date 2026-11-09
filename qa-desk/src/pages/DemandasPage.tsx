@@ -40,6 +40,14 @@ function StatusBadge({ status }: { status: DemandaStatus }) {
   );
 }
 
+function SugestaoBadge({ status }: { status: SugestaoStatus }) {
+  return (
+    <span className="rounded-md border border-violet-400/20 bg-[#1a1a1a] px-2 py-0.5 text-[0.6875rem] font-medium text-violet-300">
+      {SUGESTAO_STATUS_LABELS[status]}
+    </span>
+  );
+}
+
 function hojeIso() {
   return new Date().toLocaleDateString("en-CA");
 }
@@ -374,10 +382,8 @@ export function DemandasPage({ project, demandaRef }: { project: ProjectSlug; de
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-foreground">{d.titulo}</span>
                       <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.6875rem] text-muted-foreground">
-                        {d.tipo === "sugestao" && d.sugestaoStatus ? (
-                          <span className="rounded-md border border-violet-400/20 bg-[#1a1a1a] px-2 py-0.5 font-medium text-violet-300">
-                            {SUGESTAO_STATUS_LABELS[d.sugestaoStatus]}
-                          </span>
+                        {d.tipo === "sugestao" ? (
+                          <SugestaoBadge status={d.sugestaoStatus ?? "enviada"} />
                         ) : (
                           <StatusBadge status={d.status} />
                         )}
@@ -503,7 +509,7 @@ function DemandaDetalhe({
           <p className="font-mono text-xs tabular-nums text-muted-foreground">{demanda.codigo}</p>
           <h2 className="text-base font-semibold text-foreground">{demanda.titulo}</h2>
         </div>
-        <StatusBadge status={demanda.status} />
+        {ehSugestao ? <SugestaoBadge status={demanda.sugestaoStatus ?? "enviada"} /> : <StatusBadge status={demanda.status} />}
       </div>
 
       <div className="flex flex-wrap gap-3 text-xs">
@@ -516,7 +522,8 @@ function DemandaDetalhe({
         {origem.linkCaptura && (
           <a href={origem.linkCaptura} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground hover:underline">
             <ExternalLink className="size-3" />
-            Captura no #demandas
+            Captura no {origem.canal ?? "#demandas"}
+            {origem.tipo === "slack" ? " (Slack)" : ""}
           </a>
         )}
         {origem.dataOriginal && (
@@ -602,7 +609,7 @@ function DemandaDetalhe({
               Cobrei{demanda.cobrancas?.length ? ` (${demanda.cobrancas.length})` : ""}
             </button>
           )}
-          {demanda.status === "feito" && (
+          {!ehSugestao && demanda.status === "feito" && (
             <button type="button" className={cn(actionBtnBase, actionBtn.ghost)} onClick={() => void copiarRascunhoKb()}>
               Rascunho de artigo (KB)
             </button>
@@ -630,6 +637,7 @@ function DemandaDetalhe({
         </label>
       )}
 
+      {!ehSugestao && (
       <div className="space-y-3 border-t border-border pt-4">
         <label className="block space-y-1 text-sm">
           <span className="font-medium text-muted-foreground">Com quem (para Aguardando)</span>
@@ -654,6 +662,7 @@ function DemandaDetalhe({
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -24,6 +24,11 @@ assert.match(filtrado, /\[LINK\]/);
 assert.match(filtrado, /Conciliação Bancária/, "termos do produto continuam legíveis");
 assert.match(filtrado, /não aparece no boleto/);
 
+// Palavra comum no início da frase não transforma produto em nome; nome depois dela some.
+assert.equal(filtrarParaIaExterna("No Discord a gente usava a tag de urgência", []), "No Discord a gente usava a tag de urgência");
+assert.equal(filtrarParaIaExterna("Hoje Moacir pediu o relatório", []), "Hoje [NOME] pediu o relatório");
+assert.equal(filtrarParaIaExterna("Segundo Sandra Souza, o boleto sumiu", []), "Segundo [NOME], o boleto sumiu");
+
 // Regras locais (sem chave da API).
 assert.equal(classificarPorRegras("O boleto não aparece e dá erro ao gerar").tipo, "bug");
 assert.equal(classificarPorRegras("Sugestão: seria bom a data da tarefa ser opcional").tipo, "sugestao");

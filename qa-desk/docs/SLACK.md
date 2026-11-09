@@ -47,7 +47,7 @@ IA_OCULTAR_TERMOS=Carmo,Viçosa   # opcional: termos extras a ocultar (escolas, 
 
 O print é lido **no computador** (OCR local). Para o Grok vai **só o texto**, depois de `filtrarParaIaExterna` (`server/classificacao.ts`): além de CPF, CNPJ, telefone e e-mail, saem links, nomes (sequências com maiúscula, menções, saudações e autor de chat), valores em R$, números com 5 ou mais dígitos e os termos de `IA_OCULTAR_TERMOS`. A imagem nunca sai. Se o Grok falhar ou responder fora do esquema, valem as regras locais.
 
-A proposta vale 24 h e fica só na memória: se o QA Desk reiniciar, mande a mensagem de novo.
+A proposta vale 24 h e fica em `DATA_ROOT/slack-entrada-pendentes.json` (sem o token do Slack), então sobrevive a reinício. Demandas e sugestões têm sequencial próprio (D-001…, S-001…); registros antigos foram ajustados com `npx tsx scripts/renumerar-demandas.ts --aplicar`.
 
 ## Manifesto
 

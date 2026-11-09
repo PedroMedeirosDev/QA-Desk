@@ -27,6 +27,8 @@ export type ConteudoCaptura = {
   linkOriginal?: string;
   linkCaptura: string;
   dataOriginal?: string;
+  /** "#entrada", "#demandas"… — aparece na tela como origem da captura. */
+  canal?: string;
 };
 
 export type ResultadoCaptura = { codigo: string; resposta: string; pulados: string[] };
@@ -128,6 +130,7 @@ export async function capturarDemanda(
         linkOriginal: conteudo.linkOriginal,
         linkCaptura: conteudo.linkCaptura,
         dataOriginal: conteudo.dataOriginal,
+        ...(conteudo.canal ? { canal: conteudo.canal } : {}),
         ...(lido ? { textoDoPrint: true } : {}),
       },
       anexos: guardados.map(({ type: _t, ...a }) => a),

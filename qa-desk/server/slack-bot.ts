@@ -14,6 +14,7 @@ import {
   DEMANDA_STATUS_LABELS,
   formatarListaPendencias,
   resumirPrazos,
+  tituloDoTexto,
   type Demanda,
   type ResumoPrazos,
 } from "../src/types/demanda.js";
@@ -109,10 +110,19 @@ export function blocosEntrada(
   return { texto: `Parece ${TIPO_CAPTURA_LABELS[c.tipo]}: ${c.titulo}`, blocos };
 }
 
+/**
+ * Título do Grok só vale se não carregar marcador do filtro; senão (e nas regras locais)
+ * o título sai do texto original — o registro fica no QA Desk, não vai para fora.
+ */
+export function tituloDaIa(c: Classificacao): string | undefined {
+  if (c.fonte !== "ia") return undefined;
+  return /\[(NOME|CPF|CNPJ|TELEFONE|EMAIL|VALOR|LINK|NUM|OCULTO)\]/.test(c.titulo) ? undefined : c.titulo;
+}
+
 type EntradaPendente = {
   conteudo: ConteudoCaptura;
   lido: string;
-  titulo: string;
+  titulo?: string;
   canal: string;
   ts: string;
   criadaEm: number;
@@ -120,12 +130,50 @@ type EntradaPendente = {
 
 const BUG_ENCERRADO = new Set(["homologado", "cancelado", "arquivado", "sem_correcao", "nao_reproduzido"]);
 const ENTRADA_VALIDADE_MS = 24 * 3_600_000;
-const pendentes = new Map<string, EntradaPendente>();
+const ARQ_PENDENTES = path.join(DATA_ROOT, "slack-entrada-pendentes.json");
 
-function limparPendentesVencidas() {
-  const limite = Date.now() - ENTRADA_VALIDADE_MS;
-  for (const [id, p] of pendentes) if (p.criadaEm < limite) pendentes.delete(id);
-}
+/** Propostas à espera do clique; sobrevivem a reinício. O token não vai para o disco. */
+const pendentes = {
+  mapa: new Map<string, EntradaPendente>(),
+  carregar() {
+    try {
+      const lido = JSON.parse(fs.readFileSync(ARQ_PENDENTES, "utf8")) as Record<string, EntradaPendente>;
+      this.mapa = new Map(Object.entries(lido));
+    } catch {
+      this.mapa = new Map();
+    }
+  },
+  gravar() {
+    fs.mkdirSync(path.dirname(ARQ_PENDENTES), { recursive: true });
+    const semToken = Object.fromEntries(
+      [...this.mapa].map(([id, p]) => [id, { ...p, conteudo: { ...p.conteudo, anexos: p.conteudo.anexos.map(({ headers: _h, ...a }) => a) } }]),
+    );
+    fs.writeFileSync(ARQ_PENDENTES, JSON.stringify(semToken), "utf8");
+  },
+  set(id: string, p: EntradaPendente) {
+    this.mapa.set(id, p);
+    this.gravar();
+  },
+  /** Tira da fila (clique duplo não grava duas vezes) e devolve com o token recolocado. */
+  retirar(id: string, token: string): EntradaPendente | undefined {
+    const p = this.mapa.get(id);
+    if (!p) return undefined;
+    this.mapa.delete(id);
+    this.gravar();
+    return { ...p, conteudo: { ...p.conteudo, anexos: p.conteudo.anexos.map((a) => ({ ...a, headers: { Authorization: `Bearer ${token}` } })) } };
+  },
+  limparVencidas() {
+    const limite = Date.now() - ENTRADA_VALIDADE_MS;
+    let mudou = false;
+    for (const [id, p] of this.mapa) {
+      if (p.criadaEm < limite) {
+        this.mapa.delete(id);
+        mudou = true;
+      }
+    }
+    if (mudou) this.gravar();
+  },
+};
 
 async function itensJaRegistrados(): Promise<Array<{ codigo: string; titulo: string }>> {
   const demandas = (await listarDemandas(PROJETO))
@@ -297,6 +345,7 @@ export async function startSlack(): Promise<void> {
   }
   if (app) return;
   const c = cfg();
+  pendentes.carregar();
   const a = new App({ token: c.bot, appToken: c.app, socketMode: true, logLevel: LogLevel.WARN });
 
   a.message(async ({ message, client }) => {
@@ -337,9 +386,10 @@ export async function startSlack(): Promise<void> {
         linkOriginal: linkDiscordNoTexto(texto),
         linkCaptura: permalink,
         dataOriginal: new Date(Number(m.ts) * 1000).toISOString(),
+        canal: ehEntrada ? "#entrada" : m.channel === c.demandas ? "#demandas" : "#bugs",
       };
       if (ehEntrada) {
-        limparPendentesVencidas();
+        pendentes.limparVencidas();
         const lido = await lerTextoDoConteudo(conteudo);
         const completo = montarTexto(texto, lido);
         if (!completo.trim()) {
@@ -347,10 +397,12 @@ export async function startSlack(): Promise<void> {
           return;
         }
         const classificacao = await classificarTexto(completo);
-        const similares = parecidos(`${classificacao.titulo}\n${completo}`, await itensJaRegistrados());
+        const tituloIa = tituloDaIa(classificacao);
+        const titulo = tituloIa ?? tituloDoTexto(completo);
+        const similares = parecidos(`${titulo}\n${completo}`, await itensJaRegistrados());
         const id = randomUUID();
-        pendentes.set(id, { conteudo, lido, titulo: classificacao.titulo, canal: m.channel, ts: m.ts, criadaEm: Date.now() });
-        const proposta = blocosEntrada(id, classificacao, similares);
+        pendentes.set(id, { conteudo, lido, titulo: tituloIa, canal: m.channel, ts: m.ts, criadaEm: Date.now() });
+        const proposta = blocosEntrada(id, { ...classificacao, titulo }, similares);
         await client.chat.postMessage({
           channel: m.channel,
           thread_ts: m.ts,
@@ -439,9 +491,7 @@ export async function startSlack(): Promise<void> {
       await ack();
       if (!somenteDono(body.user.id)) return;
       const id = (action as { value?: string }).value ?? "";
-      const p = pendentes.get(id);
-      // Remove antes de gravar: clique duplo não cria dois registros.
-      pendentes.delete(id);
+      const p = pendentes.retirar(id, c.bot);
       if (!p) {
         await respond({ replace_original: true, text: "Essa proposta expirou ou já foi usada. Mande a mensagem de novo." });
         return;
