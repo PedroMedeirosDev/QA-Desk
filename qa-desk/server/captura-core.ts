@@ -3,7 +3,7 @@
  * e cria demanda ou bug em rascunho. O filtro de dados sensíveis roda na gravação.
  */
 import { randomUUID } from "node:crypto";
-import { tituloDoTexto, type DemandaAnexo } from "../src/types/demanda.js";
+import { tituloDoTexto, type DemandaAnexo, type DemandaTipo } from "../src/types/demanda.js";
 import { criarDemanda } from "./demandas.js";
 import { ehImagem, lerTextoDosPrints } from "./ocr.js";
 import { appendHistory, nextBugCode, nextBugId, readCatalog, writeCatalog } from "./storage.js";
@@ -96,13 +96,33 @@ async function lerPrintsComSeguranca(imagens: Buffer[]): Promise<string> {
   }
 }
 
-export async function capturarDemanda(conteudo: ConteudoCaptura, fonte: FonteCaptura): Promise<ResultadoCaptura> {
+/** Só lê os prints (OCR local), sem guardar nada — usado para classificar antes de registrar. */
+export async function lerTextoDoConteudo(conteudo: ConteudoCaptura): Promise<string> {
+  const imagens: Buffer[] = [];
+  for (const a of conteudo.anexos.slice(0, MAX_ANEXOS)) {
+    if (a.size > MAX_BYTES || !ehImagem(a.contentType ?? "", a.name)) continue;
+    const resp = await fetch(a.url, a.headers ? { headers: a.headers } : undefined);
+    if (resp.ok) imagens.push(Buffer.from(await resp.arrayBuffer()));
+  }
+  return imagens.length ? lerPrintsComSeguranca(imagens) : "";
+}
+
+/** Já decidido antes (classificação confirmada): evita reler o print e fixa tipo/título. */
+export type OpcoesCaptura = { tipo?: DemandaTipo; titulo?: string; lido?: string };
+
+export async function capturarDemanda(
+  conteudo: ConteudoCaptura,
+  fonte: FonteCaptura,
+  opcoes: OpcoesCaptura = {},
+): Promise<ResultadoCaptura> {
   const { guardados, imagens, pulados } = await guardarAnexos(`demanda-${randomUUID()}`, conteudo.anexos);
-  const lido = await lerPrintsComSeguranca(imagens);
+  const lido = opcoes.lido ?? (await lerPrintsComSeguranca(imagens));
   const demanda = await criarDemanda(
     PROJETO,
     {
       texto: montarTexto(conteudo.texto, lido),
+      ...(opcoes.tipo ? { tipo: opcoes.tipo } : {}),
+      ...(opcoes.titulo ? { titulo: opcoes.titulo } : {}),
       origem: {
         tipo: fonte,
         linkOriginal: conteudo.linkOriginal,
@@ -122,12 +142,16 @@ export async function capturarDemanda(conteudo: ConteudoCaptura, fonte: FonteCap
   };
 }
 
-export async function capturarBug(conteudo: ConteudoCaptura, fonte: FonteCaptura): Promise<ResultadoCaptura> {
+export async function capturarBug(
+  conteudo: ConteudoCaptura,
+  fonte: FonteCaptura,
+  opcoes: Omit<OpcoesCaptura, "tipo"> = {},
+): Promise<ResultadoCaptura> {
   const catalogo = await readCatalog(PROJETO);
   const id = nextBugId(PROJETO, catalogo);
   const { guardados, imagens, pulados } = await guardarAnexos(id, conteudo.anexos);
   // Print de bug costuma ser tela do app: só vale ler quando não veio texto nenhum.
-  const lido = conteudo.texto ? "" : await lerPrintsComSeguranca(imagens);
+  const lido = conteudo.texto ? "" : (opcoes.lido ?? (await lerPrintsComSeguranca(imagens)));
   const texto = montarTexto(conteudo.texto, lido);
   const agora = new Date().toISOString();
   const origem = conteudo.linkOriginal ? `\n\nOrigem: ${conteudo.linkOriginal}` : "";
@@ -135,7 +159,7 @@ export async function capturarBug(conteudo: ConteudoCaptura, fonte: FonteCaptura
     id,
     recordType: "bug",
     bugCode: nextBugCode(catalogo, "app", "android"),
-    title: tituloDoTexto(texto) || `Bug capturado pelo ${NOME_FONTE[fonte]}`,
+    title: opcoes.titulo || tituloDoTexto(texto) || `Bug capturado pelo ${NOME_FONTE[fonte]}`,
     description: `${texto}${origem}`,
     steps: [],
     reportedAt: agora.slice(0, 10),

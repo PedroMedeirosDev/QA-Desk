@@ -1,8 +1,11 @@
 /**
  * Slack (Socket Mode — sem webhook público): captura de demandas e bugs, comandos
  * /pendencias, /demandas e /suite, e avisos no canal #avisos.
+ * Canal de entrada: classifica o print/texto (Grok só com texto filtrado) e espera
+ * o dono confirmar o tipo num botão antes de gravar.
  * Só liga com SLACK_ATIVO=1 (uma instância só). Aceita mensagens e comandos só do dono.
  */
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { App, LogLevel } from "@slack/bolt";
@@ -14,7 +17,15 @@ import {
   type Demanda,
   type ResumoPrazos,
 } from "../src/types/demanda.js";
-import { capturarBug, capturarDemanda, type AnexoCaptura } from "./captura-core.js";
+import {
+  capturarBug,
+  capturarDemanda,
+  lerTextoDoConteudo,
+  montarTexto,
+  type AnexoCaptura,
+  type ConteudoCaptura,
+} from "./captura-core.js";
+import { classificarTexto, parecidos, TIPO_CAPTURA_LABELS, type Classificacao } from "./classificacao.js";
 import { DATA_ROOT } from "./data-paths.js";
 import { isDatabaseEnabled } from "./db/config.js";
 import { getPrisma } from "./db/prisma.js";
@@ -31,6 +42,7 @@ function cfg() {
     app: process.env.SLACK_APP_TOKEN?.trim() ?? "",
     demandas: process.env.SLACK_DEMANDAS_CHANNEL_ID?.trim() ?? "",
     bugs: process.env.SLACK_BUGS_CHANNEL_ID?.trim() ?? "",
+    entrada: process.env.SLACK_ENTRADA_CHANNEL_ID?.trim() ?? "",
     avisos: process.env.SLACK_AVISOS_CHANNEL_ID?.trim() ?? "",
     dono: process.env.SLACK_DONO_USER_ID?.trim() ?? "",
   };
@@ -38,7 +50,91 @@ function cfg() {
 
 export function isSlackAtivo(): boolean {
   const c = cfg();
-  return process.env.SLACK_ATIVO === "1" && Boolean(c.bot && c.app && c.dono && (c.demandas || c.bugs));
+  return process.env.SLACK_ATIVO === "1" && Boolean(c.bot && c.app && c.dono && (c.demandas || c.bugs || c.entrada));
+}
+
+type AcaoEntrada = "entrada_bug" | "entrada_demanda" | "entrada_sugestao" | "entrada_descartar";
+
+/** Bug/Sugestão/Demanda gravam; dúvida e configuração não têm registro próprio → Demanda. */
+const ACAO_RECOMENDADA: Record<Classificacao["tipo"], AcaoEntrada> = {
+  bug: "entrada_bug",
+  sugestao: "entrada_sugestao",
+  demanda: "entrada_demanda",
+  duvida: "entrada_demanda",
+  configuracao: "entrada_demanda",
+};
+
+/** Proposta de classificação com os botões; o recomendado vem destacado. */
+export function blocosEntrada(
+  id: string,
+  c: Classificacao,
+  similares: Array<{ codigo: string; titulo: string }>,
+): { texto: string; blocos: unknown[] } {
+  const origem = c.fonte === "ia" ? "Grok" : "regras locais";
+  const linhas = [
+    `*Parece ${TIPO_CAPTURA_LABELS[c.tipo]}* (${origem}, confiança ${Math.round(c.confianca * 100)}%)`,
+    `*${c.titulo}*`,
+    ...(c.resumo ? [c.resumo] : []),
+    ...(c.motivo ? [`_${c.motivo}_`] : []),
+  ];
+  const blocos: unknown[] = [{ type: "section", text: { type: "mrkdwn", text: linhas.join("\n") } }];
+  if (similares.length) {
+    blocos.push({
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `:warning: Parecido com: ${similares.map((s) => `*${s.codigo}* ${s.titulo}`).join(" · ")}. Confira antes de criar outro.`,
+        },
+      ],
+    });
+  }
+  const recomendada = ACAO_RECOMENDADA[c.tipo];
+  const botao = (acao: AcaoEntrada, rotulo: string) => ({
+    type: "button",
+    text: { type: "plain_text", text: rotulo },
+    action_id: acao,
+    value: id,
+    ...(acao === recomendada ? { style: "primary" } : {}),
+  });
+  blocos.push({
+    type: "actions",
+    elements: [
+      botao("entrada_bug", "Bug"),
+      botao("entrada_demanda", "Demanda"),
+      botao("entrada_sugestao", "Sugestão"),
+      { type: "button", text: { type: "plain_text", text: "Descartar" }, style: "danger", action_id: "entrada_descartar", value: id },
+    ],
+  });
+  return { texto: `Parece ${TIPO_CAPTURA_LABELS[c.tipo]}: ${c.titulo}`, blocos };
+}
+
+type EntradaPendente = {
+  conteudo: ConteudoCaptura;
+  lido: string;
+  titulo: string;
+  canal: string;
+  ts: string;
+  criadaEm: number;
+};
+
+const BUG_ENCERRADO = new Set(["homologado", "cancelado", "arquivado", "sem_correcao", "nao_reproduzido"]);
+const ENTRADA_VALIDADE_MS = 24 * 3_600_000;
+const pendentes = new Map<string, EntradaPendente>();
+
+function limparPendentesVencidas() {
+  const limite = Date.now() - ENTRADA_VALIDADE_MS;
+  for (const [id, p] of pendentes) if (p.criadaEm < limite) pendentes.delete(id);
+}
+
+async function itensJaRegistrados(): Promise<Array<{ codigo: string; titulo: string }>> {
+  const demandas = (await listarDemandas(PROJETO))
+    .filter((d) => d.status !== "feito")
+    .map((d) => ({ codigo: d.codigo, titulo: d.titulo }));
+  const bugs = (await readCatalog(PROJETO)).reports
+    .filter((r) => r.recordType === "bug" && !BUG_ENCERRADO.has(r.status))
+    .map((r) => ({ codigo: r.bugCode ?? r.id, titulo: r.title }));
+  return [...demandas, ...bugs];
 }
 
 /** Texto do Slack → texto comum: <url|rótulo> vira "rótulo (url)". */
@@ -214,7 +310,8 @@ export async function startSlack(): Promise<void> {
       files?: ArquivoSlack[];
     };
     if (m.bot_id || (m.subtype && m.subtype !== "file_share")) return;
-    if (m.channel !== c.demandas && m.channel !== c.bugs) return;
+    const ehEntrada = Boolean(c.entrada) && m.channel === c.entrada;
+    if (!ehEntrada && m.channel !== c.demandas && m.channel !== c.bugs) return;
     if (m.user !== c.dono) return;
 
     const texto = textoDoSlack(m.text ?? "");
@@ -241,6 +338,28 @@ export async function startSlack(): Promise<void> {
         linkCaptura: permalink,
         dataOriginal: new Date(Number(m.ts) * 1000).toISOString(),
       };
+      if (ehEntrada) {
+        limparPendentesVencidas();
+        const lido = await lerTextoDoConteudo(conteudo);
+        const completo = montarTexto(texto, lido);
+        if (!completo.trim()) {
+          await responder("Não achei texto na mensagem nem no print. Mande pelo #demandas ou #bugs.");
+          return;
+        }
+        const classificacao = await classificarTexto(completo);
+        const similares = parecidos(`${classificacao.titulo}\n${completo}`, await itensJaRegistrados());
+        const id = randomUUID();
+        pendentes.set(id, { conteudo, lido, titulo: classificacao.titulo, canal: m.channel, ts: m.ts, criadaEm: Date.now() });
+        const proposta = blocosEntrada(id, classificacao, similares);
+        await client.chat.postMessage({
+          channel: m.channel,
+          thread_ts: m.ts,
+          text: proposta.texto,
+          blocks: proposta.blocos as never,
+          unfurl_links: false,
+        });
+        return;
+      }
       const { resposta, pulados } =
         m.channel === c.demandas ? await capturarDemanda(conteudo, "slack") : await capturarBug(conteudo, "slack");
       const aviso = pulados.length ? `\nNão guardei: ${pulados.join(", ")} (grande demais ou indisponível).` : "";
@@ -314,6 +433,45 @@ export async function startSlack(): Promise<void> {
   acaoDemanda("demanda_cobrei");
   acaoDemanda("demanda_entregue");
   acaoDemanda("demanda_adiar");
+
+  const acaoEntrada = (acao: AcaoEntrada) =>
+    a.action(acao, async ({ ack, body, action, respond, client }) => {
+      await ack();
+      if (!somenteDono(body.user.id)) return;
+      const id = (action as { value?: string }).value ?? "";
+      const p = pendentes.get(id);
+      // Remove antes de gravar: clique duplo não cria dois registros.
+      pendentes.delete(id);
+      if (!p) {
+        await respond({ replace_original: true, text: "Essa proposta expirou ou já foi usada. Mande a mensagem de novo." });
+        return;
+      }
+      if (acao === "entrada_descartar") {
+        await respond({ replace_original: true, text: "Descartado: nada foi registrado." });
+        return;
+      }
+      try {
+        const opcoes = { titulo: p.titulo, lido: p.lido };
+        const { resposta, pulados } =
+          acao === "entrada_bug"
+            ? await capturarBug(p.conteudo, "slack", opcoes)
+            : await capturarDemanda(p.conteudo, "slack", { ...opcoes, tipo: acao === "entrada_sugestao" ? "sugestao" : "demanda" });
+        const aviso = pulados.length ? `\nNão guardei: ${pulados.join(", ")} (grande demais ou indisponível).` : "";
+        await client.reactions.add({ channel: p.canal, timestamp: p.ts, name: "white_check_mark" }).catch(() => undefined);
+        await respond({ replace_original: true, text: `${resposta}${aviso}` });
+      } catch (err) {
+        console.error(`${LOG} falha ao registrar entrada:`, err);
+        pendentes.set(id, p);
+        await respond({
+          replace_original: false,
+          text: `Não consegui registrar: ${err instanceof Error ? err.message : "erro desconhecido"}. Tente o botão de novo.`,
+        });
+      }
+    });
+  acaoEntrada("entrada_bug");
+  acaoEntrada("entrada_demanda");
+  acaoEntrada("entrada_sugestao");
+  acaoEntrada("entrada_descartar");
 
   a.error(async (err) => {
     console.error(`${LOG} erro:`, err.message);
