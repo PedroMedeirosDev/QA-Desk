@@ -196,6 +196,51 @@ export async function classificarTexto(texto: string): Promise<Classificacao> {
   return { ...classificarPorRegras(filtrado), titulo: tituloCurto(filtrado) || tituloCurto(texto) };
 }
 
+/** Pedido no canal de revisão: só texto já filtrado + formato que o QA Desk sabe ler. */
+export function pedidoRevisao(textoFiltrado: string, tipo: TipoCaptura, tituloFiltrado: string): string {
+  const citado = textoFiltrado
+    .slice(0, 1500)
+    .split("\n")
+    .map((l) => `> ${l}`)
+    .join("\n");
+  return [
+    "*Revisão pedida pelo QA Desk* (texto já sem dados pessoais)",
+    `Proposta: *${TIPO_CAPTURA_LABELS[tipo]}* · ${tituloFiltrado}`,
+    citado,
+    "Para revisar, responda nesta conversa marcando o Grok: `@Grok revise`",
+    "Formato: `TIPO: bug|sugestao|demanda|duvida|configuracao | TITULO: … | FALTA: …`",
+  ].join("\n");
+}
+
+export type RevisaoGrok = { tipo?: TipoCaptura; titulo?: string; falta?: string };
+
+function semAcento(s: string): string {
+  return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
+const TIPO_POR_PALAVRA: Array<[RegExp, TipoCaptura]> = [
+  [/\bbug\b/, "bug"],
+  [/\bsugest/, "sugestao"],
+  [/\bdemanda\b/, "demanda"],
+  [/\bduvida\b/, "duvida"],
+  [/\bconfigura/, "configuracao"],
+];
+
+/** Lê "TIPO: x | TITULO: y | FALTA: z"; sem o formato, pega o primeiro tipo citado. */
+export function interpretarRevisaoGrok(texto: string): RevisaoGrok {
+  const limpo = texto.replace(/[*_`]/g, "");
+  const campo = (nome: RegExp) => limpo.match(new RegExp(`${nome.source}\\s*:\\s*([^|\\n]+)`, "i"))?.[1]?.trim();
+  const tipoTexto = semAcento(campo(/tipo/) ?? limpo.slice(0, 200));
+  const tipo = TIPO_POR_PALAVRA.find(([re]) => re.test(tipoTexto))?.[1];
+  const titulo = campo(/t[ií]tulo/)?.slice(0, 100);
+  const falta = campo(/falta/)?.slice(0, 300);
+  return {
+    ...(tipo ? { tipo } : {}),
+    ...(titulo ? { titulo } : {}),
+    ...(falta && !/^(nada|nenhum|-|—)\.?$/i.test(falta) ? { falta } : {}),
+  };
+}
+
 const PALAVRAS_VAZIAS = new Set(["para", "como", "quando", "esta", "este", "isso", "mais", "pelo", "pela", "sobre", "texto", "lido", "print", "nome"]);
 
 function palavras(s: string): Set<string> {

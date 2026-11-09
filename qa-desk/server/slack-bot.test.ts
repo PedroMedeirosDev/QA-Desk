@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import process from "node:process";
 
 process.env.DATABASE_URL = "";
-const { blocosEntrada, blocosLembrete, linkDiscordNoTexto, textoDoSlack, tituloDaIa } = await import("./slack-bot.js");
+const { blocosEntrada, blocosLembrete, linkDiscordNoTexto, textoDoSlack, textoRevisao, tituloDaIa } = await import("./slack-bot.js");
+
+// Revisão do Grok levada ao #entrada.
+assert.match(textoRevisao({ tipo: "bug", titulo: "Miniatura sumiu" }, "bug", true), /concorda — Bug[\s\S]*uso este ao confirmar/);
+assert.match(textoRevisao({ tipo: "sugestao" }, "bug", false), /discorda — Sugestão/);
+assert.match(textoRevisao({}, "bug", false), /não indicou o tipo/);
+assert.ok(JSON.stringify(blocosEntrada("x", { tipo: "bug", titulo: "t", resumo: "", confianca: 0.5, motivo: "", fonte: "regras" }, [], "Revisão: responda").blocos).includes("Revisão: responda"));
 
 // Título: só o do Grok sem marcador do filtro; regras → título do texto original.
 const base = { tipo: "bug", resumo: "", confianca: 0.9, motivo: "" } as const;
