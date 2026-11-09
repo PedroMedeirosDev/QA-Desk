@@ -26,7 +26,16 @@ import {
   type AnexoCaptura,
   type ConteudoCaptura,
 } from "./captura-core.js";
-import { classificarTexto, parecidos, TIPO_CAPTURA_LABELS, type Classificacao } from "./classificacao.js";
+import {
+  classificarTexto,
+  filtrarParaIaExterna,
+  interpretarRevisaoGrok,
+  parecidos,
+  pedidoRevisao,
+  TIPO_CAPTURA_LABELS,
+  type Classificacao,
+  type RevisaoGrok,
+} from "./classificacao.js";
 import { DATA_ROOT } from "./data-paths.js";
 import { isDatabaseEnabled } from "./db/config.js";
 import { getPrisma } from "./db/prisma.js";
@@ -44,6 +53,9 @@ function cfg() {
     demandas: process.env.SLACK_DEMANDAS_CHANNEL_ID?.trim() ?? "",
     bugs: process.env.SLACK_BUGS_CHANNEL_ID?.trim() ?? "",
     entrada: process.env.SLACK_ENTRADA_CHANNEL_ID?.trim() ?? "",
+    /** Canal onde o Grok revisa (só texto filtrado); o Grok NÃO pode estar no #entrada. */
+    revisao: process.env.SLACK_REVISAO_CHANNEL_ID?.trim() ?? "",
+    grok: process.env.SLACK_GROK_USER_ID?.trim() ?? "",
     avisos: process.env.SLACK_AVISOS_CHANNEL_ID?.trim() ?? "",
     dono: process.env.SLACK_DONO_USER_ID?.trim() ?? "",
   };
@@ -70,6 +82,7 @@ export function blocosEntrada(
   id: string,
   c: Classificacao,
   similares: Array<{ codigo: string; titulo: string }>,
+  aviso?: string,
 ): { texto: string; blocos: unknown[] } {
   const origem = c.fonte === "ia" ? "Grok" : "regras locais";
   const linhas = [
@@ -90,6 +103,7 @@ export function blocosEntrada(
       ],
     });
   }
+  if (aviso) blocos.push({ type: "context", elements: [{ type: "mrkdwn", text: aviso }] });
   const recomendada = ACAO_RECOMENDADA[c.tipo];
   const botao = (acao: AcaoEntrada, rotulo: string) => ({
     type: "button",
@@ -110,19 +124,37 @@ export function blocosEntrada(
   return { texto: `Parece ${TIPO_CAPTURA_LABELS[c.tipo]}: ${c.titulo}`, blocos };
 }
 
+const MARCADOR_FILTRO = /\[(NOME|CPF|CNPJ|TELEFONE|EMAIL|VALOR|LINK|NUM|OCULTO)\]/;
+
 /**
  * Título do Grok só vale se não carregar marcador do filtro; senão (e nas regras locais)
  * o título sai do texto original — o registro fica no QA Desk, não vai para fora.
  */
 export function tituloDaIa(c: Classificacao): string | undefined {
   if (c.fonte !== "ia") return undefined;
-  return /\[(NOME|CPF|CNPJ|TELEFONE|EMAIL|VALOR|LINK|NUM|OCULTO)\]/.test(c.titulo) ? undefined : c.titulo;
+  return MARCADOR_FILTRO.test(c.titulo) ? undefined : c.titulo;
+}
+
+/** Resposta do Grok levada à proposta no #entrada. */
+export function textoRevisao(r: RevisaoGrok, tipoProposto: Classificacao["tipo"], tituloAceito: boolean): string {
+  const linhas = [
+    r.tipo
+      ? `*Revisão do Grok:* ${r.tipo === tipoProposto ? "concorda" : "discorda"} — ${TIPO_CAPTURA_LABELS[r.tipo]}`
+      : "*Revisão do Grok:* não indicou o tipo",
+  ];
+  if (r.titulo) linhas.push(`Título sugerido: ${r.titulo}${tituloAceito ? " _(uso este ao confirmar)_" : ""}`);
+  if (r.falta) linhas.push(`O que falta: ${r.falta}`);
+  return linhas.join("\n");
 }
 
 type EntradaPendente = {
   conteudo: ConteudoCaptura;
   lido: string;
   titulo?: string;
+  tipoProposto?: Classificacao["tipo"];
+  /** Mensagem do pedido no canal de revisão (a resposta do Grok vem na thread dela). */
+  revisaoTs?: string;
+  tituloGrok?: string;
   canal: string;
   ts: string;
   criadaEm: number;
@@ -174,6 +206,22 @@ const pendentes = {
     if (mudou) this.gravar();
   },
 };
+
+/** Resposta do Grok na thread de um pedido: guarda o título revisado e avisa no #entrada. */
+async function tratarRevisaoGrok(client: WebClient, threadTs: string, texto: string) {
+  const achado = [...pendentes.mapa].find(([, p]) => p.revisaoTs === threadTs);
+  if (!achado) return;
+  const [id, p] = achado;
+  const revisao = interpretarRevisaoGrok(texto);
+  const tituloAceito = Boolean(revisao.titulo && !MARCADOR_FILTRO.test(revisao.titulo));
+  if (tituloAceito) pendentes.set(id, { ...p, tituloGrok: revisao.titulo });
+  await client.chat.postMessage({
+    channel: p.canal,
+    thread_ts: p.ts,
+    text: textoRevisao(revisao, p.tipoProposto ?? "demanda", tituloAceito),
+    unfurl_links: false,
+  });
+}
 
 async function itensJaRegistrados(): Promise<Array<{ codigo: string; titulo: string }>> {
   const demandas = (await listarDemandas(PROJETO))
@@ -356,8 +404,18 @@ export async function startSlack(): Promise<void> {
       text?: string;
       subtype?: string;
       bot_id?: string;
+      thread_ts?: string;
       files?: ArquivoSlack[];
     };
+    // Canal de revisão: só interessa a resposta do Grok na thread de um pedido nosso.
+    if (c.revisao && m.channel === c.revisao) {
+      if (c.grok && m.user === c.grok && m.thread_ts) {
+        await tratarRevisaoGrok(client, m.thread_ts, textoDoSlack(m.text ?? "")).catch((err) =>
+          console.error(`${LOG} revisão do Grok falhou:`, err instanceof Error ? err.message : err),
+        );
+      }
+      return;
+    }
     if (m.bot_id || (m.subtype && m.subtype !== "file_share")) return;
     const ehEntrada = Boolean(c.entrada) && m.channel === c.entrada;
     if (!ehEntrada && m.channel !== c.demandas && m.channel !== c.bugs) return;
@@ -401,8 +459,28 @@ export async function startSlack(): Promise<void> {
         const titulo = tituloIa ?? tituloDoTexto(completo);
         const similares = parecidos(`${titulo}\n${completo}`, await itensJaRegistrados());
         const id = randomUUID();
-        pendentes.set(id, { conteudo, lido, titulo: tituloIa, canal: m.channel, ts: m.ts, criadaEm: Date.now() });
-        const proposta = blocosEntrada(id, { ...classificacao, titulo }, similares);
+        const pendente: EntradaPendente = {
+          conteudo,
+          lido,
+          titulo: tituloIa,
+          tipoProposto: classificacao.tipo,
+          canal: m.channel,
+          ts: m.ts,
+          criadaEm: Date.now(),
+        };
+        let aviso: string | undefined;
+        if (c.revisao) {
+          // Para o canal do Grok vai só texto filtrado — nunca o print nem o texto original.
+          const pedido = await client.chat.postMessage({
+            channel: c.revisao,
+            text: pedidoRevisao(filtrarParaIaExterna(completo), classificacao.tipo, filtrarParaIaExterna(titulo)),
+            unfurl_links: false,
+          });
+          pendente.revisaoTs = pedido.ts;
+          aviso = `Revisão: no <#${c.revisao}>, responda \`@Grok revise\` na mensagem do QA Desk.`;
+        }
+        pendentes.set(id, pendente);
+        const proposta = blocosEntrada(id, { ...classificacao, titulo }, similares, aviso);
         await client.chat.postMessage({
           channel: m.channel,
           thread_ts: m.ts,
@@ -501,7 +579,7 @@ export async function startSlack(): Promise<void> {
         return;
       }
       try {
-        const opcoes = { titulo: p.titulo, lido: p.lido };
+        const opcoes = { titulo: p.tituloGrok ?? p.titulo, lido: p.lido };
         const { resposta, pulados } =
           acao === "entrada_bug"
             ? await capturarBug(p.conteudo, "slack", opcoes)

@@ -65,4 +65,24 @@ assert.deepEqual(
 );
 assert.deepEqual(parecidos("Refazer lançamentos de setembro", itens), []);
 
+// Pedido de revisão: só o texto filtrado vai para o canal do Grok.
+const { interpretarRevisaoGrok, pedidoRevisao } = await import("./classificacao.js");
+const original = "Oi Pedro, a Maria Souza não vê o boleto de R$ 350,00";
+const pedido = pedidoRevisao(filtrarParaIaExterna(original, []), "bug", filtrarParaIaExterna("Maria Souza não vê o boleto", []));
+for (const vazou of ["Pedro", "Maria", "Souza", "350"]) assert.ok(!pedido.includes(vazou), `pedido vazou "${vazou}"`);
+assert.match(pedido, /TIPO: bug\|sugestao/);
+assert.match(pedido, /Proposta: \*Bug\*/);
+
+// Resposta no formato combinado.
+assert.deepEqual(interpretarRevisaoGrok("TIPO: sugestao | TITULO: Data da tarefa opcional | FALTA: exemplo de tarefa sem prazo"), {
+  tipo: "sugestao",
+  titulo: "Data da tarefa opcional",
+  falta: "exemplo de tarefa sem prazo",
+});
+// Resposta livre, como a do teste real ("*bug* Algo que funcionava…").
+assert.equal(interpretarRevisaoGrok("*bug* Algo que funcionava parou de funcionar depois da última versão").tipo, "bug");
+assert.equal(interpretarRevisaoGrok("Tipo: Dúvida | Título: Onde fica o recálculo").tipo, "duvida");
+assert.equal(interpretarRevisaoGrok("TIPO: demanda | FALTA: nada").falta, undefined);
+assert.deepEqual(interpretarRevisaoGrok("não sei dizer"), {});
+
 console.log("classificacao.test: ok");

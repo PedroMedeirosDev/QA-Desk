@@ -47,6 +47,17 @@ IA_OCULTAR_TERMOS=Carmo,Viçosa   # opcional: termos extras a ocultar (escolas, 
 
 O print é lido **no computador** (OCR local). Para o Grok vai **só o texto**, depois de `filtrarParaIaExterna` (`server/classificacao.ts`): além de CPF, CNPJ, telefone e e-mail, saem links, nomes (sequências com maiúscula, menções, saudações e autor de chat), valores em R$, números com 5 ou mais dígitos e os termos de `IA_OCULTAR_TERMOS`. A imagem nunca sai. Se o Grok falhar ou responder fora do esquema, valem as regras locais.
 
+### Revisão pelo Grok (sem API, usa o plano do Grok no Slack)
+
+```env
+SLACK_REVISAO_CHANNEL_ID=C...   # #revisao-grok: só o Grok, o QA Desk e você
+SLACK_GROK_USER_ID=U...         # ID de membro do Grok
+```
+
+Junto com a proposta, o QA Desk publica no `#revisao-grok` **só o texto filtrado** e a proposta. O Grok ignora mensagens de outros bots, então você responde nessa mensagem `@Grok revise`. A resposta dele (formato `TIPO: … | TITULO: … | FALTA: …`, ou texto livre) aparece na proposta do `#entrada` como "Revisão do Grok: concorda/discorda"; o título sugerido é usado ao confirmar.
+
+**O Grok nunca pode estar no `#entrada`:** ele lê a conversa inteira em que é marcado, e lá estão os prints originais.
+
 A proposta vale 24 h e fica em `DATA_ROOT/slack-entrada-pendentes.json` (sem o token do Slack), então sobrevive a reinício. Demandas e sugestões têm sequencial próprio (D-001…, S-001…); registros antigos foram ajustados com `npx tsx scripts/renumerar-demandas.ts --aplicar`.
 
 ## Manifesto
