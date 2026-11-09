@@ -56,8 +56,6 @@ function cfg() {
     /** Canal onde o Grok revisa (só texto filtrado); o Grok NÃO pode estar no #entrada. */
     revisao: process.env.SLACK_REVISAO_CHANNEL_ID?.trim() ?? "",
     grok: process.env.SLACK_GROK_USER_ID?.trim() ?? "",
-    /** xoxp- só com chat:write: o pedido ao Grok sai em nome do dono (o Grok ignora bots). */
-    usuario: process.env.SLACK_USER_TOKEN?.trim() ?? "",
     avisos: process.env.SLACK_AVISOS_CHANNEL_ID?.trim() ?? "",
     dono: process.env.SLACK_DONO_USER_ID?.trim() ?? "",
   };
@@ -85,7 +83,6 @@ export function blocosEntrada(
   c: Classificacao,
   similares: Array<{ codigo: string; titulo: string }>,
   aviso?: string,
-  botaoRevisao = false,
 ): { texto: string; blocos: unknown[] } {
   const origem = c.fonte === "ia" ? "Grok" : "regras locais";
   const linhas = [
@@ -107,12 +104,6 @@ export function blocosEntrada(
     });
   }
   if (aviso) blocos.push({ type: "context", elements: [{ type: "mrkdwn", text: aviso }] });
-  if (botaoRevisao) {
-    blocos.push({
-      type: "actions",
-      elements: [{ type: "button", text: { type: "plain_text", text: "Pedir revisão ao Grok" }, action_id: "entrada_revisao_grok", value: id }],
-    });
-  }
   const recomendada = ACAO_RECOMENDADA[c.tipo];
   const botao = (acao: AcaoEntrada, rotulo: string) => ({
     type: "button",
@@ -163,7 +154,6 @@ type EntradaPendente = {
   tipoProposto?: Classificacao["tipo"];
   /** Mensagem do pedido no canal de revisão (a resposta do Grok vem na thread dela). */
   revisaoTs?: string;
-  revisaoPedida?: boolean;
   tituloGrok?: string;
   canal: string;
   ts: string;
@@ -487,12 +477,17 @@ export async function startSlack(): Promise<void> {
             unfurl_links: false,
           });
           pendente.revisaoTs = pedido.ts;
-          aviso = c.usuario && c.grok
-            ? `Revisão: o texto filtrado está no <#${c.revisao}>. Toque em *Pedir revisão ao Grok* (sai em seu nome).`
+          // O Grok ignora toda mensagem com marca de app (inclusive via token de usuário):
+          // o pedido precisa ser digitado; o link leva direto à conversa certa.
+          const link = pedido.ts
+            ? (await client.chat.getPermalink({ channel: c.revisao, message_ts: pedido.ts }).catch(() => undefined))?.permalink
+            : undefined;
+          aviso = link
+            ? `Revisão: <${link}|abrir o pedido> e responder \`@Grok revise\`.`
             : `Revisão: no <#${c.revisao}>, responda \`@Grok revise\` na mensagem do QA Desk.`;
         }
         pendentes.set(id, pendente);
-        const proposta = blocosEntrada(id, { ...classificacao, titulo }, similares, aviso, Boolean(c.revisao && c.usuario && c.grok));
+        const proposta = blocosEntrada(id, { ...classificacao, titulo }, similares, aviso);
         await client.chat.postMessage({
           channel: m.channel,
           thread_ts: m.ts,
@@ -608,30 +603,6 @@ export async function startSlack(): Promise<void> {
         });
       }
     });
-  a.action("entrada_revisao_grok", async ({ ack, body, action, respond }) => {
-    await ack();
-    if (!somenteDono(body.user.id)) return;
-    const id = (action as { value?: string }).value ?? "";
-    const p = pendentes.mapa.get(id);
-    const avisar = (text: string) => respond({ response_type: "ephemeral", replace_original: false, text });
-    if (!p?.revisaoTs) {
-      await avisar("Essa proposta expirou ou já foi registrada.");
-      return;
-    }
-    if (p.revisaoPedida) {
-      await avisar("Revisão já pedida: a resposta do Grok aparece aqui na conversa.");
-      return;
-    }
-    try {
-      await new WebClient(c.usuario).chat.postMessage({ channel: c.revisao, thread_ts: p.revisaoTs, text: `<@${c.grok}> revise` });
-      pendentes.set(id, { ...p, revisaoPedida: true });
-      await avisar("Pedido enviado ao Grok. A revisão aparece aqui na conversa.");
-    } catch (err) {
-      console.error(`${LOG} pedido ao Grok falhou:`, err instanceof Error ? err.message : err);
-      await avisar(`Não consegui pedir a revisão (${err instanceof Error ? err.message : "erro"}). Responda \`@Grok revise\` no canal.`);
-    }
-  });
-
   acaoEntrada("entrada_bug");
   acaoEntrada("entrada_demanda");
   acaoEntrada("entrada_sugestao");

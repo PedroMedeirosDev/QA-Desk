@@ -52,10 +52,9 @@ O print é lido **no computador** (OCR local). Para o Grok vai **só o texto**, 
 ```env
 SLACK_REVISAO_CHANNEL_ID=C...   # #revisao-grok: só o Grok, o QA Desk e você
 SLACK_GROK_USER_ID=U...         # ID de membro do Grok
-SLACK_USER_TOKEN=xoxp-...       # opcional: botão "Pedir revisão ao Grok"
 ```
 
-Com `SLACK_USER_TOKEN`, a proposta no `#entrada` ganha o botão **Pedir revisão ao Grok**: o QA Desk escreve `@Grok revise` na conversa do pedido **em seu nome** (o Grok ignora bots). O token precisa só do escopo de usuário `chat:write` (OAuth & Permissions → User Token Scopes → reinstalar o app). Sem ele, responda `@Grok revise` à mão.
+A proposta no `#entrada` traz o link **abrir o pedido**, que leva direto à conversa no `#revisao-grok`. O pedido ao Grok precisa ser **digitado**: ele ignora qualquer mensagem com marca de app, inclusive as enviadas com token de usuário (testado em 09/11 — a mensagem chega com `bot_id`/`app_id` do QA Desk).
 
 Junto com a proposta, o QA Desk publica no `#revisao-grok` **só o texto filtrado** e a proposta. O Grok ignora mensagens de outros bots, então você responde nessa mensagem `@Grok revise`. A resposta dele (formato `TIPO: … | TITULO: … | FALTA: …`, ou texto livre) aparece na proposta do `#entrada` como "Revisão do Grok: concorda/discorda"; o título sugerido é usado ao confirmar.
 
