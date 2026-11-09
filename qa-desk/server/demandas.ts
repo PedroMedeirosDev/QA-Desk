@@ -9,6 +9,9 @@ import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import {
   codigoDemanda,
+  interpretarCodigo,
+  proximoSequencial,
+  sequencialDe,
   tituloDoTexto,
   type Demanda,
   type DemandaAnexo,
@@ -105,13 +108,15 @@ export async function listarDemandas(project: ProjectSlug): Promise<Demanda[]> {
   return (await lerCatalogo(project)).demandas;
 }
 
-/** Aceita o id interno ou o código público (D-014, d14, 14). */
+/** Aceita o id interno ou o código público (D-014, d14, 14, S-001). */
 export async function buscarDemanda(project: ProjectSlug, ref: string): Promise<Demanda | undefined> {
   const demandas = await listarDemandas(project);
   const porId = demandas.find((d) => d.id === ref);
   if (porId) return porId;
-  const numero = Number(ref.replace(/^[ds]-?/i, ""));
-  return Number.isFinite(numero) ? demandas.find((d) => d.numero === numero) : undefined;
+  const porCodigo = demandas.find((d) => d.codigo.toLowerCase() === ref.trim().toLowerCase());
+  if (porCodigo) return porCodigo;
+  const alvo = interpretarCodigo(ref);
+  return alvo ? demandas.find((d) => (d.tipo ?? "demanda") === alvo.tipo && sequencialDe(d) === alvo.sequencial) : undefined;
 }
 
 export type NovaDemanda = {
@@ -150,11 +155,14 @@ export async function criarDemanda(project: ProjectSlug, input: NovaDemanda, act
   const tipo = input.tipo ?? "demanda";
 
   const agora = new Date().toISOString();
-  const numero = (await lerCatalogo(project)).meta.ultimoNumero + 1;
+  const catalogo = await lerCatalogo(project);
+  const numero = catalogo.meta.ultimoNumero + 1;
+  const sequencial = proximoSequencial(catalogo.demandas, tipo);
   const demanda: Demanda = redactPiiDeep({
     id: randomUUID(),
     numero,
-    codigo: codigoDemanda(numero, tipo),
+    sequencial,
+    codigo: codigoDemanda(sequencial, tipo),
     tipo,
     prazo: input.prazo || undefined,
     reuniao: input.reuniao?.trim() || undefined,
@@ -175,12 +183,51 @@ export async function criarDemanda(project: ProjectSlug, input: NovaDemanda, act
         at: agora,
         actor,
         action: "demanda_criada",
-        detail: input.origem?.tipo === "discord" ? "Capturada pelo Discord" : "Criada no QA Desk",
+        detail:
+          input.origem?.tipo === "discord"
+            ? "Capturada pelo Discord"
+            : input.origem?.tipo === "slack"
+              ? `Capturada pelo Slack${input.origem.canal ? ` (${input.origem.canal})` : ""}`
+              : "Criada no QA Desk",
       },
     ],
   });
   await gravarDemanda(project, demanda);
   return demanda;
+}
+
+/**
+ * Registros de antes do sequencial por tipo: refaz D-/S- na ordem de criação.
+ * `simular` só devolve o que mudaria.
+ */
+export async function renumerarPorTipo(
+  project: ProjectSlug,
+  actor: string,
+  simular = true,
+): Promise<Array<{ de: string; para: string; titulo: string }>> {
+  const demandas = [...(await listarDemandas(project))].sort((a, b) => a.numero - b.numero);
+  const contadores: Record<DemandaTipo, number> = { demanda: 0, sugestao: 0 };
+  const mudancas: Array<{ de: string; para: string; titulo: string }> = [];
+  for (const d of demandas) {
+    const tipo = d.tipo ?? "demanda";
+    contadores[tipo] += 1;
+    const codigo = codigoDemanda(contadores[tipo], tipo);
+    if (codigo === d.codigo && d.sequencial === contadores[tipo]) continue;
+    if (codigo !== d.codigo) mudancas.push({ de: d.codigo, para: codigo, titulo: d.titulo });
+    if (simular) continue;
+    const agora = new Date().toISOString();
+    await gravarDemanda(project, {
+      ...d,
+      sequencial: contadores[tipo],
+      codigo,
+      atualizadaEm: agora,
+      historico:
+        codigo === d.codigo
+          ? d.historico
+          : [...d.historico, { at: agora, actor, action: "codigo_renumerado", detail: `${d.codigo} → ${codigo}` }],
+    });
+  }
+  return mudancas;
 }
 
 export type AlteracaoDemanda = Partial<

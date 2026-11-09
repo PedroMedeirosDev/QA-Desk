@@ -516,7 +516,8 @@ function DemandaDetalhe({
         {origem.linkCaptura && (
           <a href={origem.linkCaptura} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground hover:underline">
             <ExternalLink className="size-3" />
-            Captura no #demandas
+            Captura no {origem.canal ?? "#demandas"}
+            {origem.tipo === "slack" ? " (Slack)" : ""}
           </a>
         )}
         {origem.dataOriginal && (

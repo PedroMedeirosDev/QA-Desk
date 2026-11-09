@@ -45,6 +45,13 @@ const TERMOS_PRODUTO = new Set(
   ].map((t) => t.normalize("NFC")),
 );
 
+/** Começam frase com maiúscula sem ser nome. */
+const PALAVRAS_DE_FRASE = new Set([
+  "no", "na", "nos", "nas", "o", "a", "os", "as", "em", "de", "do", "da", "para", "pra", "com", "sem", "pelo", "pela",
+  "hoje", "ontem", "amanhã", "agora", "ainda", "depois", "antes", "quando", "se", "mas", "e", "ou", "um", "uma",
+  "segundo", "porque", "como", "onde", "também", "já", "então", "aqui", "ali", "esse", "essa", "este", "esta",
+]);
+
 const PALAVRA_MAIUSCULA = String.raw`\p{Lu}[\p{Ll}\p{M}]+`;
 const SEQUENCIA_NOMES = new RegExp(
   String.raw`(?<![\p{L}\p{N}])${PALAVRA_MAIUSCULA}(?:\s+(?:(?:de|da|do|das|dos|e)\s+)?${PALAVRA_MAIUSCULA})+`,
@@ -78,8 +85,12 @@ export function filtrarParaIaExterna(texto: string, extras: string[] = termosExt
     "$1[NOME]",
   );
   out = out.replace(SEQUENCIA_NOMES, (seq) => {
-    const palavras = seq.split(/\s+/).filter((p) => !/^(de|da|do|das|dos|e)$/.test(p));
-    return palavras.every((p) => TERMOS_PRODUTO.has(p.toLowerCase())) ? seq : "[NOME]";
+    // "No Discord", "Hoje Moacir": a palavra comum do início da frase fica; o resto é avaliado.
+    const [primeira, ...resto] = seq.split(/\s+/);
+    const inicio = PALAVRAS_DE_FRASE.has(primeira.toLowerCase()) ? `${primeira} ` : "";
+    const candidatas = (inicio ? resto : [primeira, ...resto]).filter((p) => !/^(de|da|do|das|dos|e)$/.test(p));
+    if (candidatas.every((p) => TERMOS_PRODUTO.has(p.toLowerCase()))) return seq;
+    return `${inicio}[NOME]`;
   });
   out = out.replace(/^(\s*)\p{Lu}[\p{Ll}\p{M}]+(?=\s+\d{1,2}:\d{2}\b)/gmu, "$1[NOME]");
   out = out.replace(/\d{5,}/g, "[NUM]");

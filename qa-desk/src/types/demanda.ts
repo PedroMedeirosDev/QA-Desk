@@ -30,6 +30,8 @@ export interface DemandaOrigem {
   dataOriginal?: string;
   /** Parte do texto veio de OCR do print — pode ter dígitos trocados. */
   textoDoPrint?: boolean;
+  /** Canal da captura ("#entrada", "#demandas"); ausente = #demandas do Discord. */
+  canal?: string;
 }
 
 export type RascunhoIaTipo = "gherkin" | "bug_v2";
@@ -66,8 +68,10 @@ export interface Demanda {
   sugestaoStatus?: SugestaoStatus;
   /** Datas em que o Pedro cobrou (botão "Cobrei" no Slack ou na tela). */
   cobrancas?: string[];
-  /** Sequencial por projeto; `codigo` é o formato público (D-001). */
+  /** Ordem interna, única no projeto (chave do banco). */
   numero: number;
+  /** Sequencial dentro do tipo (D-001…, S-001…); ausente = `numero` (registros antigos). */
+  sequencial?: number;
   codigo: string;
   titulo: string;
   texto: string;
@@ -102,6 +106,22 @@ export interface PendenciaItem {
 
 export function codigoDemanda(numero: number, tipo: DemandaTipo = "demanda"): string {
   return `${tipo === "sugestao" ? "S" : "D"}-${String(numero).padStart(3, "0")}`;
+}
+
+export function sequencialDe(d: Pick<Demanda, "sequencial" | "numero">): number {
+  return d.sequencial ?? d.numero;
+}
+
+/** Próximo número dentro do tipo: demandas e sugestões contam separado. */
+export function proximoSequencial(demandas: Demanda[], tipo: DemandaTipo): number {
+  return demandas.filter((d) => (d.tipo ?? "demanda") === tipo).reduce((max, d) => Math.max(max, sequencialDe(d)), 0) + 1;
+}
+
+/** "S-001" / "s1" → sugestão 1; "D-014" / "14" → demanda 14. */
+export function interpretarCodigo(ref: string): { tipo: DemandaTipo; sequencial: number } | null {
+  const m = ref.trim().match(/^([ds])?-?0*(\d+)$/i);
+  if (!m) return null;
+  return { tipo: m[1]?.toLowerCase() === "s" ? "sugestao" : "demanda", sequencial: Number(m[2]) };
 }
 
 export type ResumoPrazos = { vencemHoje: Demanda[]; atrasadas: Demanda[]; proximos: Demanda[] };

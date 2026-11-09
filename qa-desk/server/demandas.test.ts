@@ -12,7 +12,7 @@ process.env.QA_DATA_DIR = pasta;
 process.env.DATABASE_URL = "";
 
 const { formatarListaPendencias, tituloDoTexto, codigoDemanda, resumirPrazos } = await import("../src/types/demanda.js");
-const { criarDemanda, atualizarDemanda, buscarDemanda, listarPendencias, registrarCobranca, DemandaInvalidaError } =
+const { criarDemanda, atualizarDemanda, buscarDemanda, listarDemandas, listarPendencias, registrarCobranca, DemandaInvalidaError } =
   await import("./demandas.js");
 
 const P = "anihype";
@@ -62,7 +62,13 @@ assert.equal(
 
 // Sugestão: código S-, status de retorno próprio.
 const s = await criarDemanda(P, { texto: "Mostrar o motivo do bloqueio do lançamento", tipo: "sugestao" }, "pedro");
-assert.match(s.codigo, /^S-\d{3}$/);
+// Sequencial próprio: já existem demandas, mas é a primeira sugestão.
+assert.equal(s.codigo, "S-001");
+const proxima = await criarDemanda(P, { texto: "Mais uma demanda" }, "pedro");
+assert.equal(proxima.codigo, `D-${String((await listarDemandas(P)).filter((x) => (x.tipo ?? "demanda") === "demanda").length).padStart(3, "0")}`);
+assert.ok(proxima.numero > s.numero, "ordem interna continua única");
+assert.equal((await buscarDemanda(P, "s1"))?.id, s.id);
+assert.equal((await buscarDemanda(P, proxima.codigo))?.id, proxima.id);
 assert.equal(s.sugestaoStatus, "enviada");
 assert.equal((await buscarDemanda(P, s.codigo))?.id, s.id);
 const s2 = await atualizarDemanda(P, s.codigo, { sugestaoStatus: "aceita" }, "pedro");

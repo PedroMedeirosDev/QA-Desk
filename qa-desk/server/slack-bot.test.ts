@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import process from "node:process";
 
 process.env.DATABASE_URL = "";
-const { blocosEntrada, blocosLembrete, linkDiscordNoTexto, textoDoSlack } = await import("./slack-bot.js");
+const { blocosEntrada, blocosLembrete, linkDiscordNoTexto, textoDoSlack, tituloDaIa } = await import("./slack-bot.js");
+
+// Título: só o do Grok sem marcador do filtro; regras → título do texto original.
+const base = { tipo: "bug", resumo: "", confianca: 0.9, motivo: "" } as const;
+assert.equal(tituloDaIa({ ...base, titulo: "Miniatura do vídeo não aparece", fonte: "ia" }), "Miniatura do vídeo não aparece");
+assert.equal(tituloDaIa({ ...base, titulo: "[NOME] relatou erro", fonte: "ia" }), undefined);
+assert.equal(tituloDaIa({ ...base, titulo: "qualquer", fonte: "regras" }), undefined);
 
 // Entrada: botão recomendado destacado; dúvida vira Demanda; aviso de parecido.
 const entrada = blocosEntrada(
