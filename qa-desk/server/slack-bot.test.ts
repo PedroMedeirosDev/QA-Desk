@@ -2,7 +2,21 @@ import assert from "node:assert/strict";
 import process from "node:process";
 
 process.env.DATABASE_URL = "";
-const { blocosLembrete, linkDiscordNoTexto, textoDoSlack } = await import("./slack-bot.js");
+const { blocosEntrada, blocosLembrete, linkDiscordNoTexto, textoDoSlack } = await import("./slack-bot.js");
+
+// Entrada: botão recomendado destacado; dúvida vira Demanda; aviso de parecido.
+const entrada = blocosEntrada(
+  "abc",
+  { tipo: "duvida", titulo: "Onde fica a conciliação", resumo: "", confianca: 0.8, motivo: "pergunta de uso", fonte: "ia" },
+  [{ codigo: "D-004", titulo: "Conciliação Getnet" }],
+);
+const entradaJson = JSON.stringify(entrada.blocos);
+assert.match(entrada.texto, /Dúvida de uso/);
+assert.ok(entradaJson.includes("Parecido com") && entradaJson.includes("D-004"));
+const botoes = (entrada.blocos.at(-1) as { elements: Array<{ action_id: string; style?: string; value: string }> }).elements;
+assert.deepEqual(botoes.map((b) => b.action_id), ["entrada_bug", "entrada_demanda", "entrada_sugestao", "entrada_descartar"]);
+assert.equal(botoes.find((b) => b.style === "primary")?.action_id, "entrada_demanda");
+assert.ok(botoes.every((b) => b.value === "abc"));
 
 // Lembrete: nada a avisar → sem mensagem; com itens → um conjunto de botões por demanda.
 assert.equal(blocosLembrete({ vencemHoje: [], atrasadas: [], proximos: [] }), null);
