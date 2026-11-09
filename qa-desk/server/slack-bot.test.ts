@@ -8,7 +8,13 @@ const { blocosEntrada, blocosLembrete, linkDiscordNoTexto, textoDoSlack, textoRe
 assert.match(textoRevisao({ tipo: "bug", titulo: "Miniatura sumiu" }, "bug", true), /concorda — Bug[\s\S]*uso este ao confirmar/);
 assert.match(textoRevisao({ tipo: "sugestao" }, "bug", false), /discorda — Sugestão/);
 assert.match(textoRevisao({}, "bug", false), /não indicou o tipo/);
-assert.ok(JSON.stringify(blocosEntrada("x", { tipo: "bug", titulo: "t", resumo: "", confianca: 0.5, motivo: "", fonte: "regras" }, [], "Revisão: responda").blocos).includes("Revisão: responda"));
+const cBug = { tipo: "bug", titulo: "t", resumo: "", confianca: 0.5, motivo: "", fonte: "regras" } as const;
+assert.ok(JSON.stringify(blocosEntrada("x", cBug, [], "Revisão: responda").blocos).includes("Revisão: responda"));
+// Botão de revisão só quando há token de usuário; os botões de confirmar continuam por último.
+assert.ok(!JSON.stringify(blocosEntrada("x", cBug, []).blocos).includes("entrada_revisao_grok"));
+const comRevisao = blocosEntrada("x", cBug, [], "aviso", true).blocos;
+assert.ok(JSON.stringify(comRevisao).includes("entrada_revisao_grok"));
+assert.ok(JSON.stringify(comRevisao.at(-1)).includes("entrada_descartar"));
 
 // Título: só o do Grok sem marcador do filtro; regras → título do texto original.
 const base = { tipo: "bug", resumo: "", confianca: 0.9, motivo: "" } as const;
