@@ -12,6 +12,7 @@ import {
   interpretarCodigo,
   proximoSequencial,
   sequencialDe,
+  statusDaSugestao,
   tituloDoTexto,
   type Demanda,
   type DemandaAnexo,
@@ -243,7 +244,10 @@ export async function atualizarDemanda(
   const atual = await buscarDemanda(project, ref);
   if (!atual) return undefined;
   const agora = new Date().toISOString();
-  const status = alteracao.status ?? atual.status;
+  const status =
+    atual.tipo === "sugestao" && alteracao.sugestaoStatus
+      ? statusDaSugestao(alteracao.sugestaoStatus)
+      : (alteracao.status ?? atual.status);
   const comQuem = alteracao.comQuem !== undefined ? alteracao.comQuem.trim() || undefined : atual.comQuem;
   validarStatus(status, comQuem);
   validarPrazo(alteracao.prazo);

@@ -72,7 +72,15 @@ assert.equal((await buscarDemanda(P, proxima.codigo))?.id, proxima.id);
 assert.equal(s.sugestaoStatus, "enviada");
 assert.equal((await buscarDemanda(P, s.codigo))?.id, s.id);
 const s2 = await atualizarDemanda(P, s.codigo, { sugestaoStatus: "aceita" }, "pedro");
-assert.equal(s2?.historico.at(-1)?.action, "sugestao_status");
+assert.ok(s2?.historico.some((h) => h.action === "sugestao_status"));
+assert.equal(s2?.status, "a_fazer", "aceita continua aberta");
+// Status único: o retorno fecha a sugestão (conta como entregue nas métricas).
+const s3 = await atualizarDemanda(P, s.codigo, { sugestaoStatus: "implementada" }, "pedro");
+assert.equal(s3?.status, "feito");
+assert.ok(s3?.concluidaEm);
+const s4 = await atualizarDemanda(P, s.codigo, { sugestaoStatus: "sem_retorno" }, "pedro");
+assert.equal(s4?.status, "a_fazer");
+assert.equal(s4?.concluidaEm, undefined);
 
 // Prazo: formato validado; concluída registra a data de entrega.
 await assert.rejects(() => criarDemanda(P, { texto: "x", prazo: "12/11/2026" }, "pedro"), DemandaInvalidaError);

@@ -55,6 +55,11 @@ export const SUGESTAO_STATUS_LABELS: Record<SugestaoStatus, string> = {
   implementada: "Implementada",
 };
 
+/** Sugestão tem um status só (o retorno); fechada quando implementada ou recusada. */
+export function statusDaSugestao(s: SugestaoStatus): DemandaStatus {
+  return s === "implementada" || s === "recusada" ? "feito" : "a_fazer";
+}
+
 export interface Demanda {
   id: string;
   /** Ausente = demanda (registros antigos). */
