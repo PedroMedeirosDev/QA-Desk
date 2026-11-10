@@ -29,3 +29,27 @@ jobs:
 
       - name: Health check pelo endereço público
         run: curl -fsS https://qa-desk-pedro.duckdns.org/api/health
+
+      # Título do commit entra por env, nunca direto no script (evita injeção de comando).
+      - name: Avisar no Slack
+        if: always()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_AVISOS_CHANNEL_ID: ${{ secrets.SLACK_AVISOS_CHANNEL_ID }}
+          RESULTADO: ${{ job.status }}
+          COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
+          TITULO: ${{ github.event.workflow_run.display_title || 'deploy manual' }}
+          LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$SLACK_BOT_TOKEN" ] || [ -z "$SLACK_AVISOS_CHANNEL_ID" ]; then
+            echo "Segredos do Slack não configurados: sem aviso."
+            exit 0
+          fi
+          if [ "$RESULTADO" = "success" ]; then MSG="✅ Deploy publicado"; else MSG="❌ Deploy falhou ($RESULTADO)"; fi
+          MSG="$MSG · ${COMMIT:0:7} · $TITULO · <$LINK|ver log>"
+          jq -n --arg c "$SLACK_AVISOS_CHANNEL_ID" --arg t "$MSG" '{channel: $c, text: $t, unfurl_links: false}' \
+            | curl -sS -X POST https://slack.com/api/chat.postMessage \
+                -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                -H "Content-Type: application/json; charset=utf-8" \
+                --data @- \
+            | jq -r 'if .ok then "aviso enviado" else "Slack recusou: \(.error)" end'
