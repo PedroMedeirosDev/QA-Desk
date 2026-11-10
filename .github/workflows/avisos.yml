@@ -1,0 +1,42 @@
+name: Avisos da esteira
+
+# Falha na main (CI) ou na estabilidade semanal vira aviso no #avisos do Slack.
+# Falha de PR não avisa: quem abriu o PR já vê no próprio PR.
+on:
+  workflow_run:
+    workflows: ["CI QA Desk", "Estabilidade QA Desk"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  avisar:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event != 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Nome do commit entra por env, nunca direto no script (evita injeção de comando).
+      - name: Avisar no Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_AVISOS_CHANNEL_ID: ${{ secrets.SLACK_AVISOS_CHANNEL_ID }}
+          ESTEIRA: ${{ github.event.workflow_run.name }}
+          COMMIT: ${{ github.event.workflow_run.head_sha }}
+          TITULO: ${{ github.event.workflow_run.display_title }}
+          LINK: ${{ github.event.workflow_run.html_url }}
+        run: |
+          if [ -z "$SLACK_BOT_TOKEN" ] || [ -z "$SLACK_AVISOS_CHANNEL_ID" ]; then
+            echo "Segredos do Slack não configurados: sem aviso."
+            exit 0
+          fi
+          MSG="❌ $ESTEIRA falhou na main · ${COMMIT:0:7} · $TITULO · <$LINK|ver log>"
+          jq -n --arg c "$SLACK_AVISOS_CHANNEL_ID" --arg t "$MSG" '{channel: $c, text: $t, unfurl_links: false}' \
+            | curl -sS -X POST https://slack.com/api/chat.postMessage \
+                -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                -H "Content-Type: application/json; charset=utf-8" \
+                --data @- \
+            | jq -r 'if .ok then "aviso enviado" else "Slack recusou: \(.error)" end'
