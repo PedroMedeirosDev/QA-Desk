@@ -1,0 +1,31 @@
+name: Deploy QA Desk
+
+# Publica na VM da Oracle (runner próprio) quando o CI da main passa.
+on:
+  workflow_run:
+    workflows: ["CI QA Desk"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# Um deploy por vez; o seguinte espera, não cancela o que está no meio.
+concurrency:
+  group: deploy-producao
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Só CI verde de push na main deste repositório (nunca PR, nem fork com branch "main").
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: [self-hosted, oracle]
+    timeout-minutes: 20
+    steps:
+      - name: Publicar (mesmo script do cron; o CI já passou)
+        run: QA_DESK_SKIP_CI=1 bash "$HOME/QA-Desk/qa-desk/deploy/oracle/auto-deploy.sh"
+
+      - name: Health check pelo endereço público
+        run: curl -fsS https://qa-desk-pedro.duckdns.org/api/health
